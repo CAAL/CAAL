@@ -11,11 +11,6 @@
 	function strFirstAndRest(first, rest) {
 		return first + rest.join('');
 	}
-	function extractRelabelings(relabels) {
-		return relabels.map(function(syntaxRelabel) {
-			return {new: syntaxRelabel[1], old: syntaxRelabel[5]};
-		});
-	}
 
 	var AST = options.astNodes;
 }
@@ -25,14 +20,11 @@ start
 
 //A program consists of lines only used for process assignments.
 program
-	= firstAssignments:line* last:lastAssignment? { var assignments = firstAssignments; if (last) assignments.push(last); return {type: AST.Program, assignments: assignments}; }
+	= assignments:assignments { return {type: AST.Program, assignments: assignments}; }
 
-//A line is either blank or a valid assignment
-line = _ assignment:assignment _ newline { return assignment; }
-	 / _ newline
-
-//The last line need not end with a newline
-lastAssignment = _ assignment:assignment _ { return assignment; }
+assignments = _ first:assignment _ newline rest:assignments { return [first].concat(rest); }
+			/ _ newline assignments:assignments { return assignments; }
+	  		/ _ newline? { return []; }
 
 assignment
 	= left:constantStr _ "=" _ right:process { return {type: AST.Assignment, left: left, right: right}; }
@@ -57,7 +49,7 @@ action
 
 leftProcess
 	= process:parenProcess _ labels:restrictedLabels { return {type: AST.Restriction, labels: labels, process: process}; }
-	/ process:parenProcess _ relabels:relabelings { return {type: AST.Relabeling, relabels: relabels, process: process}; }
+	/ process:parenProcess _ "[" _ relabels:relabelings _ "]" { return {type: AST.Relabeling, relabels: relabels, process: process}; }
 	/ process:parenProcess { return process; }
 
 // A restricted set of labels   \ {a, b}
@@ -66,7 +58,11 @@ restrictedLabels
 
 // Relabelings  [a/b, c/d]
 relabelings
-	= "[" _ relabels:(_ label _ "/" _ label)* _ "]" { return extractRelabelings(relabels); }
+	= first:relabel _ "," _ rest:relabelings { return [first].concat(rest); }
+	/ relabel:relabel { return [relabel]; }
+
+relabel
+	= newlabel:label _ "/" _ old:label { return {new: newlabel, old: old}; }
 
 // ( P ) for some process P
 parenProcess
