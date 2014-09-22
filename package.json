@@ -1,0 +1,16 @@
+{
+  "name": "ccs-workbench",
+  "version": "0.0.1",
+  "description": "Workbench for CCS",
+  "main": "",
+  "dependencies": {
+    "pegjs": "~0.8.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "find src/ -iname '*.ts' -print0 | xargs tsc -m commonjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}
