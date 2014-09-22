@@ -25,7 +25,7 @@ start
 
 //A program consists of lines only used for process assignments.
 program
-	= firstAssignments:line* last:lastAssignment? { var assignments = firstAssignments; if (last) assignments.push(last); return {assignments: assignments}; }
+	= firstAssignments:line* last:lastAssignment? { var assignments = firstAssignments; if (last) assignments.push(last); return {type: AST.Program, assignments: assignments}; }
 
 //A line is either blank or a valid assignment
 line = _ assignment:assignment _ newline { return assignment; }
