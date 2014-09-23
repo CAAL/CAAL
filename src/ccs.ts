@@ -1,4 +1,3 @@
-
 export enum CCSNode {
 	Program,
 	NullProcess,

@@ -23,6 +23,7 @@ program
 	= assignments:assignments { return {type: AST.Program, assignments: assignments}; }
 
 assignments = _ first:assignment _ newline rest:assignments { return [first].concat(rest); }
+            / _ first:assignment _ { return [first];}
 			/ _ newline assignments:assignments { return assignments; }
 	  		/ _ newline? { return []; }
 

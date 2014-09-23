@@ -1,4 +1,4 @@
-var util = require('util')
+var util = require('util');
 var fs = require('fs');
 var PEG = require('pegjs');
 var ccs = require('./ccs.js');
