@@ -15,6 +15,8 @@ if (cmdText.trim() !== "") {
 	console.log("\nLabelled bracket notation: \n")
 	console.log(labelledBracketNotation(cmdAst));
 }
+else 
+    console.log("No css arguments");
 
 function logObjectDeep(obj) {
 	console.log(util.inspect(obj, false, null));
