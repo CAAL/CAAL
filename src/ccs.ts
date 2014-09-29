@@ -13,114 +13,119 @@ export enum CCSNode {
 
 export interface Visitor {
     //visitProgram(node);
-    visitNullProcess(node);
-    visitAssignment(node);
-    visitSummation(node);
-    visitComposition(node);
-    visitAction(node);
-    visitRestriction(node);
-    visitRelabeling(node);
-    visitParenthesis(node);
-    visitConstant(node);
+    visitNullProcess(node, parent);
+    visitAssignment(node, parent);
+    visitSummation(node, parent);
+    visitComposition(node, parent);
+    visitAction(node, parent);
+    visitRestriction(node, parent);
+    visitRelabeling(node, parent);
+    visitParenthesis(node, parent);
+    visitConstant(node, parent);
 }
 
 export class PostOrder implements Visitor {
-    parentStack;
-    lastNodeVisited = undefined;
+    private parentStack;
+    private lastNodeVisited = undefined;
     
-    stackPeek(stack) {
+    private stackPeek(stack) {
         return stack[stack.length - 1];
     }
     
-    postOrderVisit(root) {
+    // source: http://www.geeksforgeeks.org/iterative-postorder-traversal-using-stack/
+    public postOrderVisit(root) {
         if (root == undefined)
             return;
         
         this.parentStack = [];
         var right;
+        var node = (root.type == CCSNode.Assignment) ? root.right : root;
+        
+        // put the assignment on the stack, which means that it will be the last on to be visited
+        // the assignment's left side is ignored
+        if (root.type == CCSNode.Assignment)
+            this.parentStack.push(root);
         
         do {
             // move to the leftmost node
-            while(root != undefined) {
-                right = root.next || root.process || root.right;
+            while(node != undefined) {
+                right = node.next || node.process || node.right;
                 
-                // push root's right child and then root to stack
+                // push node's right child and then node to stack
                 if (right != undefined)
                     this.parentStack.push(right);
-                this.parentStack.push(root);
+                this.parentStack.push(node);
                 
-                // set root as root's left child
-                root = root.left;
+                // set node as node's left child
+                node = node.left;
             }
             
-            // pop and item from stack and set it as root
-            root = this.parentStack.pop();
+            // pop and item from stack and set it as node
+            node = this.parentStack.pop();
             
-            right = root.next || root.process || root.right;
+            right = node.next || node.process || node.right;
             
             //if the popped item has a right child and the right child is not
-            // processed yet, then make sure right child is processed before root
+            // processed yet, then make sure right child is processed before node
             if (right != undefined && this.stackPeek(this.parentStack) == right) {
                 this.parentStack.pop(); // remove right child from stack
-                this.parentStack.push(root); // push root back to stack
-                root = right;
+                this.parentStack.push(node); // push node back to stack
+                node = right;
             }
-            else { // else print root's data and set root as null
-                this.visit(root);
-                root = undefined;
+            else { // else print node's data and set node as null
+                this.visit(node, this.stackPeek(this.parentStack));
+                node = undefined;
             }
         } while(this.parentStack.length != 0);
     }
     
-    visit(blop) {
-        var node = CCSNode;
-        
-        switch (blop.type) {
+    private visit(node, parent) {
+        switch (node.type) {
             /*case node.Program:
-                this.visitor.visitProgram(blop);*/
-            case node.NullProcess:
-                this.visitNullProcess(blop);
+                this.visitor.visitProgram(node);*/
+            case CCSNode.NullProcess:
+                this.visitNullProcess(node, parent);
                 break;
-            case node.Assignment:
-                this.visitAssignment(blop);
+            case CCSNode.Assignment:
+                this.visitAssignment(node, parent);
                 break;
-            case node.Summation:
-                this.visitSummation(blop);
+            case CCSNode.Summation:
+                this.visitSummation(node, parent);
                 break;
-            case node.Composition:
-                this.visitComposition(blop);
+            case CCSNode.Composition:
+                this.visitComposition(node, parent);
                 break;
-            case node.Action:
-                this.visitAction(blop);
+            case CCSNode.Action:
+                this.visitAction(node, parent);
                 break;
-            case node.Restriction:
-                this.visitRestriction(blop);
+            case CCSNode.Restriction:
+                this.visitRestriction(node, parent);
                 break;
-            case node.Relabeling:
-                this.visitRelabeling(blop);
+            case CCSNode.Relabeling:
+                this.visitRelabeling(node, parent);
                 break;
-            case node.Parenthesis:
-                this.visitParenthesis(blop);
+            case CCSNode.Parenthesis:
+                this.visitParenthesis(node, parent);
                 break;
-            case node.Constant:
-                this.visitConstant(blop);
+            case CCSNode.Constant:
+                this.visitConstant(node, parent);
                 break;
             default:
-                console.log(blop);
-                throw "This should not happen " + blop.type;
+                console.log(node, parent);
+                throw "This should not happen " + node.type;
         }
     }
     
     /* Override these methods in sub classes */
-    visitNullProcess(node) { }
-    visitAssignment(node) { }
-    visitSummation(node) { }
-    visitComposition(node) { }
-    visitAction(node) { }
-    visitRestriction(node) { }
-    visitRelabeling(node) { }
-    visitParenthesis(node) { }
-    visitConstant(node) { }
+    public visitNullProcess(node, parent) { }
+    public visitAssignment(node, parent) { }
+    public visitSummation(node, parent) { }
+    public visitComposition(node, parent) { }
+    public visitAction(node, parent) { }
+    public visitRestriction(node, parent) { }
+    public visitRelabeling(node, parent) { }
+    public visitParenthesis(node, parent) { }
+    public visitConstant(node, parent) { }
 }
 
 //Bottom up we add existing subtrees.
@@ -133,15 +138,15 @@ export class SharedParseTree extends PostOrder {
         this.map = map || new NodeMap();
     }
 
-    visitNullProcess(node) {
+    visitNullProcess(node, parent) {
         this.map.acquireIdForNode(node);
     }
 
-    visitAssignment(node) {
+    visitAssignment(node, parent) {
         node.right = this.map.getById(node.right.id);
         this.map.acquireIdForNode(node);
     }
-    visitSummation(node) {
+    visitSummation(node, parent) {
         node.left = this.map.getById(node.left.id);
         node.right = this.map.getById(node.right.id);
         if (node.left.id > node.right.id) {
@@ -152,27 +157,27 @@ export class SharedParseTree extends PostOrder {
         }
         this.map.acquireIdForNode(node);
     }
-    visitComposition(node) {
+    visitComposition(node, parent) {
         //Reuse
-        this.visitSummation(node);
+        this.visitSummation(node, parent);
     }
-    visitAction(node) {
+    visitAction(node, parent) {
         node.next = this.map.getById(node.next.id);
         this.map.acquireIdForNode(node);
     }
-    visitRestriction(node) {
+    visitRestriction(node, parent) {
         node.process = this.map.getById(node.process.id);
         this.map.acquireIdForNode(node);
     }
-    visitRelabeling(node) {
+    visitRelabeling(node, parent) {
         node.process = this.map.getById(node.process.id);
         this.map.acquireIdForNode(node);
     }
-    visitParenthesis(node) {
+    visitParenthesis(node, parent) {
         node.process = this.map.getById(node.process.id);
         this.map.acquireIdForNode(node);
     }
-    visitConstant(node) {
+    visitConstant(node, parent) {
         node.process = this.map.getById(node.process.id);
         this.map.acquireIdForNode(node);
     }
@@ -200,41 +205,41 @@ export class CachePrefixAndRepr extends PostOrder {
         return result;
     }
 
-    visitNullProcess(node) {
+    visitNullProcess(node, parent) {
         node.repr = "0";
         node.acts = [];
     }
-    visitAssignment(node) {
+    visitAssignment(node, parent) {
         node.repr = node.left + " = " + node.right.repr;
     }
-    visitSummation(node) {
+    visitSummation(node, parent) {
         node.repr = node.left.repr + " + " + node.right.repr;
         node.acts = this.union(node.left.acts, node.right.acts);
     }
-    visitComposition(node) {
+    visitComposition(node, parent) {
         node.repr = node.left.repr + " | " + node.right.repr;
         //Todo acts, partial
         node.acts = this.union(node.left.acts, node.right.acts);
     }
-    visitAction(node) {
+    visitAction(node, parent) {
         var linedLabel = (node.complement ? "!" : "");
         node.repr = linedLabel + node.label + "." + node.next.repr;
         node.acts = [linedLabel +  node.label];
     }
-    visitRestriction(node) {
+    visitRestriction(node, parent) {
         node.repr = node.process.repr + " \\ {" + node.labels.join(',') + "}";
         node.acts = this.difference(node.process.acts, node.labels);
     }
-    visitRelabeling(node) {
+    visitRelabeling(node, parent) {
         //Todo
         //Acts partial
         node.acts = node.process.acts;
     }
-    visitParenthesis(node) {
+    visitParenthesis(node, parent) {
         node.repr = "(" + node.process.repr + ")";
         node.acts = node.process.acts;
     }
-    visitConstant(node) {
+    visitConstant(node, parent) {
         node.repr = node.constant;
         //Todo acts
     }
@@ -319,51 +324,48 @@ export class NodeMap {
 }
 
 export class ReducedParseTree extends PostOrder {
-    visitSummation(node) {
-        this.removeUndefinedOnRight(node);
-        this.removeDuplicateOnRight(node);
-        this.setUndefinedSibling(node);
+    
+    private isRightOf(node, parent): boolean {
+        return parent.right == node;
     }
     
-    visitComposition(node) {
-        this.removeUndefinedOnRight(node);
-        this.removeDuplicateOnRight(node);
-        this.setUndefinedSibling(node);
+    public visitSummation(node, parent) {
+        // reduce the tree, only one fix is eligible here
+        if (this.removeUnnecessaryNullprocess(node, parent)) { }
+        else if (this.removeUnnecessaryDuplicate(node, parent)) { }
     }
     
-    visitAssignment(node) {
-        this.removeUndefinedOnRight(node);
-        this.removeDuplicateOnRight(node);
+    public visitComposition(node, parent) {
+        this.removeUnnecessaryNullprocess(node, parent)
     }
     
-    /* set node to undefined if it can be removed */
-    setUndefinedSibling(node) {
+    private removeUnnecessaryNullprocess(node, parent): boolean {
+        // if either left or right is NullProcess, then we can replace the Composition node with the other
         if (node.right.type == CCSNode.NullProcess) {
-            node.right = undefined;
-        }
-        else if (node.left.type == CCSNode.NullProcess) {
-            node.left = undefined;
+            // if node is to the right of parent, then overwrite parent.right
+            if (this.isRightOf(node, parent))
+                parent.right = node.left;
+            else
+                parent.left = node.left;
+            return true;
+        } else if (node.left.type == CCSNode.NullProcess) {
+            // if node is to the right of parent, then overwrite parent.right
+            if (this.isRightOf(node, parent))
+                parent.right = node.right;
+            else
+                parent.left = node.right;
+            return true;
+        } else {
+            return false;
         }
     }
     
-    /* override node.right with one of its defined nodes */
-    removeUndefinedOnRight(node) {
-        if (node.right.type == CCSNode.Summation || node.right.type == CCSNode.Composition) {
-            if (node.right.left == undefined) {
-                node.right = node.right.right;
-            }
-            else if (node.right.right == undefined) {
-                node.right = node.right.left;
-            }
-        }
-    }
-    
-    removeDuplicateOnRight(node) {
-        if (node.right.type == CCSNode.Summation) { //TODO: also composition?
-            // if the right and left side, of node.right, are the same, we can override node.right with either
-            if (node.right.left == node.right.right) {
-                node.right = node.right.right;
-            }
+    private removeUnnecessaryDuplicate(node, parent): boolean {
+        if (node.right == node.left) {
+            parent = node.right;
+            return true;
+        } else {
+            return false;
         }
     }
 }
