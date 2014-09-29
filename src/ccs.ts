@@ -123,20 +123,201 @@ export class PostOrder implements Visitor {
     visitConstant(node) { }
 }
 
+//Bottom up we add existing subtrees.
+//Any subtree in any node is replaced by
+//its existing definition.
 export class SharedParseTree extends PostOrder {
-    visitAction() {
-        console.log("GREAT SUCCESS");
+    map;
+    constructor(map) {
+        super();
+        this.map = map || new NodeMap();
+    }
+
+    visitNullProcess(node) {
+        this.map.acquireIdForNode(node);
+    }
+
+    visitAssignment(node) {
+        node.right = this.map.getById(node.right.id);
+        this.map.acquireIdForNode(node);
+    }
+    visitSummation(node) {
+        node.left = this.map.getById(node.left.id);
+        node.right = this.map.getById(node.right.id);
+        if (node.left.id > node.right.id) {
+            //Swap
+            var temp = node.left;
+            node.left = node.right;
+            node.right = temp;
+        }
+        this.map.acquireIdForNode(node);
+    }
+    visitComposition(node) {
+        //Reuse
+        this.visitSummation(node);
+    }
+    visitAction(node) {
+        node.next = this.map.getById(node.next.id);
+        this.map.acquireIdForNode(node);
+    }
+    visitRestriction(node) {
+        node.process = this.map.getById(node.process.id);
+        this.map.acquireIdForNode(node);
+    }
+    visitRelabeling(node) {
+        node.process = this.map.getById(node.process.id);
+        this.map.acquireIdForNode(node);
+    }
+    visitParenthesis(node) {
+        node.process = this.map.getById(node.process.id);
+        this.map.acquireIdForNode(node);
+    }
+    visitConstant(node) {
+        node.process = this.map.getById(node.process.id);
+        this.map.acquireIdForNode(node);
+    }
+}
+
+export class CachePrefixAndRepr extends PostOrder {
+
+    private union(setA, setB) {
+        var result = setA.slice(0);
+        for (var i = 0; i < setB.length; i++){
+            if (setA.indexOf(setB[i]) === -1){
+                result.push(setB[i]);
+            }
+        }
+        return result;
+    }
+
+    private difference(setA, setB) {
+        var result = [];
+        for (var i = 0; i < setA.length; i++) {
+            if (setB.indexOf(setA[i]) === -1) {
+                result.push(setA[i]);
+            }
+        }
+        return result;
+    }
+
+    visitNullProcess(node) {
+        node.repr = "0";
+        node.acts = [];
+    }
+    visitAssignment(node) {
+        node.repr = node.left + " = " + node.right.repr;
+    }
+    visitSummation(node) {
+        node.repr = node.left.repr + " + " + node.right.repr;
+        node.acts = this.union(node.left.acts, node.right.acts);
+    }
+    visitComposition(node) {
+        node.repr = node.left.repr + " | " + node.right.repr;
+        //Todo acts, partial
+        node.acts = this.union(node.left.acts, node.right.acts);
+    }
+    visitAction(node) {
+        var linedLabel = (node.complement ? "!" : "");
+        node.repr = linedLabel + node.label + "." + node.next.repr;
+        node.acts = [linedLabel +  node.label];
+    }
+    visitRestriction(node) {
+        node.repr = node.process.repr + " \\ {" + node.labels.join(',') + "}";
+        node.acts = this.difference(node.process.acts, node.labels);
+    }
+    visitRelabeling(node) {
+        //Todo
+        //Acts partial
+        node.acts = node.process.acts;
+    }
+    visitParenthesis(node) {
+        node.repr = "(" + node.process.repr + ")";
+        node.acts = node.process.acts;
+    }
+    visitConstant(node) {
+        node.repr = node.constant;
+        //Todo acts
+    }
+}
+
+export class NodeMap {
+    nodeIds = {};
+    //This contain a path for the syntax to an id, e.g.:  nodeStructure[CCSNode.Summation][p.id][q.id] = id.
+    nodeStructure = {};
+    nextId = 1;
+
+    constructor( ) {
+    }
+
+    getById(id) {
+        return this.nodeIds[id] || null;
+    }
+
+    acquireIdForNode(node) {
+        var newId = this.acquireId(node);
+        node.id = newId;
+        if (!this.nodeIds[newId]) this.nodeIds[newId] = node;
+    }
+
+    private acquireId(node) {
+         switch (node.type) {
+            case CCSNode.Program:
+                //TODO
+                throw "Not implemented here (yet)";
+            case CCSNode.NullProcess:
+                return 0;
+            case CCSNode.Assignment:
+                return this.nextId++;
+            case CCSNode.Summation:
+                return this.acquireIdByStructure([CCSNode.Summation, node.left.id, node.right.id]);
+            case CCSNode.Composition:
+                return this.acquireIdByStructure([CCSNode.Composition, node.left.id, node.right.id]);
+            case CCSNode.Action:
+                return this.acquireIdByStructure([CCSNode.Action, node.next.id, node.label, node.complement]);
+            case CCSNode.Restriction:
+                return this.nextId++;
+            case CCSNode.Relabeling:
+                return this.nextId++;
+            case CCSNode.Parenthesis:
+                return this.acquireIdByStructure([CCSNode.Parenthesis, node.process.id]);
+            case CCSNode.Constant:
+                return this.acquireIdByStructure([CCSNode.Constant, node.constant]);
+            default:
+                throw "Invalid node type " + node.type;
+        }
+    }
+
+    private acquireIdByStructure(path) {
+        var key = this.last(path),
+            prefixPath = this.ensurePath(path);
+        if (!prefixPath[key]) {
+            prefixPath[key] = this.nextId++;
+        }
+        return prefixPath[key];
+    }
+
+    private ensurePath(path) : Object {
+        var current = this.nodeStructure,
+            prefixPath = this.init(path),
+            nextKey;
+        //Follow/build path.
+        for (var i = 0; i < prefixPath.length; i++){
+            nextKey = prefixPath[i];
+            if (!current[nextKey]) current[nextKey] = {};
+            current = current[nextKey];
+        }
+        return current;
+    }
+
+    private init(array) {
+        return array.slice(0, array.length-1);
+    }
+
+    private last(array) {
+        return array[array.length-1];
     }
 }
 
 export class ReducedParseTree extends PostOrder {
-    visitSummation() {
-        
-    }
+
 }
-
-
-
-
-
-
