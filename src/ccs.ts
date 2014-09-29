@@ -43,7 +43,7 @@ export class PostOrder implements Visitor {
             // move to the leftmost node
             while(root != undefined) {
                 right = root.next || root.process || root.right;
-                right = undefined;
+                
                 // push root's right child and then root to stack
                 if (right != undefined)
                     this.parentStack.push(right);
@@ -130,7 +130,9 @@ export class SharedParseTree extends PostOrder {
 }
 
 export class ReducedParseTree extends PostOrder {
-
+    visitSummation() {
+        
+    }
 }
 
 

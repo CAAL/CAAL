@@ -15,7 +15,7 @@ if (cmdText.trim() !== "") {
 	console.log("\nLabelled bracket notation: \n")
 	console.log(labelledBracketNotation(cmdAst));
     
-    var sharedPostOrder = new ccs.SharedTree();
+    var sharedPostOrder = new ccs.SharedParseTree();
     sharedPostOrder.postOrderVisit(cmdAst.assignments[0].right);
 }
 else 
