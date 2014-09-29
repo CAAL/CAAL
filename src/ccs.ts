@@ -319,5 +319,51 @@ export class NodeMap {
 }
 
 export class ReducedParseTree extends PostOrder {
-
+    visitSummation(node) {
+        this.removeUndefinedOnRight(node);
+        this.removeDuplicateOnRight(node);
+        this.setUndefinedSibling(node);
+    }
+    
+    visitComposition(node) {
+        this.removeUndefinedOnRight(node);
+        this.removeDuplicateOnRight(node);
+        this.setUndefinedSibling(node);
+    }
+    
+    visitAssignment(node) {
+        this.removeUndefinedOnRight(node);
+        this.removeDuplicateOnRight(node);
+    }
+    
+    /* set node to undefined if it can be removed */
+    setUndefinedSibling(node) {
+        if (node.right.type == CCSNode.NullProcess) {
+            node.right = undefined;
+        }
+        else if (node.left.type == CCSNode.NullProcess) {
+            node.left = undefined;
+        }
+    }
+    
+    /* override node.right with one of its defined nodes */
+    removeUndefinedOnRight(node) {
+        if (node.right.type == CCSNode.Summation || node.right.type == CCSNode.Composition) {
+            if (node.right.left == undefined) {
+                node.right = node.right.right;
+            }
+            else if (node.right.right == undefined) {
+                node.right = node.right.left;
+            }
+        }
+    }
+    
+    removeDuplicateOnRight(node) {
+        if (node.right.type == CCSNode.Summation) { //TODO: also composition?
+            // if the right and left side, of node.right, are the same, we can override node.right with either
+            if (node.right.left == node.right.right) {
+                node.right = node.right.right;
+            }
+        }
+    }
 }
