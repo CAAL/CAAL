@@ -46,11 +46,11 @@ function labelledBracketNotation(process) {
 			return "[Action " + (process.complement ? "!" : "") + process.label + " . " + lbl(process.next) + "]";
 		case node.Restriction:
 			return "[Restriction " + lbl(process.process) + " \\ (" + process.labels.join(',') + ")]";
-		case node.Relabeling:
+		case node.Relabelling:
 			var substitutions = process.relabels.map(function (relabel) {
 				return relabel.new + "/" + relabel.old;
 			});
-			return "[Relabeling " + lbl(process.process) + " (" + substitutions.join(',') + ")]";
+			return "[Relabelling " + lbl(process.process) + " (" + substitutions.join(',') + ")]";
 		case node.Parenthesis:
 			return "[Paren ( " + lbl(process.process) + " ) ]";
 		case node.Constant:

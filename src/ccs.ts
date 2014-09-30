@@ -6,7 +6,7 @@ export enum CCSNode {
     Composition,
     Action,
     Restriction,
-    Relabeling,
+    Relabelling,
     Parenthesis,
     Constant
 }
@@ -19,7 +19,7 @@ export interface Visitor {
     visitComposition(node, parent);
     visitAction(node, parent);
     visitRestriction(node, parent);
-    visitRelabeling(node, parent);
+    visitRelabelling(node, parent);
     visitParenthesis(node, parent);
     visitConstant(node, parent);
 }
@@ -101,8 +101,8 @@ export class PostOrder implements Visitor {
             case CCSNode.Restriction:
                 this.visitRestriction(node, parent);
                 break;
-            case CCSNode.Relabeling:
-                this.visitRelabeling(node, parent);
+            case CCSNode.Relabelling:
+                this.visitRelabelling(node, parent);
                 break;
             case CCSNode.Parenthesis:
                 this.visitParenthesis(node, parent);
@@ -123,7 +123,7 @@ export class PostOrder implements Visitor {
     public visitComposition(node, parent) { }
     public visitAction(node, parent) { }
     public visitRestriction(node, parent) { }
-    public visitRelabeling(node, parent) { }
+    public visitRelabelling(node, parent) { }
     public visitParenthesis(node, parent) { }
     public visitConstant(node, parent) { }
 }
@@ -169,7 +169,7 @@ export class SharedParseTree extends PostOrder {
         node.process = this.map.getById(node.process.id);
         this.map.acquireIdForNode(node);
     }
-    visitRelabeling(node, parent) {
+    visitRelabelling(node, parent) {
         node.process = this.map.getById(node.process.id);
         this.map.acquireIdForNode(node);
     }
@@ -178,7 +178,7 @@ export class SharedParseTree extends PostOrder {
         this.map.acquireIdForNode(node);
     }
     visitConstant(node, parent) {
-        node.process = this.map.getById(node.process.id);
+        node.process = this.map.getById(node.id);
         this.map.acquireIdForNode(node);
     }
 }
@@ -230,7 +230,7 @@ export class CachePrefixAndRepr extends PostOrder {
         node.repr = node.process.repr + " \\ {" + node.labels.join(',') + "}";
         node.acts = this.difference(node.process.acts, node.labels);
     }
-    visitRelabeling(node, parent) {
+    visitRelabelling(node, parent) {
         //Todo
         //Acts partial
         node.acts = node.process.acts;
@@ -281,7 +281,7 @@ export class NodeMap {
                 return this.acquireIdByStructure([CCSNode.Action, node.next.id, node.label, node.complement]);
             case CCSNode.Restriction:
                 return this.nextId++;
-            case CCSNode.Relabeling:
+            case CCSNode.Relabelling:
                 return this.nextId++;
             case CCSNode.Parenthesis:
                 return this.acquireIdByStructure([CCSNode.Parenthesis, node.process.id]);
