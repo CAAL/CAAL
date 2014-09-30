@@ -2,6 +2,8 @@ var util = require('util');
 var fs = require('fs');
 var PEG = require('pegjs');
 var ccs = require('./ccs.js');
+var reduced = require('./reducedparsetree.js');
+var shared = require('./sharedparsetree.js');
 
 var grammar = fs.readFileSync('./src/ccs_grammar.pegjs').toString();
 var parser = PEG.buildParser(grammar);
@@ -15,8 +17,11 @@ if (cmdText.trim() !== "") {
 	console.log("\nLabelled bracket notation: \n")
 	console.log(labelledBracketNotation(cmdAst));
     
-    var sharedPostOrder = new ccs.SharedParseTree();
-    sharedPostOrder.postOrderVisit(cmdAst.assignments[0].right);
+    var sharedPostOrder = new shared.SharedParseTree();
+    sharedPostOrder.postOrderVisit(cmdAst.assignments[0]);
+    
+    new reduced.ReducedParseTree().postOrderVisit(cmdAst.assignments[0]);
+    console.log(labelledBracketNotation(cmdAst));
 }
 else 
     console.log("No ccs arguments");
