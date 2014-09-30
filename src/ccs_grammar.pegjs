@@ -50,16 +50,16 @@ action
 
 leftProcess
 	= process:parenProcess _ labels:restrictedLabels { return {type: AST.Restriction, labels: labels, process: process}; }
-	/ process:parenProcess _ "[" _ relabels:relabelings _ "]" { return {type: AST.Relabeling, relabels: relabels, process: process}; }
+	/ process:parenProcess _ "[" _ relabels:relabellings _ "]" { return {type: AST.Relabelling, relabels: relabels, process: process}; }
 	/ process:parenProcess { return process; }
 
 // A restricted set of labels   \ {a, b}
 restrictedLabels
 	= "\\" _ "{" _ labels:labelsList? "}" { return labels; }
 
-// Relabelings  [a/b, c/d]
-relabelings
-	= first:relabel _ "," _ rest:relabelings { return [first].concat(rest); }
+// Relabellings  [a/b, c/d]
+relabellings
+	= first:relabel _ "," _ rest:relabellings { return [first].concat(rest); }
 	/ relabel:relabel { return [relabel]; }
 
 relabel
