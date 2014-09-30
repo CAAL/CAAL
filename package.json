@@ -8,7 +8,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "build": "find src/ -iname '*.ts' -print0 | xargs tsc -m commonjs",
+    "build": "find src/*.ts -type f -print0 | xargs -0 tsc -m commonjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
