@@ -12,6 +12,7 @@
 		return first + rest.join('');
 	}
 
+	var ccs = options.ccs;
 	var AST = options.astNodes;
 }
 
@@ -20,7 +21,7 @@ start
 
 //A program consists of lines only used for process assignments.
 program
-	= assignments:assignments { return {type: AST.Program, assignments: assignments}; }
+	= assignments:assignments { return new ccs.Program(assignments); }
 
 assignments = _ first:assignment _ newline rest:assignments { return [first].concat(rest); }
             / _ first:assignment _ { return [first];}
@@ -28,7 +29,7 @@ assignments = _ first:assignment _ newline rest:assignments { return [first].con
 	  		/ _ newline? { return []; }
 
 assignment
-	= left:constantStr _ "=" _ right:process { return {type: AST.Assignment, left: left, right: right}; }
+	= left:constantStr _ "=" _ right:process { return new ccs.Assignment(left, right); }
 
 //The rules here are defined in the reverse order of their precedence.
 //Either a given rule applies, eg. +, and everything to the left must have higher precedence,
@@ -36,21 +37,21 @@ assignment
 process = summation
 
 summation
-	= left:composition _ "+" _ right:summation { return {type: AST.Summation, left: left, right: right}; }
+	= left:composition _ "+" _ right:summation { return new ccs.Summation(left, right); }
 	/ process:composition { return process; }
 
 composition
-	= left:action _ "|" _ right:composition { return {type: AST.Composition, left: left, right: right}; }
+	= left:action _ "|" _ right:composition { return new ccs.Composition(left, right); }
 	/ process:action { return process; }
 
 action
-	= action:label _ "." _ process:action { return {type: AST.Action, label: action, complement: false, next: process}; }
-	/ "!" _ action:label _ "." _ process:action { return {type: AST.Action, label: action, complement: true, next: process}; }
+	= action:label _ "." _ process:action { return new ccs.Action(action, false, process); }
+	/ "!" _ action:label _ "." _ process:action { return new ccs.Action(action, true, process); }
 	/ process:leftProcess { return process; }
 
 leftProcess
-	= process:parenProcess _ labels:restrictedLabels { return {type: AST.Restriction, labels: labels, process: process}; }
-	/ process:parenProcess _ "[" _ relabels:relabellings _ "]" { return {type: AST.Relabelling, relabels: relabels, process: process}; }
+	= process:parenProcess _ labels:restrictedLabels { return new ccs.Restriction(process, new ccs.LabelSet(labels || [])); }
+	/ process:parenProcess _ "[" _ relabels:relabellings _ "]" { return new ccs.Relabelling(process, new ccs.RelabellingSet(relabels || [])); }
 	/ process:parenProcess { return process; }
 
 // A restricted set of labels   \ {a, b}
@@ -63,17 +64,17 @@ relabellings
 	/ relabel:relabel { return [relabel]; }
 
 relabel
-	= newlabel:label _ "/" _ old:label { return {new: newlabel, old: old}; }
+	= newlabel:label _ "/" _ old:label { return {to: newlabel, from: old}; }
 
 // ( P ) for some process P
 parenProcess
-	= "(" _ process:process _ ")" { return {type: AST.Parenthesis, process:process}; }
+	= "(" _ process:process _ ")" { return new ccs.Parenthesis(process); }
 	/ process:constantProcess { return process; }
 
 // A constant process. Either the null process 0, or some process K.
 constantProcess
-	= "0" { return {type: AST.NullProcess}; }
-	/ constant:constantStr { return {type: AST.Constant, constant: constant}; }
+	= "0" { return new ccs.NullProcess; }
+	/ constant:constantStr { return new ccs.Constant(constant); }
 
 //Valid names for processes
 constantStr
