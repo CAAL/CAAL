@@ -7,7 +7,7 @@ var reduced = require('./reducedparsetree.js');
 var shared = require('./sharedparsetree.js');
 
 var grammar = fs.readFileSync('./src/ccs_grammar.pegjs').toString();
-var parser = PEG.buildParser(grammar);
+var parser = PEG.buildParser(grammar, {cache: true});
 
 var cmdText = process.argv.slice(2).join(" ");
 
