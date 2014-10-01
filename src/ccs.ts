@@ -176,8 +176,8 @@ export class CachePrefixAndRepr extends PostOrder {
         node.acts = this.difference(node.process.acts, node.labels);
     }
     visitRelabelling(node, parent) {
-        //Todo
-        //Acts partial
+        node.repr = node.process.repr + " [" + node.relabels.join(',') + "]";
+        //TODO Acts partial
         node.acts = node.process.acts;
     }
     visitParenthesis(node, parent) {
