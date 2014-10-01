@@ -1,191 +1,245 @@
-export enum CCSNode {
-    Program,
-    NullProcess,
-    Assignment,
-    Summation,
-    Composition,
-    Action,
-    Restriction,
-    Relabelling,
-    Parenthesis,
-    Constant
+
+export interface Node {
+    id? : number;
+    inorderStructure() : InorderStruct;
+    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T;
 }
 
-export interface Visitor {
-    //visitProgram(node);
-    visitNullProcess(node, parent);
-    visitAssignment(node, parent);
-    visitSummation(node, parent);
-    visitComposition(node, parent);
-    visitAction(node, parent);
-    visitRestriction(node, parent);
-    visitRelabelling(node, parent);
-    visitParenthesis(node, parent);
-    visitConstant(node, parent);
+export interface NodeDispatcher<T> {
+    dispatchProgram(node : Program, assignResults : T[]) : T;
+    dispatchNullProcess(node : NullProcess) : T;
+    dispatchAssignment(node : Assignment, result : T) : T;
+    dispatchSummation(node : Summation, leftResult : T, rightResult : T) : T;
+    dispatchComposition(node : Composition, leftResult : T, rightResult : T) : T;
+    dispatchAction(node : Action, processResult : T) : T;
+    dispatchRestriction(node : Restriction, processResult : T) : T;
+    dispatchRelabelling(node : Relabelling, processResult : T) : T;
+    dispatchParenthesis(node : Parenthesis, processResult : T) : T;
+    dispatchConstant(node : Constant) : T;
 }
 
-export class PostOrder implements Visitor {
-    private parentStack;
-    private lastNodeVisited = undefined;
-    
-    private stackPeek(stack) {
-        return stack[stack.length - 1];
+export class Program implements Node {
+    constructor(public assignments : Assignment[]) {
     }
-    
-    // source: http://www.geeksforgeeks.org/iterative-postorder-traversal-using-stack/
-    public postOrderVisit(root) {
-        if (root == undefined)
-            return;
-        
-        this.parentStack = [];
-        var right;
-        var node = (root.type == CCSNode.Assignment) ? root.right : root;
-        
-        // put the assignment on the stack, which means that it will be the last on to be visited
-        // the assignment's left side is ignored
-        if (root.type == CCSNode.Assignment)
-            this.parentStack.push(root);
-        
-        do {
-            // move to the leftmost node
-            while(node != undefined) {
-                right = node.next || node.process || node.right;
-                
-                // push node's right child and then node to stack
-                if (right != undefined)
-                    this.parentStack.push(right);
-                this.parentStack.push(node);
-                
-                // set node as node's left child
-                node = node.left;
-            }
-            
-            // pop and item from stack and set it as node
-            node = this.parentStack.pop();
-            
-            right = node.next || node.process || node.right;
-            
-            //if the popped item has a right child and the right child is not
-            // processed yet, then make sure right child is processed before node
-            if (right != undefined && this.stackPeek(this.parentStack) == right) {
-                this.parentStack.pop(); // remove right child from stack
-                this.parentStack.push(node); // push node back to stack
-                node = right;
-            }
-            else { // else print node's data and set node as null
-                this.visit(node, this.stackPeek(this.parentStack));
-                node = undefined;
-            }
-        } while(this.parentStack.length != 0);
+    inorderStructure() : InorderStruct {
+        return new InorderStruct([], this, this.assignments);
     }
-    
-    private visit(node, parent) {
-        switch (node.type) {
-            /*case node.Program:
-                this.visitor.visitProgram(node);*/
-            case CCSNode.NullProcess:
-                this.visitNullProcess(node, parent);
-                break;
-            case CCSNode.Assignment:
-                this.visitAssignment(node, parent);
-                break;
-            case CCSNode.Summation:
-                this.visitSummation(node, parent);
-                break;
-            case CCSNode.Composition:
-                this.visitComposition(node, parent);
-                break;
-            case CCSNode.Action:
-                this.visitAction(node, parent);
-                break;
-            case CCSNode.Restriction:
-                this.visitRestriction(node, parent);
-                break;
-            case CCSNode.Relabelling:
-                this.visitRelabelling(node, parent);
-                break;
-            case CCSNode.Parenthesis:
-                this.visitParenthesis(node, parent);
-                break;
-            case CCSNode.Constant:
-                this.visitConstant(node, parent);
-                break;
-            default:
-                console.log(node, parent);
-                throw "This should not happen " + node.type;
-        }
+    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+        args = [this, args];
+        return dispatcher.dispatchProgram.apply(dispatcher, args);
     }
-    
-    /* Override these methods in sub classes */
-    public visitNullProcess(node, parent) { }
-    public visitAssignment(node, parent) { }
-    public visitSummation(node, parent) { }
-    public visitComposition(node, parent) { }
-    public visitAction(node, parent) { }
-    public visitRestriction(node, parent) { }
-    public visitRelabelling(node, parent) { }
-    public visitParenthesis(node, parent) { }
-    public visitConstant(node, parent) { }
 }
 
-export class CachePrefixAndRepr extends PostOrder {
+export class NullProcess implements Node {
+    inorderStructure() : InorderStruct {
+        return new InorderStruct([], this, []);
+    }
+    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+        args = [this].concat(args);
+        return dispatcher.dispatchNullProcess.apply(dispatcher, args);
+    }
+    toString() {
+        return "NullProcess";
+    }
+}
 
-    private union(setA, setB) {
-        var result = setA.slice(0);
-        for (var i = 0; i < setB.length; i++){
-            if (setA.indexOf(setB[i]) === -1){
-                result.push(setB[i]);
-            }
+export class Assignment implements Node {
+    constructor(public variable : string, public process : Node) {
+    }
+    inorderStructure() : InorderStruct {
+        return new InorderStruct([], this, [this.process]);
+    }
+    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+        args = [this].concat(args);
+        return dispatcher.dispatchAssignment.apply(dispatcher, args);
+    }
+    toString() {
+        return "Assignment(" + this.variable + ")";
+    }
+}
+
+export class Summation implements Node {
+    constructor(public left : Node, public right : Node) {
+    }
+    inorderStructure() : InorderStruct {
+        return new InorderStruct([this.left], this, [this.right]);
+    }
+    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+        args = [this].concat(args);
+        return dispatcher.dispatchSummation.apply(dispatcher, args);
+    }
+    toString() {
+        return "Summation";
+    }
+}
+
+export class Composition implements Node {
+    constructor(public left : Node, public right : Node) {
+    }
+    inorderStructure() : InorderStruct {
+        return new InorderStruct([this.left], this, [this.right]);
+    }
+    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+        args = [this].concat(args);
+        return dispatcher.dispatchComposition.apply(dispatcher, args);
+    }
+    toString() {
+        return "Composition";
+    }
+}
+
+export class Action implements Node {
+    constructor(public label : string, public complement : boolean, public next : Node) {
+    }
+    inorderStructure() : InorderStruct {
+        return new InorderStruct([], this, [this.next]);
+    }
+    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+        args = [this].concat(args);
+        return dispatcher.dispatchAction.apply(dispatcher, args);
+    }
+    toString() {
+        return "Action(" + (this.complement ? "!" : "") + this.label + ")";
+    }
+}
+
+export class Restriction implements Node {
+    constructor(public process : Node, public restrictedLabels : LabelSet) {
+    }
+    inorderStructure() : InorderStruct {
+        return new InorderStruct([], this, [this.process]);
+    }
+    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+        args = [this].concat(args);
+        return dispatcher.dispatchRestriction.apply(dispatcher, args);
+    }
+    toString() {
+        return "Restriction";
+    }
+}
+
+export class Relabelling implements Node {
+    constructor(public process : Node, public relabellings : RelabellingSet) {
+    }
+    inorderStructure() : InorderStruct {
+        return new InorderStruct([], this, [this.process]);
+    }
+    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+        args = [this].concat(args);
+        return dispatcher.dispatchRelabelling.apply(dispatcher, args);
+    }
+    toString() {
+        return "Relabelling";
+    }
+}
+
+export class Parenthesis implements Node {
+    constructor(public process : Node) {
+    }
+    inorderStructure() : InorderStruct {
+        return new InorderStruct([], this, [this.process]);
+    }
+    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+        args = [this].concat(args);
+        return dispatcher.dispatchParenthesis.apply(dispatcher, args);
+    }
+    toString() {
+        return "Parenthesis";
+    }
+}
+
+export class Constant implements Node {
+    constructor(public constant : string) {
+    }
+    inorderStructure() : InorderStruct {
+        return new InorderStruct([], this, []);
+    }
+    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+        args = [this].concat(args);
+        return dispatcher.dispatchConstant.apply(dispatcher, args);
+    }
+    toString() {
+        return "Constant(" + this.constant + ")";
+    }
+}
+
+export function postOrderTraversal<T>(node : Node, dispatcher : NodeDispatcher<T>) : T {
+    function handleNode(node : Node) {
+        var is = node.inorderStructure();
+        var beforeResults = is.before.map(handleNode);
+        var afterResults = is.after.map(handleNode);
+        var args = beforeResults.concat(afterResults);
+        var thisResult = node.dispatchOn(dispatcher, args);
+        return thisResult;
+    }
+    return handleNode(node);
+}
+
+export class RelabellingSet {
+    private relabelsDict = {};
+    constructor(relabellings : {from: string; to: string}[]) {
+        relabellings.forEach( (relabel) => {
+            this.relabelsDict[relabel.from] = relabel.to;
+        });
+    }
+    forEach(f : (from : string, to : string) => void, thisObject?) {
+        for (var k in this.relabelsDict) {
+            f.call(thisObject, k, this.relabelsDict[k]);
         }
-        return result;
     }
+    toString() {
+        return "RelabellingSet";
+    }
+}
 
-    private difference(setA, setB) {
-        var result = [];
-        for (var i = 0; i < setA.length; i++) {
-            if (setB.indexOf(setA[i]) === -1) {
-                result.push(setA[i]);
-            }
+export class LabelSet {
+    private bitmap = {};
+    private mcount : number = 0;
+    constructor(labels) {
+        labels.forEach(this.add, this);
+    }
+    add(label) {
+        this.bitmap[label] = true;
+        this.mcount++;
+        return this;
+    }
+    remove(label) {
+        delete this.bitmap[label];
+        this.mcount--;
+        return this;
+    }
+    union(set : LabelSet) {
+        for (var label in set.bitmap) {
+            this.add(label);
         }
-        return result;
+        return this;
     }
+    difference(set : LabelSet) {
+        for (var label in set) {
+            this.remove(label);
+        }
+        return this;
+    }
+    empty() : boolean {
+        return this.count() === 0;
+    }
+    count() : number {
+        return this.mcount;
+    }
+    forEach(f : (label : string) => void, thisObject?) {
+        for (var k in this.bitmap) {
+            f.call(thisObject, k);
+        }
+    }
+    toString() {
+        return "LabelSet";
+    }
+}
 
-    visitNullProcess(node, parent) {
-        node.repr = "0";
-        node.acts = [];
-    }
-    visitAssignment(node, parent) {
-        node.repr = node.left + " = " + node.right.repr;
-    }
-    visitSummation(node, parent) {
-        node.repr = node.left.repr + " + " + node.right.repr;
-        node.acts = this.union(node.left.acts, node.right.acts);
-    }
-    visitComposition(node, parent) {
-        node.repr = node.left.repr + " | " + node.right.repr;
-        //Todo acts, partial
-        node.acts = this.union(node.left.acts, node.right.acts);
-    }
-    visitAction(node, parent) {
-        var linedLabel = (node.complement ? "!" : "");
-        node.repr = linedLabel + node.label + "." + node.next.repr;
-        node.acts = [linedLabel +  node.label];
-    }
-    visitRestriction(node, parent) {
-        node.repr = node.process.repr + " \\ {" + node.labels.join(',') + "}";
-        node.acts = this.difference(node.process.acts, node.labels);
-    }
-    visitRelabelling(node, parent) {
-        node.repr = node.process.repr + " [" + node.relabels.join(',') + "]";
-        //TODO Acts partial
-        node.acts = node.process.acts;
-    }
-    visitParenthesis(node, parent) {
-        node.repr = "(" + node.process.repr + ")";
-        node.acts = node.process.acts;
-    }
-    visitConstant(node, parent) {
-        node.repr = node.constant;
-        //Todo acts
+/*
+    Represents the order of an in-order traversal.
+*/
+export class InorderStruct {
+    constructor(public before : Node[], public node : Node, public after : Node[]) {
     }
 }

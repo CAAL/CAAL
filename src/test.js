@@ -2,6 +2,7 @@ var util = require('util');
 var fs = require('fs');
 var PEG = require('pegjs');
 var ccs = require('./ccs.js');
+var ccsutil = require('./util.js');
 var reduced = require('./reducedparsetree.js');
 var shared = require('./sharedparsetree.js');
 
@@ -11,19 +12,20 @@ var parser = PEG.buildParser(grammar);
 var cmdText = process.argv.slice(2).join(" ");
 
 if (cmdText.trim() !== "") {
-	var cmdAst = parser.parse(cmdText, {astNodes: ccs.CCSNode});
-	logObjectDeep(cmdAst);
-
-	console.log("\nLabelled bracket notation: \n")
-	console.log(labelledBracketNotation(cmdAst));
-    
-    var sharedPostOrder = new shared.SharedParseTree();
-    sharedPostOrder.postOrderVisit(cmdAst.assignments[0]);
-    
-    new reduced.ReducedParseTree().postOrderVisit(cmdAst.assignments[0]);
-    console.log(labelledBracketNotation(cmdAst));
+	var cmdAst = parser.parse(cmdText, {ccs: ccs, astNodes: ccs.CCSNode});
+	var tree = cmdAst;
+	var lbn = new ccsutil.LabelledBracketNotation();
+	console.log("Tree Size: " + ccs.postOrderTraversal(tree, new ccsutil.SizeOfTree()) + "\n");
+	var spt = new shared.SharedParseTreeTraverser();
+	console.log("after sharing...\n");
+	tree = ccs.postOrderTraversal(tree, spt);
+	console.log(ccs.postOrderTraversal(tree, lbn));
+	console.log("about to reduce...\n")
+	var rpt = new reduced.ReducedParseTreeTraverser();
+	tree = ccs.postOrderTraversal(tree, rpt);
+	console.log(ccs.postOrderTraversal(tree, lbn));
 }
-else 
+else
     console.log("No ccs arguments");
 
 function logObjectDeep(obj) {
@@ -32,36 +34,3 @@ function logObjectDeep(obj) {
 
 //You can use:
 // http://ironcreek.net/phpsyntaxtree/?
-function labelledBracketNotation(process) {
-	var node = ccs.CCSNode,
-		lbl = labelledBracketNotation;
-	switch (process.type) {
-		case node.Program:
-			var assignments = process.assignments.map(lbl);
-			return "[Program " + assignments.join(" ") + "]";
-		case node.NullProcess:
-			return "0";
-		case node.Assignment:
-			return "[Assignment " + process.left + " [=] " + lbl(process.right) + "]";
-		case node.Summation:
-			return "[Summation " + lbl(process.left) + " + " + lbl(process.right) + "]";
-		case node.Composition:
-			return "[Composition " + lbl(process.left) + " | " + lbl(process.right) + "]";
-		case node.Action:
-			return "[Action " + (process.complement ? "!" : "") + process.label + " . " + lbl(process.next) + "]";
-		case node.Restriction:
-			return "[Restriction " + lbl(process.process) + " \\ (" + process.labels.join(',') + ")]";
-		case node.Relabelling:
-			var substitutions = process.relabels.map(function (relabel) {
-				return relabel.new + "/" + relabel.old;
-			});
-			return "[Relabelling " + lbl(process.process) + " (" + substitutions.join(',') + ")]";
-		case node.Parenthesis:
-			return "[Paren ( " + lbl(process.process) + " ) ]";
-		case node.Constant:
-			return process.constant;
-		default:
-			console.log(process);
-			throw "This should not happen " + process.type;
-	}
-}
