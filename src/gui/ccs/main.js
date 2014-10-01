@@ -66,9 +66,7 @@
           if (node.data.color){ ctx.fillStyle = node.data.color; }
           else { ctx.fillStyle = "#000000"; } //Node default color
 
-          if (node.data.color=='none') {
-            ctx.fillStyle = "white"
-          }
+          if (node.data.color=='none') { ctx.fillStyle = "rgba(0,0,0,.0)"; }
 
           
           gfx.oval(pt.x-w/2, pt.y-w/2, w,w, {fill:ctx.fillStyle})
@@ -80,7 +78,7 @@
             ctx.font = "12px Helvetica"
             ctx.textAlign = "center"
             ctx.fillStyle = "white"
-            if (node.data.color=='none') ctx.fillStyle = '#333333'
+            if (node.data.color=='none') {ctx.fillStyle = '#333333';} //default node label color 
             ctx.fillText(label||"", pt.x, pt.y+4)
             ctx.fillText(label||"", pt.x, pt.y+4)
           }
@@ -92,10 +90,9 @@
           // edge: {source:Node, target:Node, length:#, data:{}}
           // pt1:  {x:#, y:#}  source position in screen coords
           // pt2:  {x:#, y:#}  target position in screen coords
-
           // draw a line from pt1 to pt2
           ctx.strokeStyle = "rgba(0,0,0, .333)"
-          ctx.lineWidth = 1
+          ctx.lineWidth = 1.5;
           ctx.beginPath()
           ctx.moveTo(pt1.x, pt1.y)
           ctx.lineTo(pt2.x, pt2.y)
@@ -105,12 +102,23 @@
           var tail = intersect_line_box(pt1, pt2, nodeBoxes[edge.source.name])
           var head = intersect_line_box(tail, pt2, nodeBoxes[edge.target.name])
 
+          var label = edge.data.label||""
+          
+          if (label){
+            mid_x = (tail.x+head.x)/2;
+            mid_y = (tail.y+head.y)/2;
+                ctx.font = "17px Helvetica";
+                ctx.textAlign = "center";
+                ctx.fillStyle = "black";
+                ctx.fillText(label, mid_x-5, mid_y-5);
+          }
+
           //draw the arrowhead
           if(edge.data.directed){
             ctx.save()
              // move to the head position of the edge we just drew
-              var arrowLength = 20
-              var arrowWidth = 10
+              var arrowLength = 15
+              var arrowWidth = 7
               ctx.fillStyle = (edge.data.color) ? color : "#cccccc";
               ctx.translate(head.x, head.y);
               ctx.rotate(Math.atan2(head.y - tail.y, head.x - tail.x));
@@ -217,17 +225,23 @@
   }    
 
   $(document).ready(function(){
-    var sys = arbor.ParticleSystem(1000, 600, 0.90) // create the system with sensible repulsion/stiffness/friction
+    var sys = arbor.ParticleSystem(700, 9000, 0.95) // create the system with sensible repulsion/stiffness/friction
     sys.parameters({gravity:true}) // use center-gravity to make the graph settle nicely (ymmv)
     sys.renderer = Renderer("#viewport") // our newly created renderer will have its .init() method called shortly by sys...
 
     // add some nodes to the graph and watch it go...
-    sys.addEdge('b','a', {directed:true})
-    sys.addEdge('a','c', {directed:true})
-    sys.addEdge('a','d', {directed:true})
-    sys.addEdge('a','e', {directed:true})
+    sys.addNode('b', {label: "b.B"});
+    sys.addNode('a', {label: "B"});
+    sys.addNode('e', {label: "e.B"});
+    sys.addNode('c', {label: "c.B"});
+    sys.addNode('d', {label: "d.B"});
 
-    sys.addNode('f', {label:"All Alone", color:"red", shape:"dot", alone:true, mass:.25})
+    sys.addEdge('b','a', {directed:true, label:"b"})
+    sys.addEdge('c','a', {directed:true, label:"c"})
+    sys.addEdge('d','a', {directed:true, label:"d"})
+    sys.addEdge('a','e', {directed:true, label:"e"})
+
+    //sys.addNode('f', {label:"All Alone", color:"none", shape:"dot", alone:true, mass:.25})
     // or, equivalently:
     //
     // sys.graft({
