@@ -8,6 +8,8 @@
 
   var Renderer = function(canvas){
     var canvas = $(canvas).get(0)
+    console.log(canvas);
+    
     var ctx = canvas.getContext("2d");
     var gfx = arbor.Graphics(canvas);
     var particleSystem = null;
