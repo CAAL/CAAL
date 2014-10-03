@@ -35,33 +35,24 @@ export class ReducedParseTreeTraverser implements ccs.NodeDispatcher<ccs.Node> {
     }
     dispatchRestriction(node : ccs.Restriction, processResult : ccs.Node) : ccs.Node {
         node.process = processResult;
-        var resultNode = node;
         // (P \ L1) \L2 => P \ (L1 Union L2)
-        if (resultNode.process instanceof ccs.Parenthesis) { //WATCH: if paranthesis is removed fix this
-            var paren = <ccs.Parenthesis>resultNode.process;
-            if (paren.process instanceof ccs.Restriction) {
-                var subRestriction = <ccs.Restriction>paren.process;
-                subRestriction.restrictedLabels.union(node.restrictedLabels);
-                resultNode = subRestriction;
-            }
+        if (node.process instanceof ccs.Restriction) {
+            var subRestriction = <ccs.Restriction>node.process;
+            subRestriction.restrictedLabels.union(node.restrictedLabels);
+            node = subRestriction;
         }
         // 0 \ L => 0
-        if (resultNode.process instanceof ccs.NullProcess) {
-            return resultNode.process;
+        if (node.process instanceof ccs.NullProcess) {
+            return node.process;
         }
-        if (resultNode.restrictedLabels.empty()) {
-            return resultNode.process;
+        if (node.restrictedLabels.empty()) {
+            return node.process;
         }
-        return resultNode;
+        return node;
     }
     dispatchRelabelling(node : ccs.Relabelling, processResult : ccs.Node) : ccs.Node {
         node.process = processResult;
         if (node.process instanceof ccs.NullProcess) return node.process; // 0 [f] => 0
-        return node;
-    }
-    dispatchParenthesis(node : ccs.Parenthesis, processResult : ccs.Node) : ccs.Node {
-        node.process = processResult;
-        if (node.process instanceof ccs.Parenthesis) return node.process;
         return node;
     }
     dispatchConstant(node : ccs.Constant) : ccs.Node {

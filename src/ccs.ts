@@ -14,7 +14,6 @@ export interface NodeDispatcher<T> {
     dispatchAction(node : Action, processResult : T) : T;
     dispatchRestriction(node : Restriction, processResult : T) : T;
     dispatchRelabelling(node : Relabelling, processResult : T) : T;
-    dispatchParenthesis(node : Parenthesis, processResult : T) : T;
     dispatchConstant(node : Constant) : T;
 }
 
@@ -130,21 +129,6 @@ export class Relabelling implements Node {
     }
     toString() {
         return "Relabelling";
-    }
-}
-
-export class Parenthesis implements Node {
-    constructor(public process : Node) {
-    }
-    inorderStructure() : InorderStruct {
-        return new InorderStruct([], this, [this.process]);
-    }
-    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
-        args = [this].concat(args);
-        return dispatcher.dispatchParenthesis.apply(dispatcher, args);
-    }
-    toString() {
-        return "Parenthesis";
     }
 }
 
