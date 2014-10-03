@@ -21,7 +21,7 @@ class Environment {
     }
 
     showTree(tree : any){
-        if(this.syntaxTree != null){
+        //if(this.syntaxTree != null){
             // add some nodes to the graph and watch it go...
             this.sys.addNode('b', {label: "b.B"});
             this.sys.addNode('a', {label: "B"});
@@ -33,7 +33,7 @@ class Environment {
             this.sys.addEdge('c','a', {directed:true, label:"c"});
             this.sys.addEdge('d','a', {directed:true, label:"d"});
             this.sys.addEdge('a','e', {directed:true, label:"e"});
-        }
+        //}
     }
 }
 
