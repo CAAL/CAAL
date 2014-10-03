@@ -66,7 +66,10 @@ export class SharedParseTreeTraverser implements ccs.NodeDispatcher<ccs.Node> {
         return this.ensureStructId(node, "()" + processResult.id);
     }
     dispatchConstant(node : ccs.Constant) : ccs.Node {
-        if (!this.constantMap[node.constant]) this.constantMap[node.constant] = node;
+        if (!this.constantMap[node.constant]) {
+            this.constantMap[node.constant] = node;
+            this.setId(node, this.nextId++);
+        }
         return this.constantMap[node.constant];
     }
 
