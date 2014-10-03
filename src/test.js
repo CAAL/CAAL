@@ -24,6 +24,9 @@ if (cmdText.trim() !== "") {
 	var rpt = new reduced.ReducedParseTreeTraverser();
 	tree = ccs.postOrderTraversal(tree, rpt);
 	console.log(ccs.postOrderTraversal(tree, lbn));
+	console.log("about to prettyprint...\n");
+	var pp = new ccsutil.CCSNotation();
+	console.log(ccs.postOrderTraversal(tree, pp));
 }
 else
     console.log("No ccs arguments");

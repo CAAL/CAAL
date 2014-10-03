@@ -70,3 +70,54 @@ export class SizeOfTree implements ccs.NodeDispatcher<number> {
     	return 1;
     }
 }
+
+function wrapIfInstanceOf(node : ccs.Node, stringRepr : string, classes) {
+    for (var i = 0; i < classes.length; i++){
+        if (node instanceof classes[i]) {
+            return "(" + stringRepr + ")";
+        }
+    }
+    return stringRepr;
+}
+
+export class CCSNotation implements ccs.NodeDispatcher<string> {
+    dispatchProgram(node : ccs.Program, assignResults : string[]) : string {
+        return assignResults.join("\n");
+    }
+    dispatchNullProcess(node : ccs.NullProcess) : string {
+        return "0";
+    }
+    dispatchAssignment(node : ccs.Assignment, result : string) : string {
+        return node.variable + " = " + result;
+    }
+    dispatchSummation(node : ccs.Summation, leftResult : string, rightResult : string) : string {
+        return leftResult + " + " + rightResult;
+    }
+    dispatchComposition(node : ccs.Composition, leftResult : string, rightResult : string) : string {
+        return wrapIfInstanceOf(node.left, leftResult, [ccs.Summation]) + " | " + 
+            wrapIfInstanceOf(node.right, rightResult, [ccs.Summation]);
+    }
+    dispatchAction(node : ccs.Action, processResult : string) : string {
+        return (node.complement ? "!" : "") + node.label + "."+ 
+            wrapIfInstanceOf(node.next, processResult, [ccs.Summation, ccs.Composition]);
+    }
+
+    dispatchRestriction(node : ccs.Restriction, processResult : string) : string {
+        var labels = [];
+        node.restrictedLabels.forEach((label) => { labels.push(label); });
+        return "(" + wrapIfInstanceOf(node.process, processResult, [ccs.Summation, ccs.Composition, ccs.Action]) + 
+            ") \\ {" + labels.join(",") + "}";
+    }
+    dispatchRelabelling(node : ccs.Relabelling, processResult : string) : string {
+        var relabelParts = [];
+        node.relabellings.forEach((from, to) => { relabelParts.push(to + "/" + from); });
+        return "(" + wrapIfInstanceOf(node.process, processResult, [ccs.Summation, ccs.Composition, ccs.Action]) + 
+            ") [" + relabelParts.join(",") + "]";
+    }
+    dispatchParenthesis(node : ccs.Parenthesis, processResult : string) : string {
+        return "(" + processResult + ")";
+    }
+    dispatchConstant(node : ccs.Constant) : string {
+        return node.constant;
+    }
+}
