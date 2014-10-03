@@ -68,7 +68,7 @@ relabel
 
 // ( P ) for some process P
 parenProcess
-	= "(" _ process:process _ ")" { return new ccs.Parenthesis(process); }
+	= "(" _ process:process _ ")" { return process; }
 	/ process:constantProcess { return process; }
 
 // A constant process. Either the null process 0, or some process K.

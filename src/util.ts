@@ -23,15 +23,12 @@ export class LabelledBracketNotation implements ccs.NodeDispatcher<string> {
     dispatchRestriction(node : ccs.Restriction, processResult : string) : string {
     	var labels = [];
     	node.restrictedLabels.forEach((label) => { labels.push(label); });
-    	return "[Restriction " + processResult + "\\(" + labels.join(",") + ")]";
+    	return "[Restriction " + processResult + " \\(" + labels.join(",") + ")]";
     }
     dispatchRelabelling(node : ccs.Relabelling, processResult : string) : string {
     	var relabelParts = [];
     	node.relabellings.forEach((from, to) => { relabelParts.push(to + "/" + from); });
-    	return "[Relabelling " + processResult + "(" + relabelParts.join(",") + ")]";
-    }
-    dispatchParenthesis(node : ccs.Parenthesis, processResult : string) : string {
-    	return "[Parenthesis " + processResult + "]";
+    	return "[Relabelling " + processResult + " (" + relabelParts.join(",") + ")]";
     }
     dispatchConstant(node : ccs.Constant) : string {
     	return "[" + node.constant + "]"; 
@@ -62,9 +59,6 @@ export class SizeOfTree implements ccs.NodeDispatcher<number> {
     }
     dispatchRelabelling(node : ccs.Relabelling, processResult : number) : number {
     	return 1 + processResult;
-    }
-    dispatchParenthesis(node : ccs.Parenthesis, processResult : number) : number {
-    	return 0 + processResult;
     }
     dispatchConstant(node : ccs.Constant) : number {
     	return 1;
@@ -105,17 +99,14 @@ export class CCSNotation implements ccs.NodeDispatcher<string> {
     dispatchRestriction(node : ccs.Restriction, processResult : string) : string {
         var labels = [];
         node.restrictedLabels.forEach((label) => { labels.push(label); });
-        return "(" + wrapIfInstanceOf(node.process, processResult, [ccs.Summation, ccs.Composition, ccs.Action]) + 
-            ") \\ {" + labels.join(",") + "}";
+        return wrapIfInstanceOf(node.process, processResult, [ccs.Summation, ccs.Composition, ccs.Action]) +
+            " \\ {" + labels.join(",") + "}";
     }
     dispatchRelabelling(node : ccs.Relabelling, processResult : string) : string {
         var relabelParts = [];
         node.relabellings.forEach((from, to) => { relabelParts.push(to + "/" + from); });
-        return "(" + wrapIfInstanceOf(node.process, processResult, [ccs.Summation, ccs.Composition, ccs.Action]) + 
-            ") [" + relabelParts.join(",") + "]";
-    }
-    dispatchParenthesis(node : ccs.Parenthesis, processResult : string) : string {
-        return "(" + processResult + ")";
+        return wrapIfInstanceOf(node.process, processResult, [ccs.Summation, ccs.Composition, ccs.Action]) + 
+            " [" + relabelParts.join(",") + "]";
     }
     dispatchConstant(node : ccs.Constant) : string {
         return node.constant;
