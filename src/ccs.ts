@@ -179,42 +179,70 @@ export class RelabellingSet {
 export class LabelSet {
     private bitmap = {};
     private mcount : number = 0;
+
     constructor(labels) {
-        labels.forEach(this.add, this);
+        labels.forEach(this.addLabel, this);
     }
-    add(label) {
+
+    private clone() {
+        var labels = Object.keys(this.bitmap);
+        return new LabelSet(labels);
+    }
+
+    private addLabel(label) {
+        if (!this.bitmap[label]) this.mcount++;
         this.bitmap[label] = true;
-        this.mcount++;
-        return this;
     }
-    remove(label) {
-        delete this.bitmap[label];
-        this.mcount--;
-        return this;
+
+    private removeLabel(label) {
+        if (this.bitmap[label]) {
+            delete this.bitmap[label];
+            this.mcount--;
+        }
     }
-    union(set : LabelSet) {
+
+    add(labels) {
+        var result = this.clone();
+        labels.forEach(result.addLabel, result);
+        return result;
+    }
+
+    remove(labels) {
+        var result = this.clone();
+        labels.forEach(result.removeLabel, result);
+        return result;
+    }
+
+    union(set : LabelSet) : LabelSet {
+        var result = this.clone();
         for (var label in set.bitmap) {
-            this.add(label);
+            result.add(label);
         }
-        return this;
+        return result;
     }
-    difference(set : LabelSet) {
-        for (var label in set) {
-            this.remove(label);
+
+    difference(set : LabelSet) : LabelSet {
+        var result = this.clone();
+        for (var label in set.bitmap) {
+            result.remove(label);
         }
-        return this;
+        return result;
     }
+
     empty() : boolean {
         return this.count() === 0;
     }
+
     count() : number {
         return this.mcount;
     }
+
     forEach(f : (label : string) => void, thisObject?) {
         for (var k in this.bitmap) {
             f.call(thisObject, k);
         }
     }
+
     toString() {
         return "LabelSet";
     }

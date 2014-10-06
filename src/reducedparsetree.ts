@@ -38,7 +38,7 @@ export class ReducedParseTreeTraverser implements ccs.NodeDispatcher<ccs.Node> {
         // (P \ L1) \L2 => P \ (L1 Union L2)
         if (node.process instanceof ccs.Restriction) {
             var subRestriction = <ccs.Restriction>node.process;
-            subRestriction.restrictedLabels.union(node.restrictedLabels);
+            subRestriction.restrictedLabels = subRestriction.restrictedLabels.union(node.restrictedLabels);
             node = subRestriction;
         }
         // 0 \ L => 0
