@@ -1,0 +1,3 @@
+[submodule "src/ace"]
+	path = src/ace
+	url = git@github.com:figa12/ace-builds.git
