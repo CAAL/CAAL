@@ -1,3 +1,6 @@
 [submodule "lib/ace"]
 	path = lib/ace
 	url = git@github.com:figa12/ace-builds.git
+[submodule "lib/bootstrap"]
+	path = lib/bootstrap
+	url = git@github.com:twbs/bootstrap.git
