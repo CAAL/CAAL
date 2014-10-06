@@ -12,12 +12,12 @@ var parser = PEG.buildParser(grammar, {cache: true});
 var cmdText = process.argv.slice(2).join(" ");
 
 if (cmdText.trim() !== "") {
-	var cmdAst = parser.parse(cmdText, {ccs: ccs, astNodes: ccs.CCSNode});
-	var nodemap = new ccs.NodeMap();
+	var nodeMap = {};
+	var cmdAst = parser.parse(cmdText, {ccs: ccs, astNodes: ccs.CCSNode, nodeMap: nodeMap});
 	var tree = cmdAst;
 	var lbn = new ccsutil.LabelledBracketNotation();
 	console.log("Tree Size: " + ccs.postOrderTransform(tree, new ccsutil.SizeOfTree()) + "\n");
-	var spt = new shared.SharedParseTreeTraverser(nodemap);
+	var spt = new shared.SharedParseTreeTraverser();
 	console.log("after sharing...\n");
 	tree = ccs.postOrderTransform(tree, spt);
 

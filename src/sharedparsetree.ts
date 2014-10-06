@@ -6,15 +6,10 @@ import ccs = require("./ccs");
 
 export class SharedParseTreeTraverser implements ccs.PostOrderDispatchHandler<ccs.Node> {
 
-    private map;
-
-    constructor(map : ccs.NodeMap) {
-        this.map = map;
-    }
+    private structureMap = {};
 
     dispatchProgram(node : ccs.Program, ... assignResults : ccs.Node[]) : ccs.Node {
         node.assignments = <ccs.Assignment[]>assignResults;
-        this.map.ensureNodeHasId(node);
         return node;
     }
 
@@ -53,14 +48,12 @@ export class SharedParseTreeTraverser implements ccs.PostOrderDispatchHandler<cc
     dispatchRestriction(node : ccs.Restriction, processResult : ccs.Node) : ccs.Node {
         node.process = processResult;
         //Same as relabelling
-        this.map.ensureNodeHasId(node);
         return node;
     }
     dispatchRelabelling(node : ccs.Relabelling, processResult : ccs.Node) : ccs.Node {
         node.process = processResult;
         //TODO: match on relabel sets
         //For now any relabelling is unique
-        this.map.ensureNodeHasId(node);
         return node;
     }
     dispatchConstant(node : ccs.Constant) : ccs.Node {
@@ -68,10 +61,10 @@ export class SharedParseTreeTraverser implements ccs.PostOrderDispatchHandler<cc
     }
 
     private ensureUniqueNode(node, structure) {
-        var result = this.map.getNodeByStructure(structure);
+        var result = this.structureMap[structure];
         if (!result) {
+            this.structureMap[structure] = node;
             result = node;
-            this.map.ensureNodeHasIdByStructure(node, structure);
         }
         return result;
     }

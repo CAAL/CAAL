@@ -14,6 +14,18 @@
 
 	var ccs = options.ccs;
 	var AST = options.astNodes;
+	var nodeMap = options.nodeMap;
+	var nextid = 0;
+	function create(constructor) {
+		// create(constructor, arg1, arg2, arg3)
+		// all nodes have id as first parameter
+		//trickery to be able to call constructor with 'new'.
+		var args = Array.prototype.slice.call(arguments, 1),
+			boundConstructor = constructor.bind.apply(constructor, [null, nextid++].concat(args));
+			node = new boundConstructor();
+		nodeMap[node.id] = node;
+		return node;
+	}
 }
 
 start
@@ -21,7 +33,7 @@ start
 
 //A program consists of lines only used for process assignments.
 program
-	= assignments:assignments { return new ccs.Program(assignments); }
+	= assignments:assignments { return create(ccs.Program, assignments); }
 
 assignments = _ first:assignment _ newline rest:assignments { return [first].concat(rest); }
             / _ first:assignment _ { return [first];}
@@ -29,7 +41,7 @@ assignments = _ first:assignment _ newline rest:assignments { return [first].con
 	  		/ _ newline? { return []; }
 
 assignment
-	= left:constantStr _ "=" _ right:process { return new ccs.Assignment(left, right); }
+	= left:constantStr _ "=" _ right:process { return create(ccs.Assignment, left, right); }
 
 //The rules here are defined in the reverse order of their precedence.
 //Either a given rule applies, eg. +, and everything to the left must have higher precedence,
@@ -37,21 +49,21 @@ assignment
 process = summation
 
 summation
-	= left:composition _ "+" _ right:summation { return new ccs.Summation(left, right); }
+	= left:composition _ "+" _ right:summation { return create(ccs.Summation, left, right); }
 	/ process:composition { return process; }
 
 composition
-	= left:action _ "|" _ right:composition { return new ccs.Composition(left, right); }
+	= left:action _ "|" _ right:composition { return create(ccs.Composition, left, right); }
 	/ process:action { return process; }
 
 action
-	= action:label _ "." _ process:action { return new ccs.Action(action, false, process); }
-	/ "!" _ action:label _ "." _ process:action { return new ccs.Action(action, true, process); }
+	= action:label _ "." _ process:action { return create(ccs.Action, action, false, process); }
+	/ "!" _ action:label _ "." _ process:action { return create(ccs.Action, action, true, process); }
 	/ process:leftProcess { return process; }
 
 leftProcess
-	= process:parenProcess _ labels:restrictedLabels { return new ccs.Restriction(process, new ccs.LabelSet(labels || [])); }
-	/ process:parenProcess _ "[" _ relabels:relabellings _ "]" { return new ccs.Relabelling(process, new ccs.RelabellingSet(relabels || [])); }
+	= process:parenProcess _ labels:restrictedLabels { return create(ccs.Restriction, process, new ccs.LabelSet(labels || [])); }
+	/ process:parenProcess _ "[" _ relabels:relabellings _ "]" { return create(ccs.Relabelling, process, new ccs.RelabellingSet(relabels || [])); }
 	/ process:parenProcess { return process; }
 
 // A restricted set of labels   \ {a, b}
@@ -73,8 +85,8 @@ parenProcess
 
 // A constant process. Either the null process 0, or some process K.
 constantProcess
-	= "0" { return new ccs.NullProcess; }
-	/ constant:constantStr { return new ccs.Constant(constant); }
+	= "0" { return create(ccs.NullProcess); }
+	/ constant:constantStr { return create(ccs.Constant, constant); }
 
 //Valid names for processes
 constantStr

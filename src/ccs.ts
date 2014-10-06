@@ -1,6 +1,6 @@
 
 export interface Node {
-    id? : number;
+    id : number;
     inorderStructure() : InorderStruct;
     dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T;
 }
@@ -30,7 +30,7 @@ export interface PostOrderDispatchHandler<T> extends NodeDispatchHandler<T> {
 }
 
 export class Program implements Node {
-    constructor(public assignments : Assignment[]) {
+    constructor(public id : number, public assignments : Assignment[]) {
     }
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, this.assignments);
@@ -45,6 +45,8 @@ export class Program implements Node {
 }
 
 export class NullProcess implements Node {
+    constructor(public id : number) {
+    }
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, []);
     }
@@ -58,7 +60,7 @@ export class NullProcess implements Node {
 }
 
 export class Assignment implements Node {
-    constructor(public variable : string, public process : Node) {
+    constructor(public id : number, public variable : string, public process : Node) {
     }
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, [this.process]);
@@ -73,7 +75,7 @@ export class Assignment implements Node {
 }
 
 export class Summation implements Node {
-    constructor(public left : Node, public right : Node) {
+    constructor(public id : number, public left : Node, public right : Node) {
     }
     inorderStructure() : InorderStruct {
         return new InorderStruct([this.left], this, [this.right]);
@@ -88,7 +90,7 @@ export class Summation implements Node {
 }
 
 export class Composition implements Node {
-    constructor(public left : Node, public right : Node) {
+    constructor(public id : number, public left : Node, public right : Node) {
     }
     inorderStructure() : InorderStruct {
         return new InorderStruct([this.left], this, [this.right]);
@@ -103,7 +105,7 @@ export class Composition implements Node {
 }
 
 export class Action implements Node {
-    constructor(public label : string, public complement : boolean, public next : Node) {
+    constructor(public id : number, public label : string, public complement : boolean, public next : Node) {
     }
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, [this.next]);
@@ -118,7 +120,7 @@ export class Action implements Node {
 }
 
 export class Restriction implements Node {
-    constructor(public process : Node, public restrictedLabels : LabelSet) {
+    constructor(public id : number, public process : Node, public restrictedLabels : LabelSet) {
     }
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, [this.process]);
@@ -133,7 +135,7 @@ export class Restriction implements Node {
 }
 
 export class Relabelling implements Node {
-    constructor(public process : Node, public relabellings : RelabellingSet) {
+    constructor(public id : number, public process : Node, public relabellings : RelabellingSet) {
     }
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, [this.process]);
@@ -148,7 +150,7 @@ export class Relabelling implements Node {
 }
 
 export class Constant implements Node {
-    constructor(public constant : string) {
+    constructor(public id : number, public constant : string) {
     }
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, []);
@@ -271,30 +273,3 @@ export class InorderStruct {
     }
 }
 
-export class NodeMap {
-    private nextId : number = 0;
-    public idToNode = {};
-    public structureToNode = {};
-
-    getNodeById(id : string) {
-        return this.idToNode[id] || null;
-    }
-
-    getNodeByStructure(structure : string) {
-        return this.structureToNode[structure] || null;
-    }
-
-    ensureNodeHasId(node : Node) {
-        if (!node.id) {
-            node.id = this.nextId++;
-            this.idToNode[node.id] = node;
-        }
-    }
-
-    ensureNodeHasIdByStructure(node : Node, structure : string) {
-        this.ensureNodeHasId(node);
-        if (!this.structureToNode[structure]) {
-            this.structureToNode[structure] = node;
-        }
-    }
-}
