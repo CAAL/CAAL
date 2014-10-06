@@ -1,4 +1,4 @@
-// <reference path="ccs.ts" />
+/// <reference path="ccs.ts" />
 import ccs = require("./ccs");
 
 export class ReducedParseTreeTraverser implements ccs.NodeDispatcher<ccs.Node> {

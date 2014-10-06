@@ -1,4 +1,6 @@
 /*libs Jquery, graphics is needed.*/
+/// <reference path="../../lib/jquery.d.ts" />
+/// <reference path="../../lib/arbor.d.ts" />
 var Renderer = (function () {
     function Renderer(canvas) {
         this.canvas = $(canvas).get(0);
@@ -96,8 +98,8 @@ var Renderer = (function () {
             var label = edge.data.label || "";
 
             if (label) {
-                mid_x = (tail.x + head.x) / 2;
-                mid_y = (tail.y + head.y) / 2;
+                var mid_x = (tail.x + head.x) / 2;
+                var mid_y = (tail.y + head.y) / 2;
                 that.ctx.font = "17px Helvetica";
                 that.ctx.textAlign = "center";
                 that.ctx.fillStyle = "black";
@@ -111,7 +113,7 @@ var Renderer = (function () {
                 // move to the head position of the edge we just drew
                 var arrowLength = 15;
                 var arrowWidth = 7;
-                that.ctx.fillStyle = (edge.data.color) ? color : "#cccccc";
+                that.ctx.fillStyle = (edge.data.color) ? edge.data.color : "#cccccc";
                 that.ctx.translate(head.x, head.y);
                 that.ctx.rotate(Math.atan2(head.y - tail.y, head.x - tail.x));
 
@@ -141,7 +143,7 @@ var Renderer = (function () {
         var handler = {
             clicked: function (e) {
                 var pos = $(that.canvas).offset();
-                _mouseP = arbor.Point(e.pageX - pos.left, e.pageY - pos.top);
+                var _mouseP = arbor.Point(e.pageX - pos.left, e.pageY - pos.top);
                 dragged = that.particleSystem.nearest(_mouseP);
 
                 if (dragged && dragged.node !== null) {
@@ -174,7 +176,7 @@ var Renderer = (function () {
                 dragged = null;
                 $(that.canvas).unbind('mousemove', handler.dragged);
                 $(window).unbind('mouseup', handler.dropped);
-                _mouseP = null;
+                var _mouseP = null;
                 return false;
             }
         };
@@ -187,24 +189,26 @@ var Renderer = (function () {
     Renderer.prototype.intersect_line_line = function (p1, p2, p3, p4) {
         var denom = ((p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y));
         if (denom === 0)
-            return false;
+            return null;
+
         var ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / denom;
         var ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / denom;
 
         if (ua < 0 || ua > 1 || ub < 0 || ub > 1)
-            return false;
+            return null;
+
         return arbor.Point(p1.x + ua * (p2.x - p1.x), p1.y + ua * (p2.y - p1.y));
     };
 
     Renderer.prototype.intersect_line_box = function (p1, p2, boxTuple) {
         var p3 = { x: boxTuple[0], y: boxTuple[1] }, w = boxTuple[2], h = boxTuple[3];
 
-        var tl = { x: p3.x, y: p3.y };
-        var tr = { x: p3.x + w, y: p3.y };
-        var bl = { x: p3.x, y: p3.y + h };
-        var br = { x: p3.x + w, y: p3.y + h };
+        var tl = arbor.Point(p3.x, p3.y);
+        var tr = arbor.Point(p3.x + w, p3.y);
+        var bl = arbor.Point(p3.x, p3.y + h);
+        var br = arbor.Point(p3.x + w, p3.y + h);
 
-        return this.intersect_line_line(p1, p2, tl, tr) || this.intersect_line_line(p1, p2, tr, br) || this.intersect_line_line(p1, p2, br, bl) || this.intersect_line_line(p1, p2, bl, tl) || false;
+        return this.intersect_line_line(p1, p2, tl, tr) || this.intersect_line_line(p1, p2, tr, br) || this.intersect_line_line(p1, p2, br, bl) || this.intersect_line_line(p1, p2, bl, tl) || null;
     };
     return Renderer;
 })();

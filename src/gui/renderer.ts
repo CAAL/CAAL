@@ -1,12 +1,14 @@
 /*libs Jquery, graphics is needed.*/
+/// <reference path="../../lib/jquery.d.ts" />
+/// <reference path="../../lib/arbor.d.ts" /> 
 class Renderer {
-    private canvas: HTMLCanvasElement;
+    private canvas : HTMLCanvasElement;
     private ctx : CanvasRenderingContext2D;
     private gfx : any; //Graphics lib
     private particleSystem;
 
     constructor(canvas : string) {
-      this.canvas = $(canvas).get(0);
+      this.canvas = <HTMLCanvasElement> $(canvas).get(0);
       this.ctx = this.canvas.getContext("2d");
       this.gfx = arbor.Graphics(this.canvas);
       this.particleSystem = null;
@@ -105,8 +107,8 @@ class Renderer {
           var label = edge.data.label||""
           
           if (label){
-            mid_x = (tail.x+head.x)/2;
-            mid_y = (tail.y+head.y)/2;
+            var mid_x = (tail.x+head.x)/2;
+            var mid_y = (tail.y+head.y)/2;
                 that.ctx.font = "17px Helvetica";
                 that.ctx.textAlign = "center";
                 that.ctx.fillStyle = "black";
@@ -119,7 +121,7 @@ class Renderer {
              // move to the head position of the edge we just drew
               var arrowLength = 15
               var arrowWidth = 7
-              that.ctx.fillStyle = (edge.data.color) ? color : "#cccccc";
+              that.ctx.fillStyle = (edge.data.color) ? edge.data.color : "#cccccc";
               that.ctx.translate(head.x, head.y);
               that.ctx.rotate(Math.atan2(head.y - tail.y, head.x - tail.x));
 
@@ -149,7 +151,7 @@ class Renderer {
       var handler = {
         clicked:function(e){
           var pos = $(that.canvas).offset();
-          _mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
+          var _mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
           dragged = that.particleSystem.nearest(_mouseP);
 
           if (dragged && dragged.node !== null){
@@ -180,7 +182,7 @@ class Renderer {
           dragged = null
           $(that.canvas).unbind('mousemove', handler.dragged)
           $(window).unbind('mouseup', handler.dropped)
-          _mouseP = null
+          var _mouseP = null
           return false
         }
       }
@@ -190,33 +192,38 @@ class Renderer {
     }
 
     // helpers for figuring out where to draw arrows (thanks springy.js)
-    intersect_line_line(p1, p2, p3, p4)
+    intersect_line_line(p1 : Point, p2 : Point, p3 : Point, p4 : Point) : Point
     {
-      var denom = ((p4.y - p3.y)*(p2.x - p1.x) - (p4.x - p3.x)*(p2.y - p1.y));
-      if (denom === 0) return false // lines are parallel
-      var ua = ((p4.x - p3.x)*(p1.y - p3.y) - (p4.y - p3.y)*(p1.x - p3.x)) / denom;
-      var ub = ((p2.x - p1.x)*(p1.y - p3.y) - (p2.y - p1.y)*(p1.x - p3.x)) / denom;
 
-      if (ua < 0 || ua > 1 || ub < 0 || ub > 1)  return false
-      return arbor.Point(p1.x + ua * (p2.x - p1.x), p1.y + ua * (p2.y - p1.y));
+        var denom = ((p4.y - p3.y)*(p2.x - p1.x) - (p4.x - p3.x)*(p2.y - p1.y));
+        if (denom === 0)
+            return null // lines are parallel
+        
+        var ua = ((p4.x - p3.x)*(p1.y - p3.y) - (p4.y - p3.y)*(p1.x - p3.x)) / denom;
+        var ub = ((p2.x - p1.x)*(p1.y - p3.y) - (p2.y - p1.y)*(p1.x - p3.x)) / denom;
+
+        if (ua < 0 || ua > 1 || ub < 0 || ub > 1)  
+            return null
+        
+        return arbor.Point(p1.x + ua * (p2.x - p1.x), p1.y + ua * (p2.y - p1.y));
     }
 
-    intersect_line_box(p1, p2, boxTuple)
+    intersect_line_box(p1 : Point, p2 : Point, boxTuple : any) : Point
     {
       var p3 = {x:boxTuple[0], y:boxTuple[1]},
           w = boxTuple[2],
           h = boxTuple[3]
 
-      var tl = {x: p3.x, y: p3.y};
-      var tr = {x: p3.x + w, y: p3.y};
-      var bl = {x: p3.x, y: p3.y + h};
-      var br = {x: p3.x + w, y: p3.y + h};
+      var tl = arbor.Point(p3.x, p3.y);
+      var tr = arbor.Point(p3.x + w, p3.y);
+      var bl = arbor.Point(p3.x, p3.y + h);
+      var br = arbor.Point(p3.x + w, p3.y + h);
 
       return this.intersect_line_line(p1, p2, tl, tr) ||
              this.intersect_line_line(p1, p2, tr, br) ||
              this.intersect_line_line(p1, p2, br, bl) ||
              this.intersect_line_line(p1, p2, bl, tl) ||
-             false
+             null;
     }
 }
 

@@ -1,6 +1,8 @@
 /*libs Jquery, graphics is needed.*/
+/// <reference path="../../lib/jquery.d.ts" />
+/// <reference path="../../lib/arbor.d.ts" />
 $(document).ready(function () {
-    env = new Environment();
+    var env = new Environment();
     env.showTree();
 });
 
@@ -15,10 +17,15 @@ var Environment = (function () {
         this.syntaxTree = syntaxTree;
     };
 
-    Environment.prototype.showTree = function (tree) {
-        //if(this.syntaxTree != null){
+    Environment.prototype.showTree = function () {
+        // if(this.syntaxTree != null){ This should be uncommented at some point, when the environment is correctly initialized.
         // add some nodes to the graph and watch it go...
         this.sys.addNode('b', { label: "b.B" });
+        this.sys.addNode('b', { label: "b.B" });
+        this.sys.addNode('b', { label: "b.B" });
+        this.sys.addNode('b', { label: "b.B" });
+        this.sys.addNode('b', { label: "b.B" });
+        this.sys.addNode('b', { label: "asd.B" });
         this.sys.addNode('a', { label: "B" });
         this.sys.addNode('e', { label: "e.B" });
         this.sys.addNode('c', { label: "c.B" });
