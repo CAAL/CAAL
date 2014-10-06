@@ -21,7 +21,7 @@ class Environment {
     }
 
     showTree(tree : any){
-        //if(this.syntaxTree != null){
+        // if(this.syntaxTree != null){ This should be uncommented at some point, when the environment is correctly initialized.
             // add some nodes to the graph and watch it go...
             this.sys.addNode('b', {label: "b.B"});
             this.sys.addNode('a', {label: "B"});
