@@ -4,3 +4,6 @@
 [submodule "lib/bootstrap"]
 	path = lib/bootstrap
 	url = git@github.com:twbs/bootstrap.git
+[submodule "lib/fontawesome"]
+	path = lib/fontawesome
+	url = git@github.com:FortAwesome/Font-Awesome.git
