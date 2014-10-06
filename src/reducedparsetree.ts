@@ -1,8 +1,8 @@
 // <reference path="ccs.ts" />
 import ccs = require("./ccs");
 
-export class ReducedParseTreeTraverser implements ccs.NodeDispatcher<ccs.Node> {
-    dispatchProgram(node : ccs.Program, assignResults : ccs.Node[]) : ccs.Node {
+export class ReducedParseTreeTraverser implements ccs.PostOrderDispatchHandler<ccs.Node> {
+    dispatchProgram(node : ccs.Program, ... assignResults : ccs.Node[]) : ccs.Node {
         node.assignments = <ccs.Assignment[]>assignResults;
         return node;
     }

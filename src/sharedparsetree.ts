@@ -4,7 +4,7 @@ import ccs = require("./ccs");
 //Any subtree in any node is replaced by
 //its existing definition.
 
-export class SharedParseTreeTraverser implements ccs.NodeDispatcher<ccs.Node> {
+export class SharedParseTreeTraverser implements ccs.PostOrderDispatchHandler<ccs.Node> {
 
     private map;
 
@@ -12,7 +12,7 @@ export class SharedParseTreeTraverser implements ccs.NodeDispatcher<ccs.Node> {
         this.map = map;
     }
 
-    dispatchProgram(node : ccs.Program, assignResults : ccs.Node[]) : ccs.Node {
+    dispatchProgram(node : ccs.Program, ... assignResults : ccs.Node[]) : ccs.Node {
         node.assignments = <ccs.Assignment[]>assignResults;
         this.map.ensureNodeHasId(node);
         return node;

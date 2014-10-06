@@ -1,8 +1,8 @@
 /// <reference path="ccs.ts" />
 import ccs = require('./ccs');
 
-export class LabelledBracketNotation implements ccs.NodeDispatcher<string> {
-    dispatchProgram(node : ccs.Program, assignResults : string[]) : string {
+export class LabelledBracketNotation implements ccs.PostOrderDispatchHandler<string> {
+    dispatchProgram(node : ccs.Program, ... assignResults : string[]) : string {
     	return "[Program " + assignResults.join(' ') + "]";
     }
     dispatchNullProcess(node : ccs.NullProcess) : string {
@@ -35,8 +35,8 @@ export class LabelledBracketNotation implements ccs.NodeDispatcher<string> {
     }
 }
 
-export class SizeOfTree implements ccs.NodeDispatcher<number> {
-    dispatchProgram(node : ccs.Program, assignResults : number[]) : number {
+export class SizeOfTree implements ccs.PostOrderDispatchHandler<number> {
+    dispatchProgram(node : ccs.Program, ... assignResults : number[]) : number {
     	return 1 + assignResults.reduce((prev, cur) => { return prev + cur; }, 0);
     }
     dispatchNullProcess(node : ccs.NullProcess) : number {
@@ -74,8 +74,8 @@ function wrapIfInstanceOf(node : ccs.Node, stringRepr : string, classes) {
     return stringRepr;
 }
 
-export class CCSNotation implements ccs.NodeDispatcher<string> {
-    dispatchProgram(node : ccs.Program, assignResults : string[]) : string {
+export class CCSNotation implements ccs.PostOrderDispatchHandler<string> {
+    dispatchProgram(node : ccs.Program, ... assignResults : string[]) : string {
         return assignResults.join("\n");
     }
     dispatchNullProcess(node : ccs.NullProcess) : string {

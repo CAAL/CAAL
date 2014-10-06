@@ -16,10 +16,10 @@ if (cmdText.trim() !== "") {
 	var nodemap = new ccs.NodeMap();
 	var tree = cmdAst;
 	var lbn = new ccsutil.LabelledBracketNotation();
-	console.log("Tree Size: " + ccs.postOrderTraversal(tree, new ccsutil.SizeOfTree()) + "\n");
+	console.log("Tree Size: " + ccs.postOrderTransform(tree, new ccsutil.SizeOfTree()) + "\n");
 	var spt = new shared.SharedParseTreeTraverser(nodemap);
 	console.log("after sharing...\n");
-	tree = ccs.postOrderTraversal(tree, spt);
+	tree = ccs.postOrderTransform(tree, spt);
 
 	//Check for errors
 	var errors = {warnings: [], errors: []};
@@ -30,14 +30,14 @@ if (cmdText.trim() !== "") {
 		console.log("Error: " + error);
 	});
 
-	console.log(ccs.postOrderTraversal(tree, lbn));
+	console.log(ccs.postOrderTransform(tree, lbn));
 	console.log("about to reduce...\n")
 	var rpt = new reduced.ReducedParseTreeTraverser();
-	tree = ccs.postOrderTraversal(tree, rpt);
-	console.log(ccs.postOrderTraversal(tree, lbn));
+	tree = ccs.postOrderTransform(tree, rpt);
+	console.log(ccs.postOrderTransform(tree, lbn));
 	console.log("about to prettyprint...\n");
 	var pp = new ccsutil.CCSNotation();
-	console.log(ccs.postOrderTraversal(tree, pp));
+	console.log(ccs.postOrderTransform(tree, pp));
 }
 else
     console.log("No ccs arguments");

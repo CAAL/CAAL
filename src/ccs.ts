@@ -2,11 +2,23 @@
 export interface Node {
     id? : number;
     inorderStructure() : InorderStruct;
-    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T;
+    dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T;
 }
 
-export interface NodeDispatcher<T> {
-    dispatchProgram(node : Program, assignResults : T[]) : T;
+export interface NodeDispatchHandler<T> {
+    dispatchProgram(node : Program, ... args : T[]) : T
+    dispatchNullProcess(node : NullProcess, ... args : T[]) : T
+    dispatchAssignment(node : Assignment, ... args : T[]) : T
+    dispatchSummation(node : Summation, ... args : T[]) : T
+    dispatchComposition(node : Composition, ... args : T[]) : T
+    dispatchAction(node : Action, ... args : T[]) : T
+    dispatchRestriction(node : Restriction, ... args : T[]) : T
+    dispatchRelabelling(node : Relabelling, ... args : T[]) : T
+    dispatchConstant(node : Constant, ... args : T[]) : T
+}
+
+export interface PostOrderDispatchHandler<T> extends NodeDispatchHandler<T> {
+    dispatchProgram(node : Program, ... assignResults : T[]) : T;
     dispatchNullProcess(node : NullProcess) : T;
     dispatchAssignment(node : Assignment, result : T) : T;
     dispatchSummation(node : Summation, leftResult : T, rightResult : T) : T;
@@ -23,8 +35,8 @@ export class Program implements Node {
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, this.assignments);
     }
-    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
-        args = [this, args];
+    dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
+        args = [this].concat(args);
         return dispatcher.dispatchProgram.apply(dispatcher, args);
     }
     toString() {
@@ -36,7 +48,7 @@ export class NullProcess implements Node {
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, []);
     }
-    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+    dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
         args = [this].concat(args);
         return dispatcher.dispatchNullProcess.apply(dispatcher, args);
     }
@@ -51,7 +63,7 @@ export class Assignment implements Node {
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, [this.process]);
     }
-    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+    dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
         args = [this].concat(args);
         return dispatcher.dispatchAssignment.apply(dispatcher, args);
     }
@@ -66,7 +78,7 @@ export class Summation implements Node {
     inorderStructure() : InorderStruct {
         return new InorderStruct([this.left], this, [this.right]);
     }
-    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+    dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
         args = [this].concat(args);
         return dispatcher.dispatchSummation.apply(dispatcher, args);
     }
@@ -81,7 +93,7 @@ export class Composition implements Node {
     inorderStructure() : InorderStruct {
         return new InorderStruct([this.left], this, [this.right]);
     }
-    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+    dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
         args = [this].concat(args);
         return dispatcher.dispatchComposition.apply(dispatcher, args);
     }
@@ -96,7 +108,7 @@ export class Action implements Node {
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, [this.next]);
     }
-    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+    dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
         args = [this].concat(args);
         return dispatcher.dispatchAction.apply(dispatcher, args);
     }
@@ -111,7 +123,7 @@ export class Restriction implements Node {
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, [this.process]);
     }
-    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+    dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
         args = [this].concat(args);
         return dispatcher.dispatchRestriction.apply(dispatcher, args);
     }
@@ -126,7 +138,7 @@ export class Relabelling implements Node {
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, [this.process]);
     }
-    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+    dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
         args = [this].concat(args);
         return dispatcher.dispatchRelabelling.apply(dispatcher, args);
     }
@@ -141,7 +153,7 @@ export class Constant implements Node {
     inorderStructure() : InorderStruct {
         return new InorderStruct([], this, []);
     }
-    dispatchOn<T>(dispatcher : NodeDispatcher<T>, args) : T {
+    dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
         args = [this].concat(args);
         return dispatcher.dispatchConstant.apply(dispatcher, args);
     }
@@ -150,7 +162,7 @@ export class Constant implements Node {
     }
 }
 
-export function postOrderTraversal<T>(node : Node, dispatcher : NodeDispatcher<T>) : T {
+export function postOrderTransform<T>(node : Node, dispatcher : PostOrderDispatchHandler<T>) : T {
     function handleNode(node : Node) {
         var is = node.inorderStructure();
         var beforeResults = is.before.map(handleNode);
