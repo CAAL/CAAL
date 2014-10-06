@@ -27,6 +27,9 @@ export class Program implements Node {
         args = [this, args];
         return dispatcher.dispatchProgram.apply(dispatcher, args);
     }
+    toString() {
+        return "Program";
+    }
 }
 
 export class NullProcess implements Node {
@@ -253,5 +256,33 @@ export class LabelSet {
 */
 export class InorderStruct {
     constructor(public before : Node[], public node : Node, public after : Node[]) {
+    }
+}
+
+export class NodeMap {
+    private nextId : number = 0;
+    public idToNode = {};
+    public structureToNode = {};
+
+    getNodeById(id : string) {
+        return this.idToNode[id] || null;
+    }
+
+    getNodeByStructure(structure : string) {
+        return this.structureToNode[structure] || null;
+    }
+
+    ensureNodeHasId(node : Node) {
+        if (!node.id) {
+            node.id = this.nextId++;
+            this.idToNode[node.id] = node;
+        }
+    }
+
+    ensureNodeHasIdByStructure(node : Node, structure : string) {
+        this.ensureNodeHasId(node);
+        if (!this.structureToNode[structure]) {
+            this.structureToNode[structure] = node;
+        }
     }
 }
