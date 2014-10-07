@@ -70,6 +70,7 @@ class Renderer {
           that.gfx.oval(pt.x-w/2, pt.y-w/2, w,w, {fill:that.ctx.fillStyle})
           nodeBoxes[node.name] = [pt.x-w/2, pt.y-w/2, w,w]
           
+		  console.log(nodeBoxes[node.name]);
 
           // draw the text
           if (label){
@@ -80,7 +81,6 @@ class Renderer {
             if(node.data.color=='none') 
               that.ctx.fillStyle = '#333333'; //default node label color
 
-            that.ctx.fillText(label||"", pt.x, pt.y+4)
             that.ctx.fillText(label||"", pt.x, pt.y+4)
           }
         })
