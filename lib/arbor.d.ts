@@ -1,23 +1,43 @@
 interface ParticleSystem {
-    (repulsion : number, stiffness : number, friction : number) : ParticleSystem;
+    /*Vars*/
     renderer : Object;
+    
+    /*Constructor*/
+    (repulsion : number, stiffness : number, friction : number) : ParticleSystem;
+    
+    /*Functions*/
+    nearest(p : Point) : refNode;
+    screenSize(width : number, height : number) : void;
+    screenPadding(top : number) : void;
+    screenPadding(top : number, bottom : number) : void;
+    screenPadding(top : number, right : number, bottom : number, left : number) : void;
+    fromScreen(p : Point) : Point; 
+    toScreen(p : Point) : Point;
     addEdge(source : string, target : string, data : Object) : Edge;
     addNode(name : string, object : Object) : Node;
     parameters(o : Object) : void;
+    eachNode(f : (n : Node, pt : Point) => void) : void;
+    eachEdge(f : (e : Edge, p1 : Point, p2 : Point) => void) : void; 
+}
+
+interface refNode{
+    node : Node;
+    point : Point;
+    distance : number;
 }
 
 interface Node{
     mass : number;
     p : Point;
     name : string;
-    data : Object;
+    data : any; //Must not be object for some reason
 }
 
 interface Edge {
     source : Node;
     target : Node;
     lengt : Number
-    data : Object;
+    data : any; //Must not be object for some reason
 }
 
 
@@ -29,6 +49,14 @@ interface Point {
     (x : number, y : number) : Point;
     x : number;
     y : number;
+
+    add(pt : Point) : Point;
+    subtract(pt : Point) : Point;
+    multiply(n : number) : Point;
+    divide(n : number) : Point;
+    magnitude( ) : Number
+    normal( ) : Point;
+    normalize( ) : Point;
 }
 
 interface Arbor {

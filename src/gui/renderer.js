@@ -9,8 +9,6 @@ var Renderer = (function () {
         this.particleSystem = null;
     }
     Renderer.prototype.init = function (system) {
-        console.log(system);
-
         //
         // the particle system will call the init function once, right before the
         // first frame is to be drawn. it's a good place to set up the canvas and

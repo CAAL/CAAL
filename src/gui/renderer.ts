@@ -5,7 +5,7 @@ class Renderer {
     private canvas : HTMLCanvasElement;
     private ctx : CanvasRenderingContext2D;
     private gfx : any; //Graphics lib
-    private particleSystem;
+    private particleSystem : ParticleSystem;
 
     constructor(canvas : string) {
       this.canvas = <HTMLCanvasElement> $(canvas).get(0);
@@ -14,8 +14,7 @@ class Renderer {
       this.particleSystem = null;
     }
 
-    init(system : any){
-        console.log(system);
+    init(system : ParticleSystem){
         //
         // the particle system will call the init function once, right before the
         // first frame is to be drawn. it's a good place to set up the canvas and
@@ -27,7 +26,7 @@ class Renderer {
         // inform the system of the screen dimensions so it can map coords for us.
         // if the canvas is ever resized, screenSize should be called again with
         // the new dimensions
-        this.particleSystem.screenSize(this.canvas.width, this.canvas.height); 
+        this.particleSystem.screenSize(this.canvas.width, this.canvas.height);
         this.particleSystem.screenPadding(40); // leave an extra 80px of whitespace per side
         
         // set up some event handlers to allow for node-dragging
