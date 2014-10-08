@@ -1,136 +1,116 @@
 html, body {
-	height: 100%;
-	font-family: 'Open Sans', sans-serif;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Open Sans', sans-serif;
+    color: #fff;
 }
 
 a {
-	color: #fff;
+    color: #fff;
 }
 
 a:hover {
-	background-color: #172b4a;
-	text-decoration: none;
-	color: #fff;
+    text-decoration: none;
+    color: #fff;
 }
 
-#page-wrapper {
-	width: 100%;
-	height: 100%;
-	padding-left: 250px;
-	background-color: #f7f7f7;
-	transition: all 0.75s ease 0s;
+.fa {
+    font-size: 16px;
 }
 
-#sidebar-wrapper {
-	width: 250px;
-	height: 100%;
-	position: fixed;
-	left: 0px;
-	background-color: #1d365d;
-	color: #fff;
-	transition: all 0.75s ease 0s;
-}
-
-#sidebar-header, #sidebar-footer {
-	height: 55px;
-	background-color: #172b4a;
+#sidebar {
+    width: 250px;
+    height: 100%;
+    float: left;
+    background-color: #1d365d;
+    transition: all 0.75s ease 0s;
 }
 
 #sidebar-header {
-	padding: 0 25px;
-	border-bottom: 1px solid #2b4367;
-	cursor: pointer;
+    height: 55px;
+    margin-bottom: -55px;
+    border-bottom: 1px solid #2b4367;
+    background-color: #172b4a;
+    cursor: pointer;
 }
 
-#sidebar-header span {
-	line-height: 50px;
+#sidebar-header i {
+    padding-right: 25px;
+    line-height: 55px;
 }
 
-.sidebar-group {
-	margin: 0;
-	padding: 0;
-	list-style-type: none;
+#sidebar-nav {
+    height: 100%;
+    padding: 55px 0;
 }
 
-#sidebar i, #sidebar span {
-	vertical-align: middle;
-	line-height: 30px;
+#sidebar-nav ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
 }
 
-.sidebar-item {
-	display: block;
-	text-decoration: none;
-	padding: 5px 25px;
-	color: #fff;
-	font-family: 'Open Sans', sans-serif;
-	line-height: 30px;
+#sidebar-nav a {
+    padding: 10px 25px;
+    display: block;
 }
 
-.sidebar-submenu {
-	display: none;
-	margin: 0;
-	padding: 0;
-	list-style-type: none;
-	font-size: 11px;
-}
-
-.submenu-item {
-	padding: 5px 0 5px 40px;
-	display: block;
-}
-
-#sidebar a:hover {
-	background-color: #172b4a;
+#sidebar-nav a:hover {
+    background-color: #172b4a;
 }
 
 .divider {
-	border-top: 1px solid #172b4a;
-	border-bottom: 1px solid#2b4367;
+    border-top: 1px solid #172b4a;
+    border-bottom: 1px solid#2b4367;
+}
+
+#sidebar-nav .submenu a {
+    padding-left: 40px;
+    font-size: 10px;
 }
 
 #sidebar-footer {
-	border-top: 1px solid #2b4367;
-	width: 100%;
-	position: absolute;
-	bottom: 0;
-	text-align: center;
+    height: 55px;
+    margin-top: -55px;
+    border-top: 1px solid #2b4367;
+    line-height: 55px;
+    text-align: center;
+    background-color: #172b4a;
 }
 
 #sidebar-footer a {
-	color: #fff;
-	padding: 20px;
-	line-height: 55px;
-}
-
-#sidebar-footer a:hover {
-	text-decoration: none;
-}
-
-#content-wrapper {
-	width: 100%;
-	height: 100%;
-}
-
-#content-header {
-	height: 55px;
-	padding: 10px 10px;
-	background-color: #fff;
-}
-
-.project-title {
-	margin: 0;
-	padding: 0;
-	font-size: 16px;
-}
-
-.project-desc {
-	margin: 0;
-	padding: 0;
-	font-size: 11px;
-	color: #707070;
+    padding: 0 25px;
 }
 
 #content {
-	height: 100%;
-	margin-bottom: -55px;
+    height: 100%;
+    margin-left: 250px;
+    background-color: #f7f7f7;
+    transition: all 0.75s ease 0s;
+}
+
+#content-header {
+    height: 55px;
+    padding: 5px 0 0 20px;
+}
+
+#content-header p {
+    margin: 0;
+    padding: 0;
+}
+
+.project-title {
+    font-size: 18px;
+    color: #222;
+}
+
+.project-desc {
+    font-size: 11px;
+    color: #666;
+}
+
+#editor {
+    height: 100%;
+    margin-bottom: -55px;
 }
