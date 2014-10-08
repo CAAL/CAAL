@@ -41,152 +41,163 @@ class Renderer {
         this.gfx.clear();
         
         // draw the nodes & save their bounds for edge drawing
-        var nodeBoxes = {}
+        var nodeBoxes:Point[] = [];
         
-        this.particleSystem.eachNode(function(node, pt) {
-          // node: {mass:#, p:{x,y}, name:"", data:{}}
-          // pt:   {x:#, y:#}  node position in screen coords
+        this.particleSystem.eachNode(function(node, pt) { 
+            // node: {mass:#, p:{x,y}, name:"", data:{}}
+            // pt:   {x:#, y:#}  node position in screen coords
 
-          var label = node.data.label||""
-          var w = that.ctx.measureText(""+label).width + 10;
-          
-		  if(node.name == 'b')
-		  {
-			console.log(w);
-		  }
-		  
-          if (!(""+label).match(/^[ \t]*$/)) {
-            pt.x = Math.floor(pt.x)
-            pt.y = Math.floor(pt.y)
-          } 
-          else
+            var label = node.data.label||""
+            var w = that.ctx.measureText(""+label).width + 10
+
+            if (!(""+label).match(/^[ \t]*$/)) {
+                pt.x = Math.floor(pt.x)
+                pt.y = Math.floor(pt.y)
+            } 
+            else
             label = null
 
-          // draw a circle centered at pt
-          if(node.data.color)
-            that.ctx.fillStyle = node.data.color; 
-          else
-            that.ctx.fillStyle = "#000000"; //Node default color
+            // draw a circle centered at pt
+            if(node.data.color)
+                that.ctx.fillStyle = node.data.color; 
+            else
+                that.ctx.fillStyle = "#000000"; //Node default color
 
-          if(node.data.color=='none')
-            that.ctx.fillStyle = "rgba(0,0,0,.0)";
+            if(node.data.color=='none')
+                that.ctx.fillStyle = "rgba(0,0,0,.0)";
 
-          
-          that.gfx.oval(pt.x-w/2, pt.y-w/2, w,w, {fill:that.ctx.fillStyle})
-          nodeBoxes[node.name] = [pt.x-w/2, pt.y-w/2, w,w]
-          
-          // draw the text
-          if (label){
-            that.ctx.font = "12px Helvetica"
-            that.ctx.textAlign = "center"
-            that.ctx.fillStyle = "white"
-            
-            if(node.data.color=='none') 
-              that.ctx.fillStyle = '#333333'; //default node label color
+            if (node.data.shape=='dot'){
+                that.gfx.oval(pt.x-w/2, pt.y-w/2, w,w, {fill:that.ctx.fillStyle});
+                nodeBoxes[node.name] = [pt.x-w/2, pt.y-w/2, w,w];
+            } else {
+                that.gfx.rect(pt.x-w/2, pt.y-10, w,20, 4, {fill:that.ctx.fillStyle});
+                nodeBoxes[node.name] = [pt.x-w/2, pt.y-11, w, 22];
+            }
 
-            that.ctx.fillText(label||"", pt.x, pt.y+4)
-          }
+
+            // draw the text
+            if (label){
+                that.ctx.font = "12px Helvetica"
+                that.ctx.textAlign = "center"
+                that.ctx.fillStyle = "white"
+
+                if(node.data.color=='none') 
+                  that.ctx.fillStyle = '#333333'; //default node label color
+
+                that.ctx.fillText(label||"", pt.x, pt.y+4);
+            }
         })
-
 
         // draw the edges
         that.particleSystem.eachEdge(function(edge, pt1, pt2){
-          // edge: {source:Node, target:Node, length:#, data:{}}
-          // pt1:  {x:#, y:#}  source position in screen coords
-          // pt2:  {x:#, y:#}  target position in screen coords
-          // draw a line from pt1 to pt2
-          that.ctx.strokeStyle = "rgba(0,0,0, .333)"
-          that.ctx.lineWidth = 1.5;
-          that.ctx.beginPath()
-          that.ctx.moveTo(pt1.x, pt1.y)
-          that.ctx.lineTo(pt2.x, pt2.y)
-          that.ctx.stroke()
+            // edge: {source:Node, target:Node, length:#, data:{}}
+            // pt1:  {x:#, y:#}  source position in screen coords
+            // pt2:  {x:#, y:#}  target position in screen coords
+            // draw a line from pt1 to pt2
+            var line = pt2.subtract(pt1);
+            var unit =  line.normalize();
+            var isSelfloop = unit.exploded();
 
-          // find the start point
-          var tail = that.intersect_line_box(pt1, pt2, nodeBoxes[edge.source.name])
-          var head = that.intersect_line_box(tail, pt2, nodeBoxes[edge.target.name])
+            // draw edge
+            that.ctx.strokeStyle = "rgba(0,0,0, .25)";
+            that.ctx.lineWidth = 2;
+            that.ctx.beginPath();
+            that.ctx.moveTo(pt1.x, pt1.y);
+            var cpH = 130; // horizontal offset to the control points.
+            var cpV = 60; // vertical offset to the control points.
 
-          var label1 = edge.data.label||""
-          
-          if (label1){
-		  
-            var mid_x = (tail.x+head.x)/2;
-            var mid_y = (tail.y+head.y)/2;
-			that.ctx.font = "12px Helvetica"; // needs to be 12px or first drawn nodes gets larger
-			that.ctx.textAlign = "center";
-			that.ctx.fillStyle = "black";
-			that.ctx.fillText(label1, mid_x-5, mid_y-5);
-		  }
+            if(isSelfloop){
+                that.ctx.moveTo(pt1.x, pt1.y);
+                that.ctx.bezierCurveTo(pt1.x - (cpH/2), pt1.y - cpV, pt1.x + (cpH/2), pt1.y - cpV, pt1.x, pt1.y);
+                pt2 = pt1;            
+            } else{
+                that.ctx.lineTo(pt2.x, pt2.y);
+            }
+            that.ctx.stroke();
+            that.ctx.save();
 
-          //draw the arrowhead
-          if(edge.data.directed){
-            that.ctx.save()
-             // move to the head position of the edge we just drew
-              var arrowLength = 15
-              var arrowWidth = 7
-              that.ctx.fillStyle = (edge.data.color) ? edge.data.color : "#cccccc";
-              that.ctx.translate(head.x, head.y);
-              that.ctx.rotate(Math.atan2(head.y - tail.y, head.x - tail.x));
+            // draw arrow head
+            var label = edge.data.label || "";
+            var arrowLength = 15;
+            var arrowWidth = 7;
+            var chevronColor = edge.data.color || "#4D4D4D";
 
-              // delete some of the edge that's already there (so the point isn't hidden)
-              that.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1)
+            if(!isSelfloop){
+                /*Edge is not self-loop*/
+                var tail : Point = that.intersect_line_box(pt1, pt2, nodeBoxes[edge.source.name])
+                var head : Point = that.intersect_line_box(tail, pt2, nodeBoxes[edge.target.name])
 
-              // draw the chevron
-              that.ctx.beginPath();
-              that.ctx.moveTo(-arrowLength, arrowWidth);
-              that.ctx.lineTo(0, 0);
-              that.ctx.lineTo(-arrowLength, -arrowWidth);
-              that.ctx.lineTo(-arrowLength * 0.8, -0);
-              that.ctx.closePath();
-              that.ctx.fill();
+                if (label){ //draw the label on edge
+                    var mid_x = ((tail.x+head.x)/2) - 5; //minus 5 to offset from the edge
+                    var mid_y = ((tail.y+head.y)/2) - 5; //minus 5 to offset form the edge
+                    that.drawLabel(mid_x, mid_y, label, that.ctx);                   
+                }
+
+                that.ctx.translate(head.x, head.y); // translate pointer to the top og the nodebox.
+                that.ctx.rotate(Math.atan2(head.y - tail.y, head.x - tail.x));
+                that.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge that's already there (so the point isn't hidden)
+                that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
+            } else {
+                /*Edge is self-loop*/
+                if (label){ 
+                    //draw the label on edge
+                    that.drawLabel(pt2.x, pt2.y - (cpV), label, that.ctx);                   
+                }
+
+                that.ctx.translate(pt2.x + 9, pt2.y - 9); // translate pointer to the top og the nodebox.
+                that.ctx.rotate(125*Math.PI/180); // otates in radians use (degrees*Math.PI/180)
+                that.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge that's already there (so the point isn't hidden)
+                that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
+            }
             that.ctx.restore();
-          }
         })
     }
 
     initMouseHandling(){
       // no-nonsense drag and drop (thanks springy.js)
-      var dragged = null;
+      var dragged : refNode = null;
       var that = this;
       // set up a handler object that will initially listen for mousedowns then
       // for moves and mouseups while dragging
 
       var handler = {
         clicked:function(e){
-          var pos = $(that.canvas).offset();
-          var _mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
-          dragged = that.particleSystem.nearest(_mouseP);
+            var pos = $(that.canvas).offset();
+            var _mouseP : Point = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
+            dragged = that.particleSystem.nearest(_mouseP);
 
-          if (dragged && dragged.node !== null){
-            // while we're dragging, don't let physics move the node
-            dragged.node.fixed = true
-          }
+            if (dragged && dragged.node !== null){
+                // while we're dragging, don't let physics move the node
+                dragged.node.fixed = true
+            }
 
-          $(that.canvas).bind('mousemove', handler.dragged)
-          $(window).bind('mouseup', handler.dropped)
+            $(that.canvas).bind('mousemove', handler.dragged) 
+            $(window).bind('mouseup', handler.dropped) 
 
-          return false
+            return false
         },
         dragged:function(e){
-          var pos = $(that.canvas).offset();
-          var s = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
+            var pos = $(that.canvas).offset();
+            var s : Point = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
 
-          if (dragged && dragged.node !== null){
-            var p = that.particleSystem.fromScreen(s)
-            dragged.node.p = p
-          }
+            if (dragged && dragged.node !== null){
+                var p : Point = that.particleSystem.fromScreen(s)
+                dragged.node.p = p
+            }
 
-          return false
+            return false
         },
         dropped:function(e){
-          if (dragged===null || dragged.node===undefined) return
-          if (dragged.node !== null) dragged.node.fixed = false
-          dragged.node.tempMass = 1000
-          dragged = null
-          $(that.canvas).unbind('mousemove', handler.dragged)
-          $(window).unbind('mouseup', handler.dropped)
-          var _mouseP = null
-          return false
+            if (dragged===null || dragged.node===undefined) 
+                return;
+            if (dragged.node !== null) 
+                dragged.node.fixed = false;
+            dragged.node.tempMass = 10;
+            dragged = null;
+            $(that.canvas).unbind('mousemove', handler.dragged);
+            $(window).unbind('mouseup', handler.dropped);
+            var _mouseP = null;
+            return false;
         }
       }
       
@@ -194,35 +205,62 @@ class Renderer {
       $(that.canvas).mousedown(handler.clicked);
     }
 
-    // helpers for figuring out where to draw arrows (thanks springy.js)
-    intersect_line_line(p1 : Point, p2 : Point, p3 : Point, p4 : Point) : Point
-    {
+    drawLabel(x : number, y : number, label : string, ctx : CanvasRenderingContext2D){
+        ctx.save();
+        ctx.font = "17px Helvetica";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "black";
+        ctx.fillText(label, x, y);
+        ctx.restore();
+    }
 
+    drawChevron(arrowLength : number, arrowWidth : number, color : string, ctx : CanvasRenderingContext2D){
+        ctx.save()
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(-arrowLength, arrowWidth);
+        ctx.lineTo(0, 0);
+        ctx.lineTo(-arrowLength, -arrowWidth);
+        ctx.lineTo(-arrowLength * 0.8, -0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    // helpers for figuring out where to draw arrows (thanks springy.js)
+    intersect_line_line(p1 : Point, p2 : Point, p3 : Point, p4 : Point) : Point {
+        // console.log("Point1 " + p1.x, p1.y);
+        // console.log("Point2 " + p2.x, p2.y);
+        // console.log("Point3 " + p3.x, p3.y);
+        // console.log("Point4 " + p4.x, p4.y);
         var denom = ((p4.y - p3.y)*(p2.x - p1.x) - (p4.x - p3.x)*(p2.y - p1.y));
-        if (denom === 0)
-            return null // lines are parallel
+        // console.log("demon " + denom);
+        if (denom === 0){
+            return null; // lines are parallel
+        }
         
         var ua = ((p4.x - p3.x)*(p1.y - p3.y) - (p4.y - p3.y)*(p1.x - p3.x)) / denom;
         var ub = ((p2.x - p1.x)*(p1.y - p3.y) - (p2.y - p1.y)*(p1.x - p3.x)) / denom;
 
-        if (ua < 0 || ua > 1 || ub < 0 || ub > 1)  
-            return null
+        if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
+            return null;
+        }
         
         return arbor.Point(p1.x + ua * (p2.x - p1.x), p1.y + ua * (p2.y - p1.y));
     }
 
-    intersect_line_box(p1 : Point, p2 : Point, boxTuple : any) : Point
-    {
-      var p3 = {x:boxTuple[0], y:boxTuple[1]},
-          w = boxTuple[2],
-          h = boxTuple[3]
+    intersect_line_box(p1 : Point, p2 : Point, boxTuple : any) : Point {
+        // console.log(boxTuple);
+        var p3 = arbor.Point(boxTuple[0], boxTuple[1]);
+        var w = boxTuple[2];
+        var h = boxTuple[3];
 
-      var tl = arbor.Point(p3.x, p3.y);
-      var tr = arbor.Point(p3.x + w, p3.y);
-      var bl = arbor.Point(p3.x, p3.y + h);
-      var br = arbor.Point(p3.x + w, p3.y + h);
+        var tl = arbor.Point(p3.x, p3.y);
+        var tr = arbor.Point(p3.x + w, p3.y);
+        var bl = arbor.Point(p3.x, p3.y + h);
+        var br = arbor.Point(p3.x + w, p3.y + h);
 
-      return this.intersect_line_line(p1, p2, tl, tr) ||
+        return this.intersect_line_line(p1, p2, tl, tr) ||
              this.intersect_line_line(p1, p2, tr, br) ||
              this.intersect_line_line(p1, p2, br, bl) ||
              this.intersect_line_line(p1, p2, bl, tl) ||

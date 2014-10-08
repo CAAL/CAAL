@@ -31,6 +31,8 @@ interface Node{
     p : Point;
     name : string;
     data : any; //Must not be object for some reason
+    fixed : boolean; // if true, don't let physics move the node
+    tempMass : number
 }
 
 interface Edge {
@@ -57,6 +59,7 @@ interface Point {
     magnitude( ) : Number
     normal( ) : Point;
     normalize( ) : Point;
+    exploded() : boolean;
 }
 
 interface Arbor {
