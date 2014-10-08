@@ -1,18 +1,18 @@
 class ExpandableNav {
     private expanded: boolean;
-    private navId: String;
-    private contentId: String;
+    private navId: string;
+    private contentId: string;
     private expandedWidth: number;
     private contractedWidth: number;
-    private hideOnContraction: String[];
+    private hideOnContraction: string[];
 
     constructor(startState: boolean,
-                buttonId: String,
-                navId: String,
-                contentId: String,
+                buttonId: string,
+                navId: string,
+                contentId: string,
                 expandedWidth: number,
                 contractedWidth: number,
-                hideOnContraction?: String[])
+                hideOnContraction?: string[])
     {
         this.expanded = startState;
         this.navId = navId;
@@ -49,10 +49,10 @@ class ExpandableNav {
     }
 }
 
-class ExpandableItem {
-    private itemId: String;
+class ExpandableList {
+    private itemId: string;
 
-    constructor(startState: boolean, buttonId: String, itemId: String) {
+    constructor(startState: boolean, buttonId: string, itemId: string) {
         this.itemId = itemId;
 
         $(itemId).toggle(startState);
