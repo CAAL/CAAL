@@ -1,23 +1,6 @@
-$("#sidebar-header").click(function() {
-    var page = $("#page-wrapper");
-    var sidebar = $("#sidebar-wrapper");
-
-    if (sidebar.css("left") == "0px") {
-        sidebar.css("left", "-184px");
-        page.css("padding-left", "66px");
-        $("#sidebar-footer").hide();
-    }
-    else {
-        sidebar.css("left", "0px");
-        page.css("padding-left", "250px");
-        $("#sidebar-footer").show();
-    }
-});
-
-
 var editor;
 $("document").ready(function() {
-    editor = ace.edit("content");
+    editor = ace.edit("editor");
     editor.setTheme("ace/theme/crisp");
     editor.setShowPrintMargin(false);
     editor.getSession().setMode("ace/mode/ccs");
