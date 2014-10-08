@@ -1,6 +1,7 @@
 /// <reference path="ccs.ts" />
 import ccs = require('./ccs');
 
+// http://ironcreek.net/phpsyntaxtree/?
 export class LabelledBracketNotation implements ccs.PostOrderDispatchHandler<string> {
     dispatchProgram(node : ccs.Program, ... assignResults : string[]) : string {
     	return "[Program " + assignResults.join(' ') + "]";

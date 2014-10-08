@@ -11,49 +11,69 @@ var parser = PEG.buildParser(grammar, {cache: true});
 
 var cmdText = process.argv.slice(2).join(" ");
 
-if (cmdText.trim() !== "") {
-	var nodeMap = {};
-	var cmdAst = parser.parse(cmdText, {ccs: ccs, astNodes: ccs.CCSNode, nodeMap: nodeMap});
-	var tree = cmdAst;
-	var lbn = new ccsutil.LabelledBracketNotation();
-	console.log("Tree Size: " + ccs.postOrderTransform(tree, new ccsutil.SizeOfTree()) + "\n");
-	var spt = new shared.SharedParseTreeTraverser();
-	console.log("after sharing...\n");
-	tree = ccs.postOrderTransform(tree, spt);
+function runOnText(text) {
+    var graph = new ccs.Graph();
+    var cmdAst = parser.parse(text, {ccs: ccs, astNodes: ccs.CCSNode, graph: graph});
+    var tree = cmdAst;
+    var lbn = new ccsutil.LabelledBracketNotation();
+    console.log("Tree Size: " + ccs.postOrderTransform(tree, new ccsutil.SizeOfTree()) + "\n");
 
-	//Check for errors
-	var errors = {warnings: [], errors: []};
-	checkConstants(errors, spt, cmdAst.assignments.map(function (ass) {
-		return ass.variable;
-	}));
-	errors.errors.forEach(function (error) {
-		console.log("Error: " + error);
-	});
+    var spt = new shared.SharedParseTreeTraverser();
+    console.log("after sharing...\n");
+    tree = ccs.postOrderTransform(tree, spt);
+    console.log(ccs.postOrderTransform(tree, lbn));
 
-	console.log(ccs.postOrderTransform(tree, lbn));
-	console.log("about to reduce...\n")
-	var rpt = new reduced.ReducedParseTreeTraverser();
-	tree = ccs.postOrderTransform(tree, rpt);
-	console.log(ccs.postOrderTransform(tree, lbn));
-	console.log("about to prettyprint...\n");
-	var pp = new ccsutil.CCSNotation();
-	console.log(ccs.postOrderTransform(tree, pp));
+    console.log("about to reduce...\n")
+    var rpt = new reduced.ReducedParseTreeTraverser();
+    tree = ccs.postOrderTransform(tree, rpt);
+    console.log(ccs.postOrderTransform(tree, lbn));
+
+    console.log("about to prettyprint...\n");
+    var pp = new ccsutil.CCSNotation();
+    console.log(ccs.postOrderTransform(tree, pp));
+
+    return [tree, graph];
 }
-else
-    console.log("No ccs arguments");
 
-function checkConstants(errorCollection, spt, assignmentTargets) {
-	//Add not found errors
-	for (var constant in spt.constantToNode) {
-		if (assignmentTargets.indexOf(constant) == -1) {
-			errorCollection.errors.push("Process name '" + constant + "' not found");
-		}
-	}
+if (cmdText.trim() !== "") {
+    runOnText(cmdText);
+} else {
+    (function () {
+        var tree, graph;
+        var pair = runOnText("P = (a.b.P | !a.!b.Q) \\ {a,b} \n Q = c.P");
+        tree = pair[0];
+        graph = pair[1];
+        simulate("P", graph, tree, 5);
+    })();
 }
 
 function logObjectDeep(obj) {
-	console.log(util.inspect(obj, false, null));
+    console.log(util.inspect(obj, false, null));
 }
 
-//You can use:
-// http://ironcreek.net/phpsyntaxtree/?
+function simulate(processName, graph, tree, n) {
+    n = n || 10;
+    var successors = {};
+    var program = graph.root;
+    var sc = new ccs.SuccessorGenerator(successors, graph);
+    //Must run it on program to cache all variable definitions.
+    ccs.conditionalPostOrderTransform(program, sc, function (n) { return true; });
+    var currentNode = graph.assignmentByVariable(processName);
+    if (!currentNode) throw "Invalid process name";
+    currentNode = currentNode.process;
+    for (var i = 0; i < n; i++) {
+        //Must run it on the current node since it may be attached independently of the original program.
+        ccs.conditionalPostOrderTransform(currentNode, sc, function (n) { return true; });
+        var transitionCandidates = successors[currentNode.id];
+        var arrayCandidates = [];
+        transitionCandidates.forEach(function (t) {
+            arrayCandidates.push(t);
+        });
+        if (arrayCandidates.length === 0) {
+            break;
+        }
+        var ct = arrayCandidates[Math.floor(Math.random() * arrayCandidates.length)];
+        console.log(currentNode.id + " ---- " + (ct.complement ? "!" : "") + ct.label + " ----> " + ct.targetProcessId);
+        currentNode = graph.nodeById(ct.targetProcessId);
+    }
+}
