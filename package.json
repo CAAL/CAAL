@@ -8,7 +8,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "build": "find src/*.ts -type f -print0 | xargs -0 tsc -m commonjs; node modules/ace/Makefile.dryice.js -m --target lib/ace",
+    "build": "find src/*.ts -type f -print0 | xargs -0 tsc -m commonjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "authors": "Jacob K. Wortmann, Jesper R. Andersen, Mathias M. Hansen, Nicklas Andersen, Simon R. Olesen, Søren Enevoldsen ",
