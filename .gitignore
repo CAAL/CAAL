@@ -1,3 +1,5 @@
 node_modules
 src/*.js
+src/gui/*.js
 npm-debug.log
+lib/ccs.js

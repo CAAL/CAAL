@@ -13,8 +13,6 @@
 	}
 
 	var ccs = options.ccs;
-	var AST = options.astNodes;
-	var nodeMap = options.nodeMap;
 	var g = options.graph;
 }
 
