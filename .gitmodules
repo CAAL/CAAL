@@ -7,3 +7,6 @@
 [submodule "lib/fontawesome"]
 	path = lib/fontawesome
 	url = git@github.com:FortAwesome/Font-Awesome.git
+[submodule "modules/ace"]
+	path = modules/ace
+	url = git@github.com:figa12/ace.git

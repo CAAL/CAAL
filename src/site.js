@@ -14,8 +14,10 @@ $("#sidebar-header").click(function() {
     }
 });
 
+
+var editor;
 $("document").ready(function() {
-    var editor = ace.edit("content");
+    editor = ace.edit("content");
     editor.setTheme("ace/theme/crisp");
     editor.setShowPrintMargin(false);
     editor.getSession().setMode("ace/mode/ccs");
