@@ -48,8 +48,13 @@ class Renderer {
           // pt:   {x:#, y:#}  node position in screen coords
 
           var label = node.data.label||""
-          var w = that.ctx.measureText(""+label).width + 10
+          var w = that.ctx.measureText(""+label).width + 10;
           
+		  if(node.name == 'b')
+		  {
+			console.log(w);
+		  }
+		  
           if (!(""+label).match(/^[ \t]*$/)) {
             pt.x = Math.floor(pt.x)
             pt.y = Math.floor(pt.y)
@@ -70,8 +75,6 @@ class Renderer {
           that.gfx.oval(pt.x-w/2, pt.y-w/2, w,w, {fill:that.ctx.fillStyle})
           nodeBoxes[node.name] = [pt.x-w/2, pt.y-w/2, w,w]
           
-		  console.log(nodeBoxes[node.name]);
-
           // draw the text
           if (label){
             that.ctx.font = "12px Helvetica"
@@ -103,16 +106,17 @@ class Renderer {
           var tail = that.intersect_line_box(pt1, pt2, nodeBoxes[edge.source.name])
           var head = that.intersect_line_box(tail, pt2, nodeBoxes[edge.target.name])
 
-          var label = edge.data.label||""
+          var label1 = edge.data.label||""
           
-          if (label){
+          if (label1){
+		  
             var mid_x = (tail.x+head.x)/2;
             var mid_y = (tail.y+head.y)/2;
-                that.ctx.font = "17px Helvetica";
-                that.ctx.textAlign = "center";
-                that.ctx.fillStyle = "black";
-                that.ctx.fillText(label, mid_x-5, mid_y-5);
-          }
+			that.ctx.font = "12px Helvetica"; // needs to be 12px or first drawn nodes gets larger
+			that.ctx.textAlign = "center";
+			that.ctx.fillStyle = "black";
+			that.ctx.fillText(label1, mid_x-5, mid_y-5);
+		  }
 
           //draw the arrowhead
           if(edge.data.directed){
