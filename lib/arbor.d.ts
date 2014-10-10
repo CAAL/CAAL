@@ -6,16 +6,18 @@ interface ParticleSystem {
     (repulsion : number, stiffness : number, friction : number) : ParticleSystem;
     
     /*Functions*/
-    nearest(p : Point) : refNode;
     screenSize(width : number, height : number) : void;
     screenPadding(top : number) : void;
     screenPadding(top : number, bottom : number) : void;
     screenPadding(top : number, right : number, bottom : number, left : number) : void;
+    
+    nearest(p : Point) : refNode;
     fromScreen(p : Point) : Point; 
     toScreen(p : Point) : Point;
+    parameters(o : Object) : void;
+    
     addEdge(source : string, target : string, data : Object) : Edge;
     addNode(name : string, object : Object) : Node;
-    parameters(o : Object) : void;
     eachNode(f : (n : Node, pt : Point) => void) : void;
     eachEdge(f : (e : Edge, p1 : Point, p2 : Point) => void) : void; 
 }
