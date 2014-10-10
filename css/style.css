@@ -114,3 +114,7 @@ a:hover {
     height: 100%;
     margin-bottom: -55px;
 }
+
+input.hidden-input {
+    display: none;
+}
