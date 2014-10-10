@@ -110,11 +110,11 @@ a:hover {
     color: #666;
 }
 
+input.hidden-input {
+    display: none;
+}
+
 #editor {
     height: 100%;
     margin-bottom: -55px;
-}
-
-input.hidden-input {
-    display: none;
 }
