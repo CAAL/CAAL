@@ -9,6 +9,7 @@
   "devDependencies": {},
   "scripts": {
     "build": "find src/*.ts -type f | xargs tsc -out lib/ccs.js",
+    "build-grammar": "pegjs -e CCSParser src/ccs_grammar.pegjs lib/ccs_grammar.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "authors": "Jacob K. Wortmann, Jesper R. Andersen, Mathias M. Hansen, Nicklas Andersen, Simon R. Olesen, Søren Enevoldsen ",

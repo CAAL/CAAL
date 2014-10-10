@@ -1,19 +1,7 @@
-"use strict";
 
 var ccs = CCS,
     tvs = Traverse,
-    parser;
-
-
-console.log("Fetching grammar");
-$.ajax({
-    url: "src/ccs_grammar.pegjs",
-    dataType: "text"
-}).done(function (data) {
-    console.log("Got grammar");
-    parser = PEG.buildParser(data, {cache: true});
-    console.log("Parser Generated");
-});
+    parser = CCSParser;
 
 $(document).ready(function(){
     $("#formbutton").on("click", function () {
