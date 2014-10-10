@@ -1055,6 +1055,8 @@ declare module AceAjax {
 
         container: HTMLElement;
 
+        setOptions(An: any);
+
         onSelectionChange(e);
 
         onChangeMode(e?);

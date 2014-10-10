@@ -13,12 +13,17 @@ editor.setOptions({enableBasicAutocompletion: true});
 
 /* Element IDs */
 var newId = '#new';
+var importId = '#import';
 var exportId = '#export';
 
 /* Initialize project */
 var project = new Project('Untitled Project', 'No description ...', '', '.project-title', '.project-desc', editor);
 $(newId).click(() => project.new());
-$(exportId).click(() => project.export(exportId));
+$(importId).click(function() {
+    $(':file').click();
+});
+$(':file').change((evt) => project.importProject(evt));
+$(exportId).click(() => project.exportProject(exportId));
 
 /* Initialize sidebar elements */
 var projects = new ExpandableList(false, '#projects-toggle', '#projects');

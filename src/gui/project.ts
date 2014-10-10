@@ -8,7 +8,7 @@ class Project {
     private descriptionId: string;
     private editor: any;
 
-    constructor(defaultTitle: string,
+    public constructor(defaultTitle: string,
                 defaultDescription: string,
                 defaultCCS: string,
                 titleId: string,
@@ -32,7 +32,7 @@ class Project {
         $(this.descriptionId).focusout(() => this.onDescriptionChanged());
     }
 
-    new() {
+    public new() {
         this.setTitle(this.defaultTitle);
         this.setDescription(this.defaultDescription);
         this.setCCS(this.defaultCCS);
@@ -50,11 +50,19 @@ class Project {
 
     }
 
-    private import() {
-
+    public importProject(evt) {
+        var file = evt.target['files'][0];
+        var reader = new FileReader();
+        reader.readAsText(file);
+        reader.onload = () => {
+            var project = JSON.parse(reader.result);
+            this.setTitle(project.title);
+            this.setDescription(project.description);
+            this.setCCS(project.ccs);
+        }
     }
 
-    export(exportId: string) {
+    public exportProject(exportId: string) {
         var blob = new Blob([this.toJSON()], {type: 'text/plain'});
         $(exportId).attr('href', URL.createObjectURL(blob));
         $(exportId).attr('download', this.title + '.ccs');
@@ -95,16 +103,4 @@ class Project {
             }
         );
     }
-
-    /*private import(evt) {
-        $(':file').click();
-        console.log(evt);
-        var file = evt.target['files'][0];
-        var reader = new FileReader();
-        reader.readAsText(file);
-        reader.onload = function() {
-            console.log(reader.result);
-            this.editor.getSession().setValue(reader.result);
-        }
-    }*/
 }
