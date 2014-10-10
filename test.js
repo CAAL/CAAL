@@ -4,8 +4,8 @@ var ccs = CCS,
     parser = CCSParser;
 
 $(document).ready(function(){
-    $("#formbutton").on("click", function () {
-        var programText = $("#textarea").val(),
+    $("#parse").on("click", function () {
+        var programText = editor.getValue(),
             graph = new ccs.Graph(),
             ast = parser.parse(programText, {ccs: ccs, graph: graph});
         console.log("Parsed program into AST: " + ast);
