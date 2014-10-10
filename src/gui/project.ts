@@ -1,36 +1,41 @@
 class Project {
     private defaultTitle: string;
     private defaultDescription: string;
+    private defaultCCS: string;
     private title: string;
     private description: string;
     private titleId: string;
     private descriptionId: string;
-    private resetId: string;
+    private editor: any;
 
     constructor(defaultTitle: string,
                 defaultDescription: string,
+                defaultCCS: string,
                 titleId: string,
                 descriptionId: string,
-                resetId: string)
+                editor: any)
     {
         this.defaultTitle = defaultTitle;
         this.defaultDescription = defaultDescription;
+        this.defaultCCS = defaultCCS;
         this.titleId = titleId;
         this.descriptionId = descriptionId;
-        this.resetId = resetId;
+        this.editor = editor;
 
+        /* Set default values */
         this.setTitle(this.defaultTitle);
         this.setDescription(this.defaultDescription);
+        this.setCCS(this.defaultCCS);
 
         /* Register event handlers */
         $(this.titleId).focusout(() => this.onTitleChanged());
         $(this.descriptionId).focusout(() => this.onDescriptionChanged());
-        $(this.resetId).click(() => this.reset());
     }
 
-    private reset() {
+    new() {
         this.setTitle(this.defaultTitle);
         this.setDescription(this.defaultDescription);
+        this.setCCS(this.defaultCCS);
     }
 
     private save() {
@@ -49,8 +54,10 @@ class Project {
 
     }
 
-    private export() {
-
+    export(exportId: string) {
+        var blob = new Blob([this.toJSON()], {type: 'text/plain'});
+        $(exportId).attr('href', URL.createObjectURL(blob));
+        $(exportId).attr('download', this.title + '.ccs');
     }
 
     private setTitle(title: string) {
@@ -63,6 +70,14 @@ class Project {
         $(this.descriptionId).text(this.description);
     }
 
+    private setCCS(ccs: string) {
+        this.editor.setValue(ccs);
+    }
+
+    private getCCS(): string {
+        return this.editor.getSession().getValue();
+    }
+
     private onTitleChanged() {
         this.title = $(this.titleId).text();
     }
@@ -71,23 +86,17 @@ class Project {
         this.description = $(this.descriptionId).text();
     }
 
-    /*private export() {
-        var blob = new Blob([this.toJSON()], {type: 'text/plain'});
-        $(exportId).attr('href', URL.createObjectURL(blob));
-        $(exportId).attr('download', this.title + '.ccs');
-    }
-
     private toJSON() {
         return JSON.stringify(
             {
                 title: this.title,
                 description: this.description,
-                ccs: this.editor.getValue()
+                ccs: this.getCCS()
             }
         );
     }
 
-    private import(evt) {
+    /*private import(evt) {
         $(':file').click();
         console.log(evt);
         var file = evt.target['files'][0];

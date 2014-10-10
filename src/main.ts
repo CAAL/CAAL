@@ -9,10 +9,16 @@ editor.setTheme("ace/theme/crisp");
 editor.setShowPrintMargin(false);
 editor.getSession().setMode("ace/mode/ccs");
 ace.require("ace/ext/language_tools");
-//editor.setOptions({enableBasicAutocompletion: true});
+editor.setOptions({enableBasicAutocompletion: true});
+
+/* Element IDs */
+var newId = '#new';
+var exportId = '#export';
 
 /* Initialize project */
-var project = new Project('Untitled Project', 'No description ...', '.project-title', '.project-desc', '#new');
+var project = new Project('Untitled Project', 'No description ...', '', '.project-title', '.project-desc', editor);
+$(newId).click(() => project.new());
+$(exportId).click(() => project.export(exportId));
 
 /* Initialize sidebar elements */
 var projects = new ExpandableList(false, '#projects-toggle', '#projects');
