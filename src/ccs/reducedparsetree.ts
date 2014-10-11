@@ -4,63 +4,89 @@ module Traverse {
 
     import ccs = CCS;
 
-    export class ReducedParseTreeTraverser implements ccs.PostOrderDispatchHandler<ccs.Node> {
-        dispatchProgram(node : ccs.Program, ... assignResults : ccs.Node[]) : ccs.Node {
-            node.assignments = <ccs.Assignment[]>assignResults;
-            return node;
+    export class ProcessTreeReducer implements ccs.ProcessVisitor<ccs.Process>, ccs.ProcessDispatchHandler<ccs.Process> {
+
+        constructor(public graph : ccs.Graph, public cache?) {
+            this.cache = cache || {};
         }
-        dispatchNullProcess(node : ccs.NullProcess) : ccs.Node {
-            return node;
+
+        visit(process : ccs.Process) : ccs.Process {
+            return process.dispatchOn(this);
         }
-        dispatchAssignment(node : ccs.Assignment, result : ccs.Node) : ccs.Node {
-            node.process = result;
-            return node;
+
+        dispatchNullProcess(process : ccs.NullProcess) {
+            this.cache[process.id] = true;
+            return process;
         }
-        dispatchSummation(node : ccs.Summation, leftResult : ccs.Node, rightResult : ccs.Node) : ccs.Node {
-            node.left = leftResult;
-            node.right = rightResult;
-            if (node.left instanceof ccs.NullProcess) return node.right; // 0 + P => 0
-            if (node.right instanceof ccs.NullProcess) return node.left; // P + 0 => P
-            if (node.left.id === node.right.id) return leftResult; // P + P => P
-            return node;
-        }
-        dispatchComposition(node : ccs.Composition, leftResult : ccs.Node, rightResult : ccs.Node) : ccs.Node {
-            node.left = leftResult;
-            node.right = rightResult;
-            if (node.left instanceof ccs.NullProcess) return node.right; // 0 | P => 0
-            if (node.right instanceof ccs.NullProcess) return node.left; // P | 0 => P
-            // DISABLED ---- if (node.left.id === node.right.id) return node.left; // P | P => P  --- ASK THE MAN
-            return node;
-        }
-        dispatchAction(node : ccs.Action, processResult : ccs.Node) : ccs.Node {
-            node.next = processResult;
-            return node;
-        }
-        dispatchRestriction(node : ccs.Restriction, processResult : ccs.Node) : ccs.Node {
-            node.process = processResult;
-            // (P \ L1) \L2 => P \ (L1 Union L2)
-            if (node.process instanceof ccs.Restriction) {
-                var subRestriction = <ccs.Restriction>node.process;
-                subRestriction.restrictedLabels = subRestriction.restrictedLabels.union(node.restrictedLabels);
-                node = subRestriction;
+
+        dispatchNamedProcess(process : ccs.NamedProcess) {
+            if (!this.cache[process.id]) {
+                process.subProcess = process.subProcess.dispatchOn(this);
+                this.cache[process.id] = true;
             }
-            // 0 \ L => 0
-            if (node.process instanceof ccs.NullProcess) {
-                return node.process;
-            }
-            if (node.restrictedLabels.empty()) {
-                return node.process;
-            }
-            return node;
+            return process;
         }
-        dispatchRelabelling(node : ccs.Relabelling, processResult : ccs.Node) : ccs.Node {
-            node.process = processResult;
-            if (node.process instanceof ccs.NullProcess) return node.process; // 0 [f] => 0
-            return node;
+
+        dispatchSummationProcess(process : ccs.SummationProcess) {
+            if (!this.cache[process.id]) {
+                process.leftProcess = process.leftProcess.dispatchOn(this);
+                process.rightProcess = process.rightProcess.dispatchOn(this);
+                if (process.leftProcess instanceof ccs.NullProcess) return process.rightProcess; // 0 + P => 0
+                if (process.rightProcess instanceof ccs.NullProcess) return process.leftProcess; // P + 0 => P
+                if (process.leftProcess.id === process.rightProcess.id) return process.leftProcess; // P + P => P
+                this.cache[process.id] = true;
+            }
+            return process;
         }
-        dispatchConstant(node : ccs.Constant) : ccs.Node {
-            return node;
+
+        dispatchCompositionProcess(process : ccs.CompositionProcess) {
+            if (!this.cache[process.id]) {
+                process.leftProcess = process.leftProcess.dispatchOn(this);
+                process.rightProcess = process.rightProcess.dispatchOn(this);
+                if (process.leftProcess instanceof ccs.NullProcess) return process.rightProcess; // 0 | P => 0
+                if (process.rightProcess instanceof ccs.NullProcess) return process.leftProcess; // P | 0 => P
+                this.cache[process.id] = true;
+            }
+            return process;
+        }
+
+        dispatchActionPrefixProcess(process : ccs.ActionPrefixProcess) {
+            if (!this.cache[process.id]) {
+                process.nextProcess = process.nextProcess.dispatchOn(this);
+                this.cache[process.id] = true;
+            }
+            return process;
+        }
+
+        dispatchRestrictionProcess(process : ccs.RestrictionProcess) {
+            if (!this.cache[process.id]) {
+                process.subProcess = process.subProcess.dispatchOn(this);
+                // (P \ L1) \L2 => P \ (L1 Union L2)
+                if (process.subProcess instanceof ccs.RestrictionProcess) {
+                    var subRestriction = <ccs.RestrictionProcess>process.subProcess;
+                    subRestriction.restrictedLabels = subRestriction.restrictedLabels.union(process.restrictedLabels);
+                    process = subRestriction;
+                }
+                // 0 \ L => 0
+                if (process.subProcess instanceof ccs.NullProcess) {
+                    return process.subProcess;
+                }
+                // P \ Ø => P
+                if (process.restrictedLabels.empty()) {
+                    return process.subProcess;
+                }
+                this.cache[process.id] = true;
+            }
+            return process;
+        }
+
+        dispatchRelabellingProcess(process : ccs.RelabellingProcess) {
+            if (!this.cache[process.id]) {
+                process.subProcess = process.subProcess.dispatchOn(this);
+                if (process.subProcess instanceof ccs.NullProcess) return process.subProcess; // 0 [f] => 0
+                this.cache[process.id] = true;
+            }
+            return process;
         }
     }
-
 }
