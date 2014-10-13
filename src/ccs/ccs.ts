@@ -20,18 +20,6 @@ module CCS {
         visit(process : Process) : T;
     }
 
-
-
-    // export interface PostOrderDispatchHandler<T> extends ProcessDispatchHandler<T> {
-    //     dispatchNullProcess(process : NullProcess) : T;
-    //     dispatchNamedProcess(process : NamedProcess, result : T) : T;
-    //     dispatchSummationProcess(process : SummationProcess, leftResult : T, rightResult : T) : T;
-    //     dispatchCompositionProcess(process : CompositionProcess, leftResult : T, rightResult : T) : T;
-    //     dispatchActionPrefixProcess(process : ActionPrefixProcess, processResult : T) : T;
-    //     dispatchRestrictionProcess(process : RestrictionProcess, processResult : T) : T;
-    //     dispatchRelabellingProcess(process : RelabellingProcess, processResult : T) : T;
-    // }
-
     export class NullProcess implements Process {
         constructor(public id : number) {
         }
@@ -127,12 +115,18 @@ module CCS {
         }
     } 
 
+    interface Error {
+        name : string;
+        message : string;
+    }
+
     export class Graph {
         nextId : number = 1;
         private nullProcess = new NullProcess(0);
         private cache : any = {};
         private processes = {0: this.nullProcess};
         private namedProcesses = {}
+        private constructErrors = [];
 
         constructor() {
             this.cache.structural = {}; //used structural sharing
@@ -144,9 +138,11 @@ module CCS {
             if (!namedProcess) {
                 namedProcess = this.namedProcesses[processName] = new NamedProcess(this.nextId++, processName, process);
                 this.processes[namedProcess.id] = namedProcess;
-            }
-            if (!namedProcess.subProcess) {
+            } else if (!namedProcess.subProcess) {
                 namedProcess.subProcess = process;
+            } else {
+                this.constructErrors.push({name: "DuplicateDeclaration",
+                    messsage: "Duplicate declaration of process '" + processName + "'"});
             }
             return namedProcess;
         }
@@ -233,6 +229,23 @@ module CCS {
 
         getNamedProcesses() {
             return Object.keys(this.namedProcesses);
+        }
+
+        getErrors() {
+            var errors = this.constructErrors.slice(0);
+            //Add undefined processes
+            var addUndefinedProcess = () => {
+                var processName, process;
+                for (processName in this.namedProcesses) {
+                    process = this.namedProcesses[processName];
+                    if (!process.subProcess) {
+                        errors.push({name: "UndefinedProcess",
+                            message: "Process '" + processName + "' has no definition"});
+                    }
+                }
+            }
+            addUndefinedProcesses();
+            return errors;
         }
     }
 

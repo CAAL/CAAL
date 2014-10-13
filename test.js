@@ -6,12 +6,18 @@ var ccs = CCS,
 $(document).ready(function() {
     $("#parse").on("click", function () {
         var programText = editor.getValue(),
-            graph = new ccs.Graph();
+            graph = new ccs.Graph(),
+            errors;
         parser.parse(programText, {ccs: ccs, graph: graph});
         console.log("Parsed program into AST: " + graph + " with definitions:");
-        console.log(printListing(graph));
-        console.log("Simulating process 'P' 5 times");
-        simulate("P", graph, 5);
+        errors = graph.getErrors();
+        if (errors.length > 0) {
+            console.log(errors);
+        } else {
+            console.log(printListing(graph));
+            console.log("Simulating process 'P' 5 times");
+            simulate("P", graph, 5);
+        }
     });
 })
 
