@@ -59,3 +59,5 @@ editor.setValue([
     "agent Spec = acc.'del.Spec; * our specification",
     ""
 ].join('\n'));
+
+editor.clearSelection();
