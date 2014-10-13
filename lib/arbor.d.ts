@@ -4,6 +4,7 @@ interface ParticleSystem {
     
     /*Constructor*/
     (repulsion : number, stiffness : number, friction : number) : ParticleSystem;
+    (repulsion : number, stiffness : number, friction : number, gravity : boolean, fps : number, dt : number, precision : number) : ParticleSystem;
     
     /*Functions*/
     screenSize(width : number, height : number) : void;
@@ -34,7 +35,8 @@ interface Node{
     name : string;
     data : any; //Must not be object for some reason
     fixed : boolean; // if true, don't let physics move the node
-    tempMass : number
+    tempMass : number;
+    expanded : boolean;
 }
 
 interface Edge {
