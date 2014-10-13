@@ -1,3 +1,4 @@
+/// <reference path="unguarded_recursion.ts" />
 
 module CCS {
 
@@ -234,7 +235,7 @@ module CCS {
         getErrors() {
             var errors = this.constructErrors.slice(0);
             //Add undefined processes
-            var addUndefinedProcess = () => {
+            var addUndefinedProcesses = () => {
                 var processName, process;
                 for (processName in this.namedProcesses) {
                     process = this.namedProcesses[processName];
@@ -244,7 +245,18 @@ module CCS {
                     }
                 }
             }
+            var addUnguardedRecursionErrors = () => {
+                var checker = new Traverse.UnguardedRecursionChecker(),
+                    processNames = Object.keys(this.namedProcesses),
+                    processes = processNames.map(name => this.namedProcesses[name]),
+                    unguardedProcesses = checker.findUnguardedProcesses(processes);
+                unguardedProcesses.forEach(process => {
+                    errors.push({name: "UnguardedProcess", message: "Process '" + process.name + "' has unguarded recursion"});
+                });
+            }
             addUndefinedProcesses();
+            //Unguarded recursion checking requires all processes to defined.
+            if (errors.length === 0) addUnguardedRecursionErrors();
             return errors;
         }
     }

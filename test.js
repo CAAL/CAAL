@@ -45,6 +45,7 @@ function simulate(processName, graph, ast, n) {
         });
 
         var randomTransition = transitionsInArray[Math.floor(Math.random() * transitionsInArray.length)];
+        if (!randomTransition) break;
         var from = ccsn.visit(currentNode);
         var to = ccsn.visit(randomTransition.targetProcess);
         console.log(from + "\t --- " + randomTransition.action + " --> \t" + to);
