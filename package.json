@@ -8,7 +8,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "build": "./build.sh",
+    "build": "build.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "authors": "Jacob K. Wortmann, Jesper R. Andersen, Mathias M. Hansen, Nicklas Andersen, Simon R. Olesen, Søren Enevoldsen ",
