@@ -8,7 +8,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "build": "find src/ccs/*.ts -type f | xargs tsc -out lib/ccs.js; tsc --out ./src/main.js ./src/main.ts",
+    "build": "find src/ccs/*.ts -type f | xargs tsc --out lib/ccs.js & tsc --out src/main.js src/main.ts",
     "build-grammar": "pegjs --cache -e CCSParser src/ccs/ccs_grammar.pegjs lib/ccs_grammar.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
