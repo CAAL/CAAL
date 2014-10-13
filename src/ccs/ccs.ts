@@ -128,6 +128,7 @@ module CCS {
         private processes = {0: this.nullProcess};
         private namedProcesses = {}
         private constructErrors = [];
+        private definedSets = {};
 
         constructor() {
             this.cache.structural = {}; //used structural sharing
@@ -142,8 +143,8 @@ module CCS {
             } else if (!namedProcess.subProcess) {
                 namedProcess.subProcess = process;
             } else {
-                this.constructErrors.push({name: "DuplicateDeclaration",
-                    messsage: "Duplicate declaration of process '" + processName + "'"});
+                this.constructErrors.push({name: "DuplicateProcessDefinition",
+                    messsage: "Duplicate definition of process '" + processName + "'"});
             }
             return namedProcess;
         }
@@ -213,11 +214,27 @@ module CCS {
             return existing;
         }
 
+        newRestrictedProcessOnSetName(process, setName) {
+            var labelSet = this.definedSets[setName];
+            if (!labelSet) {
+                this.constructErrors.push({name: "UndefinedSet", message: "Set '" + setName + "' has not been defined"});
+                labelSet = new LabelSet();
+            }
+            return this.newRestrictedProcess(process, labelSet);
+        }
+
         newRelabelingProcess(process, relabellings : RelabellingSet) {
             //Same as reasoning as restriction
             var existing = new RelabellingProcess(this.nextId++, process, relabellings);
             this.processes[existing.id] = existing;
             return existing;
+        }
+
+        defineSet(name, labels) {
+            if (this.definedSets[name]) {
+                this.constructErrors.push({name: "DuplicateSetDefinition", message: "Set '" + name + "' has already been defined"});
+            }
+            this.definedSets[name] = new LabelSet(labels);
         }
 
         processById(id) {
@@ -310,8 +327,10 @@ module CCS {
     export class LabelSet {
         private labels : string[] = [];
 
-        constructor(labels) {
-            this.addLabels(labels);
+        constructor(labels?) {
+            if (labels) {
+                this.addLabels(labels);
+            }
         }
 
         public clone() {

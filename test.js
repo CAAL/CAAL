@@ -7,28 +7,29 @@ $(document).ready(function() {
     $("#parse").on("click", function () {
         var programText = editor.getValue(),
             graph = new ccs.Graph(),
+            n = 10,
             errors;
         parser.parse(programText, {ccs: ccs, graph: graph});
-        console.log("Parsed program into AST: " + graph + " with definitions:");
         errors = graph.getErrors();
         if (errors.length > 0) {
             console.log(errors);
         } else {
-            console.log(printListing(graph));
-            console.log("Simulating process 'P' 5 times");
-            simulate("P", graph, 5);
+            // console.log("Parsed program into AST: " + graph + " with definitions:");
+            // printListing(graph, "\t");
+            console.log("Simulating process 'Protocol' " + n + " times");
+            simulate("Protocol", graph, n);
         }
     });
 })
 
-function printListing(graph) {
+function printListing(graph, prefix) {
     var ccsnv = new tvs.CCSNotationVisitor();
     graph.getNamedProcesses().forEach(function (name) {
-        console.log(name + " = " + ccsnv.visit(graph.processByName(name).subProcess));
+        console.log(prefix + name + " = " + ccsnv.visit(graph.processByName(name).subProcess));
     });
 }
 
-function simulate(processName, graph, ast, n) {
+function simulate(processName, graph, n) {
     n = n || 10;
     var program = graph.root;
     var sc = new ccs.SuccessorGenerator(graph, graph.cache.successors, graph);
@@ -36,7 +37,7 @@ function simulate(processName, graph, ast, n) {
     //Must run it on program to cache all variable definitions.
     var currentNode = graph.processByName(processName);
     if (!currentNode) throw "Process name '" + processName + "' not found";
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < n; i++) {
         var possibleTransitions = sc.visit(currentNode);
 
         var transitionsInArray = [];
@@ -45,7 +46,11 @@ function simulate(processName, graph, ast, n) {
         });
 
         var randomTransition = transitionsInArray[Math.floor(Math.random() * transitionsInArray.length)];
-        if (!randomTransition) break;
+        if (!randomTransition) {
+            console.log(graph);
+            console.log("deadlock");
+            break;
+        }
         var from = ccsn.visit(currentNode);
         var to = ccsn.visit(randomTransition.targetProcess);
         console.log(from + "\t --- " + randomTransition.action + " --> \t" + to);

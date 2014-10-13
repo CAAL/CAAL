@@ -22,15 +22,19 @@ start
 
 //A program consists of lines only used for process assignments.
 Program
-	= assignments:Assignments { return g; }
+	= statements:Statements _ { return g; }
+	/ _ { return g; }
 
-Assignments = _ first:Assignment _ Newline rest:Assignments { return [first].concat(rest); }
-            / _ first:Assignment _ { return [first];}
-			/ _ Newline assignments:Assignments { return assignments; }
-	  		/ _ Newline? { return []; }
+Statements = Statement Statements
+		   / Statement
+
+Statement = Assignment
+		  / SetDeclaration
+
+SetDeclaration = _ "set" _ name:Identifier _ "=" _ "{" _ labels:LabelList _ "}" _ ";" { return g.defineSet(name, labels); }
 
 Assignment
-	= name:ConstantStr _ "=" _ P:Process { return g.newNamedProcess(name, P); }
+	= (_ "agent"?) _ name:Identifier _ "=" _ P:Process _ ";" { return g.newNamedProcess(name, P); }
 
 //The rules here are defined in the reverse order of their precedence.
 //Either a given rule applies, eg. +, and everything to the left must have higher precedence,
@@ -46,12 +50,12 @@ Composition
 	/ P:ActionPrefix { return P; }
 
 ActionPrefix
-	= label:Label _ "." _ P:ActionPrefix { return g.newActionPrefixProcess(new ccs.Action(label, false), P); }
-	/ "!" _ label:Label _ "." _ P:ActionPrefix { return g.newActionPrefixProcess(new ccs.Action(label, true), P); }
+	= action:Action _ "." _ P:ActionPrefix { return g.newActionPrefixProcess(action, P); }
 	/ P:ReProcess { return P; }
 
 ReProcess
 	= P:ParenProcess _ "\\" _ "{" _ labels:LabelList? _ "}" { return g.newRestrictedProcess(P, new ccs.LabelSet(labels || [])); }
+	/ P:ParenProcess _ "\\" _ setName:Identifier { return g.newRestrictedProcessOnSetName(P, setName); }
 	/ P:ParenProcess _ "[" _ relabels:RelabellingList _ "]" { return g.newRelabelingProcess(P, new ccs.RelabellingSet(relabels || [])); }
 	/ P:ParenProcess { return P; }
 
@@ -71,15 +75,22 @@ ParenProcess
 // A constant process. Either the null process 0, or some process K.
 ConstantProcess
 	= "0" { return g.getNullProcess(); }
-	/ K:ConstantStr { return g.referToNamedProcess(K); }
+	/ K:Identifier { return g.referToNamedProcess(K); }
 
 //Valid names for processes
-ConstantStr
-	= first:[A-Z] rest:[A-Za-z]* { return strFirstAndRest(first, rest); }
+Identifier
+	= first:[A-Z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
+
+IdentifierRest
+	= rest:[A-Za-z0-9?!_'\-#]*  { return rest; }
+
+Action
+	= [!'] label:Label { return new ccs.Action(label, true); }
+	/ label:Label { return new ccs.Action(label, false); }
 
 //Valid name for actions
 Label
-	= label:[a-z]+ { return label.join(''); }
+	= first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
 
 LabelList
 	= first:Label rest:(_ "," _ Label)* { return extractLabelList(first, rest); }
@@ -87,8 +98,15 @@ LabelList
 Whitespace
 	= [ \t]
 
+Comment = "*" [^\r\n]* "\r"? "\n"?
+
+WhitespaceNewline
+	= Whitespace
+	/ Newline
+
 //Useful utility
-_ = Whitespace*
+_ = WhitespaceNewline* Comment _
+  / WhitespaceNewline*
 
 Newline
 	= "\r\n" / "\n" / "\r"

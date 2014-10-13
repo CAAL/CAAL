@@ -29,3 +29,33 @@ $(exportId).click(() => project.exportProject(exportId));
 var projects = new ExpandableList(false, '#projects-toggle', '#projects');
 var examples = new ExpandableList(false, '#examples-toggle', '#examples');
 var sidebar = new ExpandableNav(true, '#sidebar-header', '#sidebar', '#content', 250, 66, ['#sidebar-footer']);
+
+
+editor.setValue([
+    "",
+    "* Lets look at alternating bit protocol.",
+    "",
+    "set InternalComActs = {left0, left1, right0, right1, leftAck0, leftAck1, rightAck0, rightAck1};",
+    "",
+    "agent Send0 = acc.Sending0;",
+    "agent Sending0 = 'left0.Sending0 + leftAck0.Send1 + leftAck1.Sending0;",
+    "agent Send1 = acc.Sending1;",
+    "agent Sending1 = 'left1.Sending1 + leftAck1.Send0 + leftAck0.Sending1;",
+    " ",
+    "agent Received0 = 'del.RecvAck1;",
+    "agent Received1 = 'del.RecvAck0;",
+    "agent RecvAck0 = right0.Received0 + right1.RecvAck0 + 'rightAck1.RecvAck0;",
+    "agent RecvAck1 = right1.Received1 + right0.RecvAck1 + 'rightAck0.RecvAck1;",
+    "",
+    "agent Med = MedTop | MedBot;",
+    "agent MedBot = left0.MedBotRep0 + left1.MedBotRep1;",
+    "agent MedBotRep0 = 'right0.MedBotRep0 + tau.MedBot;",
+    "agent MedBotRep1 = 'right1.MedBotRep1 + tau.MedBot;",
+    "agent MedTop = rightAck0.MedTopRep0 + rightAck1.MedTopRep1;",
+    "agent MedTopRep0 = 'leftAck0.MedTopRep0 + tau.MedTop;",
+    "agent MedTopRep1 = 'leftAck1.MedTopRep1 + tau.MedTop;",
+    "",
+    "agent Protocol = (Send0 | Med | RecvAck0) \\ InternalComActs;",
+    "agent Spec = acc.'del.Spec; * our specification",
+    ""
+].join('\n'));
