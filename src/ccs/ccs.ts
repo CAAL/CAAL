@@ -1,262 +1,299 @@
+/// <reference path="unguarded_recursion.ts" />
 
 module CCS {
 
-    export interface Node {
+    export interface Process {
         id : number;
-        inorderStructure() : InorderStruct;
-        dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T;
+        dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T;
     }
 
-    export interface NodeDispatchHandler<T> {
-        dispatchProgram(node : Program, ... args : T[]) : T
-        dispatchNullProcess(node : NullProcess, ... args : T[]) : T
-        dispatchAssignment(node : Assignment, ... args : T[]) : T
-        dispatchSummation(node : Summation, ... args : T[]) : T
-        dispatchComposition(node : Composition, ... args : T[]) : T
-        dispatchAction(node : Action, ... args : T[]) : T
-        dispatchRestriction(node : Restriction, ... args : T[]) : T
-        dispatchRelabelling(node : Relabelling, ... args : T[]) : T
-        dispatchConstant(node : Constant, ... args : T[]) : T
+    export interface ProcessDispatchHandler<T> {
+        dispatchNullProcess(process : NullProcess, ... args) : T
+        dispatchNamedProcess(process : NamedProcess, ... args) : T
+        dispatchSummationProcess(process : SummationProcess, ... args) : T
+        dispatchCompositionProcess(process : CompositionProcess, ... args) : T
+        dispatchActionPrefixProcess(process : ActionPrefixProcess, ... args) : T
+        dispatchRestrictionProcess(process : RestrictionProcess, ... args) : T
+        dispatchRelabellingProcess(process : RelabellingProcess, ... args) : T
     }
 
-    export interface PostOrderDispatchHandler<T> extends NodeDispatchHandler<T> {
-        dispatchProgram(node : Program, ... assignResults : T[]) : T;
-        dispatchNullProcess(node : NullProcess) : T;
-        dispatchAssignment(node : Assignment, result : T) : T;
-        dispatchSummation(node : Summation, leftResult : T, rightResult : T) : T;
-        dispatchComposition(node : Composition, leftResult : T, rightResult : T) : T;
-        dispatchAction(node : Action, processResult : T) : T;
-        dispatchRestriction(node : Restriction, processResult : T) : T;
-        dispatchRelabelling(node : Relabelling, processResult : T) : T;
-        dispatchConstant(node : Constant) : T;
+    export interface ProcessVisitor<T> {
+        visit(process : Process) : T;
     }
 
-    export class Program implements Node {
-        constructor(public id : number, public assignments : Assignment[]) {
-        }
-        inorderStructure() : InorderStruct {
-            return new InorderStruct([], this, this.assignments);
-        }
-        dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
-            args = [this].concat(args);
-            return dispatcher.dispatchProgram.apply(dispatcher, args);
-        }
-        toString() {
-            return "Program";
-        }
-    }
-
-    export class NullProcess implements Node {
+    export class NullProcess implements Process {
         constructor(public id : number) {
         }
-        inorderStructure() : InorderStruct {
-            return new InorderStruct([], this, []);
-        }
-        dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
-            args = [this].concat(args);
-            return dispatcher.dispatchNullProcess.apply(dispatcher, args);
+        dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
+            return dispatcher.dispatchNullProcess(this);
         }
         toString() {
             return "NullProcess";
         }
     }
 
-    export class Assignment implements Node {
-        constructor(public id : number, public variable : string, public process : Node) {
+    export class NamedProcess implements Process {
+        constructor(public id : number, public name : string, public subProcess : Process) {
         }
-        inorderStructure() : InorderStruct {
-            return new InorderStruct([], this, [this.process]);
-        }
-        dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
-            args = [this].concat(args);
-            return dispatcher.dispatchAssignment.apply(dispatcher, args);
+        dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
+            return dispatcher.dispatchNamedProcess(this);
         }
         toString() {
-            return "Assignment(" + this.variable + ")";
+            return "NamedProcess(" + this.name +")";
         }
     }
 
-    export class Summation implements Node {
-        constructor(public id : number, public left : Node, public right : Node) {
+    export class SummationProcess implements Process {
+        constructor(public id : number, public leftProcess : Process, public rightProcess : Process) {
         }
-        inorderStructure() : InorderStruct {
-            return new InorderStruct([this.left], this, [this.right]);
-        }
-        dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
-            args = [this].concat(args);
-            return dispatcher.dispatchSummation.apply(dispatcher, args);
+        dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
+            return dispatcher.dispatchSummationProcess(this);
         }
         toString() {
             return "Summation";
         }
     }
 
-    export class Composition implements Node {
-        constructor(public id : number, public left : Node, public right : Node) {
+    export class CompositionProcess implements Process {
+        constructor(public id : number, public leftProcess : Process, public rightProcess : Process) {
         }
-        inorderStructure() : InorderStruct {
-            return new InorderStruct([this.left], this, [this.right]);
-        }
-        dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
-            args = [this].concat(args);
-            return dispatcher.dispatchComposition.apply(dispatcher, args);
+        dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
+            return dispatcher.dispatchCompositionProcess(this);
         }
         toString() {
             return "Composition";
         }
     }
 
-    export class Action implements Node {
-        constructor(public id : number, public label : string, public complement : boolean, public next : Node) {
+    export class ActionPrefixProcess implements Process {
+        constructor(public id : number, public action : Action, public nextProcess : Process) {
         }
-        inorderStructure() : InorderStruct {
-            return new InorderStruct([], this, [this.next]);
-        }
-        dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
-            args = [this].concat(args);
-            return dispatcher.dispatchAction.apply(dispatcher, args);
+        dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
+            return dispatcher.dispatchActionPrefixProcess(this);
         }
         toString() {
-            return "Action(" + (this.complement ? "!" : "") + this.label + ")";
+            return "Action(" + this.action.toString() + ")";
         }
     }
 
-    export class Restriction implements Node {
-        constructor(public id : number, public process : Node, public restrictedLabels : LabelSet) {
+    export class RestrictionProcess implements Process {
+        constructor(public id : number, public subProcess : Process, public restrictedLabels : LabelSet) {
         }
-        inorderStructure() : InorderStruct {
-            return new InorderStruct([], this, [this.process]);
-        }
-        dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
-            args = [this].concat(args);
-            return dispatcher.dispatchRestriction.apply(dispatcher, args);
+        dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
+            return dispatcher.dispatchRestrictionProcess(this);
         }
         toString() {
             return "Restriction";
         }
     }
 
-    export class Relabelling implements Node {
-        constructor(public id : number, public process : Node, public relabellings : RelabellingSet) {
+    export class RelabellingProcess implements Process {
+        constructor(public id : number, public subProcess : Process, public relabellings : RelabellingSet) {
         }
-        inorderStructure() : InorderStruct {
-            return new InorderStruct([], this, [this.process]);
-        }
-        dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
-            args = [this].concat(args);
-            return dispatcher.dispatchRelabelling.apply(dispatcher, args);
+        dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
+            return dispatcher.dispatchRelabellingProcess(this);
         }
         toString() {
             return "Relabelling";
         }
     }
 
-    export class Constant implements Node {
-        constructor(public id : number, public constant : string) {
+    export class Action {
+        constructor(public label : string, public isComplement : boolean) {
+            if (label === "tau" && isComplement) {
+                throw new Error("tau has no complement");
+            }
         }
-        inorderStructure() : InorderStruct {
-            return new InorderStruct([], this, []);
-        }
-        dispatchOn<T>(dispatcher : NodeDispatchHandler<T>, args) : T {
-            args = [this].concat(args);
-            return dispatcher.dispatchConstant.apply(dispatcher, args);
+        equals(other : Action) {
+            return this.label === other.label &&
+                this.isComplement === other.isComplement;
         }
         toString() {
-            return "Constant(" + this.constant + ")";
+            return (this.isComplement ? "!" : "") + this.label;
         }
+        clone() {
+            return new Action(this.label, this.isComplement);
+        }
+    } 
+
+    interface Error {
+        name : string;
+        message : string;
     }
 
     export class Graph {
-        nextId : number = 0;
-        nodes = {};
-        constantNodes = {};
-        public root : Program;
+        nextId : number = 1;
+        private nullProcess = new NullProcess(0);
+        private cache : any = {};
+        private processes = {0: this.nullProcess};
+        private namedProcesses = {}
+        private constructErrors = [];
 
         constructor() {
+            this.cache.structural = {}; //used structural sharing
+            this.cache.successors = {};
         }
 
-        create(constructor, ... args) : Node {
-            var boundConstructor = constructor.bind.apply(constructor, [null, this.nextId++].concat(args)),
-                node = new boundConstructor();
-            this.nodes[node.id] = node;
-
-            if (node instanceof Constant) {
-                this.constantNodes[node.constant] = node;
-            } else if (node instanceof Program) {
-                this.root = <Program>node;
+        newNamedProcess(processName : string, process : Process) {
+            var namedProcess = this.namedProcesses[processName];
+            if (!namedProcess) {
+                namedProcess = this.namedProcesses[processName] = new NamedProcess(this.nextId++, processName, process);
+                this.processes[namedProcess.id] = namedProcess;
+            } else if (!namedProcess.subProcess) {
+                namedProcess.subProcess = process;
+            } else {
+                this.constructErrors.push({name: "DuplicateDeclaration",
+                    messsage: "Duplicate declaration of process '" + processName + "'"});
             }
-
-            return node;
+            return namedProcess;
         }
 
-        getUid() {
-            return this.nextId++;
+        referToNamedProcess(processName : string) {
+            var namedProcess = this.namedProcesses[processName];
+            if (!namedProcess) {
+                //Null will be fixed, by newNamedProcess
+                namedProcess = this.namedProcesses[processName] = new NamedProcess(this.nextId++, processName, null);
+                this.processes[namedProcess.id] = namedProcess;
+            }
+            return namedProcess;
         }
 
-        nodeById(id) {
-            return this.nodes[id] || null;
+        getNullProcess() {
+            return this.nullProcess;
         }
 
-        assignmentByVariable(constant) {
-            var assignments = this.root.assignments;
-            for (var i = 0, max = assignments.length; i < max; i++){
-                if (assignments[i].variable === constant) {
-                    return assignments[i];
+        newActionPrefixProcess(action : Action, nextProcess : Process) {
+            var key = "." + action.toString() + nextProcess.id;
+            var existing = this.cache.structural[key];
+            if (!existing) {
+                existing = this.cache.structural[key] = new ActionPrefixProcess(this.nextId++, action, nextProcess);
+            }
+            this.processes[existing.id] = existing;
+            return existing;
+        }
+
+        newSummationProcess(left : Process, right : Process) {
+            var temp, key, existing;
+            //Ensure left.id <= right.id
+            if (left.id > right.id) {
+                temp = left;
+                left = right;
+                right = temp;
+            }
+            key = "+" + left.id + "," + right.id;
+            existing = this.cache.structural[key];
+            if (!existing) {
+                existing = this.cache.structural[key] = new SummationProcess(this.nextId++, left, right);
+                this.processes[existing.id] = existing;
+            }
+            return existing;
+        }
+
+        newCompositionProcess(left : Process, right : Process) {
+            var temp, key, existing;
+            //Ensure left.id <= right.id
+            if (right.id > left.id) {
+                temp = left;
+                left = right;
+                right = temp;
+            }
+            key = "|" + left.id + "," + right.id;
+            existing = this.cache.structural[key];
+            if (!existing) {
+                existing = this.cache.structural[key] = new CompositionProcess(this.nextId++, left, right);
+                this.processes[existing.id] = existing;
+            }
+            return existing;
+        }
+
+        newRestrictedProcess(process, restriction : LabelSet) {
+            //For now return just new instead of structural sharing
+            var existing = new RestrictionProcess(this.nextId++, process, restriction);
+            this.processes[existing.id] = existing;
+            return existing;
+        }
+
+        newRelabelingProcess(process, relabellings : RelabellingSet) {
+            //Same as reasoning as restriction
+            var existing = new RelabellingProcess(this.nextId++, process, relabellings);
+            this.processes[existing.id] = existing;
+            return existing;
+        }
+
+        processById(id) {
+            return this.processes[id] || null;
+        }
+
+        processByName(name : string) {
+            return this.namedProcesses[name] || null;
+        }
+
+        getNamedProcesses() {
+            return Object.keys(this.namedProcesses);
+        }
+
+        getErrors() {
+            var errors = this.constructErrors.slice(0);
+            //Add undefined processes
+            var addUndefinedProcesses = () => {
+                var processName, process;
+                for (processName in this.namedProcesses) {
+                    process = this.namedProcesses[processName];
+                    if (!process.subProcess) {
+                        errors.push({name: "UndefinedProcess",
+                            message: "Process '" + processName + "' has no definition"});
+                    }
                 }
             }
-            return null;
-        }
-
-        constantByVariable(constant) {
-            return this.constantNodes[constant] || null;
-        }
-    }
-
-    export function postOrderTransform<T>(node : Node, dispatchHandler : PostOrderDispatchHandler<T>) : T {
-        function handleNode(node : Node) {
-            var is = node.inorderStructure();
-            var beforeResults = is.before.map(handleNode);
-            var afterResults = is.after.map(handleNode);
-            var args = beforeResults.concat(afterResults);
-            var thisResult = node.dispatchOn(dispatchHandler, args);
-            return thisResult;
-        }
-        return handleNode(node);
-    }
-
-
-    export function conditionalPostOrderTransform(node : Node, dispatchHandler : NodeDispatchHandler<void>, predicate : (n : Node) => boolean) {
-        function handleNode(node : Node) {
-            if (predicate(node)) {
-                var is = node.inorderStructure();
-                is.before.map(handleNode);
-                is.after.map(handleNode);
-                node.dispatchOn(dispatchHandler, []);
+            var addUnguardedRecursionErrors = () => {
+                var checker = new Traverse.UnguardedRecursionChecker(),
+                    processNames = Object.keys(this.namedProcesses),
+                    processes = processNames.map(name => this.namedProcesses[name]),
+                    unguardedProcesses = checker.findUnguardedProcesses(processes);
+                unguardedProcesses.forEach(process => {
+                    errors.push({name: "UnguardedProcess", message: "Process '" + process.name + "' has unguarded recursion"});
+                });
             }
+            addUndefinedProcesses();
+            //Unguarded recursion checking requires all processes to defined.
+            if (errors.length === 0) addUnguardedRecursionErrors();
+            return errors;
         }
-        handleNode(node);
     }
 
     export class RelabellingSet {
         private froms = [];
         private tos = [];
-        constructor(relabellings : {from: string; to: string}[]) {
-            relabellings.forEach( (relabel) => {
-                if (relabel.from !== "tau" && relabel.to !== "tau") {
-                    this.froms.push(relabel.from);
-                    this.tos.push(relabel.to);
-                }
-            });
+
+        constructor(relabellings? : {from: string; to: string}[]) {
+            if (relabellings) {
+                relabellings.forEach( (relabel) => {
+                    if (relabel.from !== "tau" && relabel.to !== "tau") {
+                        this.froms.push(relabel.from);
+                        this.tos.push(relabel.to);
+                    }
+                });
+            }
         }
+
+        clone() : RelabellingSet {
+            var result = new RelabellingSet();
+            result.froms = this.froms.slice();
+            result.tos = this.tos.slice();
+            return result;
+        }
+
         forEach(f : (from : string, to : string) => void, thisObject?) {
             for (var i = 0, max = this.froms.length; i < max; i++) {
                 f.call(thisObject, this.froms[i], this.tos[i]);
             }
         }
-        hasRelabelForLabel(label : string ) {
+
+        hasRelabelForLabel(label : string ) : boolean {
             return this.froms.indexOf(label) !== -1;
         }
-        toLabelForFromLabel(label : string) {
+
+        toLabelForFromLabel(label : string) : string {
             var index = this.froms.indexOf(label),
                 result = null;
             if (index >= 0) {
@@ -264,20 +301,25 @@ module CCS {
             }
             return result;
         }
-        toString() {
+
+        toString() : string {
             return "RelabellingSet";
         }
     }
 
     export class LabelSet {
-        private labels = [];
+        private labels : string[] = [];
 
         constructor(labels) {
             this.addLabels(labels);
         }
 
-        private clone() {
+        public clone() {
             return new LabelSet(this.labels);
+        }
+
+        public toArray() : string[] {
+            return this.labels.slice(0);
         }
 
         private addLabels(labels) {
@@ -303,14 +345,14 @@ module CCS {
             return result;
         }
 
-        contains(label) : boolean {
-            return this.labels.indexOf(label) !== -1;
-        }
-
         remove(labels) {
             var result = this.clone();
             result.removeLabels(labels);
             return result;
+        }
+
+        contains(label) : boolean {
+            return this.labels.indexOf(label) !== -1;
         }
 
         union(set : LabelSet) : LabelSet {
@@ -342,23 +384,26 @@ module CCS {
         Represents the order of an in-order traversal.
     */
     export class InorderStruct {
-        constructor(public before : Node[], public node : Node, public after : Node[]) {
+        constructor(public before : Process[], public process : Process, public after : Process[]) {
         }
     }
 
     export class Transition {
-        constructor(public label : string, public complement : boolean, public targetProcessId : number) {
-            //Prevents accidentally creating two taus.
-            if (label === "tau") complement = false;
+        constructor(public action : Action, public targetProcess : Process) {
         }
-        equals(transition : Transition) {
+        equals(other : Transition) {
             //TODO: look into targetProcessId and reductions
-            return (this.label === transition.label &&
-                this.complement === transition.complement &&
-                this.targetProcessId === transition.targetProcessId);
+            return (this.action.equals(other.action) &&
+                    this.targetProcess.id == other.targetProcess.id);
         }
         hash() {
-            return (this.complement ? "!" : "") + this.label + "->" + this.targetProcessId;
+            if (this.targetProcess instanceof NamedProcess) {
+                return this.action.toString() + "->" + (<NamedProcess>this.targetProcess).name;
+            }
+            return this.action.toString() + "->" + this.targetProcess.id;
+        }
+        toString() {
+            return this.hash();
         }
     }
 
@@ -366,13 +411,13 @@ module CCS {
         private transitions = {};
         constructor(transitions?) {
             if (transitions) {
-                transitions.forEach(this.addInto, this);
+                transitions.forEach(this.addTransition, this);
             }
         }
 
         public mergeInto(tSet : TransitionSet) : TransitionSet {
             for (var hashKey in tSet.transitions) {
-                tSet.transitions[hashKey].forEach(this.addInto, this);
+                tSet.transitions[hashKey].forEach(this.addTransition, this);
             }
             return this;
         }
@@ -380,7 +425,7 @@ module CCS {
         public clone() {
             var result = new TransitionSet([]);
             for (var hashKey in this.transitions) {
-                this.transitions[hashKey].forEach(result.addInto, result);
+                this.transitions[hashKey].forEach(result.addTransition, result);
             }
             return result;
         }
@@ -394,7 +439,7 @@ module CCS {
             return hashSet;
         }
 
-        addInto(transition) {
+        addTransition(transition) {
             var hash = transition.hash(),
                 existingHashset = this.hashsetArray(hash);
             for (var i = 0; i < existingHashset.length; i++) {
@@ -406,7 +451,7 @@ module CCS {
 
         removeInPlace(labels : LabelSet) {
             for (var hashKey in this.transitions) {
-                this.transitions[hashKey] = this.transitions[hashKey].filter(t => !labels.contains(t.label));
+                this.transitions[hashKey] = this.transitions[hashKey].filter(t => !labels.contains(t.action.label));
                 if (this.transitions[hashKey].length === 0) {
                     delete this.transitions[hashKey];
                 }
@@ -434,101 +479,114 @@ module CCS {
         }
     }
 
-    export class SuccessorGenerator implements NodeDispatchHandler<void> {
-        /*
-            Should only run for nodes for which we don't know the successors,
-        */
+    export class SuccessorGenerator implements ProcessVisitor<TransitionSet>, ProcessDispatchHandler<TransitionSet> {
 
-        constructor(public cache, public graph) {
+        constructor(public graph : Graph, public cache?) {
+            this.cache = cache || {};
         }
 
-        dispatchProgram(node : Program) {
-            var all = new TransitionSet();
-            node.assignments.forEach((assignment) => {
-                all.mergeInto(this.cache[assignment.id]);
-            });
-            this.cache[node.id] = all;
-        }
-        dispatchNullProcess(node : NullProcess) {
-            this.cache[node.id] = [];
+        visit(process : Process) : TransitionSet {
+            //Move recursive calling into loop with stack here
+            //if overflow becomes an issue.
+            return this.cache[process.id] = process.dispatchOn(this);
         }
 
-        dispatchAssignment(node : Assignment) {
-            //This is  P = Q
-            //Our result is the same, but need to fix the constant node
-            //since we didn't know the result at the time.
-            var constantNode = this.graph.constantByVariable(node.variable);
-            this.cache[constantNode.id] = this.cache[node.process.id].clone();
-            this.cache[node.id] = this.cache[node.process.id].clone();
-        }
-
-        dispatchSummation(node : Summation) {
-            this.cache[node.id] = this.cache[node.left.id].clone().mergeInto(this.cache[node.right.id]);
-        }
-
-        dispatchComposition(node : Composition) {
-            var left = this.cache[node.left.id],
-                right = this.cache[node.right.id],
-                resultSet = new TransitionSet();
-            //These loops could be merged into one....
-            //COM1
-            left.forEach(leftTransition => {
-                var leftResult = this.graph.nodeById(leftTransition.targetProcessId);
-                var resultComposition = this.graph.create(Composition, leftResult, node.right);
-                resultSet.addInto(new Transition(leftTransition.label, leftTransition.complement, resultComposition.id));
-            });
-        
-            // //COM2
-            right.forEach(rightTransition => {
-                var rightResult = this.graph.nodeById(rightTransition.targetProcessId);
-                var resultComposition = this.graph.create(Composition, node.left, rightResult);
-                resultSet.addInto(new Transition(rightTransition.label, rightTransition.complement, resultComposition.id));
-            });
-
-            // //COM3
-            left.forEach(leftTransition => {
-                right.forEach(rightTransition => {
-                    if (leftTransition.label === rightTransition.label &&
-                        leftTransition.complement !== rightTransition.complement) {
-                        var leftResult = this.graph.nodeById(leftTransition.targetProcessId);
-                        var rightResult = this.graph.nodeById(rightTransition.targetProcessId);
-                        var resultComposition = this.graph.create(Composition, leftResult, rightResult);
-                        resultSet.addInto(new Transition("tau", false, resultComposition.id));
-                    }                
-                });
-            });
-            this.cache[node.id] = resultSet;
-        }
-
-        dispatchAction(node : Action) {
-            var actionTransition = new Transition(node.label, node.complement, node.next.id);
-            this.cache[node.id] = new TransitionSet([actionTransition]);
-        }
-
-        dispatchRestriction(node : Restriction) {
-            var subResults = this.cache[node.process.id].clone(),
-                result = new TransitionSet();
-            subResults.removeInPlace(node.restrictedLabels);
-            subResults.forEach(t => {
-                var subNode = this.graph.nodeById(t.targetProcessId);
-                var restrictedNode = this.graph.create(Restriction, subNode, node.restrictedLabels);
-                result.addInto(new Transition(t.label, t.complement, restrictedNode.id));
-            });
-            this.cache[node.id] = result;
-        }
-
-        dispatchRelabelling(node : Relabelling) {
-            var result = this.cache[node.process.id].clone();
-            result.relabelInPlace(node.relabellings);
-            this.cache[node.id] = result;
-        }
-
-        dispatchConstant(node : Constant) {
-            //TODO: Look into this
-            //Assume none for now.. Assignment will fix this
-            if (!this.cache[node.id]) {
-                this.cache[node.id] = new TransitionSet();
+        dispatchNullProcess(process : NullProcess) {
+            var transitionSet = this.cache[process.id];
+            if (!transitionSet) {
+                transitionSet = this.cache[process.id] = new TransitionSet();
             }
+            return transitionSet;
+        }
+
+        dispatchNamedProcess(process : NamedProcess) {
+            var transitionSet = this.cache[process.id];
+            if (!transitionSet) {
+                //Assume nothing, then figure it out when subprocess successors are known.
+                this.cache[process.id] = new TransitionSet();
+                transitionSet = this.cache[process.id] = process.subProcess.dispatchOn(this).clone();
+            }
+            return transitionSet;
+        }
+
+        dispatchSummationProcess(process : SummationProcess) {
+            var transitionSet = this.cache[process.id],
+                leftTransitions, rightTransitions;
+            if (!transitionSet) {
+                leftTransitions = process.leftProcess.dispatchOn(this);
+                rightTransitions = process.rightProcess.dispatchOn(this);
+                transitionSet = this.cache[process.id] = leftTransitions.clone().mergeInto(rightTransitions);
+            }
+            return transitionSet;
+        }
+
+        dispatchCompositionProcess(process : CompositionProcess) {
+            var transitionSet = this.cache[process.id],
+                leftSet, rightSet;
+            if (!transitionSet) {
+                transitionSet = this.cache[process.id] = new TransitionSet();
+                leftSet = process.leftProcess.dispatchOn(this);
+                rightSet = process.rightProcess.dispatchOn(this);
+                
+                leftSet.forEach(leftTransition => {
+                    //COM1
+                    transitionSet.addTransition(new Transition(leftTransition.action.clone(),
+                        this.graph.newCompositionProcess(leftTransition.targetProcess, process.rightProcess)));
+
+                    rightSet.forEach(rightTransition => {
+                        //COM2
+                        transitionSet.addTransition(new Transition(rightTransition.action.clone(),
+                            this.graph.newCompositionProcess(process.leftProcess, rightTransition.targetProcess)));
+
+                        //COM3
+                        if (leftTransition.action.label === rightTransition.action.label &&
+                            leftTransition.action.isComplement !== rightTransition.action.isComplement) {
+                            transitionSet.addTransition(new Transition(new Action("tau", false),
+                                this.graph.newCompositionProcess(leftTransition.targetProcess, rightTransition.targetProcess)));
+                        }
+                    });
+                });
+            }
+            return transitionSet;
+        }
+
+        dispatchActionPrefixProcess(process : ActionPrefixProcess) {
+            var transitionSet = this.cache[process.id];
+            if (!transitionSet) {
+                process.nextProcess.dispatchOn(this).clone();
+                transitionSet = this.cache[process.id] = new TransitionSet([new Transition(process.action, process.nextProcess)]);
+            }
+            return transitionSet;
+        }
+
+        dispatchRestrictionProcess(process : RestrictionProcess) {
+            var transitionSet = this.cache[process.id],
+                subTransitionSet;
+            if (!transitionSet) {
+                transitionSet = this.cache[process.id] = new TransitionSet();
+                subTransitionSet = process.subProcess.dispatchOn(this).clone();
+                subTransitionSet.removeInPlace(process.restrictedLabels);
+                subTransitionSet.forEach(transition => {
+                    var newRestriction = this.graph.newRestrictedProcess(transition.targetProcess, process.restrictedLabels.clone());
+                    transitionSet.addTransition(new Transition(transition.action.clone(), newRestriction));
+                });
+            }
+            return transitionSet;
+        }
+
+        dispatchRelabellingProcess(process : RelabellingProcess) {
+            var transitionSet = this.cache[process.id],
+                subTransitionSet;
+            if (!transitionSet) {
+                transitionSet = this.cache[process.id] = new TransitionSet();
+                subTransitionSet = process.subProcess.dispatchOn(this).clone();
+                subTransitionSet.relabelInPlace(process.relabellings);
+                subTransitionSet.forEach(transition => {
+                    var newRelabelling = this.graph.newRelabelingProcess(transition.targetProcess, process.relabellings.clone());
+                    transitionSet.addTransition(new Transition(transition.action.clone(), newRelabelling));
+                });
+            }
+            return transitionSet;
         }
     }
 }

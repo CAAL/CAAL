@@ -8,93 +8,88 @@
 		});
 		return [f].concat(restLabels)
 	}
+
 	function strFirstAndRest(first, rest) {
 		return first + rest.join('');
 	}
 
 	var ccs = options.ccs;
-	var g = options.graph;
+	var g = options.graph || new ccs.Graph();
 }
 
 start
-	= program
+	= Program
 
 //A program consists of lines only used for process assignments.
-program
-	= assignments:assignments { return g.create(ccs.Program, assignments); }
+Program
+	= assignments:Assignments { return g; }
 
-assignments = _ first:assignment _ newline rest:assignments { return [first].concat(rest); }
-            / _ first:assignment _ { return [first];}
-			/ _ newline assignments:assignments { return assignments; }
-	  		/ _ newline? { return []; }
+Assignments = _ first:Assignment _ Newline rest:Assignments { return [first].concat(rest); }
+            / _ first:Assignment _ { return [first];}
+			/ _ Newline assignments:Assignments { return assignments; }
+	  		/ _ Newline? { return []; }
 
-assignment
-	= left:constantStr _ "=" _ right:process { return g.create(ccs.Assignment, left, right); }
+Assignment
+	= name:ConstantStr _ "=" _ P:Process { return g.newNamedProcess(name, P); }
 
 //The rules here are defined in the reverse order of their precedence.
 //Either a given rule applies, eg. +, and everything to the left must have higher precedence,
 // or there is no plus, in which cases it must still have higher predence.
-process = summation
+Process = Summation
 
-summation
-	= left:composition _ "+" _ right:summation { return g.create(ccs.Summation, left, right); }
-	/ process:composition { return process; }
+Summation
+	= P:Composition _ "+" _ Q:Summation { return g.newSummationProcess(P, Q); }
+	/ P:Composition { return P; }
 
-composition
-	= left:action _ "|" _ right:composition { return g.create(ccs.Composition, left, right); }
-	/ process:action { return process; }
+Composition
+	= P:ActionPrefix _ "|" _ Q:Composition { return g.newCompositionProcess(P, Q); }
+	/ P:ActionPrefix { return P; }
 
-action
-	= action:label _ "." _ process:action { return g.create(ccs.Action, action, false, process); }
-	/ "!" _ action:label _ "." _ process:action { return g.create(ccs.Action, action, true, process); }
-	/ process:leftProcess { return process; }
+ActionPrefix
+	= label:Label _ "." _ P:ActionPrefix { return g.newActionPrefixProcess(new ccs.Action(label, false), P); }
+	/ "!" _ label:Label _ "." _ P:ActionPrefix { return g.newActionPrefixProcess(new ccs.Action(label, true), P); }
+	/ P:ReProcess { return P; }
 
-leftProcess
-	= process:parenProcess _ labels:restrictedLabels { return g.create(ccs.Restriction, process, new ccs.LabelSet(labels || [])); }
-	/ process:parenProcess _ "[" _ relabels:relabellings _ "]" { return g.create(ccs.Relabelling, process, new ccs.RelabellingSet(relabels || [])); }
-	/ process:parenProcess { return process; }
-
-// A restricted set of labels   \ {a, b}
-restrictedLabels
-	= "\\" _ "{" _ labels:labelsList? "}" { return labels; }
+ReProcess
+	= P:ParenProcess _ "\\" _ "{" _ labels:LabelList? _ "}" { return g.newRestrictedProcess(P, new ccs.LabelSet(labels || [])); }
+	/ P:ParenProcess _ "[" _ relabels:RelabellingList _ "]" { return g.newRelabelingProcess(P, new ccs.RelabellingSet(relabels || [])); }
+	/ P:ParenProcess { return P; }
 
 // Relabellings  [a/b, c/d]
-relabellings
-	= first:relabel _ "," _ rest:relabellings { return [first].concat(rest); }
-	/ relabel:relabel { return [relabel]; }
+RelabellingList
+	= first:Relabel _ "," _ rest:RelabellingList { return [first].concat(rest); }
+	/ relabel:Relabel { return [relabel]; }
 
-relabel
-	= newlabel:label _ "/" _ old:label { return {to: newlabel, from: old}; }
+Relabel
+	= to:Label _ "/" _ from:Label { return {to: to, from: from}; }
 
 // ( P ) for some process P
-parenProcess
-	= "(" _ process:process _ ")" { return process; }
-	/ process:constantProcess { return process; }
+ParenProcess
+	= "(" _ P:Process _ ")" { return P; }
+	/ P:ConstantProcess { return P; }
 
 // A constant process. Either the null process 0, or some process K.
-constantProcess
-	= "0" { return g.create(ccs.NullProcess); }
-	/ constant:constantStr { return g.create(ccs.Constant, constant); }
+ConstantProcess
+	= "0" { return g.getNullProcess(); }
+	/ K:ConstantStr { return g.referToNamedProcess(K); }
 
 //Valid names for processes
-constantStr
+ConstantStr
 	= first:[A-Z] rest:[A-Za-z]* { return strFirstAndRest(first, rest); }
 
 //Valid name for actions
-label
+Label
 	= label:[a-z]+ { return label.join(''); }
 
-labelsList
-	= first:label rest:(_ "," _ label)* { return extractLabelList(first, rest); }
+LabelList
+	= first:Label rest:(_ "," _ Label)* { return extractLabelList(first, rest); }
 
-whitespace
+Whitespace
 	= [ \t]
 
 //Useful utility
-_ = whitespace*
+_ = Whitespace*
 
-newline
+Newline
 	= "\r\n" / "\n" / "\r"
 
-blankline
-	= whitespace* newline
