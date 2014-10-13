@@ -22,4 +22,4 @@ mv ccs_grammar.js modules/ace/lib/ace/mode/ccs/
 
 # Build the ACE editor.
 echo 'ACE EDITOR OUTPUT:'
-nodejs modules/ace/Makefile.ccs.js -m --target lib/ace
+node modules/ace/Makefile.ccs.js --target lib/ace
