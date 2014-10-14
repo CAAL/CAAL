@@ -14,7 +14,7 @@ class Environment {
 
     constructor() {
         this.sys = arbor.ParticleSystem(500, 3000, 0.90);
-        this.sys.parameters({gravity:true});
+        this.sys.parameters({gravity:false});
         this.renderer = new Renderer("#viewport");
         this.sys.renderer = this.renderer
     }
@@ -25,11 +25,10 @@ class Environment {
         this.sys.addNode('a', {label: "b.B"});
         this.sys.addNode('c', {label: "c.B"});
 
-
-        this.sys.addEdge('b','a', {directed:true, label:"a"});
-        this.sys.addEdge('a','a', {directed:true, label:"b"});
-        this.sys.addEdge('a','b', {directed:true, label:"b"});
-        this.sys.addEdge('c','b', {directed:true, label:"c"});
+        this.sys.addEdge('b','a', {label:"a"});
+        this.sys.addEdge('a','a', {label:"b"});
+        this.sys.addEdge('a','b', {label:"b"});
+        this.sys.addEdge('c','b', {label:"c"});
 
     }
 }

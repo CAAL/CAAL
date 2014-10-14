@@ -15,11 +15,10 @@ class Renderer {
     }
 
     public init(system : ParticleSystem){
-        //
         // the particle system will call the init function once, right before the
         // first frame is to be drawn. it's a good place to set up the canvas and
         // to pass the canvas size to the particle system
-        //
+
         // save a reference to the particle system for use in the .redraw() loop
         this.particleSystem = system;
 
@@ -35,9 +34,7 @@ class Renderer {
 
     public redraw(){
         var that = this;
-        //
         // redraw will be called repeatedly during the run.
-        //
         this.gfx.clear();
 
         // draw the nodes & save their bounds for edge drawing
@@ -129,15 +126,13 @@ class Renderer {
                 that.ctx.moveTo(pt1.x, pt1.y);
                 that.ctx.bezierCurveTo(pt1.x - (cpH/2), pt1.y - cpV, pt1.x + (cpH/2), pt1.y - cpV, pt1.x, pt1.y);
                 pt2 = pt1;              
-            } 
-            else if (oppo != undefined) {
+            } else if (oppo != undefined) {
                 if(same.source == oppo.target && same.target == oppo.source) {
                     that.ctx.moveTo(pt1.x, pt1.y)
                     that.ctx.quadraticCurveTo(cp.x, cp.y, pt2.x, pt2.y);
                     that.ctx.stroke()
                 }
-            } 
-            else {
+            } else {
                 that.ctx.lineTo(pt2.x, pt2.y);
             }
             that.ctx.stroke();
@@ -149,7 +144,7 @@ class Renderer {
             var arrowWidth = 7;
             var chevronColor = edge.data.color || "#4D4D4D";
 
-            if(!isSelfloop){
+            if (!isSelfloop) {
                 /*Edge is not self-loop*/
                 var tail : Point = that.intersect_line_box(pt1, pt2, nodeBoxes[edge.source.name])
                 var head : Point = that.intersect_line_box(tail, pt2, nodeBoxes[edge.target.name])
@@ -170,9 +165,7 @@ class Renderer {
                         that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
                         
                     }
-                }
-                
-                else if(label){ //draw the label on edge
+                } else if(label){ //draw the label on edge
                     var mid_x = ((tail.x+head.x)/2) - 5; //minus 5 to offset from the edge
                     var mid_y = ((tail.y+head.y)/2) - 5; //minus 5 to offset from the edge
                     that.drawLabel(mid_x, mid_y, label, that.ctx); 
@@ -182,22 +175,18 @@ class Renderer {
                     that.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge that's already there (so the point isn't hidden)
                     that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
                 }
-                
-                
-                
             } else {
                 /*Edge is self-loop*/
-
                 if (label){
                     //draw the label on edge
                     that.drawLabel(pt2.x, pt2.y - (cpV), label, that.ctx);
                 }
 
-                    that.ctx.translate(pt2.x + 9, pt2.y - 9); // translate pointer to the top og the nodebox.
-                    that.ctx.rotate(125*Math.PI/180); // Rotates in radians use (degrees*Math.PI/180)
-                    that.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge that's already there (so the point isn't hidden)
-                    that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
-                }
+                that.ctx.translate(pt2.x + 9, pt2.y - 9); // translate pointer to the top og the nodebox.
+                that.ctx.rotate(125*Math.PI/180); // Rotates in radians use (degrees*Math.PI/180)
+                that.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge that's already there (so the point isn't hidden)
+                that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
+            }
             
             that.ctx.restore();
         })

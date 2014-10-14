@@ -10,11 +10,9 @@ var Renderer = (function () {
         this.particleSystem = null;
     }
     Renderer.prototype.init = function (system) {
-        //
         // the particle system will call the init function once, right before the
         // first frame is to be drawn. it's a good place to set up the canvas and
         // to pass the canvas size to the particle system
-        //
         // save a reference to the particle system for use in the .redraw() loop
         this.particleSystem = system;
 
@@ -31,9 +29,7 @@ var Renderer = (function () {
     Renderer.prototype.redraw = function () {
         var that = this;
 
-        //
         // redraw will be called repeatedly during the run.
-        //
         this.gfx.clear();
 
         // draw the nodes & save their bounds for edge drawing
