@@ -58,6 +58,4 @@ editor.setValue([
     "agent Protocol = (Send0 | Med | RecvAck0) \\ InternalComActs;",
     "agent Spec = acc.'del.Spec; * our specification",
     ""
-].join('\n'));
-
-editor.clearSelection();
+].join('\n'), 1);

@@ -79,7 +79,7 @@ class Project {
     }
 
     private setCCS(ccs: string) {
-        this.editor.setValue(ccs);
+        this.editor.setValue(ccs, 1);
     }
 
     private getCCS(): string {
