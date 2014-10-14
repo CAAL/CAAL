@@ -1,6 +1,7 @@
 /*libs Jquery, graphics is needed.*/
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="../../lib/arbor.d.ts" />
+/// <reference path="./renderer.ts" />
 $(document).ready(function () {
     var env = new Environment();
     env.init();

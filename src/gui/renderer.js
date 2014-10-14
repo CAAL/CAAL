@@ -335,13 +335,13 @@ var Renderer = (function () {
     };
 
     Renderer.prototype.addEdgeToGraph = function (source, target, data) {
-        console.log("addEdgeToGraph", source, target, data);
         if (source === target) {
             data.selfloop = true;
             var selfloopEdge = this.particleSystem.getEdges(source.name, target.name)[0];
 
             if (selfloopEdge !== undefined) {
                 selfloopEdge.data.label += ", " + data.label;
+
                 if (selfloopEdge.data.label.length > 10) {
                     selfloopEdge.data.label = selfloopEdge.data.label.substring(0, 8) + "..";
                 }
@@ -349,7 +349,6 @@ var Renderer = (function () {
             }
         }
 
-        console.log("edge is not defined");
         return this.particleSystem.addEdge(source.name, target.name, data);
     };
 

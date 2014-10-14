@@ -43,7 +43,7 @@ class Renderer {
         // draw the nodes & save their bounds for edge drawing
         var nodeBoxes:Point[] = [];
 
-        this.particleSystem.eachNode(function(node, pt) {
+        this.particleSystem.eachNode(function(node : Node, pt : Point) {
             // node: {mass:#, p:{x,y}, name:"", data:{}}
             // pt:   {x:#, y:#}  node position in screen coords
             if(node.data.invisible != undefined){
@@ -95,7 +95,7 @@ class Renderer {
         })
 
         // draw the edges
-        that.particleSystem.eachEdge(function(edge, pt1, pt2){
+        that.particleSystem.eachEdge(function(edge : Edge, pt1 : Point, pt2 : Point){
             // edge: {source:Node, target:Node, length:#, data:{}}
             // pt1:  {x:#, y:#}  source position in screen coords
             // pt2:  {x:#, y:#}  target position in screen coords
@@ -138,7 +138,7 @@ class Renderer {
                 }
             } 
             else {
-                that.ctx.lineTo(pt2.x, pt2.y);  
+                that.ctx.lineTo(pt2.x, pt2.y);
             }
             that.ctx.stroke();
             that.ctx.save();
@@ -203,7 +203,7 @@ class Renderer {
         })
     }
 
-   private initMouseHandling(){
+   private initMouseHandling() : void{
         // no-nonsense drag and drop (thanks springy.js)
         var nearest : refNode = null;
         var dragged : refNode = null;
@@ -277,7 +277,7 @@ class Renderer {
      * @param {string}                   label the text to be written.
      * @param {CanvasRenderingContext2D} ctx   the canvas to draw on.
      */
-    private drawLabel(x : number, y : number, label : string, ctx : CanvasRenderingContext2D){
+    private drawLabel(x : number, y : number, label : string, ctx : CanvasRenderingContext2D) : void {
         ctx.save();
         ctx.font = "17px Helvetica";
         ctx.textAlign = "center";
@@ -293,7 +293,7 @@ class Renderer {
      * @param {string}                   color       the color of the arrowhead
      * @param {CanvasRenderingContext2D} ctx         the canvas
      */
-    private drawChevron(arrowLength : number, arrowWidth : number, color : string, ctx : CanvasRenderingContext2D){
+    private drawChevron(arrowLength : number, arrowWidth : number, color : string, ctx : CanvasRenderingContext2D) : void {
         ctx.save()
         ctx.fillStyle = color;
         ctx.beginPath();
@@ -352,25 +352,24 @@ class Renderer {
                 label = label.substring(0,8) + "..";
             }
         }
-        return this.particleSystem.addNode(nodeName, {label: label, expanded:false});
+        return this.particleSystem.addNode(nodeName, {label: label, expanded: false});
     }
 
     public addEdgeToGraph(source: Node, target: Node, data: any) : Edge{
-        console.log("addEdgeToGraph", source, target, data);
         if (source === target) {  // if selfloop
             data.selfloop = true;
             var selfloopEdge = this.particleSystem.getEdges(source.name, target.name)[0]; // there should only be one...
             
-            if (selfloopEdge !== undefined){ // if selfloop is already defined then concat the labels.
+            if (selfloopEdge !== undefined) { // if selfloop is already defined then concat the labels.
                 selfloopEdge.data.label += ", " + data.label;
-                if (selfloopEdge.data.label.length > 10){
+                
+                if (selfloopEdge.data.label.length > 10) {
                     selfloopEdge.data.label = selfloopEdge.data.label.substring(0, 8) + "..";
                 }
                 return selfloopEdge;
             }
         }
 
-        console.log("edge is not defined");
         return this.particleSystem.addEdge(source.name, target.name, data);
     }
 
