@@ -61,7 +61,7 @@ class Renderer {
             if(node.data.color)
                 that.ctx.fillStyle = node.data.color; 
             else
-                that.ctx.fillStyle = "#000000"; //Node default color
+                that.ctx.fillStyle = "#ffffff"; //Node default color
 
             if(node.data.color=='none')
                 that.ctx.fillStyle = "rgba(0,0,0,.0)";
@@ -105,17 +105,40 @@ class Renderer {
             that.ctx.moveTo(pt1.x, pt1.y);
             var cpH = 130; // horizontal offset to the control points.
             var cpV = 60; // vertical offset to the control points.
-
+			var md = arbor.Point((pt1.x + pt2.x)/2, (pt1.y + pt2.y)/2); // Find the middle point of the line
+			var angle = Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x) - Math.PI/2; // Calculate the angle for the triangle
+			
+			if(angle < 0) // incase the angle is negative, multiply with a full circle
+				angle += Math.PI*2;
+		
+			var dx = 60*Math.cos(angle); // Calculate the offset on x
+			var dy = 60*Math.sin(angle); // Calculate the offset on y
+			var cp = arbor.Point(md.x + dx, md.y + dy); // Make the control point
+						
+			
+			var same = that.particleSystem.getEdges(edge.source, edge.target)[0];
+			var oppo = that.particleSystem.getEdges(edge.target, edge.source)[0];
+			
             if(isSelfloop){
                 that.ctx.moveTo(pt1.x, pt1.y);
                 that.ctx.bezierCurveTo(pt1.x - (cpH/2), pt1.y - cpV, pt1.x + (cpH/2), pt1.y - cpV, pt1.x, pt1.y);
-                pt2 = pt1;            
-            } else{
-                that.ctx.lineTo(pt2.x, pt2.y);
+                pt2 = pt1;   			
+            } 	
+			else if (oppo != undefined){
+				if(same.source == oppo.target && same.target == oppo.source){
+									
+					that.ctx.moveTo(pt1.x, pt1.y)
+					that.ctx.quadraticCurveTo(cp.x, cp.y, pt2.x, pt2.y);
+					that.ctx.stroke()
+				}
+			}
+			
+			else {
+                that.ctx.lineTo(pt2.x, pt2.y);	
             }
             that.ctx.stroke();
             that.ctx.save();
-
+	
             // draw arrow head
             var label = edge.data.label || "";
             var arrowLength = 15;
@@ -126,29 +149,53 @@ class Renderer {
                 /*Edge is not self-loop*/
                 var tail : Point = that.intersect_line_box(pt1, pt2, nodeBoxes[edge.source.name])
                 var head : Point = that.intersect_line_box(tail, pt2, nodeBoxes[edge.target.name])
+				
+				if(oppo != undefined){
+					if(same.source == oppo.target && same.target == oppo.source && label){
+					
+						var labeldx = dx * 0.7;
+						var labeldy = dy * 0.7;
+						var labelcp = arbor.Point(md.x + labeldx, md.y + labeldy);
+						
+						that.drawLabel(labelcp.x, labelcp.y, label, that.ctx); 
+						
+						that.ctx.translate(pt2.x, pt2.y); // translate pointer to the top of the nodebox.
 
-                if (label){ //draw the label on edge
+						that.ctx.rotate(2*Math.PI-Math.atan2(pt2.y - cp.y, pt2.x - cp.x));
+						that.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge that's already there (so the point isn't hidden)
+						that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
+						
+					}
+				}
+				
+                else if(label){ //draw the label on edge
                     var mid_x = ((tail.x+head.x)/2) - 5; //minus 5 to offset from the edge
-                    var mid_y = ((tail.y+head.y)/2) - 5; //minus 5 to offset form the edge
-                    that.drawLabel(mid_x, mid_y, label, that.ctx);                   
+                    var mid_y = ((tail.y+head.y)/2) - 5; //minus 5 to offset from the edge
+                    that.drawLabel(mid_x, mid_y, label, that.ctx); 
+					
+					that.ctx.translate(head.x, head.y); // translate pointer to the top og the nodebox.
+					that.ctx.rotate(Math.atan2(head.y - tail.y, head.x - tail.x));
+					that.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge that's already there (so the point isn't hidden)
+					that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
                 }
-
-                that.ctx.translate(head.x, head.y); // translate pointer to the top og the nodebox.
-                that.ctx.rotate(Math.atan2(head.y - tail.y, head.x - tail.x));
-                that.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge that's already there (so the point isn't hidden)
-                that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
+				
+                
+				
             } else {
                 /*Edge is self-loop*/
+				
                 if (label){ 
+				
                     //draw the label on edge
                     that.drawLabel(pt2.x, pt2.y - (cpV), label, that.ctx);                   
                 }
 
-                that.ctx.translate(pt2.x + 9, pt2.y - 9); // translate pointer to the top og the nodebox.
-                that.ctx.rotate(125*Math.PI/180); // otates in radians use (degrees*Math.PI/180)
-                that.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge that's already there (so the point isn't hidden)
-                that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
-            }
+					that.ctx.translate(pt2.x + 9, pt2.y - 9); // translate pointer to the top og the nodebox.
+					that.ctx.rotate(125*Math.PI/180); // Rotates in radians use (degrees*Math.PI/180)
+					that.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge that's already there (so the point isn't hidden)
+					that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
+				}
+            
             that.ctx.restore();
         })
     }

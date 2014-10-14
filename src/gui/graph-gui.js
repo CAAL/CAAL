@@ -20,19 +20,14 @@ var Environment = (function () {
     Environment.prototype.showTree = function () {
         // if(this.syntaxTree != null){ This should be uncommented at some point, when the environment is correctly initialized.
         // add some nodes to the graph and watch it go...
-        this.sys.addNode('b', { label: "asd.B" });
-        this.sys.addNode('a', { label: "e.B" });
-        this.sys.addNode('e', { label: "e.B" });
+        this.sys.addNode('b', { label: "a.B" });
+        this.sys.addNode('a', { label: "b.B" });
         this.sys.addNode('c', { label: "c.B" });
-        this.sys.addNode('d', { label: "d.B" });
-        this.sys.addNode('q', { label: "q.B" });
 
-        this.sys.addEdge('b', 'a', { directed: true, label: "bjjoijoij" });
-        this.sys.addEdge('c', 'a', { directed: true, label: "joijoijc" });
-        this.sys.addEdge('d', 'a', { directed: true, label: "djoijoij" });
-        this.sys.addEdge('a', 'e', { directed: true, label: "e" });
-        this.sys.addEdge('a', 'q', { directed: true, label: "e" });
-        this.sys.addEdge('a', 'a', { directed: true, label: "basdasdasdasdsadasd" });
+        this.sys.addEdge('b', 'a', { directed: true, label: "a" });
+        this.sys.addEdge('a', 'a', { directed: true, label: "b" });
+        this.sys.addEdge('a', 'b', { directed: true, label: "b" });
+        this.sys.addEdge('c', 'b', { directed: true, label: "c" });
         //}
     };
     return Environment;

@@ -54,7 +54,7 @@ var Renderer = (function () {
             if (node.data.color)
                 that.ctx.fillStyle = node.data.color;
             else
-                that.ctx.fillStyle = "#000000"; //Node default color
+                that.ctx.fillStyle = "#ffffff"; //Node default color
 
             if (node.data.color == 'none')
                 that.ctx.fillStyle = "rgba(0,0,0,.0)";
@@ -97,11 +97,29 @@ var Renderer = (function () {
             that.ctx.moveTo(pt1.x, pt1.y);
             var cpH = 130;
             var cpV = 60;
+            var md = arbor.Point((pt1.x + pt2.x) / 2, (pt1.y + pt2.y) / 2);
+            var angle = Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x) - Math.PI / 2;
+
+            if (angle < 0)
+                angle += Math.PI * 2;
+
+            var dx = 60 * Math.cos(angle);
+            var dy = 60 * Math.sin(angle);
+            var cp = arbor.Point(md.x + dx, md.y + dy);
+
+            var same = that.particleSystem.getEdges(edge.source, edge.target)[0];
+            var oppo = that.particleSystem.getEdges(edge.target, edge.source)[0];
 
             if (isSelfloop) {
                 that.ctx.moveTo(pt1.x, pt1.y);
                 that.ctx.bezierCurveTo(pt1.x - (cpH / 2), pt1.y - cpV, pt1.x + (cpH / 2), pt1.y - cpV, pt1.x, pt1.y);
                 pt2 = pt1;
+            } else if (oppo != undefined) {
+                if (same.source == oppo.target && same.target == oppo.source) {
+                    that.ctx.moveTo(pt1.x, pt1.y);
+                    that.ctx.quadraticCurveTo(cp.x, cp.y, pt2.x, pt2.y);
+                    that.ctx.stroke();
+                }
             } else {
                 that.ctx.lineTo(pt2.x, pt2.y);
             }
@@ -119,16 +137,30 @@ var Renderer = (function () {
                 var tail = that.intersect_line_box(pt1, pt2, nodeBoxes[edge.source.name]);
                 var head = that.intersect_line_box(tail, pt2, nodeBoxes[edge.target.name]);
 
-                if (label) {
+                if (oppo != undefined) {
+                    if (same.source == oppo.target && same.target == oppo.source && label) {
+                        var labeldx = dx * 0.7;
+                        var labeldy = dy * 0.7;
+                        var labelcp = arbor.Point(md.x + labeldx, md.y + labeldy);
+
+                        that.drawLabel(labelcp.x, labelcp.y, label, that.ctx);
+
+                        that.ctx.translate(pt2.x, pt2.y); // translate pointer to the top of the nodebox.
+
+                        that.ctx.rotate(2 * Math.PI - Math.atan2(pt2.y - cp.y, pt2.x - cp.x));
+                        that.ctx.clearRect(-arrowLength / 2, 1 / 2, arrowLength / 2, 1);
+                        that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
+                    }
+                } else if (label) {
                     var mid_x = ((tail.x + head.x) / 2) - 5;
                     var mid_y = ((tail.y + head.y) / 2) - 5;
                     that.drawLabel(mid_x, mid_y, label, that.ctx);
-                }
 
-                that.ctx.translate(head.x, head.y); // translate pointer to the top og the nodebox.
-                that.ctx.rotate(Math.atan2(head.y - tail.y, head.x - tail.x));
-                that.ctx.clearRect(-arrowLength / 2, 1 / 2, arrowLength / 2, 1);
-                that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
+                    that.ctx.translate(head.x, head.y); // translate pointer to the top og the nodebox.
+                    that.ctx.rotate(Math.atan2(head.y - tail.y, head.x - tail.x));
+                    that.ctx.clearRect(-arrowLength / 2, 1 / 2, arrowLength / 2, 1);
+                    that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
+                }
             } else {
                 /*Edge is self-loop*/
                 if (label) {
@@ -137,10 +169,11 @@ var Renderer = (function () {
                 }
 
                 that.ctx.translate(pt2.x + 9, pt2.y - 9); // translate pointer to the top og the nodebox.
-                that.ctx.rotate(125 * Math.PI / 180); // otates in radians use (degrees*Math.PI/180)
+                that.ctx.rotate(125 * Math.PI / 180); // Rotates in radians use (degrees*Math.PI/180)
                 that.ctx.clearRect(-arrowLength / 2, 1 / 2, arrowLength / 2, 1);
                 that.drawChevron(arrowLength, arrowWidth, chevronColor, that.ctx); // draw the chevron
             }
+
             that.ctx.restore();
         });
     };
