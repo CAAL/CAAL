@@ -324,62 +324,67 @@ module CCS {
         }
     }
 
+    /*
+        Always modifies inplace. Clone gives shallow clone
+    */
     export class LabelSet {
         private labels : string[] = [];
 
         constructor(labels?) {
             if (labels) {
-                this.addLabels(labels);
+                this.addAll(labels);
             }
         }
 
-        public clone() {
+        clone() : LabelSet {
             return new LabelSet(this.labels);
         }
 
-        public toArray() : string[] {
+        toArray() : string[] {
             return this.labels.slice(0);
         }
 
-        private addLabels(labels) {
-            for (var i = 0, max = labels.length; i < max; i++) {
-                var label = labels[i];
-                if (this.labels.indexOf(label) === -1) this.labels.push(label);
+        add(label) : LabelSet {
+            if (this.labels.indexOf(label) === -1) {
+                this.labels.push(label);
             }
+            return this;
         }
 
-        private removeLabels(labels) {
-            for (var i = 0, max = labels.length; i < max; i++){
-                var label = labels[i];
-                var index = this.labels.indexOf(label);
-                if (index !== -1) {
-                    this.labels.splice(index, 1);
+        addAll(labels) : LabelSet {
+            for (var i = 0, max = labels.length; i < max; i++) {
+                this.add(labels[i]);
+            }
+            return this;
+        }
+
+        remove(labels) : LabelSet {
+            var allCurrent = this.labels,
+                count = allCurrent.length,
+                i = 0;
+            while (i < count) {
+                if (labels.indexOf(allCurrent[i]) !== -1) {
+                    allCurrent[i] = allCurrent[--count];
+                } else {
+                    ++i;
                 }
             }
-        }
-
-        add(labels) {
-            var result = this.clone();
-            result.addLabels(labels);
-            return result;
-        }
-
-        remove(labels) {
-            var result = this.clone();
-            result.removeLabels(labels);
-            return result;
+            allCurrent.length = count;
+            return this;
         }
 
         contains(label) : boolean {
             return this.labels.indexOf(label) !== -1;
         }
 
-        union(set : LabelSet) : LabelSet {
-            return this.add(set.labels);
+        unionWith(set : LabelSet) : LabelSet {
+            this.addAll(set.labels);
+            return this;
         }
 
-        difference(set : LabelSet) : LabelSet {
-            return this.remove(set.labels);
+        differenceWith(set : LabelSet) : LabelSet {
+            this.remove(set.labels);
+            return this;
         }
 
         empty() : boolean {
@@ -391,7 +396,9 @@ module CCS {
         }
 
         forEach(f : (label : string) => void, thisObject?) {
-            this.labels.forEach(f, thisObject);
+            for (var i = 0, max = this.labels.length; i < max; i++){
+                f(this.labels[i]);
+            }
         }
 
         toString() {
@@ -407,93 +414,86 @@ module CCS {
         }
     }
 
+    /*
+        Always modifies inplace. Clone gives shallow clone
+    */
     export class Transition {
         constructor(public action : Action, public targetProcess : Process) {
         }
         equals(other : Transition) {
-            //TODO: look into targetProcessId and reductions
             return (this.action.equals(other.action) &&
                     this.targetProcess.id == other.targetProcess.id);
         }
-        hash() {
+        toString() {
             if (this.targetProcess instanceof NamedProcess) {
                 return this.action.toString() + "->" + (<NamedProcess>this.targetProcess).name;
             }
             return this.action.toString() + "->" + this.targetProcess.id;
         }
-        toString() {
-            return this.hash();
-        }
     }
 
     export class TransitionSet {
-        private transitions = {};
+        private transitions = [];
+
         constructor(transitions?) {
             if (transitions) {
-                transitions.forEach(this.addTransition, this);
+                this.addAll(transitions);
             }
         }
 
-        public mergeInto(tSet : TransitionSet) : TransitionSet {
-            for (var hashKey in tSet.transitions) {
-                tSet.transitions[hashKey].forEach(this.addTransition, this);
+        add(transition : Transition) {
+            var allCurrent = this.transitions;
+            for (var i = 0, max = allCurrent.length; i < max; i++){
+                if (transition.equals(allCurrent[i])) break;
             }
+            allCurrent.push(transition);
             return this;
         }
 
-        public clone() {
-            var result = new TransitionSet([]);
-            for (var hashKey in this.transitions) {
-                this.transitions[hashKey].forEach(result.addTransition, result);
+        addAll(transitions : Transition[]) {
+            for (var i = 0, max = transitions.length; i < max; i++){
+                this.add(transitions[i]);
             }
-            return result;
         }
 
-        private hashsetArray(hash) {
-            var hashSet = this.transitions[hash];
-            if (!hashSet) {
-                hashSet = [];
-                this.transitions[hash] = hashSet;
-            }
-            return hashSet;
-        }
-
-        addTransition(transition) {
-            var hash = transition.hash(),
-                existingHashset = this.hashsetArray(hash);
-            for (var i = 0; i < existingHashset.length; i++) {
-                if (existingHashset[i].equals(transition)) return;
-            }
-            existingHashset.push(transition);
+        unionWith(tSet : TransitionSet) : TransitionSet {
+            this.addAll(tSet.transitions);
             return this;
         }
 
-        removeInPlace(labels : LabelSet) {
-            for (var hashKey in this.transitions) {
-                this.transitions[hashKey] = this.transitions[hashKey].filter(t => !labels.contains(t.action.label));
-                if (this.transitions[hashKey].length === 0) {
-                    delete this.transitions[hashKey];
+        clone() : TransitionSet {
+            return new TransitionSet(this.transitions);
+        }
+
+        applyRestrictionSet(labels : LabelSet) : TransitionSet {
+            var count = this.transitions.length,
+                allCurrent = this.transitions,
+                i = 0;
+            while (i < count) {
+                if (labels.contains(allCurrent[i].action.label)) {
+                    allCurrent[i] = allCurrent[--count];
+                } else {
+                    ++i;
                 }
             }
+            allCurrent.length = count;
             return this;
         }
 
-        relabelInPlace(relabels : RelabellingSet) {
-            for (var hashKey in this.transitions) {
-                this.transitions[hashKey].forEach(t => {
-                    if (relabels.hasRelabelForLabel(t.label)) {
-                        t.label = relabels.toLabelForFromLabel(t.label);
-                    }
-                });
-                if (this.transitions[hashKey].length === 0) {
-                    delete this.transitions[hashKey];
+        applyRelabelSet(relabels : RelabellingSet) : void {
+            var allCurrent = this.transitions,
+                transition;
+            for (var i = 0, max = allCurrent.length; i < max; i++){
+                transition = allCurrent[i];
+                if (relabels.hasRelabelForLabel(transition.action.label)) {
+                    transition.action.label = relabels.toLabelForFromLabel(transition.action.label);
                 }
             }
         }
 
         forEach(f : (transition : Transition) => any) {
-            for (var hashKey in this.transitions) {
-                this.transitions[hashKey].forEach(f);
+            for (var i = 0, max = this.transitions.length; i < max; i++){
+                f(this.transitions[i]);
             }
         }
     }
@@ -534,7 +534,7 @@ module CCS {
             if (!transitionSet) {
                 leftTransitions = process.leftProcess.dispatchOn(this);
                 rightTransitions = process.rightProcess.dispatchOn(this);
-                transitionSet = this.cache[process.id] = leftTransitions.clone().mergeInto(rightTransitions);
+                transitionSet = this.cache[process.id] = leftTransitions.clone().unionWith(rightTransitions);
             }
             return transitionSet;
         }
@@ -549,18 +549,18 @@ module CCS {
                 
                 leftSet.forEach(leftTransition => {
                     //COM1
-                    transitionSet.addTransition(new Transition(leftTransition.action.clone(),
+                    transitionSet.add(new Transition(leftTransition.action.clone(),
                         this.graph.newCompositionProcess(leftTransition.targetProcess, process.rightProcess)));
 
                     rightSet.forEach(rightTransition => {
                         //COM2
-                        transitionSet.addTransition(new Transition(rightTransition.action.clone(),
+                        transitionSet.add(new Transition(rightTransition.action.clone(),
                             this.graph.newCompositionProcess(process.leftProcess, rightTransition.targetProcess)));
 
                         //COM3
                         if (leftTransition.action.label === rightTransition.action.label &&
                             leftTransition.action.isComplement !== rightTransition.action.isComplement) {
-                            transitionSet.addTransition(new Transition(new Action("tau", false),
+                            transitionSet.add(new Transition(new Action("tau", false),
                                 this.graph.newCompositionProcess(leftTransition.targetProcess, rightTransition.targetProcess)));
                         }
                     });
@@ -584,10 +584,10 @@ module CCS {
             if (!transitionSet) {
                 transitionSet = this.cache[process.id] = new TransitionSet();
                 subTransitionSet = process.subProcess.dispatchOn(this).clone();
-                subTransitionSet.removeInPlace(process.restrictedLabels);
+                subTransitionSet.applyRestrictionSet(process.restrictedLabels);
                 subTransitionSet.forEach(transition => {
                     var newRestriction = this.graph.newRestrictedProcess(transition.targetProcess, process.restrictedLabels.clone());
-                    transitionSet.addTransition(new Transition(transition.action.clone(), newRestriction));
+                    transitionSet.add(new Transition(transition.action.clone(), newRestriction));
                 });
             }
             return transitionSet;
@@ -599,10 +599,10 @@ module CCS {
             if (!transitionSet) {
                 transitionSet = this.cache[process.id] = new TransitionSet();
                 subTransitionSet = process.subProcess.dispatchOn(this).clone();
-                subTransitionSet.relabelInPlace(process.relabellings);
+                subTransitionSet.applyRelabelSet(process.relabellings);
                 subTransitionSet.forEach(transition => {
                     var newRelabelling = this.graph.newRelabelingProcess(transition.targetProcess, process.relabellings.clone());
-                    transitionSet.addTransition(new Transition(transition.action.clone(), newRelabelling));
+                    transitionSet.add(new Transition(transition.action.clone(), newRelabelling));
                 });
             }
             return transitionSet;
