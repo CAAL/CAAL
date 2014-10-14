@@ -3,6 +3,7 @@
 /// <reference path="../../lib/arbor.d.ts" />
 var Renderer = (function () {
     function Renderer(canvas) {
+        this.myid = 1;
         this.canvas = $(canvas).get(0);
         this.ctx = this.canvas.getContext("2d");
         this.gfx = arbor.Graphics(this.canvas);
@@ -41,23 +42,29 @@ var Renderer = (function () {
         this.particleSystem.eachNode(function (node, pt) {
             // node: {mass:#, p:{x,y}, name:"", data:{}}
             // pt:   {x:#, y:#}  node position in screen coords
+            if (node.data.invisible != undefined) {
+                return;
+            }
             var label = node.data.label || "";
             var w = that.ctx.measureText("" + label).width + 10;
 
             if (!("" + label).match(/^[ \t]*$/)) {
                 pt.x = Math.floor(pt.x);
                 pt.y = Math.floor(pt.y);
-            } else
+            } else {
                 label = null;
+            }
 
             // draw a circle centered at pt
-            if (node.data.color)
+            if (node.data.color) {
                 that.ctx.fillStyle = node.data.color;
-            else
-                that.ctx.fillStyle = "#ffffff"; //Node default color
+            } else {
+                that.ctx.fillStyle = "#000000"; //Node default color
+            }
 
-            if (node.data.color == 'none')
+            if (node.data.color == 'none') {
                 that.ctx.fillStyle = "rgba(0,0,0,.0)";
+            }
 
             if (node.data.shape == 'dot') {
                 that.gfx.oval(pt.x - w / 2, pt.y - w / 2, w, w, { fill: that.ctx.fillStyle });
@@ -180,20 +187,28 @@ var Renderer = (function () {
 
     Renderer.prototype.initMouseHandling = function () {
         // no-nonsense drag and drop (thanks springy.js)
+        var nearest = null;
         var dragged = null;
         var that = this;
+        var mouseP;
 
         // set up a handler object that will initially listen for mousedowns then
         // for moves and mouseups while dragging
         var handler = {
             clicked: function (e) {
                 var pos = $(that.canvas).offset();
-                var _mouseP = arbor.Point(e.pageX - pos.left, e.pageY - pos.top);
-                dragged = that.particleSystem.nearest(_mouseP);
+                mouseP = arbor.Point(e.pageX - pos.left, e.pageY - pos.top);
+                nearest = dragged = that.particleSystem.nearest(mouseP);
+                that.selectedNode = dragged.node;
 
                 if (dragged && dragged.node !== null) {
                     // while we're dragging, don't let physics move the node
                     dragged.node.fixed = true;
+                }
+
+                if (that.selectedNode) {
+                    // just making sure that the selectedNode is not null
+                    that.expandGraph();
                 }
 
                 $(that.canvas).bind('mousemove', handler.dragged);
@@ -203,9 +218,11 @@ var Renderer = (function () {
             },
             dragged: function (e) {
                 var pos = $(that.canvas).offset();
+                var old_nearest = nearest && nearest.node._id;
+                var pos = $(that.canvas).offset();
                 var s = arbor.Point(e.pageX - pos.left, e.pageY - pos.top);
 
-                if (dragged && dragged.node !== null) {
+                if (dragged !== null && dragged.node !== null) {
                     var p = that.particleSystem.fromScreen(s);
                     dragged.node.p = p;
                 }
@@ -213,15 +230,21 @@ var Renderer = (function () {
                 return false;
             },
             dropped: function (e) {
-                if (dragged === null || dragged.node === undefined)
+                if (dragged === null || dragged.node === undefined) {
                     return;
-                if (dragged.node !== null)
+                }
+
+                if (dragged.node !== null) {
                     dragged.node.fixed = false;
-                dragged.node.tempMass = 10;
+                }
+
                 dragged = null;
+
+                //that.selectedNode = null;
                 $(that.canvas).unbind('mousemove', handler.dragged);
                 $(window).unbind('mouseup', handler.dropped);
-                var _mouseP = null;
+                mouseP = null;
+
                 return false;
             }
         };
@@ -230,6 +253,13 @@ var Renderer = (function () {
         $(that.canvas).mousedown(handler.clicked);
     };
 
+    /**
+    * Draws the label upon the edge
+    * @param {number}                   x     the x coordinate
+    * @param {number}                   y     the y coordinate
+    * @param {string}                   label the text to be written.
+    * @param {CanvasRenderingContext2D} ctx   the canvas to draw on.
+    */
     Renderer.prototype.drawLabel = function (x, y, label, ctx) {
         ctx.save();
         ctx.font = "17px Helvetica";
@@ -239,6 +269,13 @@ var Renderer = (function () {
         ctx.restore();
     };
 
+    /**
+    * Draws the arrowhead
+    * @param {number}                   arrowLength the length of the arrowhead
+    * @param {number}                   arrowWidth  the width of the arrowhead
+    * @param {string}                   color       the color of the arrowhead
+    * @param {CanvasRenderingContext2D} ctx         the canvas
+    */
     Renderer.prototype.drawChevron = function (arrowLength, arrowWidth, color, ctx) {
         ctx.save();
         ctx.fillStyle = color;
@@ -254,13 +291,7 @@ var Renderer = (function () {
 
     // helpers for figuring out where to draw arrows (thanks springy.js)
     Renderer.prototype.intersect_line_line = function (p1, p2, p3, p4) {
-        // console.log("Point1 " + p1.x, p1.y);
-        // console.log("Point2 " + p2.x, p2.y);
-        // console.log("Point3 " + p3.x, p3.y);
-        // console.log("Point4 " + p4.x, p4.y);
         var denom = ((p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y));
-
-        // console.log("demon " + denom);
         if (denom === 0) {
             return null;
         }
@@ -276,7 +307,6 @@ var Renderer = (function () {
     };
 
     Renderer.prototype.intersect_line_box = function (p1, p2, boxTuple) {
-        // console.log(boxTuple);
         var p3 = arbor.Point(boxTuple[0], boxTuple[1]);
         var w = boxTuple[2];
         var h = boxTuple[3];
@@ -287,6 +317,66 @@ var Renderer = (function () {
         var br = arbor.Point(p3.x + w, p3.y + h);
 
         return this.intersect_line_line(p1, p2, tl, tr) || this.intersect_line_line(p1, p2, tr, br) || this.intersect_line_line(p1, p2, br, bl) || this.intersect_line_line(p1, p2, bl, tl) || null;
+    };
+
+    /**
+    * adds a single node to the graph.
+    * @param  {number} nodeId The unique name of the node.
+    * @param  {string} label    The label the of the node.
+    * @return {Node}            Returns the node, just added.
+    */
+    Renderer.prototype.addNodeToGraph = function (nodeName, label) {
+        if (label) {
+            if (label.length > 10) {
+                label = label.substring(0, 8) + "..";
+            }
+        }
+        return this.particleSystem.addNode(nodeName, { label: label, expanded: false });
+    };
+
+    Renderer.prototype.addEdgeToGraph = function (source, target, data) {
+        console.log("addEdgeToGraph", source, target, data);
+        if (source === target) {
+            data.selfloop = true;
+            var selfloopEdge = this.particleSystem.getEdges(source.name, target.name)[0];
+
+            if (selfloopEdge !== undefined) {
+                selfloopEdge.data.label += ", " + data.label;
+                if (selfloopEdge.data.label.length > 10) {
+                    selfloopEdge.data.label = selfloopEdge.data.label.substring(0, 8) + "..";
+                }
+                return selfloopEdge;
+            }
+        }
+
+        console.log("edge is not defined");
+        return this.particleSystem.addEdge(source.name, target.name, data);
+    };
+
+    /**
+    * expand the graph from a single node, get it successors and add them to the graph
+    * @param {Node} selNode Optional parameter, if not given this.selectedNode will be expanded.
+    */
+    Renderer.prototype.expandGraph = function (selNode) {
+        if (selNode !== undefined) {
+            this.selectedNode = selNode;
+        }
+
+        if (!this.selectedNode.expanded) {
+            this.selectedNode.expanded = true;
+            var successors = this.getSuccessors(this.selectedNode);
+
+            for (var i = 0, max = successors.length; i < max; i++) {
+                var targetNode = this.addNodeToGraph(successors[i].targetid.toString(), successors[i].targetLabel);
+                this.addEdgeToGraph(this.selectedNode, targetNode, { label: successors[i].action });
+            }
+            // console.log(this.particleSystem.getEdgesFrom(this.selectedNode.name));
+        }
+    };
+
+    Renderer.prototype.getSuccessors = function (curNode) {
+        return [{ action: "a", targetid: this.myid, targetLabel: "asd.B" }, { action: "b", targetid: this.myid, targetLabel: "asd.B" }, { action: "c", targetid: ++this.myid, targetLabel: "new Node" }];
+        // return [{action:"action" + this.myid, targetid : this.myid + 1, targetLabel : "Label" + this.myid}/*, {action:"action" + that.myid++, targetid : that.myid + 1, targetLabel : "Label" + that.myid}*/];
     };
     return Renderer;
 })();

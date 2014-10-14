@@ -22,6 +22,7 @@ interface ParticleSystem {
     eachNode(f : (n : Node, pt : Point) => void) : void;
     eachEdge(f : (e : Edge, p1 : Point, p2 : Point) => void) : void; 
     getEdges(source : string, target: string) : Edge[];
+    getEdges(source : Node, target: Node) : Edge[];
     getEdgesFrom(node: string) : Edge[];
 
 }
