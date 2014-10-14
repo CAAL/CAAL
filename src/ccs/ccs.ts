@@ -324,62 +324,67 @@ module CCS {
         }
     }
 
+    /*
+        Always modifies inplace. Clone gives shallow clone
+    */
     export class LabelSet {
         private labels : string[] = [];
 
         constructor(labels?) {
             if (labels) {
-                this.addLabels(labels);
+                this.addAll(labels);
             }
         }
 
-        public clone() {
+        clone() : LabelSet {
             return new LabelSet(this.labels);
         }
 
-        public toArray() : string[] {
+        toArray() : string[] {
             return this.labels.slice(0);
         }
 
-        private addLabels(labels) {
-            for (var i = 0, max = labels.length; i < max; i++) {
-                var label = labels[i];
-                if (this.labels.indexOf(label) === -1) this.labels.push(label);
+        add(label) : LabelSet {
+            if (this.labels.indexOf(label) === -1) {
+                this.labels.push(label);
             }
+            return this;
         }
 
-        private removeLabels(labels) {
-            for (var i = 0, max = labels.length; i < max; i++){
-                var label = labels[i];
-                var index = this.labels.indexOf(label);
-                if (index !== -1) {
-                    this.labels.splice(index, 1);
+        addAll(labels) : LabelSet {
+            for (var i = 0, max = labels.length; i < max; i++) {
+                this.add(labels[i]);
+            }
+            return this;
+        }
+
+        remove(labels) : LabelSet {
+            var allCurrent = this.labels,
+                count = allCurrent.length,
+                i = 0;
+            while (i < count) {
+                if (labels.indexOf(allCurrent[i]) !== -1) {
+                    allCurrent[i] = allCurrent[--count];
+                } else {
+                    ++i;
                 }
             }
-        }
-
-        add(labels) {
-            var result = this.clone();
-            result.addLabels(labels);
-            return result;
-        }
-
-        remove(labels) {
-            var result = this.clone();
-            result.removeLabels(labels);
-            return result;
+            allCurrent.length = count;
+            return this;
         }
 
         contains(label) : boolean {
             return this.labels.indexOf(label) !== -1;
         }
 
-        union(set : LabelSet) : LabelSet {
-            return this.add(set.labels);
+        unionWith(set : LabelSet) : LabelSet {
+            this.addAll(set.labels);
+            return this;
         }
 
-        difference(set : LabelSet) : LabelSet {
-            return this.remove(set.labels);
+        differenceWith(set : LabelSet) : LabelSet {
+            this.remove(set.labels);
+            return this;
         }
 
         empty() : boolean {
@@ -391,7 +396,9 @@ module CCS {
         }
 
         forEach(f : (label : string) => void, thisObject?) {
-            this.labels.forEach(f, thisObject);
+            for (var i = 0, max = this.labels.length; i < max; i++){
+                f(this.labels[i]);
+            }
         }
 
         toString() {
@@ -407,6 +414,9 @@ module CCS {
         }
     }
 
+    /*
+        Always modifies inplace. Clone gives shallow clone
+    */
     export class Transition {
         constructor(public action : Action, public targetProcess : Process) {
         }
@@ -446,15 +456,16 @@ module CCS {
             }
         }
 
-        unionWith(tSet : TransitionSet) : void {
+        unionWith(tSet : TransitionSet) : TransitionSet {
             this.addAll(tSet.transitions);
+            return this;
         }
 
         clone() : TransitionSet {
             return new TransitionSet(this.transitions);
         }
 
-        applyRestrictionSet(labels : LabelSet) : void {
+        applyRestrictionSet(labels : LabelSet) : TransitionSet {
             var count = this.transitions.length,
                 allCurrent = this.transitions,
                 i = 0;
@@ -466,6 +477,7 @@ module CCS {
                 }
             }
             allCurrent.length = count;
+            return this;
         }
 
         applyRelabelSet(relabels : RelabellingSet) : void {
