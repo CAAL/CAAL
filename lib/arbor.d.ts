@@ -65,7 +65,7 @@ interface Point {
     subtract(pt : Point) : Point;
     multiply(n : number) : Point;
     divide(n : number) : Point;
-    magnitude( ) : Number
+    magnitude( ) : Number;
     normal( ) : Point;
     normalize( ) : Point;
     exploded() : boolean;
