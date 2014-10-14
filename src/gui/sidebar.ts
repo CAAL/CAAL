@@ -1,54 +1,3 @@
-class ExpandableNav {
-    private expanded: boolean;
-    private navId: string;
-    private contentId: string;
-    private expandedWidth: number;
-    private contractedWidth: number;
-    private hideOnContraction: string[];
-
-    constructor(startState: boolean,
-                buttonId: string,
-                navId: string,
-                contentId: string,
-                expandedWidth: number,
-                contractedWidth: number,
-                hideOnContraction?: string[])
-    {
-        this.expanded = startState;
-        this.navId = navId;
-        this.contentId = contentId;
-        this.expandedWidth = expandedWidth;
-        this.contractedWidth = contractedWidth;
-        this.hideOnContraction = hideOnContraction;
-
-        if (startState) { this.expand() }
-        else { this.contract() }
-
-        $(buttonId).click(() => this.toggle());
-    }
-
-    private toggle() {
-        if (this.expanded) { this.contract() }
-        else { this.expand() }
-
-        this.expanded = !this.expanded;
-
-        for (var i in this.hideOnContraction) {
-            $(this.hideOnContraction[i]).toggle(this.expanded);
-        }
-    }
-
-    private expand() {
-        $(this.navId).css('margin-left', 0);
-        $(this.contentId).css('margin-left', this.expandedWidth);
-    }
-
-    private contract() {
-        $(this.navId).css('margin-left', this.contractedWidth - this.expandedWidth);
-        $(this.contentId).css('margin-left', this.contractedWidth);
-    }
-}
-
 class ExpandableList {
     private itemId: string;
 
@@ -61,5 +10,62 @@ class ExpandableList {
 
     private toggle() {
         $(this.itemId).toggle();
+    }
+}
+
+class MenuItem {
+    public itemId: string;
+    public project: Project;
+
+    public constructor(itemId: string, project: Project) {
+        this.itemId = itemId;
+        this.project = project;
+
+        $(itemId).click((event) => this.onClick(event));
+        $(itemId).change((event) => this.onChange(event));
+    }
+
+    public onClick(event) {}
+    public onChange(event) {}
+}
+
+class New extends MenuItem {
+    public onClick(event) {
+        this.project.new();
+    }
+}
+
+class Save extends MenuItem {
+    public onClick(event) {
+        var projects = this.project.storage.get('projects');
+
+        if (projects) {
+            var json = JSON.parse(projects);
+            json.push(this.project.toJSON());
+            this.project.storage.set('projects', JSON.stringify(json));
+        } else {
+            this.project.storage.set('projects', JSON.stringify([this.project.toJSON()]));
+        }
+    }
+}
+
+class Import extends MenuItem {
+    public onChange(event) {
+        var file = event.target.files[0];
+        var reader = new FileReader();
+        reader.readAsText(file);
+
+        reader.onload = () => {
+            var project = JSON.parse(reader.result);
+            this.project.update(project.title, project.description, project.ccs);
+        }
+    }
+}
+
+class Export extends MenuItem {
+    public onClick(event) {
+        var blob = new Blob([JSON.stringify(this.project.toJSON())], {type: 'text/plain'});
+        $(this.itemId).attr('href', URL.createObjectURL(blob));
+        $(this.itemId).attr('download', this.project.getTitle() + '.ccs');
     }
 }
