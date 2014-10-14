@@ -1,6 +1,7 @@
 /*libs Jquery, graphics is needed.*/
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="../../lib/arbor.d.ts" />
+/// <reference path="handler.ts" />
 class Renderer {
     public canvas : HTMLCanvasElement;
     public ctx : CanvasRenderingContext2D;
@@ -14,7 +15,7 @@ class Renderer {
       this.particleSystem = null;
     }
 
-    public init(system : ParticleSystem){
+    public init(system : ParticleSystem) {
         // the particle system will call the init function once, right before the
         // first frame is to be drawn. it's a good place to set up the canvas and
         // to pass the canvas size to the particle system
@@ -32,7 +33,7 @@ class Renderer {
         this.initMouseHandling();
     }
 
-    public redraw(){
+    public redraw() {
         var that = this;
         // redraw will be called repeatedly during the run.
         this.gfx.clear();
@@ -384,6 +385,7 @@ class Renderer {
         }
     }
 
+    /* Just test function */
     private myid = 1;
     public getSuccessors(curNode : Node) : any[] {
         return [{action:"a", targetid: this.myid, targetLabel: "asd.B"}, {action:"b", targetid: this.myid, targetLabel: "asd.B"}, {action:"c", targetid: ++this.myid, targetLabel: "new Node"}];

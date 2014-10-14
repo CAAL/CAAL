@@ -1,8 +1,10 @@
 /*libs Jquery, graphics is needed.*/
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="../../lib/arbor.d.ts" />
+/// <reference path="handler.ts" />
 var Renderer = (function () {
     function Renderer(canvas) {
+        /* Just test function */
         this.myid = 1;
         this.canvas = $(canvas).get(0);
         this.ctx = this.canvas.getContext("2d");
