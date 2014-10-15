@@ -1,8 +1,9 @@
 /// <reference path="../lib/jquery.d.ts" />
 /// <reference path="../lib/ace.d.ts" />
-/// <reference path="gui/sidebar.ts" />
 /// <reference path="gui/project.ts" />
+/// <reference path="gui/sidebar.ts" />
 /// <reference path="gui/storage.ts" />
+/// <reference path="gui/examples.ts" />
 
 /* Initialize Ace */
 var editor = ace.edit("editor");
@@ -20,13 +21,13 @@ var project = new Project(
     '#project-title', '#project-desc', 'editor'
 );
 
-/* Initialize sidebar elements */
-new ExpandableList(false, '#projects', '#projects-list');
-new ExpandableList(false, '#examples', '#examples-list');
-
+/* Initialize sidebar items */
 new New('#new', project);
 new Save('#save', project);
-
-$('#import').click(function() { $('#import-input').click() }); // Simulate click on hidden <input> element
 new Import('#import-input', project);
 new Export('#export', project);
+new MyProjects('#projects', '#projects-list', project);
+new Examples('#examples', '#examples-list', project);
+
+/* Simulate click on hidden <input> element when "Import" is pressed. */
+$('#import').click(function() { $('#import-input').click() });

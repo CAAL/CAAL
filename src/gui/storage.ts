@@ -1,26 +1,30 @@
 interface WebStorage {
-	set(key: string, value: string): void;
     get(key: string): string;
-    append(key: string, value: string): void;
+    getJSON(key: string): any;
+    set(key: string, value: string): void;
     isCompatible(): boolean;
 }
 
 class LocalStorage implements WebStorage {
+    public get(key: string): string {
+        if (this.isCompatible()) {
+            return localStorage.getItem(key);
+        }
+    }
+
+    public getJSON(key: string): any {
+        var value = this.get(key);
+
+        try {
+            return JSON.parse(value);
+        } catch(error) {
+            console.log('Not valid JSON.');
+        }
+    }
+
     public set(key: string, value: string): void {
         if (this.isCompatible()) {
-            localStorage[key] = value;
-        }
-    }
-
-	public get(key: string): string {
-        if (this.isCompatible()) {
-            return localStorage[key];
-        }
-    }
-
-    public append(key: string, value: string): void {
-        if (this.isCompatible()) {
-            localStorage[key] = this.get(key) 
+            localStorage.setItem(key, value);
         }
     }
 
@@ -35,5 +39,5 @@ class LocalStorage implements WebStorage {
 }
 
 /*class SessionStorage implements WebStorage {
-	
+    
 }*/

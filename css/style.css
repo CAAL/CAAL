@@ -68,9 +68,16 @@ body {
     background-color: #172b4a;
 }
 
-.sub-nav {
-    margin-left: 15px;
-    font-size: 11px;
+#projects-list, #examples-list {
+    margin: 0;
+    display: none;
+}
+
+.sub-nav > li > a, .sub-nav p {
+    margin: 0 0 5px 35px;
+    padding: 0;
+    font-size: 12px;
+    color: #b9c8e0;
 }
 
 .main {
