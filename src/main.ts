@@ -11,7 +11,7 @@ editor.setTheme("ace/theme/crisp");
 editor.setShowPrintMargin(false);
 editor.getSession().setMode("ace/mode/ccs");
 ace.require("ace/ext/language_tools");
-editor.setOptions({enableBasicAutocompletion: true, maxLines: Infinity, fontSize: 16, fontFamily: "Inconsolata"});
+editor.setOptions({enableBasicAutocompletion: true, maxLines: Infinity, fontSize: 14, fontFamily: "Inconsolata"});
 editor.focus();
 
 /* Initialize project */
