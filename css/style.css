@@ -107,5 +107,11 @@ body {
 }
 
 #editor {
+    min-height: 50% !important;
     margin-bottom: 15px;
+    border: 1px solid #666;
+}
+
+.ace_scrollbar {
+    display: none !important;
 }
