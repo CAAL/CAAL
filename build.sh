@@ -3,6 +3,7 @@
 #build typescript files
 find src/ccs/*.ts -type f | xargs tsc -out lib/ccs.js
 tsc --out ./src/main.js ./src/main.ts
+find src/gui/*ts -type f | xargs tsc -out lib/gui.js
 
 # generate the parser
 pegjs --cache -e CCSParser src/ccs/ccs_grammar.pegjs lib/ccs_grammar.js
