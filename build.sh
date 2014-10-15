@@ -21,5 +21,5 @@ echo 'module.exports.CCSParser = CCSParser; });' >> ccs_grammar.js
 mv ccs_grammar.js modules/ace/lib/ace/mode/ccs/
 
 # Build the ACE editor.
-echo 'ACE EDITOR OUTPUT:'
-node modules/ace/Makefile.ccs.js --target lib/ace
+#echo 'ACE EDITOR OUTPUT:'
+#node modules/ace/Makefile.ccs.js --target lib/ace
