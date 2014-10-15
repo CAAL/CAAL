@@ -5,71 +5,71 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>CCSTool</title>
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans:600' rel='stylesheet' type='text/css'>
         <link href="lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="lib/fontawesome/css/font-awesome.min.css" rel="stylesheet">
-        <link href='http://fonts.googleapis.com/css?family=Open+Sans:600' rel='stylesheet' type='text/css'>
         <link href="css/style.css" rel="stylesheet">
     </head>
     <body>
-        <div id="sidebar">
-            <div id="sidebar-header"><i class="fa fa-exchange pull-right"></i></div>
-            <div id="sidebar-nav">
-                <ul>
-                    <li><a href="#" id="new">New Project<i class="fa fa-plus pull-right"></i></a></li>
-                    <li><a href="#">Save<i class="fa fa-floppy-o pull-right"></i></a></li>
-                </ul>
-                <div class="divider"></div>
-                <ul>
-                    <li><a href="#">Edit<i class="fa fa-code pull-right"></i></a></li>
-                    <li><a href="#">Visualize<i class="fa fa-video-camera pull-right"></i></a></li>
-                    <li><a href="#">Verify<i class="fa fa-check pull-right"></i></a></li>
-                </ul>
-                <div class="divider"></div>
-                <ul>
-                    <li><a href="#" id="import">Import<i class="fa fa-upload pull-right"></i></a></li>
-                    <input type="file" class="hidden-input" accept=".ccs" />
-                    <li><a href="#" id="export">Export<i class="fa fa-download pull-right"></i></a></li>
-                </ul>
-                <div class="divider"></div>
-                <ul>
-                    <li><a href="#" id="projects-toggle">My Projects<i class="fa fa-folder-open-o pull-right"></i></a></li>
-                    <ul id="projects" class="submenu">
+        <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="index.html">CCSTool</a>
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Help</a></li>
+                        <li><a href="https://github.com/figa12/CCS-tool"><i class="fa fa-github fa-lg"></i></a></li>
                     </ul>
-                    <li><a href="#" id="examples-toggle">Examples<i class="fa fa-folder-open-o pull-right"></i></a></li>
-                    <ul id="examples" class="submenu">
-                    </ul>
-                </ul>
-                <div class="divider"></div>
-            </div>
-            <div id="sidebar-footer">
-                <a href="#">Help</a>
-                <a href="#">About</a>
-                <a href="https://github.com/figa12/CCS-tool"><i class="fa fa-github"></i></a>
-            </div>
-        </div>
-        <div id="content">
-            <div id="content-header">
-                <div class="container">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p class="project-title" contenteditable="true"></p>
-                            <p class="project-desc" contenteditable="true"></p>
-                        </div>
-                        <div class="col-md-6">
-                            <button id="parse" type="button" class="btn btn-default">Temp Parse</button>
-                        </div>
-                    </div>
                 </div>
             </div>
-            <div id="editor"></div>
+        </div>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-3 col-md-2 sidebar">
+                    <ul class="nav nav-sidebar">
+                        <li><a id="new">New Project<i class="fa fa-plus pull-right"></i></a></li>
+                        <li><a id="save">Save<i class="fa fa-floppy-o pull-right"></i></a></li>
+                    </ul>
+                    <ul class="nav nav-sidebar">
+                        <li class="active"><a href="#">Edit<i class="fa fa-code pull-right"></i></a></li>
+                        <li><a>Visualize<i class="fa fa-video-camera pull-right"></i></a></li>
+                        <li><a>Verify<i class="fa fa-check pull-right"></i></a></li>
+                    </ul>
+                    <ul class="nav nav-sidebar">
+                        <li><a id="import">Import<i class="fa fa-upload pull-right"></i></a></li>
+                        <input type="file" id="import-input" class="hidden" accept=".ccs" />
+                        <li><a id="export">Export<i class="fa fa-download pull-right"></i></a></li>
+                    </ul>
+                    <ul class="nav nav-sidebar">
+                        <li><a id="projects">My Projects<i class="fa fa-folder-open pull-right"></i></a>
+                            <ul id="projects-list" class="nav nav-sidebar sub-nav"></ul>
+                        </li>
+                        <li><a id="examples">Examples<i class="fa fa-folder-open pull-right"></i></a></li>
+                        <ul id="examples-list" class="nav nav-sidebar sub-nav"></ul>
+                    </ul>
+                </div>
+                <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+                    <h1 id="project-title" contenteditable="true"></h1>
+                    <h4 id="project-desc" contenteditable="true"></h4>
+                    <div class="divider"></div>
+                    <div id="editor"></div>
+                    <div class="divider"></div>
+                    <button type="button" id="parse" class="btn btn-default pull-right">Parse</button>
+                </div>
+            </div>
         </div>
         <script src="lib/jquery-1.11.1.min.js"></script>
         <script src="lib/bootstrap/dist/js/bootstrap.min.js"></script>
         <script src="lib/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
         <script src="lib/ace/src/ext-language_tools.js"></script>
-        <script type="text/javascript" src="lib/ccs_grammar.js"></script>
-	    <script type="text/javascript" src="lib/ccs.js"></script>
-        <script src="test.js"></script>
         <script src="src/main.js"></script>
     </body>
 </html>

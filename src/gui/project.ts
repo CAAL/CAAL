@@ -2,105 +2,84 @@ class Project {
     private defaultTitle: string;
     private defaultDescription: string;
     private defaultCCS: string;
-    private title: string;
-    private description: string;
     private titleId: string;
     private descriptionId: string;
     private editor: any;
+    private title: string;
+    private description: string;
 
     public constructor(defaultTitle: string,
                 defaultDescription: string,
                 defaultCCS: string,
                 titleId: string,
                 descriptionId: string,
-                editor: any)
+                editorId: string)
     {
         this.defaultTitle = defaultTitle;
         this.defaultDescription = defaultDescription;
         this.defaultCCS = defaultCCS;
         this.titleId = titleId;
         this.descriptionId = descriptionId;
-        this.editor = editor;
+        this.editor = ace.edit(editorId);
 
         /* Set default values */
-        this.setTitle(this.defaultTitle);
-        this.setDescription(this.defaultDescription);
-        this.setCCS(this.defaultCCS);
+        this.update(this.defaultTitle, this.defaultDescription, this.defaultCCS);
 
         /* Register event handlers */
         $(this.titleId).focusout(() => this.onTitleChanged());
         $(this.descriptionId).focusout(() => this.onDescriptionChanged());
     }
 
-    public new() {
-        this.setTitle(this.defaultTitle);
-        this.setDescription(this.defaultDescription);
-        this.setCCS(this.defaultCCS);
+    public getTitle(): string {
+        return this.title;
     }
 
-    private save() {
-
-    }
-
-    private saveSession() {
-
-    }
-
-    private load() {
-
-    }
-
-    public importProject(evt) {
-        var file = evt.target['files'][0];
-        var reader = new FileReader();
-        reader.readAsText(file);
-        reader.onload = () => {
-            var project = JSON.parse(reader.result);
-            this.setTitle(project.title);
-            this.setDescription(project.description);
-            this.setCCS(project.ccs);
-        }
-    }
-
-    public exportProject(exportId: string) {
-        var blob = new Blob([this.toJSON()], {type: 'text/plain'});
-        $(exportId).attr('href', URL.createObjectURL(blob));
-        $(exportId).attr('download', this.title + '.ccs');
-    }
-
-    private setTitle(title: string) {
+    public setTitle(title: string): void {
         this.title = title;
         $(this.titleId).text(this.title);
     }
 
-    private setDescription(description: string) {
+    public getDescription(): string {
+        return this.description;
+    }
+
+    public setDescription(description: string): void {
         this.description = description;
         $(this.descriptionId).text(this.description);
     }
 
-    private setCCS(ccs: string) {
-        this.editor.setValue(ccs);
-    }
-
-    private getCCS(): string {
+    public getCCS(): string {
         return this.editor.getSession().getValue();
     }
 
-    private onTitleChanged() {
+    public setCCS(ccs: string): void {
+        this.editor.setValue(ccs);
+        this.editor.clearSelection();
+    }
+
+    public update(title: string, description: string, ccs: string): void {
+        this.setTitle(title);
+        this.setDescription(description);
+        this.setCCS(ccs);
+    }
+
+    public reset(): void {
+        this.update(this.defaultTitle, this.defaultDescription, this.defaultCCS);
+    }
+
+    public toJSON(): Object {
+        return {
+            title: this.getTitle(),
+            description: this.getDescription(),
+            ccs: this.getCCS()
+        };
+    }
+
+    private onTitleChanged(): void {
         this.title = $(this.titleId).text();
     }
 
-    private onDescriptionChanged() {
+    private onDescriptionChanged(): void {
         this.description = $(this.descriptionId).text();
-    }
-
-    private toJSON() {
-        return JSON.stringify(
-            {
-                title: this.title,
-                description: this.description,
-                ccs: this.getCCS()
-            }
-        );
     }
 }
