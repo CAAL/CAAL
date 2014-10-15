@@ -13,7 +13,7 @@ class Environment {
     private renderer : Renderer;
 
     constructor() {
-        this.sys = arbor.ParticleSystem(500, 3000, 0.90);
+        this.sys = arbor.ParticleSystem(500, 3000, 0.95);
         this.sys.parameters({gravity:false});
         this.renderer = new Renderer("#viewport");
         this.sys.renderer = this.renderer
@@ -21,9 +21,9 @@ class Environment {
 
 
     init() : void{
-        this.sys.addNode('b', {label: "a.B"});
-        this.sys.addNode('a', {label: "b.B"});
-        this.sys.addNode('c', {label: "c.B"});
+        this.sys.addNode('b', {label: "Response"});
+        this.sys.addNode('a', {label: "Server"});
+        this.sys.addNode('c', {label: "S3"});
 
         this.sys.addEdge('b','a', {label:"a"});
         this.sys.addEdge('a','a', {label:"b"});

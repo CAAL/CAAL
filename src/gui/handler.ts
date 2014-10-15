@@ -53,8 +53,22 @@ class Handler {
         return false;
     }
 
-    public droppen(e): boolean {
+    public droppen(e): any {
          var h = e.data.handler;
+         if (h.dragged===null || h.dragged.node===undefined) {
+             return;
+         }
+         
+         if (h.dragged.node !== null) {
+             h.dragged.node.fixed = false;
+         }
+
+         h.dragged = null;
+         //that.selectedNode = null;
+
+         $(h.renderer.canvas).unbind('mousemove', h.dragged);
+         $(window).unbind('mouseup', h.dropped);
+         h.mouseP = null;
     
         return false;
     }
