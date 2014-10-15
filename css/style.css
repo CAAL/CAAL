@@ -107,7 +107,7 @@ body {
 }
 
 #editor {
-    min-height: 300px !important;
+    min-height: 50% !important;
     margin-bottom: 15px;
     border: 1px solid #666;
 }
