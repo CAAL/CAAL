@@ -7,11 +7,17 @@
 
 /* Initialize Ace */
 var editor = ace.edit("editor");
-editor.setTheme("ace/theme/crisp");
-editor.setShowPrintMargin(false);
-editor.getSession().setMode("ace/mode/ccs");
 ace.require("ace/ext/language_tools");
-editor.setOptions({enableBasicAutocompletion: true, maxLines: Infinity, fontSize: 14, fontFamily: "Inconsolata"});
+editor.setTheme("ace/theme/crisp");
+editor.getSession().setMode("ace/mode/ccs");
+editor.getSession().setUseWrapMode(true);
+editor.setOptions({
+    enableBasicAutocompletion: true,
+    maxLines: Infinity,
+    showPrintMargin: false,
+    fontSize: 14,
+    fontFamily: "Inconsolata",
+});
 editor.focus();
 
 /* Initialize project */
@@ -30,6 +36,8 @@ new Export('#export', project);
 new MyProjects('#projects', '#projects-list', project);
 new Examples('#examples', '#examples-list', project);
 
-/* Simulate click on hidden <input> element when "Import" is pressed. */
+/* Simulate click on hidden <input> element */
 $('#import').click(function() { $('#import-input').click() });
+
+/* Focus Ace editor whenever its containing <div> is pressed */
 $('#editor').click(function() { editor.focus(); });
