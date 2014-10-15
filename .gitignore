@@ -6,3 +6,4 @@ npm-debug.log
 lib/ccs.js
 lib/ccs_grammar.js
 lib/ace
+*.js.map
