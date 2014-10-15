@@ -1,3 +1,4 @@
 node_modules
 src/*.js
 npm-debug.log
+src/gui/*.js
