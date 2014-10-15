@@ -12,12 +12,13 @@ editor.setShowPrintMargin(false);
 editor.getSession().setMode("ace/mode/ccs");
 ace.require("ace/ext/language_tools");
 editor.setOptions({enableBasicAutocompletion: true, maxLines: Infinity, fontSize: 16});
+editor.focus();
 
 /* Initialize project */
 var project = new Project(
     'Untitled Project', // Default title
     'No description ...', // Default description
-    '# Enter your program here', // Initial editor content
+    '* Enter your program here', // Initial editor content
     '#project-title', '#project-desc', 'editor'
 );
 
@@ -31,3 +32,7 @@ new Examples('#examples', '#examples-list', project);
 
 /* Simulate click on hidden <input> element when "Import" is pressed. */
 $('#import').click(function() { $('#import-input').click() });
+
+$('#editor').click(function() {
+    editor.focus();
+});
