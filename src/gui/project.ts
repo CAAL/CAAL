@@ -53,7 +53,7 @@ class Project {
     }
 
     public setCCS(ccs: string): void {
-        this.editor.setValue(ccs);
+        this.editor.setValue(ccs, 1);
         this.editor.clearSelection();
     }
 
