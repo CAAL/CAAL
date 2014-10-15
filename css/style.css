@@ -1,0 +1,111 @@
+body {
+    padding-top: 50px;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.navbar-fixed-top {
+    border-bottom: 1px solid #2b4367;
+    background-color: #172b4a;
+}
+
+.navbar a.navbar-brand,
+.navbar .navbar-nav > li > a {
+    color: #b9c8e0;
+}
+
+.navbar .navbar-toggle {
+    color: #b9c8e0;
+    border-color: #b9c8e0;
+}
+
+.navbar .navbar-toggle:hover,
+.navbar .navbar-toggle:focus {
+    background-color: #1d365d;
+}
+
+.sidebar {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .sidebar {
+        position: fixed;
+        top: 50px;
+        bottom: 0;
+        left: 0;
+        z-index: 1000;
+        display: block;
+        padding: 20px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        background-color: #1d365d;
+        border-right: 1px solid #2b4367;
+    }
+}
+
+.nav-sidebar {
+    margin-right: -21px;
+    margin-bottom: 20px;
+    margin-left: -20px;
+}
+
+.nav-sidebar > li > a {
+    padding-right: 20px;
+    padding-left: 20px;
+    color: #b9c8e0;
+    cursor: pointer;
+}
+
+.nav-sidebar > li > a:hover {
+    color: #fff;
+    background-color: #1d365d;
+}
+
+.nav-sidebar > .active > a,
+.nav-sidebar > .active > a:hover,
+.nav-sidebar > .active > a:focus {
+    color: #fff;
+    background-color: #172b4a;
+}
+
+#projects-list, #examples-list {
+    margin: 0;
+    display: none;
+}
+
+.sub-nav > li > a, .sub-nav p {
+    margin: 0 0 5px 35px;
+    padding: 0;
+    font-size: 12px;
+    color: #b9c8e0;
+}
+
+.main {
+    padding: 20px;
+}
+
+@media (min-width: 768px) {
+    .main {
+        padding-right: 40px;
+        padding-left: 40px;
+    }
+}
+
+#project-title {
+    margin-top: 0;
+    padding: 5px 0;
+}
+
+#project-desc {
+    padding: 5px 0;
+    color: #666;
+}
+
+.divider {
+    border-top: 1px solid #ccc;
+    margin: 15px 0;
+}
+
+#editor {
+    margin-bottom: 15px;
+}

@@ -1,4 +1,8 @@
 node_modules
 src/*.js
-npm-debug.log
+src/ccs/*.js
 src/gui/*.js
+npm-debug.log
+lib/ccs.js
+lib/ccs_grammar.js
+lib/ace
