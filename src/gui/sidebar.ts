@@ -7,12 +7,12 @@
 class MenuItem {
     public itemId: string;
     public project: Project;
-    public storage: LocalStorage;
+    public storage: WebStorage;
 
     public constructor(itemId: string, project: Project) {
         this.itemId = itemId;
         this.project = project;
-        this.storage = new LocalStorage();
+        this.storage = new WebStorage(localStorage);
 
         $(itemId).click((event) => this.onClick(event));
         $(itemId).change((event) => this.onChange(event));
@@ -30,14 +30,13 @@ class New extends MenuItem {
 
 class Save extends MenuItem {
     public onClick(event) {
-        var projects = this.storage.get('projects');
+        var projects = this.storage.getObj('projects');
 
         if (projects) {
-            var json = JSON.parse(projects);
-            json.push(this.project.toJSON());
-            this.storage.set('projects', JSON.stringify(json));
+            projects.push(this.project.toJSON());
+            this.storage.setObj('projects', projects);
         } else {
-            this.storage.set('projects', JSON.stringify([this.project.toJSON()]));
+            this.storage.setObj('projects', [this.project.toJSON()]);
         }
 
         $(document).trigger('save'); // Trigger event to update list display.
@@ -81,7 +80,7 @@ class MyProjects extends MenuItem {
     }
 
     private show() {
-        var projects = this.storage.getJSON('projects');
+        var projects = this.storage.getObj('projects');
         var list = $(this.listId);
         list.empty();
 
@@ -97,7 +96,7 @@ class MyProjects extends MenuItem {
     }
 
     private load(event) {
-        var projects = this.storage.getJSON('projects');
+        var projects = this.storage.getObj('projects');
         var title = $(event.target).text();
 
         for (var i = 0; i < projects.length; i++) {
