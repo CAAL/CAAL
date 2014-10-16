@@ -17,7 +17,7 @@ class WebStorage {
         try {
             return JSON.parse(this.get(key));
         } catch (e) {
-            console.log(e.message);
+            console.log('Invalid JSON: ' + e.message);
         }
     }
 
@@ -33,7 +33,7 @@ class WebStorage {
         try {
             this.set(key, JSON.stringify(value));
         } catch (e) {
-            console.log(e.message);
+            console.log('Invalid JSON: ' + e.message);
         }
     }
 
