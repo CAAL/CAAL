@@ -8,6 +8,8 @@ class Renderer {
     public gfx : any; //Graphics lib
     public particleSystem : ParticleSystem;
     public selectedNode : Node;
+    private nodeBoxes:Point[] = [];
+
     constructor(canvas : string) {
       this.canvas = <HTMLCanvasElement> $(canvas).get(0);
       this.ctx = this.canvas.getContext("2d");
@@ -38,55 +40,11 @@ class Renderer {
         // redraw will be called repeatedly during the run.
         this.gfx.clear();
 
-        // draw the nodes & save their bounds for edge drawing
-        var nodeBoxes:Point[] = [];
-
         this.particleSystem.eachNode(function(node : Node, pt : Point) {
             // node: {mass:#, p:{x,y}, name:"", data:{}}
             // pt:   {x:#, y:#}  node position in screen coords
-            if(node.data.invisible != undefined){
-                return;
-            }
-            var label = node.data.label || "";
-            var w = that.ctx.measureText(""+label).width + 10;
 
-            if (!(""+label).match(/^[ \t]*$/)) {
-                pt.x = Math.floor(pt.x);
-                pt.y = Math.floor(pt.y);
-            }
-            else {
-                label = null;
-            }
-
-            // draw a circle centered at pt
-            if (node.data.color) {
-                that.ctx.fillStyle = node.data.color; 
-            }
-            else {
-                //that.ctx.fillStyle = "#044C92"; //Node default color
-                //that.ctx.fillStyle = "#2471E0"; //Node default color
-                that.ctx.fillStyle = "rgb(5, 0, 112)"; //Node default color
-            }
-
-            if (node.data.color=='none') {
-                that.ctx.fillStyle = "rgba(0,0,0,.0)";
-            }
-
-            that.gfx.rect(pt.x-w/2, pt.y-10, w, 26, 8, {fill:that.ctx.fillStyle});
-            nodeBoxes[node.name] = [pt.x-w/2, pt.y-11, w, 28];
-
-
-            // draw the text
-            if (label){
-                that.ctx.font = "14px 'Open Sans'";
-                that.ctx.textAlign = "center";
-                that.ctx.fillStyle = "white";
-
-                if(node.data.color=='none')
-                  that.ctx.fillStyle = '#333333'; //default node label color
-
-                that.ctx.fillText(label||"", pt.x, pt.y+8);
-            }
+            that.drawRectNode(node, pt);
         })
 
         // draw the edges
@@ -105,24 +63,22 @@ class Renderer {
             var oppo = that.particleSystem.getEdges(edge.target, edge.source)[0];
 
             that.ctx.save();
-            
-
             that.ctx.strokeStyle = "rgb(196, 196, 196)"; //Edge color
             that.ctx.lineWidth = 1.6; 
             
             if(isSelfloop){
-                that.drawSelfEdge(pt1, pt2, arrowLength, arrowWidth, chevronColor, label, nodeBoxes[edge.target.name]);             
+                that.drawSelfEdge(pt1, pt2, arrowLength, arrowWidth, chevronColor, label, that.nodeBoxes[edge.target.name]);             
             }
             else if (oppo != undefined) {
-                /* Bend the edges, ótherwise the two edges will "overlap" eachother*/
+                /* Bend the edges, otherwise the two edges will "overlap" eachother*/
                 if (edge.source == oppo.target && edge.target == oppo.source) {
-                    that.drawBendingEdge(pt1, pt2, nodeBoxes[edge.source.name], nodeBoxes[edge.target.name],
+                    that.drawBendingEdge(pt1, pt2, that.nodeBoxes[edge.source.name], that.nodeBoxes[edge.target.name],
                         arrowLength, arrowWidth, chevronColor, label);
                 }
             }
             else {
                 /*Draw normal edge*/
-                that.drawNormalEdge(pt1, pt2, nodeBoxes[edge.source.name], nodeBoxes[edge.target.name],
+                that.drawNormalEdge(pt1, pt2, that.nodeBoxes[edge.source.name], that.nodeBoxes[edge.target.name],
                         arrowLength, arrowWidth, chevronColor, label)
             }     
             that.ctx.restore();       
@@ -184,9 +140,7 @@ class Renderer {
             }
 
             var midPoint = pt1.add(pt2).multiply(0.5);
-            // this.ctx.moveTo(midPoint.x,midPoint.y);
-            // this.ctx.lineTo(midPoint.x + offset.x, midPoint.y + offset.y);
-            // this.ctx.stroke();
+            
             this.drawLabel(midPoint.x + offset.x, midPoint.y + offset.y, label);  
         }
 
@@ -294,6 +248,38 @@ class Renderer {
         $(that.canvas).mousedown(handler.clicked);
     }
 
+   private drawRectNode(node: Node, pt: Point): void {
+        // draw a circle centered at pt
+        var label = node.data.label || "";
+        var textWidth = this.ctx.measureText(label).width + 30;
+
+        if (node.data.color) {
+            if (node.data.color=='none') {
+                this.ctx.fillStyle = "rgba(0,0,0,.0)"; // invisible
+            }
+            else {
+                this.ctx.fillStyle = node.data.color; 
+            }
+        }
+        else {
+            //that.ctx.fillStyle = "#044C92"; //Node default color
+            //that.ctx.fillStyle = "#2471E0"; //Node default color
+            this.ctx.fillStyle = "rgb(5, 0, 112)"; //Node default color
+        }
+
+        this.gfx.rect(pt.x-textWidth/2, pt.y-10, textWidth, 26, 8, {fill:this.ctx.fillStyle}); // draw the node rect
+        this.nodeBoxes[node.name] = [pt.x-textWidth/2, pt.y-11, textWidth, 28]; // save the bounds of the node-rect for drawing the edges correctly.
+
+        // draw the text
+        if (label){
+            if (node.data.color != 'none' || node.data.color != 'white') {
+                this.drawLabel(pt.x, pt.y+8, label, 'white');
+            } 
+            else {
+                this.drawLabel(pt.x, pt.y+8, label, 'black');
+            }
+        }
+    }
 
     /**
      * Draws the label upon the edge
@@ -302,11 +288,11 @@ class Renderer {
      * @param {string}                   label the text to be written.
      * @param {CanvasRenderingContext2D} ctx   the canvas to draw on.
      */
-    private drawLabel(x : number, y : number, label : string) : void {
+    private drawLabel(x : number, y : number, label : string, color? : string) : void {
         this.ctx.save();
         this.ctx.font = "14px 'Open Sans'";
         this.ctx.textAlign = "center";
-        this.ctx.fillStyle = "black";
+        this.ctx.fillStyle = color === undefined ? "black" : color;
         this.ctx.fillText(label, x, y);
         this.ctx.restore();
     }

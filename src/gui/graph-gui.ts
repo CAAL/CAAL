@@ -4,11 +4,11 @@
 /// <reference path="./renderer.ts" />
 
 $(document).ready(function(){
-    var env = new Environment();
-    env.init()
+    var graph = new Graph();
+    graph.init()
 })
 
-class Environment {
+class Graph {
     private sys : ParticleSystem;
     private renderer : Renderer;
 
@@ -21,17 +21,6 @@ class Environment {
 
 
     init() : void{
-        this.sys.addNode('b', {label: "Response"});
-        this.sys.addNode('a', {label: "Server"});
-        this.sys.addNode('c', {label: "S3"});
-
-        this.sys.addEdge('b','a', {label:"a"});
-        this.sys.addEdge('a','a', {label:"b"});
-        this.sys.addEdge('a','b', {label:"b"});
-        this.sys.addEdge('c','b', {label:"c"});
-
+        this.sys.addNode('1', {label: "asd.B"}); 
     }
 }
-
-
-
