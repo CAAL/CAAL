@@ -1,7 +1,8 @@
 /*libs Jquery, graphics is needed.*/
-/// <reference path="../../lib/jquery.d.ts" />
-/// <reference path="../../lib/arbor.d.ts" />
+/// <reference path="../../../lib/jquery.d.ts" />
+/// <reference path="../../../lib/arbor.d.ts" />
 /// <reference path="handler.ts" />
+
 class Renderer {
     public canvas : HTMLCanvasElement;
     public ctx : CanvasRenderingContext2D;
@@ -9,6 +10,9 @@ class Renderer {
     public particleSystem : ParticleSystem;
     public selectedNode : Node;
     private nodeBoxes:Point[] = [];
+
+    private unDrawnEdges : Edge[] = [];
+    private unDrawnNodes : Node[] = [];
 
     constructor(canvas : string) {
       this.canvas = <HTMLCanvasElement> $(canvas).get(0);
@@ -39,6 +43,22 @@ class Renderer {
         var that = this;
         // redraw will be called repeatedly during the run.
         this.gfx.clear();
+
+        /* Draw the nodes that have been saved by "this.addNodeToGraph"*/
+        if(this.unDrawnNodes.length > 0 && this.particleSystem) {
+            while(this.unDrawnNodes.length > 0){
+                var node = this.unDrawnNodes.pop();
+                this.addNodeToGraph(node.name, node.data);
+            }
+        }
+
+        /* Draw the edges that have been saved by "this.addEdgeToGraph"*/
+        if(this.unDrawnEdges.length > 0 && this.particleSystem) {
+            while(this.unDrawnEdges.length > 0){
+                var edge = this.unDrawnEdges.pop();
+                this.addEdgeToGraph(edge.source, edge.target, edge.data);
+            }
+        }
 
         this.particleSystem.eachNode(function(node : Node, pt : Point) {
             // node: {mass:#, p:{x,y}, name:"", data:{}}
@@ -192,6 +212,7 @@ class Renderer {
         // for moves and mouseups while dragging
         var handler = {
             clicked:function(e){
+                console.log("mouseDown");
                 var pos = $(that.canvas).offset();
                 mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
                 nearest = dragged = that.particleSystem.nearest(mouseP);
@@ -213,6 +234,7 @@ class Renderer {
                 return false
             },
             dragged:function(e){
+                console.log("dragged");
                 var pos = $(that.canvas).offset();
                 var old_nearest = nearest && nearest.node._id
                 var pos = $(that.canvas).offset();
@@ -226,13 +248,16 @@ class Renderer {
                 return false;
             },
             dropped:function(e){
+                console.log("dropped")
                 if (dragged===null || dragged.node===undefined) {
                     return;
                 }
                 
                 if (dragged.node !== null) {
                     dragged.node.fixed = false;
+                    dragged.node.tempMass = 1000;
                 }
+
 
                 dragged = null;
 
@@ -357,29 +382,45 @@ class Renderer {
      * @param  {string} label    The label the of the node.
      * @return {Node}            Returns the node, just added.
      */
-    public addNodeToGraph(nodeName : string, label : string) : Node{
+    public addNodeToGraph(name : string, data : any) : Node{
+        if (!this.particleSystem) {
+            console.log("particleSystem not defined")
+            var node = <Node> {name: name, data: data};
+            this.unDrawnNodes.push(<Node> {name: name, data: data});
+            return node;
+        }
+
+        var label = data.label
         if (label){
             if(label.length > 10){
                 label = label.substring(0,8) + "..";
             }
         }
-        return this.particleSystem.addNode(nodeName, {label: label, expanded: false});
+        return this.particleSystem.addNode(name, data);
     }
 
-    public addEdgeToGraph(source: Node, target: Node, data: any) : Edge{
+    public addEdgeToGraph(source: Node, target: Node, data: any) : Edge {
+        if(!this.particleSystem) {
+            var edge = <Edge>{source: source, target: target, data:data}
+            this.unDrawnEdges.push(edge);
+            return edge;
+        }
+
         if (source === target) {  // if selfloop
             data.selfloop = true;
-            var selfloopEdge = this.particleSystem.getEdges(source.name, target.name)[0]; // there should only be one...
-            
-            if (selfloopEdge !== undefined) { // if selfloop is already defined then concat the labels.
-                selfloopEdge.data.label += ", " + data.label;
-                
-                if (selfloopEdge.data.label.length > 10) {
-                    selfloopEdge.data.label = selfloopEdge.data.label.substring(0, 8) + "..";
-                }
-                return selfloopEdge;
-            }
         }
+
+        var edge = this.particleSystem.getEdges(source.name, target.name)[0]; // there should only be one...
+        
+        if (edge !== undefined) { // if ege is already defined then concat the labels.
+            edge.data.label += ", " + data.label;
+            
+            if (edge.data.label.length > 10) {
+                edge.data.label = edge.data.label.substring(0, 8) + "..";
+            }
+            return edge;
+        }
+        
 
         return this.particleSystem.addEdge(source.name, target.name, data);
     }
@@ -398,19 +439,16 @@ class Renderer {
             var successors : any[] = this.getSuccessors(this.selectedNode);
             
             for (var i = 0, max = successors.length; i < max; i++) {
-                var targetNode = this.addNodeToGraph(successors[i].targetid.toString(), successors[i].targetLabel);
+                var targetNode = this.addNodeToGraph(successors[i].targetid.toString(), successors[i].data);
                 this.addEdgeToGraph(this.selectedNode, targetNode, {label:successors[i].action});
             }
-
-            // console.log(this.particleSystem.getEdgesFrom(this.selectedNode.name));
         }
     }
 
     /* Just test function */
     private myid = 1;
     public getSuccessors(curNode : Node) : any[] {
-        return [{action:"a", targetid: this.myid, targetLabel: "asd.B"}, {action:"b", targetid: this.myid, targetLabel: "asd.B"}, {action:"c", targetid: ++this.myid, targetLabel: "new Node"}];
-        // return [{action:"action" + this.myid, targetid : this.myid + 1, targetLabel : "Label" + this.myid}/*, {action:"action" + that.myid++, targetid : that.myid + 1, targetLabel : "Label" + that.myid}*/];
+        return [{action:"a", targetid: this.myid, data:{label: "asd.B"}}, {action:"b", targetid: this.myid, data:{label: "asd.B"}}, {action:"c", targetid: ++this.myid, data:{label: "asd.B"}}];
     }
 }
 

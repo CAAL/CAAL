@@ -1,6 +1,6 @@
-/// <reference path="../../lib/jquery.d.ts" />
-/// <reference path="../../lib/arbor.d.ts" />
-/// <reference path="./renderer.ts" />
+/// <reference path="../../../lib/jquery.d.ts" />
+/// <reference path="../../../lib/arbor.d.ts" />
+/// <reference path="renderer.ts" />
 
 class Handler {
     private draggedObject : refNode;

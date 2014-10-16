@@ -1,3 +1,5 @@
+/// <reference path="../../lib/jquery.d.ts" />
+/// <reference path="../../lib/ace.d.ts" />
 class Project {
     private defaultTitle: string;
     private defaultDescription: string;
