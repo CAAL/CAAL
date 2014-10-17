@@ -37,6 +37,7 @@ class Renderer {
 
         // set up some event handlers to allow for node-dragging
         this.initMouseHandling();
+        this.ctx.translate(0.5,0.5);
     }
 
     public redraw() {
@@ -129,7 +130,7 @@ class Renderer {
         // Draw chevron
         this.ctx.translate(end.x, end.y); // translate pointer to the top og the nodebox.
         this.ctx.rotate(-Math.atan2(-(end.y - cp2.y), end.x - cp2.x) - Math.PI/23); // Rotates in radians use (degrees*Math.PI/180)
-        //this.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge this's already there (so the point isn't hidden)
+        this.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1) // delete some of the edge this's already there (so the point isn't hidden)
         this.drawChevron(arrowLength, arrowWidth, chevronColor); // draw the chevron
     }
 
