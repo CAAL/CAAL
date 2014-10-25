@@ -78,32 +78,31 @@ ConstantProcess
 	/ K:Identifier { return g.referToNamedProcess(K); }
 
 //Valid names for processes
-Identifier
+Identifier "identifier"
 	= first:[A-Z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
 
 IdentifierRest
 	= rest:[A-Za-z0-9?!_'\-#]*  { return rest; }
 
-Action
+Action "action"
 	= [!'] label:Label { return new ccs.Action(label, true); }
 	/ label:Label { return new ccs.Action(label, false); }
 
 //Valid name for actions
-Label
+Label "label"
 	= first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
 
 LabelList
 	= first:Label rest:(_ "," _ Label)* { return extractLabelList(first, rest); }
 
-Whitespace
-	= [ \r\n\t]
+Whitespace "whitespace"
+	= [ \t]
 
-Comment = "*" [^\r\n]* "\r"? "\n"?
+Comment "comment" = "*" [^\r\n]* "\r"? "\n"?
 
 //Useful utility
-_ = Whitespace* Comment _
-  / Whitespace*
+_ = (Whitespace / Newline)* Comment _
+  / (Whitespace / Newline)*
 
-Newline
+Newline "newline"
 	= "\r\n" / "\n" / "\r"
-
