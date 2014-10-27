@@ -39,5 +39,9 @@ new Examples('#examples', '#examples-list', project);
 /* Simulate click on hidden <input> element */
 $('#import').click(function() { $('#import-input').click() });
 
+<<<<<<< HEAD
 /* Focus Ace editor whenever its containing <div> is pressed */
+=======
+
+>>>>>>> gui
 $('#editor').click(function() { editor.focus(); });

@@ -71,6 +71,11 @@ interface Point {
     exploded() : boolean;
 }
 
+interface Branch {
+    nodes : Object;
+    edges : Object;
+}
+
 interface Arbor {
     ParticleSystem : ParticleSystem;
     Point : Point;

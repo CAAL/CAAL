@@ -1,3 +1,7 @@
+/// <reference path="../../lib/jquery.d.ts" />
+/// <reference path="project" />
+/// <reference path="storage" />
+/// <reference path="examples"/>
 /*
  * TODO
  * - Unique names.
