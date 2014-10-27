@@ -6,6 +6,9 @@
 $(document).ready(function(){
     var graph = new Graph(<Branch>{nodes:{foo:{label:'foo'}}, edges:{foo: {foo: {label: 'baz'}}, '1':{'foo':{label:'test'}}}});
     graph.init()
+    $("#freezeButton").on("click", ()=>{
+            graph.freeze.call(graph);
+        });
 })
 
 class Graph {
@@ -27,9 +30,16 @@ class Graph {
         this.renderer.addEdgeToGraph(one, two, {label: 'one'});
         this.renderer.addEdgeToGraph(one, two, {label: 'two'});
         this.renderer.addEdgeToGraph(two, one, {label: 'test'});
-
-
     }
 
-
+    private isFrozen: boolean = false;
+    
+    public freeze(): void {
+        if (!this.isFrozen) {
+            this.sys.stop();
+        } else {
+            this.sys.start();
+        }
+        this.isFrozen = !this.isFrozen;
+    }
 }
