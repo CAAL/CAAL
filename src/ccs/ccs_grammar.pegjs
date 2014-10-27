@@ -67,17 +67,14 @@ RelabellingList
 Relabel
 	= to:Label _ "/" _ from:Label { return {to: to, from: from}; }
 
-// ( P ) for some process P
 ParenProcess
 	= "(" _ P:Process _ ")" { return P; }
 	/ P:ConstantProcess { return P; }
 
-// A constant process. Either the null process 0, or some process K.
 ConstantProcess
 	= "0" { return g.getNullProcess(); }
 	/ K:Identifier { return g.referToNamedProcess(K); }
 
-//Valid names for processes
 Identifier "identifier"
 	= first:[A-Z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
 
@@ -85,10 +82,9 @@ IdentifierRest
 	= rest:[A-Za-z0-9?!_'\-#]*  { return rest; }
 
 Action "action"
-	= [!'] label:Label { return new ccs.Action(label, true); }
+	= ['] label:Label { return new ccs.Action(label, true); }
 	/ label:Label { return new ccs.Action(label, false); }
 
-//Valid name for actions
 Label "label"
 	= first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
 
