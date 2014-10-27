@@ -26,6 +26,7 @@ class Graph {
 
         this.renderer.addEdgeToGraph(one, two, {label: 'one'});
         this.renderer.addEdgeToGraph(one, two, {label: 'two'});
+        this.renderer.addEdgeToGraph(two, one, {label: 'test'});
 
 
     }
