@@ -43,7 +43,7 @@ module Traverse {
             if (!this.cache[process.id]) {
                 process.leftProcess = process.leftProcess.dispatchOn(this);
                 process.rightProcess = process.rightProcess.dispatchOn(this);
-                if (process.leftProcess instanceof ccs.NullProcess) return process.rightProcess; // 0 | P => 0
+                if (process.leftProcess instanceof ccs.NullProcess) return process.rightProcess; // 0 | P => P
                 if (process.rightProcess instanceof ccs.NullProcess) return process.leftProcess; // P | 0 => P
                 this.cache[process.id] = true;
             }
@@ -64,8 +64,8 @@ module Traverse {
                 // (P \ L1) \L2 => P \ (L1 Union L2)
                 if (process.subProcess instanceof ccs.RestrictionProcess) {
                     var subRestriction = <ccs.RestrictionProcess>process.subProcess;
-                    subRestriction.restrictedLabels = subRestriction.restrictedLabels.clone().unionWith(process.restrictedLabels);
-                    process = subRestriction;
+                    var mergedLabels = subRestriction.restrictedLabels.clone().unionWith(process.restrictedLabels);
+                    process = this.graph.newRestrictedProcess(subRestriction.subProcess, mergedLabels);
                 }
                 // 0 \ L => 0
                 if (process.subProcess instanceof ccs.NullProcess) {
