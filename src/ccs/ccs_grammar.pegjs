@@ -34,7 +34,7 @@ Statement = Assignment
 SetDeclaration = _ "set" _ name:Identifier _ "=" _ "{" _ labels:LabelList _ "}" _ ";" { return g.defineSet(name, labels); }
 
 Assignment
-	= (_ "agent"?) Whitespace _ name:Identifier _ "=" _ P:Process _ ";" { return g.newNamedProcess(name, P); }
+	= (_ ("agent" Whitespace)?) _ name:Identifier _ "=" _ P:Process _ ";" { return g.newNamedProcess(name, P); }
 
 //The rules here are defined in the reverse order of their precedence.
 //Either a given rule applies, eg. +, and everything to the left must have higher precedence,
