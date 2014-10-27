@@ -3,15 +3,18 @@
 /// <reference path="renderer.ts" />
 
 class Handler {
-    private draggedObject : refNode;
-    private nearest : refNode;
-    private mouseP : Point;
-    constructor(public renderer : Renderer) {
+    public selectedNode : Node = null;
+    public draggedObject : refNode = null;
+    public nearest : refNode = null;
+    public mouseP : Point = null;
 
+    public renderer : Renderer = null;
+    constructor(renderer : Renderer) {
+        this.renderer = renderer;
     }
 
     public init(){
-        $(this.renderer.canvas).on("mousedown",{handler: this}, this.clicked);
+        $(this.renderer.canvas).on('mousedown', {handler: this}, this.clicked);
     }
 
     public clicked(e): boolean {
@@ -20,16 +23,16 @@ class Handler {
          var pos = $(h.renderer.canvas).offset();
          h.mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
          h.nearest = h.draggedObject = h.renderer.particleSystem.nearest(h.mouseP);
-         h.renderer.selectedNode = h.draggedObject.node;
+         h.selectedNode = h.draggedObject.node;
 
-         if (h.dragged && h.dragged.node !== null){
+         if (h.draggedObject && h.draggedObject.node !== null){
              // while we're dragging, don't let physics move the node
-             h.dragged.node.fixed = true;
+             h.draggedObject.node.fixed = true;
          }
 
-         if (h.renderer.selectedNode) {
+         if (h.selectedNode) {
              // just making sure that the selectedNode is not null
-             h.renderer.expandGraph();
+             h.renderer.expandGraph(); // test
          }
 
          $(h.renderer.canvas).bind('mousemove',{handler: h}, h.dragged);
@@ -45,25 +48,25 @@ class Handler {
         var pos = $(h.renderer.canvas).offset();
         var s = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
 
-        if (h.dragged !== null && h.dragged.node !== null){
+        if (h.draggedObject !== null && h.draggedObject.node !== null){
             var p = h.renderer.particleSystem.fromScreen(s);
-            h.dragged.node.p = p;
+            h.draggedObject.node.p = p;
         }
 
         return false;
     }
 
-    public droppen(e): any {
+    public dropped(e): any {
          var h = e.data.handler;
-         if (h.dragged===null || h.dragged.node===undefined) {
+         if (h.draggedObject===null || h.draggedObject.node===undefined) {
              return;
          }
          
-         if (h.dragged.node !== null) {
-             h.dragged.node.fixed = false;
+         if (h.draggedObject.node !== null) {
+             h.draggedObject.node.fixed = false;
          }
 
-         h.dragged = null;
+         h.draggedObject = null;
          //that.selectedNode = null;
 
          $(h.renderer.canvas).unbind('mousemove', h.dragged);

@@ -4,21 +4,20 @@
 /// <reference path="handler.ts" />
 
 class Renderer {
+    private nodeBoxes:Point[] = []; // stores the points of the node box.
+    private handler : Handler = null;
+    private pendingEdges : Edge[] = []; // pending undrawn edges
+    private pendingNodes : Node[] = []; // pending undrawn nodes
+    
     public canvas : HTMLCanvasElement;
     public ctx : CanvasRenderingContext2D;
-    public gfx : any; //Graphics lib
-    public particleSystem : ParticleSystem;
-    public selectedNode : Node;
-    private nodeBoxes:Point[] = [];
-
-    private unDrawnEdges : Edge[] = [];
-    private unDrawnNodes : Node[] = [];
+    public gfx : any; // Graphics lib
+    public particleSystem : ParticleSystem = null;
 
     constructor(canvas : string) {
       this.canvas = <HTMLCanvasElement> $(canvas).get(0);
       this.ctx = this.canvas.getContext("2d");
       this.gfx = arbor.Graphics(this.canvas);
-      this.particleSystem = null;
     }
 
     public init(system : ParticleSystem) {
@@ -36,7 +35,9 @@ class Renderer {
         this.particleSystem.screenPadding(40); // leave an extra 80px of whitespace per side
 
         // set up some event handlers to allow for node-dragging
-        this.initMouseHandling();
+        this.handler = new Handler(this);
+        this.handler.init();
+
         this.ctx.translate(0.5,0.5);
     }
 
@@ -46,17 +47,17 @@ class Renderer {
         this.gfx.clear();
 
         /* Draw the nodes that have been saved by "this.addNodeToGraph"*/
-        if(this.unDrawnNodes.length > 0 && this.particleSystem) {
-            while(this.unDrawnNodes.length > 0){
-                var node = this.unDrawnNodes.pop();
+        if(this.pendingNodes.length > 0 && this.particleSystem) {
+            while(this.pendingNodes.length > 0){
+                var node = this.pendingNodes.pop();
                 this.addNodeToGraph(node.name, node.data);
             }
         }
 
         /* Draw the edges that have been saved by "this.addEdgeToGraph"*/
-        if(this.unDrawnEdges.length > 0 && this.particleSystem) {
-            while(this.unDrawnEdges.length > 0){
-                var edge = this.unDrawnEdges.pop();
+        if(this.pendingEdges.length > 0 && this.particleSystem) {
+            while(this.pendingEdges.length > 0){
+                var edge = this.pendingEdges.pop();
                 this.addEdgeToGraph(edge.source, edge.target, edge.data);
             }
         }
@@ -134,7 +135,18 @@ class Renderer {
         this.drawChevron(arrowLength, arrowWidth, chevronColor); // draw the chevron
     }
 
-    drawNormalEdge(pt1, pt2, nodeBox1, nodeBox2, arrowLength, arrowWidth, chevronColor, label) {
+    /**
+     * Draw a normal edge between two nodes.
+     * @param {Point}  pt1          source point
+     * @param {Point}  pt2          target point
+     * @param {[type]} nodeBox1     nodebox for source node
+     * @param {[type]} nodeBox2     nodebox for target node
+     * @param {number} arrowLength  the lenght of the arrowhead
+     * @param {number} arrowWidth   the width of the arrowhead
+     * @param {string} chevronColor the color of the arrowhead
+     * @param {string} label        the label of the edge
+     */
+    drawNormalEdge(pt1: Point, pt2: Point, nodeBox1, nodeBox2, arrowLength: number, arrowWidth: number, chevronColor: string, label: string) {
         var tail : Point = this.intersect_line_box(pt1, pt2, nodeBox1)
         var head : Point = this.intersect_line_box(tail, pt2, nodeBox2)
         
@@ -172,7 +184,18 @@ class Renderer {
         this.drawChevron(arrowLength, arrowWidth, chevronColor); // draw the chevron
     }
 
-    drawBendingEdge(pt1, pt2, nodeBox1, nodeBox2, arrowLength, arrowWidth, chevronColor, label) {
+    /**
+     * The bending edges between two nodes.
+     * @param {Point}  pt1          source point
+     * @param {Point}  pt2          target point
+     * @param {[type]} nodeBox1     nodebox for source node
+     * @param {[type]} nodeBox2     nodebox for target node
+     * @param {number} arrowLength  the lenght of the arrowhead
+     * @param {number} arrowWidth   the width of the arrowhead
+     * @param {string} chevronColor the color of the arrowhead
+     * @param {string} label        the label of the edge
+     */
+    drawBendingEdge(pt1 : Point, pt2: Point, nodeBox1, nodeBox2, arrowLength: number, arrowWidth: number, chevronColor: string, label: string) {
         var midPoint = pt1.add(pt2).multiply(0.5);
         var angle = Math.atan2(-(pt2.y-pt1.y), pt2.x - pt1.x) - Math.PI/2; 
 
@@ -202,79 +225,12 @@ class Renderer {
         this.ctx.clearRect(-arrowLength/2,1/2, arrowLength/2,1); // delete some of the edge s already there (so the point isn't hidden)
         this.drawChevron(arrowLength, arrowWidth, chevronColor); // draw the chevron
     }
-
-   private initMouseHandling() : void{
-        // no-nonsense drag and drop (thanks springy.js)
-        var nearest : refNode = null;
-        var dragged : refNode = null;
-        var that = this;
-        var mouseP : Point;
-        // set up a handler object that will initially listen for mousedowns then
-        // for moves and mouseups while dragging
-        var handler = {
-            clicked:function(e){
-                console.log("mouseDown");
-                var pos = $(that.canvas).offset();
-                mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
-                nearest = dragged = that.particleSystem.nearest(mouseP);
-                that.selectedNode = dragged.node;
-
-                if (dragged && dragged.node !== null){
-                    // while we're dragging, don't let physics move the node
-                    dragged.node.fixed = true;
-                }
-
-                if (that.selectedNode) {
-                    // just making sure that the selectedNode is not null
-                    that.expandGraph();
-                }
-
-                $(that.canvas).bind('mousemove', handler.dragged);
-                $(window).bind('mouseup', handler.dropped);
-
-                return false
-            },
-            dragged:function(e){
-                console.log("dragged");
-                var pos = $(that.canvas).offset();
-                var old_nearest = nearest && nearest.node._id
-                var pos = $(that.canvas).offset();
-                var s = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
-
-                if (dragged !== null && dragged.node !== null){
-                    var p = that.particleSystem.fromScreen(s);
-                    dragged.node.p = p;
-                }
-
-                return false;
-            },
-            dropped:function(e){
-                console.log("dropped")
-                if (dragged===null || dragged.node===undefined) {
-                    return;
-                }
-                
-                if (dragged.node !== null) {
-                    dragged.node.fixed = false;
-                    dragged.node.tempMass = 1000;
-                }
-
-
-                dragged = null;
-
-                $(that.canvas).unbind('mousemove', handler.dragged);
-                $(window).unbind('mouseup', handler.dropped);
-                mouseP = null;
-                
-                return false;
-            }
-        }
-
-        // start listening
-        $(that.canvas).mousedown(handler.clicked);
-    }
-
-   private drawRectNode(node: Node, pt: Point): void {
+    /**
+     * Draws the rectangle of the node
+     * @param {Node}  node
+     * @param {Point} pt   
+     */
+    private drawRectNode(node: Node, pt: Point): void {
         // draw a circle centered at pt
         var label = node.data.label || "";
         var textWidth = this.ctx.measureText(label).width + 30;
@@ -288,8 +244,6 @@ class Renderer {
             }
         }
         else {
-            //that.ctx.fillStyle = "#044C92"; //Node default color
-            //that.ctx.fillStyle = "#2471E0"; //Node default color
             this.ctx.fillStyle = "rgb(5, 0, 112)"; //Node default color
         }
 
@@ -387,7 +341,7 @@ class Renderer {
         if (!this.particleSystem) {
             console.log("particleSystem not defined")
             var node = <Node> {name: name, data: data};
-            this.unDrawnNodes.push(<Node> {name: name, data: data});
+            this.pendingNodes.push(<Node> {name: name, data: data});
             return node;
         }
 
@@ -403,7 +357,8 @@ class Renderer {
     public addEdgeToGraph(source: Node, target: Node, data: any) : Edge {
         if(!this.particleSystem) {
             var edge = <Edge>{source: source, target: target, data:data}
-            this.unDrawnEdges.push(edge);
+            this.pendingEdges.push(edge);
+            
             return edge;
         }
 
@@ -419,10 +374,10 @@ class Renderer {
             if (edge.data.label.length > 10) {
                 edge.data.label = edge.data.label.substring(0, 8) + "..";
             }
+
             return edge;
         }
         
-
         return this.particleSystem.addEdge(source.name, target.name, data);
     }
 
@@ -432,16 +387,16 @@ class Renderer {
      */
     public expandGraph(selNode? : Node) : void {        
         if (selNode !== undefined) { // if given a node to expand, change this.selectedNode.
-            this.selectedNode = selNode;
+            this.handler.selectedNode = selNode;
         }
 
-        if (!this.selectedNode.expanded) { // if not expanded, then expand.
-            this.selectedNode.expanded = true;
-            var successors : any[] = this.getSuccessors(this.selectedNode);
+        if (!this.handler.selectedNode.expanded) { // if not expanded, then expand.
+            this.handler.selectedNode.expanded = true;
+            var successors : any[] = this.getSuccessors(this.handler.selectedNode);
             
             for (var i = 0, max = successors.length; i < max; i++) {
                 var targetNode = this.addNodeToGraph(successors[i].targetid.toString(), successors[i].data);
-                this.addEdgeToGraph(this.selectedNode, targetNode, {label:successors[i].action});
+                this.addEdgeToGraph(this.handler.selectedNode, targetNode, {label:successors[i].action});
             }
         }
     }

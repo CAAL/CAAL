@@ -25,6 +25,9 @@ interface ParticleSystem {
     getEdges(source : Node, target: Node) : Edge[];
     getEdgesFrom(node: string) : Edge[];
 
+    start();
+    stop();
+
 }
 
 interface refNode{
