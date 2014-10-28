@@ -1,43 +1,48 @@
-interface WebStorage {
-    get(key: string): string;
-    getJSON(key: string): any;
-    set(key: string, value: string): void;
-    isCompatible(): boolean;
-}
+class WebStorage {
+    private storageObj: Storage;
 
-class LocalStorage implements WebStorage {
-    public get(key: string): string {
-        if (this.isCompatible()) {
-            return localStorage.getItem(key);
-        }
+    public constructor(storageObj: Storage) {
+        this.storageObj = storageObj;
     }
 
-    public getJSON(key: string): any {
-        var value = this.get(key);
+    public get(key: string): string {
+        if (!this.isCompatible()) { return; }
+
+        return this.storageObj.getItem(key);
+    }
+
+    public getObj(key: string): any {
+        if (!this.isCompatible()) { return; }
 
         try {
-            return JSON.parse(value);
-        } catch(error) {
-            console.log('Not valid JSON.');
+            return JSON.parse(this.get(key));
+        } catch (e) {
+            console.log('Invalid JSON: ' + e.message);
         }
     }
 
     public set(key: string, value: string): void {
-        if (this.isCompatible()) {
-            localStorage.setItem(key, value);
+        if (!this.isCompatible()) { return; }
+
+        this.storageObj.setItem(key, value);
+    }
+
+    public setObj(key: string, value: Object): void {
+        if (!this.isCompatible()) { return; }
+
+        try {
+            this.set(key, JSON.stringify(value));
+        } catch (e) {
+            console.log('Invalid JSON: ' + e.message);
         }
     }
 
-    public isCompatible(): boolean {
+    private isCompatible(): boolean {
         if (typeof(Storage) !== 'undefined') {
             return true;
         } else {
-            alert('Your browser does not support Web Storage.');
+            console.log('Your browser does not support Web Storage.');
             return false;
         }
     }
 }
-
-/*class SessionStorage implements WebStorage {
-    
-}*/
