@@ -1,3 +1,7 @@
+/// <reference path="../../lib/jquery.d.ts" />
+/// <reference path="project" />
+/// <reference path="storage" />
+/// <reference path="examples"/>
 /*
  * TODO
  * - Get rid of duplicate classes MyProjects and Examples at some point.

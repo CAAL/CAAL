@@ -25,6 +25,9 @@ interface ParticleSystem {
     getEdges(source : Node, target: Node) : Edge[];
     getEdgesFrom(node: string) : Edge[];
 
+    start();
+    stop();
+
 }
 
 interface refNode{
@@ -69,6 +72,11 @@ interface Point {
     normal( ) : Point;
     normalize( ) : Point;
     exploded() : boolean;
+}
+
+interface Branch {
+    nodes : Object;
+    edges : Object;
 }
 
 interface Arbor {
