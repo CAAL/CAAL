@@ -1,6 +1,5 @@
 /*
  * TODO
- * - Unique names.
  * - Get rid of duplicate classes MyProjects and Examples at some point.
  */
 
@@ -29,17 +28,49 @@ class New extends MenuItem {
 }
 
 class Save extends MenuItem {
+    /*
+     * Saves the current project to Local Storage.
+     * Assigns a unique id to the project if it does not already have one.
+     * Triggers the "save"-event after saving.
+     */
     public onClick(event) {
+        var id = this.project.getId();
         var projects = this.storage.getObj('projects');
 
-        if (projects) {
-            projects.push(this.project.toJSON());
-            this.storage.setObj('projects', projects);
-        } else {
-            this.storage.setObj('projects', [this.project.toJSON()]);
+        if (id) { // Has id. Overwrite existing project and save.
+            for (var i = 0; i < projects.length; i++) {
+                if (projects[i].id === id) {
+                    projects[i] = this.project.toJSON();
+                    this.storage.setObj('projects', projects);
+                    break;
+                }
+            }
+        } else { // No id. Assign id and save.
+            this.project.setId(this.nextId());
+            if (projects) {
+                projects.push(this.project.toJSON());
+                this.storage.setObj('projects', projects);
+            } else {
+                this.storage.setObj('projects', [this.project.toJSON()]);
+            }
         }
 
-        $(document).trigger('save'); // Trigger event to update list display.
+        $(document).trigger('save');
+    }
+
+    /*
+     * Returns a unique id.
+     * Does not consider holes in the id's.
+     * E.g. [0, 1, 3] will return 4 and not 2.
+     */
+    private nextId(): number {
+        var projects = this.storage.getObj('projects');
+
+        if (!projects) {return 0}
+
+        projects.sort(function(a, b) {return a.id - b.id});
+
+        return projects[projects.length - 1].id + 1;
     }
 }
 
@@ -51,7 +82,7 @@ class Import extends MenuItem {
 
         reader.onload = () => {
             var project = JSON.parse(reader.result);
-            this.project.update(project.title, project.description, project.ccs);
+            this.project.update(project.id, project.title, project.description, project.ccs);
             $(this.itemId).replaceWith($(this.itemId).val('').clone(true)); // Clear input field.
         }
     }
@@ -86,10 +117,10 @@ class MyProjects extends MenuItem {
 
         if (projects) {
             for (var i = 0; i < projects.length; i++) {
-                list.append('<li><a>' + projects[i].title + '</li></a>');
+                var html = $('<li><a>' + projects[i].title + '</li></a>');
+                list.append(html);
+                html.on('click', {id: projects[i].id}, event => this.load(event));
             }
-
-            $(this.listId + '> li > a').click((event) => this.load(event));
         } else {
             list.append('<li><p>No projects saved yet</p></li>');
         }
@@ -97,11 +128,11 @@ class MyProjects extends MenuItem {
 
     private load(event) {
         var projects = this.storage.getObj('projects');
-        var title = $(event.target).text();
+        var id = event.data.id;
 
         for (var i = 0; i < projects.length; i++) {
-            if (projects[i].title === title) {
-                this.project.update(projects[i].title, projects[i].description, projects[i].ccs);
+            if (projects[i].id === id) {
+                this.project.update(id, projects[i].title, projects[i].description, projects[i].ccs);
                 break;
             }
         }
@@ -126,21 +157,21 @@ class Examples extends MenuItem {
 
         if (examples) {
             for (var i = 0; i < examples.length; i++) {
-                list.append('<li><a>' + examples[i].title + '</li></a>');
+                var html = $('<li><a>' + examples[i].title + '</li></a>');
+                list.append(html);
+                html.on('click', {id: examples[i].id}, event => this.load(event));
             }
-
-            $(this.listId + '> li > a').click((event) => this.load(event));
         } else {
             list.append('<li><p>No examples</p></li>');
         }
     }
 
     private load(event) {
-        var title = $(event.target).text();
+         var id = event.data.id;
 
         for (var i = 0; i < examples.length; i++) {
-            if (examples[i].title === title) {
-                this.project.update(examples[i].title, examples[i].description, examples[i].ccs);
+            if (examples[i].id === id) {
+                this.project.update(id, examples[i].title, examples[i].description, examples[i].ccs);
                 break;
             }
         }

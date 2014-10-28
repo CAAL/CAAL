@@ -1,5 +1,6 @@
 var examples = [
     {
+        id: 0,
         title: "Alternating Bit Protocol",
         description: "A simple network protocol which can retransmit lost or corrupted messages",
         ccs: "set InternalComActs = {left0, left1, right0, right1, leftAck0, leftAck1, rightAck0, rightAck1};\n" +
