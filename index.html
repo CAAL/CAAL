@@ -40,7 +40,7 @@
                         <li><a id="save">Save<i class="fa fa-floppy-o pull-right"></i></a></li>
                     </ul>
                     <ul class="nav nav-sidebar">
-                        <li class="active"><a id="edit-mode-btn" href="#">Edit<i class="fa fa-code pull-right"></i></a></li>
+                        <li class="active"><a id="edit-mode-btn">Edit<i class="fa fa-code pull-right"></i></a></li>
                         <li><a id="viz-mode-btn">Visualize<i class="fa fa-video-camera pull-right"></i></a></li>
                         <li><a>Verify<i class="fa fa-check pull-right"></i></a></li>
                     </ul>
@@ -61,11 +61,11 @@
                     <h1 id="project-title" contenteditable="true"></h1>
                     <h4 id="project-desc" contenteditable="true"></h4>
                     <div id="main-content" class="container-fluid">
-                        <div id="editor-container" style="display: none">
+                        <div id="editor-container">
                     	   <div id="editor"></div>
                     	   <button type="button" id="parse" class="btn btn-default pull-right">Parse</button>	
                         </div>
-                        <div id="explorer-container" style="display: none">
+                        <div id="explorer-container">
   						    <canvas id="arbor-canvas" width="500" height="500" style="background-color: lightgray; width:500px; height:500px; border: 1px solid black"></canvas>
                         </div>
                     </div>
@@ -80,10 +80,6 @@
         <script type="text/javascript" src="lib/ccs.js"></script>
         <script type="text/javascript" src="lib/arbor.js"></script>
         <script type="text/javascript" src="lib/graphics.js"></script>
-         <script type="text/javascript" src="src/gui/graph/renderer.js"></script>
-         <script type="text/javascript" src="src/gui/graph/handler.js"></script>
-         <script type="text/javascript" src="src/gui/graph/graph.js"></script>
-         <script type="text/javascript" src="src/activities.js"></script>
         <script src="src/main.js"></script>
         <script src="test.js"></script>
     </body>

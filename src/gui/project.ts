@@ -23,7 +23,7 @@ class Project {
         this.defaultCCS = defaultCCS;
         this.titleId = titleId;
         this.descriptionId = descriptionId;
-        this.editor = ace.edit(editorId);
+        this.editor = ace.edit($(editorId)[0]);
 
         /* Set default values */
         this.reset();
