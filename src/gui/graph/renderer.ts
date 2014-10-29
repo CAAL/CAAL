@@ -14,8 +14,9 @@ class Renderer {
     public gfx : any; // Graphics lib
     public particleSystem : ParticleSystem = null;
 
-    constructor(canvas : string) {
-      this.canvas = <HTMLCanvasElement> $(canvas).get(0);
+    constructor(canvas : HTMLCanvasElement) {
+      // this.canvas = <HTMLCanvasElement> $(canvas).get(0);
+      this.canvas = canvas;
       this.ctx = this.canvas.getContext("2d");
       this.gfx = arbor.Graphics(this.canvas);
     }
@@ -32,7 +33,6 @@ class Renderer {
         // if the canvas is ever resized, screenSize should be called again with
         // the new dimensions
         this.particleSystem.screenSize(this.canvas.width, this.canvas.height);
-        this.particleSystem.screenPadding(40); // leave an extra 80px of whitespace per side
 
         // set up some event handlers to allow for node-dragging
         this.handler = new Handler(this);
@@ -339,7 +339,6 @@ class Renderer {
      */
     public addNodeToGraph(name : string, data : any) : Node{
         if (!this.particleSystem) {
-            console.log("particleSystem not defined")
             var node = <Node> {name: name, data: data};
             this.pendingNodes.push(<Node> {name: name, data: data});
             return node;
