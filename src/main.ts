@@ -71,13 +71,15 @@ function selectActivity(activityStr) {
     if (currentActivity) {
         //Close current
         activityElement = activityElements[currentActivity];
+        activityElement.activity.beforeHide();
         $(activityElement.element).hide();
-        activityElement.activity.exit();
+        activityElement.activity.afterHide();
     }
     //Open new activity.
     currentActivity = activityStr;
     activityElement = activityElements[currentActivity];
-    activityElement.activity.prepare();
+    activityElement.activity.beforeVisible();
     $(activityElement.element).show();
+    activityElement.activity.afterVisible();
 }
 selectActivity("editor");
