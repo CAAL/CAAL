@@ -14,11 +14,13 @@ module Activities {
             if (activity instanceof Activity) {
                 if (activity !== this.currentActivity) {
                     if (this.currentActivity) { // Will be 'undefined' initially.
+                        this.currentActivity.beforeHide();
                         this.currentActivity.hide();
-                        this.currentActivity.exit();
+                        this.currentActivity.afterHide();
                     }
-                    activity.prepare();
+                    activity.beforeShow();
                     activity.show();
+                    activity.afterShow();
                     this.currentActivity = activity;
                 }
             }
@@ -46,8 +48,10 @@ module Activities {
             $(this.containerId).hide();
         }
 
-        public prepare(): void {}
-        public exit(): void {}
+        public beforeShow(): void {}
+        public afterShow(): void {}
+        public beforeHide(): void {}
+        public afterHide(): void {}
     }
 
     export class Editor extends Activity {
@@ -81,23 +85,38 @@ module Activities {
     }
 
     export class Explorer extends Activity { 
-        private canvas: HTMLCanvasElement;
+        private canvas: any;
         private renderer: any;
         private arborGraph: any;
+        private bindedResizeFn;
 
         public constructor(containerId: string, buttonId: string, canvasId: string) {
             super(containerId, buttonId);
 
-            this.canvas = <HTMLCanvasElement> $(canvasId)[0];
+            this.canvas = $(canvasId)[0];
             this.renderer = new Renderer(this.canvas);
             this.arborGraph = new ArborGraph(this.renderer);
             this.arborGraph.init();
         }
-    }
 
-    export class Verifier extends Activity {
-        public constructor(containerId: string, buttonId: string) {
-            super(containerId, buttonId);
+        public afterShow(): void {
+            this.bindedResizeFn = this.resize.bind(this);
+            $(window).on("resize", this.bindedResizeFn);
+            this.resize();
+        }
+
+        public afterHide(): void {
+            $(window).unbind("resize", this.bindedResizeFn)
+            this.bindedResizeFn = null;
+        }
+
+        private resize(): void {
+            var width = this.canvas.parentNode.clientWidth;
+            var height = this.canvas.parentNode.clientHeight;
+            height = width * 4 / 10;
+            this.canvas.width = width;
+            this.canvas.height = height;
+            this.renderer.resize(width, height);
         }
     }
 }

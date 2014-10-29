@@ -32,13 +32,20 @@ class Renderer {
         // inform the system of the screen dimensions so it can map coords for us.
         // if the canvas is ever resized, screenSize should be called again with
         // the new dimensions
-        this.particleSystem.screenSize(this.canvas.width, this.canvas.height);
+        // this.particleSystem.screenSize(this.canvas.width, this.canvas.height);
+        this.resize(this.canvas.width, this.canvas.height);
 
         // set up some event handlers to allow for node-dragging
         this.handler = new Handler(this);
         this.handler.init();
 
         this.ctx.translate(0.5,0.5);
+    }
+
+    public resize(width, height) {
+        this.particleSystem.screenSize(width, height);
+        this.particleSystem.screenPadding(40);
+        this.redraw();
     }
 
     public redraw() {
