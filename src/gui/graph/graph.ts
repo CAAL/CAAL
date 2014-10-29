@@ -3,23 +3,15 @@
 /// <reference path="../../../lib/arbor.d.ts" />
 /// <reference path="renderer.ts" />
 
-$(document).ready(function(){
-    var graph = new Graph(<Branch>{nodes:{foo:{label:'foo'}}, edges:{foo: {foo: {label: 'baz'}}, '1':{'foo':{label:'test'}}}});
-    graph.init()
-    $("#freezeButton").on("click", ()=>{
-            graph.freeze.call(graph);
-        });
-})
-
-class Graph {
+class ArborGraph {
     private sys : ParticleSystem;
     private renderer : Renderer;
     private nodes : Object; 
     private edges : Object;
-    constructor(graphDefinition? : Branch) {
+    constructor(renderer) {
         this.sys = arbor.ParticleSystem(500, 3000, 0.95);
         this.sys.parameters({gravity:true});
-        this.renderer = new Renderer("#viewport");
+        this.renderer = renderer;
         this.sys.renderer = this.renderer
     }
 
