@@ -4,6 +4,10 @@
 /// <reference path="gui/sidebar.ts" />
 /// <reference path="gui/storage.ts" />
 /// <reference path="gui/examples.ts" />
+/// <reference path="./activities.ts" />
+/// <reference path="gui/graph/renderer.ts" />
+/// <reference path="gui/graph/handler.ts" />
+/// <reference path="gui/graph/graph.ts" />
 
 /* Initialize Ace */
 var editor = ace.edit("editor");
@@ -41,3 +45,7 @@ $('#import').click(function() { $('#import-input').click() });
 
 /* Focus Ace editor whenever its containing <div> is pressed */
 $('#editor').click(function() { editor.focus(); });
+
+var editorActivity = new Activities.Editor('#editor-container', '#edit-mode-btn');
+var explorerActivity = new Activities.Explorer('#explorer-container', '#viz-mode-btn', $('#arbor-canvas'));
+var activityHandler = new Activities.ActivityHandler(editorActivity, [editorActivity, explorerActivity]);
