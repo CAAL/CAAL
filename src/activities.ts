@@ -29,9 +29,11 @@ module Activities {
 
     export class Activity {
         private containerId: string;
+        private buttonId: string;
 
         public constructor(containerId: string, buttonId: string) {
             this.containerId = containerId;
+            this.buttonId = buttonId;
 
             this.hide();
 
@@ -42,10 +44,12 @@ module Activities {
 
         public show(): void {
             $(this.containerId).show();
+            $(this.buttonId).addClass('active');
         }
 
         public hide(): void {
             $(this.containerId).hide();
+            $(this.buttonId).removeClass('active');
         }
 
         public beforeShow(): void {}

@@ -17,17 +17,17 @@ $(document).ready(function() {
         '#project-title', '#project-desc', '#editor'
     );
 
-    new New('#new', project);
-    new Save('#save', project);
+    new New('#new-btn', project);
+    new Save('#save-btn', project);
     new Import('#import-input', project);
-    new Export('#export', project);
-    new MyProjects('#projects', '#projects-list', project);
-    new Examples('#examples', '#examples-list', project);
+    new Export('#export-btn', project);
+    new MyProjects('#projects-btn', '#projects-list', project);
+    new Examples('#examples-btn', '#examples-list', project);
 
     /* Simulate click on hidden <input> element */
-    $('#import').click(function() { $('#import-input').click() });
+    $('#import-btn').click(function() { $('#import-input').click() });
 
-    var editorActivity = new Activities.Editor('#editor-container', '#edit-mode-btn', '#editor');
-    var explorerActivity = new Activities.Explorer('#explorer-container', '#viz-mode-btn', '#arbor-canvas');
+    var editorActivity = new Activities.Editor('#editor-container', '#edit-btn', '#editor');
+    var explorerActivity = new Activities.Explorer('#explorer-container', '#explore-btn', '#arbor-canvas');
     var activityHandler = new Activities.ActivityHandler(editorActivity);
 });
