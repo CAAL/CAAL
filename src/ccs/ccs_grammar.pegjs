@@ -34,7 +34,7 @@ Statement = Assignment
 SetDeclaration = _ "set" _ name:Identifier _ "=" _ "{" _ labels:LabelList _ "}" _ ";" { return g.defineSet(name, labels); }
 
 Assignment
-	= (_ "agent"?) Whitespace _ name:Identifier _ "=" _ P:Process _ ";" { return g.newNamedProcess(name, P); }
+	= (_ "agent" Whitespace)? _ name:Identifier _ "=" _ P:Process _ ";" { return g.newNamedProcess(name, P); }
 
 //The rules here are defined in the reverse order of their precedence.
 //Either a given rule applies, eg. +, and everything to the left must have higher precedence,
@@ -67,43 +67,38 @@ RelabellingList
 Relabel
 	= to:Label _ "/" _ from:Label { return {to: to, from: from}; }
 
-// ( P ) for some process P
 ParenProcess
 	= "(" _ P:Process _ ")" { return P; }
 	/ P:ConstantProcess { return P; }
 
-// A constant process. Either the null process 0, or some process K.
 ConstantProcess
 	= "0" { return g.getNullProcess(); }
 	/ K:Identifier { return g.referToNamedProcess(K); }
 
-//Valid names for processes
-Identifier
+Identifier "identifier"
 	= first:[A-Z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
 
 IdentifierRest
 	= rest:[A-Za-z0-9?!_'\-#]*  { return rest; }
 
-Action
-	= [!'] label:Label { return new ccs.Action(label, true); }
+Action "action"
+	= ['] label:Label { return new ccs.Action(label, true); }
 	/ label:Label { return new ccs.Action(label, false); }
 
-//Valid name for actions
-Label
+Label "label"
 	= first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
 
 LabelList
 	= first:Label rest:(_ "," _ Label)* { return extractLabelList(first, rest); }
 
-Whitespace
-	= [ \r\n\t]
+Whitespace "whitespace"
+	= [ \t]
 
-Comment = "*" [^\r\n]* "\r"? "\n"?
+Comment "comment" = "*" [^\r\n]* "\r"? "\n"?
 
 //Useful utility
-_ = Whitespace* Comment _
-  / Whitespace*
+_ = (Whitespace / Newline)* Comment _
+  / (Whitespace / Newline)*
 
-Newline
+Newline "newline"
 	= "\r\n" / "\n" / "\r"
-
