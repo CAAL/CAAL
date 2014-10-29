@@ -4,6 +4,10 @@
 /// <reference path="gui/sidebar.ts" />
 /// <reference path="gui/storage.ts" />
 /// <reference path="gui/examples.ts" />
+/// <reference path="./activities.ts" />
+/// <reference path="gui/graph/renderer.ts" />
+/// <reference path="gui/graph/handler.ts" />
+/// <reference path="gui/graph/graph.ts" />
 
 /* Initialize Ace */
 var editor = ace.edit("editor");
@@ -41,3 +45,41 @@ $('#import').click(function() { $('#import-input').click() });
 
 /* Focus Ace editor whenever its containing <div> is pressed */
 $('#editor').click(function() { editor.focus(); });
+
+/* Activity buttons */
+$('#edit-mode-btn').on('click', () => selectActivity("editor"));
+$('#viz-mode-btn').on('click', () => selectActivity("explorer"));
+
+/* Initialize Activities */
+var activityElements = {
+    explorer: {
+        element: document.getElementById("explorer-container"),
+        activity: new Activities.Explorer(document.getElementById("arbor-canvas"))
+    },
+    editor: {
+        element: document.getElementById("editor-container"),
+        activity: new Activities.Editor()
+    }
+};
+
+var currentActivity = "";
+function selectActivity(activityStr) {
+    var activityElement;
+    //New or valid activity?
+    if (activityStr === currentActivity) return;
+    if (!activityElements[activityStr]) return;
+    if (currentActivity) {
+        //Close current
+        activityElement = activityElements[currentActivity];
+        activityElement.activity.beforeHide();
+        $(activityElement.element).hide();
+        activityElement.activity.afterHide();
+    }
+    //Open new activity.
+    currentActivity = activityStr;
+    activityElement = activityElements[currentActivity];
+    activityElement.activity.beforeVisible();
+    $(activityElement.element).show();
+    activityElement.activity.afterVisible();
+}
+selectActivity("editor");

@@ -9,3 +9,4 @@ lib/ccs_grammar.js
 lib/ace
 lib/gui.js
 *.js.map
+lib/visualizer.js
