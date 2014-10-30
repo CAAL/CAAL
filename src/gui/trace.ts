@@ -11,7 +11,7 @@ class Trace {
     }
 
     public drawTrace() {
-        var list:Drawable[] = [new Circle(this.paper, 10, "Yo"), new Square(this.paper, 30, "To")];
+        var list:Drawable[] = [new Circle(this.paper, 10, "Yo"), new Square(this.paper, 30, "To"), new Arrow(this.paper, 30, "abc")];
 
         list.forEach( (item) => {
             item.draw(this.currentX, this.currentY);
@@ -72,8 +72,17 @@ class Square implements Drawable {
 }
 
 class Arrow implements Drawable {
+    private height;
     
     constructor(public paper: RaphaelPaper, public width: number, private text: string) {
-        
+        this.height = 10;
+    }
+
+    public draw(x: number, y: number) {
+        var path = this.paper.path("M"+x+","+(y+this.height)+"L"+(x+this.width)+","+(y+this.height));
+
+        path.attr({"stroke": "black", 
+	               "stroke-width": 2, 
+	               "arrow-end": "block-wide-long"});
     }
 }
