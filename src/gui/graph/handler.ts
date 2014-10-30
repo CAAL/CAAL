@@ -9,6 +9,8 @@ class Handler {
     public mouseP : Point = null;
 
     public renderer : Renderer = null;
+
+    public clickDistance = 50;
     constructor(renderer : Renderer) {
         this.renderer = renderer;
     }
@@ -18,26 +20,30 @@ class Handler {
     }
 
     public clicked(e): boolean {
-         var h = e.data.handler;
+        var h = e.data.handler;
 
-         var pos = $(h.renderer.canvas).offset();
-         h.mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
-         h.nearest = h.draggedObject = h.renderer.particleSystem.nearest(h.mouseP);
-         h.selectedNode = h.draggedObject.node;
+        var pos = $(h.renderer.canvas).offset();
+        h.mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
+        h.nearest = h.draggedObject = h.renderer.particleSystem.nearest(h.mouseP);
+        if( h.nearest.distance <= h.clickDistance ){
+            h.selectedNode = h.draggedObject.node;
 
-         if (h.draggedObject && h.draggedObject.node !== null){
-             // while we're dragging, don't let physics move the node
-             h.draggedObject.node.fixed = true;
-         }
+            if (h.draggedObject && h.draggedObject.node !== null){
+                // while we're dragging, don't let physics move the node
+                h.draggedObject.node.fixed = true;
+            }
 
-         if (h.selectedNode) {
-             // just making sure that the selectedNode is not null
-             h.renderer.expandGraph(); // test
-         }
+            if (h.selectedNode) {
+                // just making sure that the selectedNode is not null
+                h.renderer.expandGraph(); // test
+            }
 
-         $(h.renderer.canvas).bind('mousemove',{handler: h}, h.dragged);
-         $(window).bind('mouseup',{handler: h}, h.dropped);
-    
+            $(h.renderer.canvas).bind('mousemove',{handler: h}, h.dragged);
+            $(window).bind('mouseup',{handler: h}, h.dropped);
+        } else {
+            console.log("select a closer point");
+        }
+
         return  false;
     }
 
@@ -61,18 +67,18 @@ class Handler {
          if (h.draggedObject===null || h.draggedObject.node===undefined) {
              return;
          }
-         
+
          if (h.draggedObject.node !== null) {
              h.draggedObject.node.fixed = false;
          }
 
          h.draggedObject = null;
-         //that.selectedNode = null;
+         // h.selectedNode = null;
 
          $(h.renderer.canvas).unbind('mousemove', h.dragged);
          $(window).unbind('mouseup', h.dropped);
          h.mouseP = null;
-    
+
         return false;
     }
 }

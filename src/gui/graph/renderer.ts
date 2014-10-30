@@ -8,7 +8,7 @@ class Renderer {
     private handler : Handler = null;
     private pendingEdges : Edge[] = []; // pending undrawn edges
     private pendingNodes : Node[] = []; // pending undrawn nodes
-    
+
     public canvas : HTMLCanvasElement;
     public ctx : CanvasRenderingContext2D;
     public gfx : any; // Graphics lib
@@ -82,21 +82,21 @@ class Renderer {
             // pt1:  {x:#, y:#}  source position in screen coords
             // pt2:  {x:#, y:#}  target position in screen coords
             // draw a line from pt1 to pt2
-        
+
             var label = edge.data.label || "";
             var arrowLength = 13;
             var arrowWidth = 6;
             var chevronColor = edge.data.color || "#4D4D4D";
-            
-            var isSelfloop = edge.source.name === edge.target.name; 
+
+            var isSelfloop = edge.source.name === edge.target.name;
             var oppo = that.particleSystem.getEdges(edge.target, edge.source)[0];
 
             that.ctx.save();
             that.ctx.strokeStyle = "rgb(196, 196, 196)"; //Edge color
-            that.ctx.lineWidth = 1.6; 
-            
+            that.ctx.lineWidth = 1.6;
+
             if(isSelfloop){
-                that.drawSelfEdge(pt1, pt2, arrowLength, arrowWidth, chevronColor, label, that.nodeBoxes[edge.target.name]);             
+                that.drawSelfEdge(pt1, pt2, arrowLength, arrowWidth, chevronColor, label, that.nodeBoxes[edge.target.name]);
             }
             else if (oppo != undefined) {
                 /* Bend the edges, otherwise the two edges will "overlap" eachother*/
@@ -109,8 +109,8 @@ class Renderer {
                 /*Draw normal edge*/
                 that.drawNormalEdge(pt1, pt2, that.nodeBoxes[edge.source.name], that.nodeBoxes[edge.target.name],
                         arrowLength, arrowWidth, chevronColor, label)
-            }     
-            that.ctx.restore();       
+            }
+            that.ctx.restore();
         })
     }
 
@@ -131,7 +131,7 @@ class Renderer {
         this.ctx.stroke();
 
         // Draw label
-        if (label){                 
+        if (label){
             this.drawLabel(pt2.x, pt2.y - (cpV), label);
         }
 
@@ -155,21 +155,21 @@ class Renderer {
      */
     drawNormalEdge(pt1: Point, pt2: Point, nodeBox1, nodeBox2, arrowLength: number, arrowWidth: number, chevronColor: string, label: string) {
         var tail : Point = this.intersect_line_box(pt1, pt2, nodeBox1)
-        var head : Point = this.intersect_line_box(tail, pt2, nodeBox2)
-        
+        var temp = this.intersect_line_box(tail, pt2, nodeBox2);
+        var head : Point = (temp != null) ? temp) : this.intersect_line_box(pt1, pt2, nodeBox2);
         // Draw the edge.
         this.ctx.beginPath();
         this.ctx.moveTo(tail.x, tail.y);
-        this.ctx.lineTo(head.x, head.y);  
+        this.ctx.lineTo(head.x, head.y);
         this.ctx.stroke();
 
         // Draw the label
         if (label){ //draw the label on edge
             var offsetAngle = Math.atan2(-(pt2.y - pt1.y), pt2.x - pt1.x) + Math.PI*0.5;
-            
+
             if (offsetAngle < 0){
                 offsetAngle += Math.PI * 2;
-            } 
+            }
             else if(offsetAngle >= Math.PI*2){
                 offsetAngle -= Math.PI * 2;
             }
@@ -180,8 +180,8 @@ class Renderer {
             }
 
             var midPoint = pt1.add(pt2).multiply(0.5);
-            
-            this.drawLabel(midPoint.x + offset.x, midPoint.y + offset.y, label);  
+
+            this.drawLabel(midPoint.x + offset.x, midPoint.y + offset.y, label);
         }
 
         // Draw the arrow
@@ -204,12 +204,12 @@ class Renderer {
      */
     drawBendingEdge(pt1 : Point, pt2: Point, nodeBox1, nodeBox2, arrowLength: number, arrowWidth: number, chevronColor: string, label: string) {
         var midPoint = pt1.add(pt2).multiply(0.5);
-        var angle = Math.atan2(-(pt2.y-pt1.y), pt2.x - pt1.x) - Math.PI/2; 
+        var angle = Math.atan2(-(pt2.y-pt1.y), pt2.x - pt1.x) - Math.PI/2;
 
         if(angle < 0) {
             angle += Math.PI*2;
         }
-        
+
         var cpOffset = arbor.Point(Math.cos(angle), -Math.sin(angle)).multiply(60);
         var cp = midPoint.add(cpOffset);
         var start = (nodeBox1 && this.intersect_line_box(pt1, cp, nodeBox1)) || pt1;
@@ -223,7 +223,7 @@ class Renderer {
 
         if (label) {
             var labelcp = midPoint.add(cpOffset.multiply(0.8));
-            this.drawLabel(labelcp.x, labelcp.y, label); 
+            this.drawLabel(labelcp.x, labelcp.y, label);
         }
 
         this.ctx.translate(end.x, end.y); // translate pointer to the top of the nodebox.
@@ -235,7 +235,7 @@ class Renderer {
     /**
      * Draws the rectangle of the node
      * @param {Node}  node
-     * @param {Point} pt   
+     * @param {Point} pt
      */
     private drawRectNode(node: Node, pt: Point): void {
         // draw a circle centered at pt
@@ -247,7 +247,7 @@ class Renderer {
                 this.ctx.fillStyle = "rgba(0,0,0,.0)"; // invisible
             }
             else {
-                this.ctx.fillStyle = node.data.color; 
+                this.ctx.fillStyle = node.data.color;
             }
         }
         else {
@@ -261,7 +261,7 @@ class Renderer {
         if (label){
             if (node.data.color != 'none' || node.data.color != 'white') {
                 this.drawLabel(pt.x, pt.y+8, label, 'white');
-            } 
+            }
             else {
                 this.drawLabel(pt.x, pt.y+8, label, 'black');
             }
@@ -364,7 +364,7 @@ class Renderer {
         if(!this.particleSystem) {
             var edge = <Edge>{source: source, target: target, data:data}
             this.pendingEdges.push(edge);
-            
+
             return edge;
         }
 
@@ -373,17 +373,17 @@ class Renderer {
         }
 
         var edge = this.particleSystem.getEdges(source.name, target.name)[0]; // there should only be one...
-        
+
         if (edge !== undefined) { // if ege is already defined then concat the labels.
             edge.data.label += ", " + data.label;
-            
+
             if (edge.data.label.length > 10) {
                 edge.data.label = edge.data.label.substring(0, 8) + "..";
             }
 
             return edge;
         }
-        
+
         return this.particleSystem.addEdge(source.name, target.name, data);
     }
 
@@ -391,18 +391,19 @@ class Renderer {
      * expand the graph from a single node, get it successors and add them to the graph
      * @param {Node} selNode Optional parameter, if not given this.selectedNode will be expanded.
      */
-    public expandGraph(selNode? : Node) : void {        
+    public expandGraph(selNode? : Node) : void {
         if (selNode !== undefined) { // if given a node to expand, change this.selectedNode.
             this.handler.selectedNode = selNode;
         }
 
         if (!this.handler.selectedNode.expanded) { // if not expanded, then expand.
             this.handler.selectedNode.expanded = true;
-            var successors : any[] = this.getSuccessors(this.handler.selectedNode);
-            
+
+            var successors : any[] = this.getSuccessors(this.handler.selectedNode); // Get successors of the node
+
             for (var i = 0, max = successors.length; i < max; i++) {
-                var targetNode = this.addNodeToGraph(successors[i].targetid.toString(), successors[i].data);
-                this.addEdgeToGraph(this.handler.selectedNode, targetNode, {label:successors[i].action});
+                var targetNode = this.addNodeToGraph(successors[i].targetid.toString(), successors[i].data); // add targetnode to the graph
+                this.addEdgeToGraph(this.handler.selectedNode, targetNode, {label:successors[i].action}); // add the edge between selectedNode and targetNode
             }
         }
     }
