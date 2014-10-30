@@ -48,5 +48,8 @@ var traceWidth = document.getElementById("trace").clientWidth;
 var traceHeight = document.getElementById("trace").clientHeight;
 console.log(traceWidth);
 console.log(traceHeight);
-var trace = new Trace("trace", traceWidth, traceHeight);
-trace.drawTrace();
+
+/* Raphael canvas drawing */
+var canvas = new RaphaelCanvas("trace", traceWidth, traceHeight);
+canvas.draw();
+

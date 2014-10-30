@@ -1,34 +1,58 @@
 /// <reference path="../../lib/raphael.d.ts" />
-class Trace {
-    private paper: RaphaelPaper;
+class RaphaelCanvas {
+    
     private currentX: number;
     private currentY: number;
+    public paper: RaphaelPaper;
     
-    constructor(private htmlElement: string, private width: number, private height: number) {
+    constructor(htmlElement: string, private width: number, private height: number) {
         this.paper = Raphael(htmlElement, width, height);
         this.currentX = 0;
         this.currentY = 0;
     }
-
-    public drawTrace() {
-        var list:Drawable[] = [new Circle(this.paper, 10, "Yo"), new Square(this.paper, 30, "To"), new Arrow(this.paper, 30, "abc")];
-
-        list.forEach( (item) => {
+    
+    public draw() {
+        var traces: Trace[] = [Trace.GetTrace(this.paper)];
+        
+        traces.forEach( (item) => {
             item.draw(this.currentX, this.currentY);
             this.currentX += item.width;
+            this.currentY += item.height;
         });
     }
-
 }
 
 interface Drawable {
-    width: number;
     paper: RaphaelPaper;
-
+    width: number;
     draw(x: number, y: number);
 }
 
+class Trace implements Drawable {
+    static LineHeight = 40;
+    static LineSpacing = 20;
+    
+    // save how much space the trace used in the canvas
+    public width: number;
+    public height: number;
+    
+    constructor(public paper: RaphaelPaper, private drawables: Drawable[]) { }
 
+    static GetTrace(paper: RaphaelPaper) : Trace {
+        var drawables: Drawable[]  = [new Circle(paper, 10, "Yo"), new Square(paper, 30, "To")];
+        var trace = new Trace(paper, drawables);
+        // TODO: fix method structure
+        
+        return trace;
+    }
+    
+    public draw(x: number, y: number) {
+        this.drawables.forEach( (item) => {
+            item.draw(x, y);
+            x += item.width;
+        });
+    }
+}
 
 class Circle implements Drawable {
     public width: number;
@@ -60,9 +84,12 @@ class Square implements Drawable {
 
         var textWidth = text.getBBox().width;
         
+        // set width of the square to make room for the text
+        this.width = (textWidth + margin*2 > this.width) ? textWidth + margin*2 : this.width;
+        
         // Parameters: x, y, width, height
         var rect = this.paper.rect(x, y,
-                                   (textWidth + margin*2 > this.width) ? textWidth + margin*2 : this.width,
+                                   this.width,
                                    this.height);
         rect.attr({"fill": "#f00", "stroke": "#000"});
 
