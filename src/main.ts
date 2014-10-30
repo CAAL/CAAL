@@ -4,6 +4,7 @@
 /// <reference path="gui/sidebar.ts" />
 /// <reference path="gui/storage.ts" />
 /// <reference path="gui/examples.ts" />
+/// <reference path="gui/trace.ts" />
 
 /* Initialize Ace */
 var editor = ace.edit("editor");
@@ -41,3 +42,11 @@ $('#import').click(function() { $('#import-input').click() });
 
 /* Focus Ace editor whenever its containing <div> is pressed */
 $('#editor').click(function() { editor.focus(); });
+
+/* Trace / Raphael */
+var traceWidth = document.getElementById("trace").clientWidth;
+var traceHeight = document.getElementById("trace").clientHeight;
+console.log(traceWidth);
+console.log(traceHeight);
+var trace = new Trace("trace", traceWidth, traceHeight);
+trace.drawTrace();
