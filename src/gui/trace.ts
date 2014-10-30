@@ -11,7 +11,7 @@ class Trace {
     }
 
     public drawTrace() {
-        var list:Drawable[] = [new Circle(this.paper, 10, "Yo"), new Square(this.paper, 50, "Yoslkdsalkdj1")];
+        var list:Drawable[] = [new Circle(this.paper, 10, "Yo"), new Square(this.paper, 30, "To")];
 
         list.forEach( (item) => {
             item.draw(this.currentX, this.currentY);
@@ -44,32 +44,36 @@ class Circle implements Drawable {
 }
 
 class Square implements Drawable {
-
+    
+    private height: number;
+    
     constructor(public paper: RaphaelPaper, public width: number, private text: string) {
-        
+        this.height = this.width;
     }
 
     public draw(x: number, y: number) {
         var margin = (this.width - (this.width / 2.5)) / 2;
 
-        var text = this.paper.text(x + (this.width / 2), y + (this.width / 2), this.text);
-        text.attr({"font-size": this.width / 2.5});
+        var text = this.paper.text(x + margin, y + (this.height / 2), this.text);
+        text.attr({"font-size": this.width / 2.5,
+                   "text-anchor": "start"});
 
         var textWidth = text.getBBox().width;
         
         // Parameters: x, y, width, height
         var rect = this.paper.rect(x, y,
-                                   ((this.width - margin * 2) < textWidth) ? textWidth + margin*2 : this.width,
-                                   this.width);
+                                   (textWidth + margin*2 > this.width) ? textWidth + margin*2 : this.width,
+                                   this.height);
         rect.attr({"fill": "#f00", "stroke": "#000"});
 
         text.toFront();
-        
-
     }
 
 }
 
 class Arrow implements Drawable {
-    public width: number;
+    
+    constructor(public paper: RaphaelPaper, public width: number, private text: string) {
+        
+    }
 }
