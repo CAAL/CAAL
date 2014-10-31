@@ -5,81 +5,94 @@ class RaphaelCanvas {
     private currentY: number;
     public paper: RaphaelPaper;
     
-    constructor(htmlElement: string, private width: number, private height: number) {
-        this.paper = Raphael(htmlElement, width, height);
-        this.currentX = 0;
-        this.currentY = 0;
+    constructor(htmlElement: string, public canvasWidth: number, public canvasHeight: number) {
+        this.paper = Raphael(htmlElement, canvasWidth, canvasHeight);
     }
     
     public draw() {
-        var traces: Trace[] = [Trace.GetTrace(this.paper)];
+        var traces: Trace[] = [Trace.GetTrace(this), Trace.GetTrace(this)];
+        
+        this.currentX = Trace.LineBorder;
+        this.currentY = Trace.LineBorder;
         
         traces.forEach( (item) => {
-            item.draw(this.currentX, this.currentY);
-            this.currentX += item.width;
-            this.currentY += item.height;
+            item.draw(this, this.currentX, this.currentY);
+            this.currentY += item.height; // should be equal to one or more LineHeight
+            this.currentY += Trace.LineSpacing * 2;
         });
     }
 }
 
 interface Drawable {
-    paper: RaphaelPaper;
     width: number;
-    draw(x: number, y: number);
+    height: number;
+    draw(raphaelCanvas: RaphaelCanvas, x: number, y: number);
 }
 
 class Trace implements Drawable {
     static LineHeight = 40;
-    static LineSpacing = 20;
+    static LineSpacing = 25;
+    static LineBorder = 15;
     
     // save how much space the trace used in the canvas
-    public width: number;
-    public height: number;
+    public width: number = 0;
+    public height: number = Trace.LineHeight;
     
-    constructor(public paper: RaphaelPaper, private drawables: Drawable[]) { }
+    constructor(public paper: RaphaelCanvas, private drawables: Drawable[]) { }
 
-    static GetTrace(paper: RaphaelPaper) : Trace {
-        var drawables: Drawable[]  = [new Circle(paper, 10, "Yo"), new Square(paper, 30, "To")];
-        var trace = new Trace(paper, drawables);
+    static GetTrace(raphaelCanvas: RaphaelCanvas) : Trace {
+        var drawables: Drawable[]  = [new Square(50, Trace.LineHeight, "o"), new Arrow(50, Trace.LineHeight, "a")];
+        for (var i: number = 1; i < 25; i++) {
+            drawables.push(new Circle(50, Trace.LineHeight, "o"));
+            drawables.push(new Arrow(50, Trace.LineHeight, "a"));
+        }
+        drawables.push(new Square(50, Trace.LineHeight, "o"));
+        var trace = new Trace(raphaelCanvas, drawables);
         // TODO: fix method structure
         
         return trace;
     }
     
-    public draw(x: number, y: number) {
+    public draw(raphaelCanvas: RaphaelCanvas, x: number, y: number) {
         this.drawables.forEach( (item) => {
-            item.draw(x, y);
+            if (x + item.width + Trace.LineBorder > raphaelCanvas.canvasWidth) {
+                x = Trace.LineBorder;
+                y += Trace.LineHeight + Trace.LineSpacing
+                this.height += Trace.LineHeight + Trace.LineSpacing;
+            }
+            
+            item.draw(raphaelCanvas, x, y);
             x += item.width;
         });
+        
+        this.width = x;
     }
 }
 
 class Circle implements Drawable {
-    public width: number;
-    
-    constructor(public paper: RaphaelPaper, private radius: number, private text: string) {
-        this.width = radius*2;
+
+    constructor(public width: number, public height: number, private text: string) {
+        this.width = this.height;
     }
 
-    public draw(x: number, y: number) {
-        var circle = this.paper.circle(x + this.radius, y + this.radius, this.radius);
+    public draw(raphaelCanvas: RaphaelCanvas, x: number, y: number) {
+        var radius = this.height/2;
+    
+        var circle = raphaelCanvas.paper.circle(x + radius, y + radius, radius);
         circle.attr({"fill": "#f00", "stroke": "#000"});
     }
 }
 
 class Square implements Drawable {
     
-    private height: number;
-    
-    constructor(public paper: RaphaelPaper, public width: number, private text: string) {
-        this.height = this.width;
+    constructor(public width: number, public height: number, private text: string) {
     }
 
-    public draw(x: number, y: number) {
-        var margin = (this.width - (this.width / 2.5)) / 2;
+    public draw(raphaelCanvas: RaphaelCanvas, x: number, y: number) {
+        var margin = (this.height - (this.height / 2.5)) / 2;
 
-        var text = this.paper.text(x + margin, y + (this.height / 2), this.text);
-        text.attr({"font-size": this.width / 2.5,
+        var text = raphaelCanvas.paper.text(x + margin, y + (this.height / 2), this.text);
+        text.attr({"font-size": this.height / 2.5,
                    "text-anchor": "start"});
 
         var textWidth = text.getBBox().width;
@@ -88,7 +101,7 @@ class Square implements Drawable {
         this.width = (textWidth + margin*2 > this.width) ? textWidth + margin*2 : this.width;
         
         // Parameters: x, y, width, height
-        var rect = this.paper.rect(x, y,
+        var rect = raphaelCanvas.paper.rect(x, y,
                                    this.width,
                                    this.height);
         rect.attr({"fill": "#f00", "stroke": "#000"});
@@ -99,14 +112,21 @@ class Square implements Drawable {
 }
 
 class Arrow implements Drawable {
-    private height;
-    
-    constructor(public paper: RaphaelPaper, public width: number, private text: string) {
-        this.height = 10;
+
+    constructor(public width: number, public height: number, private text: string) {
     }
 
-    public draw(x: number, y: number) {
-        var path = this.paper.path("M"+x+","+(y+this.height)+"L"+(x+this.width)+","+(y+this.height));
+    public draw(raphaelCanvas: RaphaelCanvas, x: number, y: number) {
+        var margin = (this.height - (this.height / 2.5)) / 2;
+
+        var text = raphaelCanvas.paper.text(x + margin, y + (this.height / 2), this.text);
+        text.attr({"font-size": this.height / 2.5,
+                   "text-anchor": "start"});
+
+        var textWidth = text.getBBox().width;
+        
+        
+        var path = raphaelCanvas.paper.path("M"+x+","+(y+(this.height / 2))+"L"+(x+this.width)+","+(y+(this.height / 2)));
 
         path.attr({"stroke": "black", 
 	               "stroke-width": 2, 
