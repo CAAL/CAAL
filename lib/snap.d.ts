@@ -82,7 +82,7 @@ interface SnapStatic {
     is(o: any, type: string): boolean;
     matrix(a: number, b: number, c: number, d: number, e: number, f: number): SnapMatrix;
     Matrix(a: number, b: number, c: number, d: number, e: number, f: number): SnapMatrix;
-    parse();
+    parse(): SnapFragment;
     parsePathString(pathString: string): string[];
     parsePathString(pathString: string[]): string[];
     parseTransformString(TString: string): string[];
@@ -246,7 +246,8 @@ interface SnapAnimationDescriptor {
 }
 
 interface SnapFragment {
-    // methods
+    select();
+    selectAll();
 }
 
 interface SnapSet {
