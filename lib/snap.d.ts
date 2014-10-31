@@ -21,16 +21,17 @@ interface BoundingBox {
 }
 
 interface SnapFilter {
-    blur();
-    brightness();
-    contrast();
-    grayscale();
-    hueRotate();
-    invert();
-    staturate();
-    sepia();
-    shadow();
-
+    blur(x: number, y?: number);
+    brightness(amount: number): string;
+    contrast(amount: number): string;
+    grayscale(amount: number): string;
+    hueRotate(angle: number): string;
+    invert(amount: number): string;
+    staturate(amount: number): string;
+    sepia(amount: number): string;
+    shadow(dx: number, dy: number, blur: number, color: string, opacity: number): string;
+    shadow(dx: number, dy: number, color: string, opacity: number): string;
+    shadow(dx: number, dy: number, opacity: number): string;
 }
 
 interface SnapPath {
@@ -38,17 +39,17 @@ interface SnapPath {
     bezierBBox(bez: any[]): { min: { x: number; y: number; }; max: { x: number; y: number; }; };
     findDotsAtSegment(p1x: number, p1y: number, c1x: number, c1y: number, c2x: number, c2y: number, p2x: number, p2y: number, t: number): { x: number; y: number; m: { x: number; y: number; }; n: { x: number; y: number; }; start: { x: number; y: number; }; end: { x: number; y: number; }; alpha: number; };
     getBBox(path: string): BoundingBox;
-    getPointAtLength();
-    getSubpath();
-    getTotalLength();
-    intersection();
-    isBBoxIntersect();
-    isPointInside();
-    isPointInsideBBox();
-    map();
-    toAbsolute();
-    toCubic();
-    toRelative();
+    getPointAtLength(path: string, length: number): {x: number, y: number, alpha: number};
+    getSubpath(path: string, from: number, to: number);
+    getTotalLength(path: string): number;
+    intersection(path1: string path2: string): boolean;
+    isBBoxIntersect(bbox1: string, bbox2: string): boolean;
+    isPointInside(path: string, x: number, y: number): boolean;
+    isPointInsideBBox(bbox: string, x: string, y: string): boolean;
+    map(path: string, matrix: SnapMatrix): string;
+    toAbsolute(path: string): string[];
+    toCubic(path: string): string[];
+    toRelative(path: string): string[];
 }
 
 
@@ -58,20 +59,20 @@ interface SnapStatic {
     (DOM: any) : SnapElement;
     (all: any[]): SnapElement;
     (query: string): SnapElement;
+
     path: SnapPath;
     filter: SnapFilter;
-
 
     ajax(url: string, postData: string, callback: Function, scope: any): any;
     ajax(url: string, postData: any, callback: Function, scope: any): any;
     ajax(url: string, callback: Function, scope: any): any;
     angle(x1: number, y1: number, x2: number, y2: number, x3?: number, y3?: number): number;
-    animate();
+    animate(attrs: any, duration: number, easing: Function, callback: Function);
     animation(params: any, ms: number, easing?: string, callback?: Function): any;
     color(clr: string): { r: number; g: number; b: number; hex: string; error: boolean; h: number; s: number; v: number; l: number; };
     deg(deg: number): number;
     format(token: string, ...parameters: any[]): string;
-    fragment();
+    fragment(): SnapFragment;
     getElementByPoint();
     getRGB(colour: string): { r: number; g: number; b: number; hex: string; error: boolean; };
     hsb(h: number, s: number, b: number): string;
@@ -95,7 +96,6 @@ interface SnapStatic {
     selectAll(query: string): SnapElement;
     snapTo(values: number, value: number, tolerance?: number): number;
     snapTo(values: number[], value: number, tolerance?: number): number;
-
 }
 
 interface SnapElement {
