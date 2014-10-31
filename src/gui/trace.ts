@@ -41,12 +41,12 @@ class Trace implements Drawable {
     constructor(public paper: RaphaelCanvas, private drawables: Drawable[]) { }
 
     static GetTrace(raphaelCanvas: RaphaelCanvas) : Trace {
-        var drawables: Drawable[]  = [new Square(50, Trace.LineHeight, "o"), new Arrow(50, Trace.LineHeight, "a")];
+        var drawables: Drawable[]  = [new Square(40, Trace.LineHeight, "o"), new Arrow(40, Trace.LineHeight, "a")];
         for (var i: number = 1; i < 25; i++) {
-            drawables.push(new Circle(50, Trace.LineHeight, "o"));
-            drawables.push(new Arrow(50, Trace.LineHeight, "a"));
+            drawables.push(new Circle(40, Trace.LineHeight, "o"));
+            drawables.push(new Arrow(40, Trace.LineHeight, "a"));
         }
-        drawables.push(new Square(50, Trace.LineHeight, "o"));
+        drawables.push(new Square(40, Trace.LineHeight, "TTo"));
         var trace = new Trace(raphaelCanvas, drawables);
         // TODO: fix method structure
         
@@ -78,7 +78,7 @@ class Circle implements Drawable {
     public draw(raphaelCanvas: RaphaelCanvas, x: number, y: number) {
         var radius = this.height/2;
     
-        var circle = raphaelCanvas.paper.circle(x + radius, y + radius, radius);
+        var circle: RaphaelElement = raphaelCanvas.paper.circle(x + radius, y + radius, radius);
         circle.attr({"fill": "#f00", "stroke": "#000"});
     }
 }
@@ -91,9 +91,8 @@ class Square implements Drawable {
     public draw(raphaelCanvas: RaphaelCanvas, x: number, y: number) {
         var margin = (this.height - (this.height / 2.5)) / 2;
 
-        var text = raphaelCanvas.paper.text(x + margin, y + (this.height / 2), this.text);
-        text.attr({"font-size": this.height / 2.5,
-                   "text-anchor": "start"});
+        var text: RaphaelElement = raphaelCanvas.paper.text(x, y, this.text); // x and y doesnt matter here, move it below
+        text.attr({"font-size": this.height / 2.5});
 
         var textWidth = text.getBBox().width;
         
@@ -101,12 +100,15 @@ class Square implements Drawable {
         this.width = (textWidth + margin*2 > this.width) ? textWidth + margin*2 : this.width;
         
         // Parameters: x, y, width, height
-        var rect = raphaelCanvas.paper.rect(x, y,
+        var rect: RaphaelElement = raphaelCanvas.paper.rect(x, y,
                                    this.width,
                                    this.height);
         rect.attr({"fill": "#f00", "stroke": "#000"});
-
+        
         text.toFront();
+        
+        // center text
+        text.attr({"x": x+this.width/2, "y": y+this.height/2});
     }
 
 }
@@ -117,19 +119,25 @@ class Arrow implements Drawable {
     }
 
     public draw(raphaelCanvas: RaphaelCanvas, x: number, y: number) {
-        var margin = (this.height - (this.height / 2.5)) / 2;
+        var margin: number = (this.height - (this.height / 2.5)) / 2;
 
-        var text = raphaelCanvas.paper.text(x + margin, y + (this.height / 2), this.text);
-        text.attr({"font-size": this.height / 2.5,
-                   "text-anchor": "start"});
+        var text: RaphaelElement = raphaelCanvas.paper.text(x, y, this.text); // x and y doesnt matter here, move it below
+        text.attr({"font-size": this.height / 2.5});
 
-        var textWidth = text.getBBox().width;
+        var textWidth: number = text.getBBox().width;
+        
+        // set width of the square to make room for the text
+        this.width = (textWidth + margin*2 > this.width) ? textWidth + margin*2 : this.width;
         
         
-        var path = raphaelCanvas.paper.path("M"+x+","+(y+(this.height / 2))+"L"+(x+this.width)+","+(y+(this.height / 2)));
-
+        var path: RaphaelPath = raphaelCanvas.paper.path("M"+x+","+(y+(this.height / 2))+"L"+(x+this.width)+","+(y+(this.height / 2)));
+        
         path.attr({"stroke": "black", 
 	               "stroke-width": 2, 
 	               "arrow-end": "block-wide-long"});
+        
+        // center text right above the arrow
+        var textPosition: number = (y + this.height/2) - (path.attr("stroke-width") + text.getBBox().height/2);
+        text.attr({"x": x+this.width/2, "y": textPosition});
     }
 }
