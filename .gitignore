@@ -7,7 +7,5 @@ npm-debug.log
 lib/ccs.js
 lib/ccs_grammar.js
 lib/ace
-lib/gui.js
-lib/graph.js
+lib/main.js
 *.js.map
-lib/visualizer.js

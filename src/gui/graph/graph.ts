@@ -6,22 +6,37 @@
 class ArborGraph {
     private sys : ParticleSystem;
     private renderer : Renderer;
-    private nodes : Object; 
-    private edges : Object;
+    private handler : Handler;
+    public onClick : Function = null;
+
     constructor(renderer) {
         this.sys = arbor.ParticleSystem(500, 3000, 0.95);
         this.sys.parameters({gravity:true});
         this.renderer = renderer;
-        this.sys.renderer = this.renderer
+        this.sys.renderer = renderer;
+        this.handler = new Handler(renderer);
+
+        this.handler.onClick = (nodeId) => {
+            if (this.onClick) this.onClick(nodeId);
+        };
     }
 
-    init() : void{
-        var one  = this.renderer.addNodeToGraph('-1', {label: 'Node one'}); 
-        var two = this.renderer.addNodeToGraph('0', {label: 'Node two'});
+    public addNode(nodeId, data) {
+        this.sys.addNode(nodeId, data);
+    }
 
-        this.renderer.addEdgeToGraph(one, two, {label: 'one'});
-        this.renderer.addEdgeToGraph(one, two, {label: 'two'});
-        this.renderer.addEdgeToGraph(two, one, {label: 'test'});
+    public addEdge(nodeFromId, nodeToId, data) {
+        //Arbor only allows one directed edge between two nodes.
+        var edges = this.sys.getEdges(nodeFromId, nodeToId),
+            edge = edges.length > 0 ? edges[0] : null;
+        if (!edge) {
+            edge = this.sys.addEdge(nodeFromId, nodeToId, data);
+        }
+        edge.data = data;
+    }
+
+    public clear() {
+        this.sys.prune((node, from, to) => true);
     }
 
     private isFrozen: boolean = false;

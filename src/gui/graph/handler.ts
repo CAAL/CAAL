@@ -5,79 +5,75 @@
 class Handler {
     public selectedNode : Node = null;
     public draggedObject : refNode = null;
-    public nearest : refNode = null;
     public mouseP : Point = null;
+    public onClick : Function = null;
+    private isDragging = false;
+    private mouseDownPos; 
+    public clickDistance = 50;
 
     public renderer : Renderer = null;
 
-    public clickDistance = 50;
     constructor(renderer : Renderer) {
         this.renderer = renderer;
-    }
-
-    public init(){
-        $(this.renderer.canvas).on('mousedown', {handler: this}, this.clicked);
+        $(this.renderer.canvas).bind('mousedown', {handler: this}, this.clicked);
     }
 
     public clicked(e): boolean {
         var h = e.data.handler;
+        if (!h.renderer.particleSystem) {
+            return false;
+        }
+        h.isDragging = false;
 
         var pos = $(h.renderer.canvas).offset();
-        h.mouseP = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
-        h.nearest = h.draggedObject = h.renderer.particleSystem.nearest(h.mouseP);
-        if( h.nearest.distance <= h.clickDistance ){
-            h.selectedNode = h.draggedObject.node;
+        h.mouseDownPos = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
+        h.mouseP = h.mouseDownPos;
+        h.draggedObject = h.renderer.particleSystem.nearest(h.mouseP);
+        h.selectedNode = h.draggedObject.node;
 
-            if (h.draggedObject && h.draggedObject.node !== null){
-                // while we're dragging, don't let physics move the node
-                h.draggedObject.node.fixed = true;
-            }
-
-            if (h.selectedNode) {
-                // just making sure that the selectedNode is not null
-                h.renderer.expandGraph(); // test
-            }
-
-            $(h.renderer.canvas).bind('mousemove',{handler: h}, h.dragged);
-            $(window).bind('mouseup',{handler: h}, h.dropped);
-        } else {
-            console.log("select a closer point");
+        if (h.selectedNode && h.draggedObject.distance <= h.clickDistance) {
+            $(h.renderer.canvas).bind('mousemove', {handler: h}, h.dragged);
+            $(window).bind('mouseup', {handler: h}, h.dropped);
         }
-
-        return  false;
+        return false;
     }
 
     public dragged(e): boolean {
         var h = e.data.handler;
         var pos = $(h.renderer.canvas).offset();
-        var old_nearest = h.nearest && h.nearest.node._id
+        var old_nearest = h.draggedObject && h.draggedObject.node._id
         var pos = $(h.renderer.canvas).offset();
         var s = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
 
-        if (h.draggedObject !== null && h.draggedObject.node !== null){
+        if (!h.isDragging && h.mouseDownPos.subtract(s).magnitude() > 10) {
+            h.isDragging = true;
+            h.selectedNode.fixed = true;
+        }
+
+        //Drag node visually around
+        if (h.isDragging) {
             var p = h.renderer.particleSystem.fromScreen(s);
-            h.draggedObject.node.p = p;
+            h.selectedNode.p = p;
         }
 
         return false;
     }
 
     public dropped(e): any {
-         var h = e.data.handler;
-         if (h.draggedObject===null || h.draggedObject.node===undefined) {
-             return;
-         }
-
-         if (h.draggedObject.node !== null) {
-             h.draggedObject.node.fixed = false;
-         }
-
-         h.draggedObject = null;
-         // h.selectedNode = null;
-
-         $(h.renderer.canvas).unbind('mousemove', h.dragged);
-         $(window).unbind('mouseup', h.dropped);
-         h.mouseP = null;
+        var h = e.data.handler,
+            nodeReference = h.selectedNode;
+        h.selectedNode.fixed = false;
+        if (nodeReference && !h.isDragging && h.onClick) {
+            h.onClick(nodeReference.name);
+            // setTimeout(() => {
+            //     h.onClick(nodeReference.name);
+            // }, 1);
+        }
+        h.selectedNode = null;
+        h.draggedObject = null;
+        $(h.renderer.canvas).unbind('mousemove', h.dragged);
+        $(window).unbind('mouseup', h.dropped);
+        h.mouseP = null;
 
         return false;
     }

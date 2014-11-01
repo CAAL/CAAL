@@ -17,13 +17,24 @@ interface ParticleSystem {
     toScreen(p : Point) : Point;
     parameters(o : Object) : void;
     
-    addEdge(source : string, target : string, data : Object) : Edge;
+    /* Nodes */
     addNode(name : string, object : Object) : Node;
+    getNode(name : string);
+    pruneNode(node);
+
+    /* Edges */
+    addEdge(source, target, data) : Edge;
+    getEdges(source, target) : Edge[];
+    getEdgesFrom(node) : Edge[];
+    getEdgesTo(node) : Edge[];
+    pruneEdge(edge : Edge);
+    
+    /* Iteration */
+
     eachNode(f : (n : Node, pt : Point) => void) : void;
     eachEdge(f : (e : Edge, p1 : Point, p2 : Point) => void) : void; 
-    getEdges(source : string, target: string) : Edge[];
-    getEdges(source : Node, target: Node) : Edge[];
-    getEdgesFrom(node: string) : Edge[];
+
+    prune(f : (node : Node, from : Edge[], to : Edge[]) => void);
 
     start();
     stop();

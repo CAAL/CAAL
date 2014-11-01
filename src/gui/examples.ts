@@ -21,5 +21,14 @@ var examples = [
              "agent MedTopRep1 = 'leftAck1.MedTopRep1 + tau.MedTop;\n\n" +
              "agent Protocol = (Send0 | Med | RecvAck0) \\ InternalComActs;\n" +
              "agent Spec = acc.'del.Spec; * our specification"
+    },
+    {
+        id: 1,
+        title: "Square Formation",
+        description: "A simple cyclical process structure",
+        ccs: "S1 = right.S2 + down.S3;\n" +
+             "S2 = down.S4 + left.S1;\n" +
+             "S3 = up.S1 + right.S4;\n" +
+             "S4 = up.S2 + left.S3;\n"
     }
 ]

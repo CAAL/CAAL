@@ -1,58 +1,11 @@
+/// <reference path="../lib/jquery.d.ts" />
+/// <reference path="gui/graph/graph.ts" />
+/// <reference path="ccs/ccs.ts" />
+
 module Activities {
-    export class ActivityHandler {
-        private currentActivity: Activity;
-
-        public constructor(initialActivity: Activity) {
-            this.selectActivity(initialActivity);
-
-            $(document).on('activityChanged', (evt, activity) => {
-                this.selectActivity(activity);
-            });
-        }
-
-        private selectActivity(activity: Activity): void {
-            if (activity instanceof Activity) {
-                if (activity !== this.currentActivity) {
-                    if (this.currentActivity) { // Will be 'undefined' initially.
-                        this.currentActivity.beforeHide();
-                        this.currentActivity.hide();
-                        this.currentActivity.afterHide();
-                    }
-                    activity.beforeShow();
-                    activity.show();
-                    activity.afterShow();
-                    this.currentActivity = activity;
-                }
-            }
-        }
-    }
 
     export class Activity {
-        private containerId: string;
-        private buttonId: string;
-
-        public constructor(containerId: string, buttonId: string) {
-            this.containerId = containerId;
-            this.buttonId = buttonId;
-
-            this.hide();
-
-            $(buttonId).on('click', () => {
-                $(document).trigger('activityChanged', this);
-            });
-        }
-
-        public show(): void {
-            $(this.containerId).show();
-            $(this.buttonId).addClass('active');
-        }
-
-        public hide(): void {
-            $(this.containerId).hide();
-            $(this.buttonId).removeClass('active');
-        }
-
-        public beforeShow(): void {}
+        public beforeShow(configuration : Object): void {}
         public afterShow(): void {}
         public beforeHide(): void {}
         public afterHide(): void {}
@@ -61,10 +14,9 @@ module Activities {
     export class Editor extends Activity {
         private editor: any;
 
-        public constructor(containerId: string, buttonId: string, editorId: string) {
-            super(containerId, buttonId);
-
-            this.editor = ace.edit($(editorId)[0]);
+        public constructor(editor, editorId : string) {
+            super();
+            this.editor = editor;
             this.editor.setTheme("ace/theme/crisp");
             this.editor.getSession().setMode("ace/mode/ccs");
             this.editor.getSession().setUseWrapMode(true);
@@ -76,14 +28,12 @@ module Activities {
                 fontFamily: "Inconsolata",
             });
 
-            /* Focus Ace editor whenever its containing <div> is pressed */
-            $(editorId).on('click', () => {
+            // /* Focus Ace editor whenever its containing <div> is pressed */
+            $("#" + editorId).on('click', () => {
                 this.editor.focus()
             });
         }
-
-        public show(): void {
-            super.show();
+        afterShow() {
             this.editor.focus();
         }
     }
@@ -93,25 +43,83 @@ module Activities {
         private renderer: any;
         private arborGraph: any;
         private bindedResizeFn;
+        private graph : CCS.Graph;
+        private succGenerator : CCS.ProcessVisitor<CCS.TransitionSet>;
+        private initialProcessName : string;
+        private processData;
 
-        public constructor(containerId: string, buttonId: string, canvasId: string) {
-            super(containerId, buttonId);
-
-            this.canvas = $(canvasId)[0];
-            this.renderer = new Renderer(this.canvas);
+        constructor(canvas) {
+            super();
+            this.canvas = canvas;
+            this.renderer = new Renderer(canvas);
             this.arborGraph = new ArborGraph(this.renderer);
-            this.arborGraph.init();
         }
 
-        public afterShow(): void {
+        beforeShow(configuration) {
+            this.clear();
+            this.graph = configuration.graph;
+            this.succGenerator = configuration.successorGenerator;
+            this.initialProcessName = configuration.initialProcessName;
+            this.arborGraph.clear();
+            this.showProcess(this.graph.processByName(this.initialProcessName));
+        }
+
+        afterShow(): void {
             this.bindedResizeFn = this.resize.bind(this);
             $(window).on("resize", this.bindedResizeFn);
-            this.resize();
+            this.arborGraph.onClick = (processId) => {
+                this.expand(this.graph.processById(processId));
+            };
+            this.resize(); 
         }
 
-        public afterHide(): void {
+        afterHide() {
             $(window).unbind("resize", this.bindedResizeFn)
             this.bindedResizeFn = null;
+            this.arborGraph.onClick = null;
+            this.graph = null;
+            this.succGenerator = null;
+        }
+
+        private clear() {
+            this.processData = {};
+            this.arborGraph.clear();
+        }
+
+        private showProcess(process) {
+            var data;
+            if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
+            if (!this.processData[process.id]) {
+                data = {label: this.labelFor(process), status: "unexpanded"};
+                this.processData[process.id] = data;
+                this.arborGraph.addNode(process.id, data);
+            }
+        }
+
+        private labelFor(process) : string{
+            var label = "S" + process.id;
+            if (process instanceof CCS.NamedProcess) {
+                label = process.name;
+            }
+            return label;
+        }
+
+        private expand(process) {
+            if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
+            this.showProcess(process);
+            this.processData[process.id].status = "expanded";
+            var transitions = this.succGenerator.visit(process);
+            transitions.forEach(transition => {
+                this.showTransition(process, transition);
+            }); 
+        }
+
+        private showTransition(fromProcess, transition) {
+            var action = transition.action,
+                toProcess = transition.targetProcess,
+                actionLabel = (action.isComplement ? "'" : "") + action.label;
+            this.showProcess(toProcess);
+            this.arborGraph.addEdge(fromProcess.id, toProcess.id, {label: actionLabel});
         }
 
         private resize(): void {

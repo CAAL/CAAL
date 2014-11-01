@@ -1,44 +1,28 @@
-/*libs Jquery, graphics is needed.*/
 /// <reference path="../../../lib/jquery.d.ts" />
 /// <reference path="../../../lib/arbor.d.ts" />
 /// <reference path="handler.ts" />
 
 class Renderer {
     private nodeBoxes:Point[] = []; // stores the points of the node box.
-    private handler : Handler = null;
-    private pendingEdges : Edge[] = []; // pending undrawn edges
-    private pendingNodes : Node[] = []; // pending undrawn nodes
-
     public canvas : HTMLCanvasElement;
     public ctx : CanvasRenderingContext2D;
     public gfx : any; // Graphics lib
     public particleSystem : ParticleSystem = null;
 
+    private nodeStatusColors = {
+        "unexpanded": "rgb(160,160,160)",
+        "expanded": "rgb(51, 65, 185)"
+    }
+
     constructor(canvas : HTMLCanvasElement) {
-      // this.canvas = <HTMLCanvasElement> $(canvas).get(0);
       this.canvas = canvas;
       this.ctx = this.canvas.getContext("2d");
       this.gfx = arbor.Graphics(this.canvas);
     }
 
     public init(system : ParticleSystem) {
-        // the particle system will call the init function once, right before the
-        // first frame is to be drawn. it's a good place to set up the canvas and
-        // to pass the canvas size to the particle system
-
-        // save a reference to the particle system for use in the .redraw() loop
         this.particleSystem = system;
-
-        // inform the system of the screen dimensions so it can map coords for us.
-        // if the canvas is ever resized, screenSize should be called again with
-        // the new dimensions
-        // this.particleSystem.screenSize(this.canvas.width, this.canvas.height);
         this.resize(this.canvas.width, this.canvas.height);
-
-        // set up some event handlers to allow for node-dragging
-        this.handler = new Handler(this);
-        this.handler.init();
-
         this.ctx.translate(0.5,0.5);
     }
 
@@ -49,32 +33,19 @@ class Renderer {
     }
 
     public redraw() {
+        if (!this.particleSystem) {
+            return;
+        }
+
         var that = this;
         // redraw will be called repeatedly during the run.
         this.gfx.clear();
 
-        /* Draw the nodes that have been saved by "this.addNodeToGraph"*/
-        if(this.pendingNodes.length > 0 && this.particleSystem) {
-            while(this.pendingNodes.length > 0){
-                var node = this.pendingNodes.pop();
-                this.addNodeToGraph(node.name, node.data);
-            }
-        }
-
-        /* Draw the edges that have been saved by "this.addEdgeToGraph"*/
-        if(this.pendingEdges.length > 0 && this.particleSystem) {
-            while(this.pendingEdges.length > 0){
-                var edge = this.pendingEdges.pop();
-                this.addEdgeToGraph(edge.source, edge.target, edge.data);
-            }
-        }
-
-        this.particleSystem.eachNode(function(node : Node, pt : Point) {
+        that.particleSystem.eachNode(function(node : Node, pt : Point) {
             // node: {mass:#, p:{x,y}, name:"", data:{}}
             // pt:   {x:#, y:#}  node position in screen coords
-
             that.drawRectNode(node, pt);
-        })
+        });
 
         // draw the edges
         that.particleSystem.eachEdge(function(edge : Edge, pt1 : Point, pt2 : Point){
@@ -82,14 +53,22 @@ class Renderer {
             // pt1:  {x:#, y:#}  source position in screen coords
             // pt2:  {x:#, y:#}  target position in screen coords
             // draw a line from pt1 to pt2
-
-            var label = edge.data.label || "";
             var arrowLength = 13;
             var arrowWidth = 6;
             var chevronColor = edge.data.color || "#4D4D4D";
 
             var isSelfloop = edge.source.name === edge.target.name;
             var oppo = that.particleSystem.getEdges(edge.target, edge.source)[0];
+
+            function strShorten(str) {
+                return str.length > 10 ? str.substring(0,8) + ".." : str;
+            }
+
+            var edgeLabels = that.particleSystem.getEdges(edge.source, edge.target).map(edge => {
+                return strShorten(edge.data.label || "");
+            });
+
+            var label = edgeLabels.join(",");
 
             that.ctx.save();
             that.ctx.strokeStyle = "rgb(196, 196, 196)"; //Edge color
@@ -109,9 +88,9 @@ class Renderer {
                 /*Draw normal edge*/
                 that.drawNormalEdge(pt1, pt2, that.nodeBoxes[edge.source.name], that.nodeBoxes[edge.target.name],
                         arrowLength, arrowWidth, chevronColor, label)
-            }
-            that.ctx.restore();
-        })
+            }     
+            that.ctx.restore();       
+        });
     }
 
     drawSelfEdge(pt1, pt2, arrowLength, arrowWidth, chevronColor, label, nodeBox ) {
@@ -156,7 +135,7 @@ class Renderer {
     drawNormalEdge(pt1: Point, pt2: Point, nodeBox1, nodeBox2, arrowLength: number, arrowWidth: number, chevronColor: string, label: string) {
         var tail : Point = this.intersect_line_box(pt1, pt2, nodeBox1)
         var temp = this.intersect_line_box(tail, pt2, nodeBox2);
-        var head : Point = (temp != null) ? temp) : this.intersect_line_box(pt1, pt2, nodeBox2);
+        var head : Point = (temp != null) ? temp : this.intersect_line_box(pt1, pt2, nodeBox2);
         // Draw the edge.
         this.ctx.beginPath();
         this.ctx.moveTo(tail.x, tail.y);
@@ -242,17 +221,11 @@ class Renderer {
         var label = node.data.label || "";
         var textWidth = this.ctx.measureText(label).width + 30;
 
-        if (node.data.color) {
-            if (node.data.color=='none') {
-                this.ctx.fillStyle = "rgba(0,0,0,.0)"; // invisible
-            }
-            else {
-                this.ctx.fillStyle = node.data.color;
-            }
+        if (label && label.length > 10) {
+            label = node.data.label = label.substring(0,8) + "..";
         }
-        else {
-            this.ctx.fillStyle = "rgb(5, 0, 112)"; //Node default color
-        }
+
+        this.ctx.fillStyle = this.nodeStatusColors[node.data.status] || this.nodeStatusColors["expanded"];
 
         this.gfx.rect(pt.x-textWidth/2, pt.y-10, textWidth, 26, 8, {fill:this.ctx.fillStyle}); // draw the node rect
         this.nodeBoxes[node.name] = [pt.x-textWidth/2, pt.y-11, textWidth, 28]; // save the bounds of the node-rect for drawing the edges correctly.
@@ -344,76 +317,59 @@ class Renderer {
      * @param  {string} label    The label the of the node.
      * @return {Node}            Returns the node, just added.
      */
-    public addNodeToGraph(name : string, data : any) : Node{
-        if (!this.particleSystem) {
-            var node = <Node> {name: name, data: data};
-            this.pendingNodes.push(<Node> {name: name, data: data});
-            return node;
-        }
+    // public addNodeToGraph(name : string, data : any) : Node{
+    //     var label = data.label
+    //     if (label){
+    //         if(label.length > 10){
+    //             label = label.substring(0,8) + "..";
+    //         }
+    //     }
+    //     return this.particleSystem.addNode(name, data);
+    // }
 
-        var label = data.label
-        if (label){
-            if(label.length > 10){
-                label = label.substring(0,8) + "..";
-            }
-        }
-        return this.particleSystem.addNode(name, data);
-    }
+    // public addEdgeToGraph(source: Node, target: Node, data: any) : Edge {
+    //     if (source === target) {  // if selfloop
+    //         data.selfloop = true;
+    //     }
 
-    public addEdgeToGraph(source: Node, target: Node, data: any) : Edge {
-        if(!this.particleSystem) {
-            var edge = <Edge>{source: source, target: target, data:data}
-            this.pendingEdges.push(edge);
+    //     var edge = this.particleSystem.getEdges(source.name, target.name)[0]; // there should only be one...
+        
+    //     if (edge !== undefined) { // if ege is already defined then concat the labels.
+    //         edge.data.label += ", " + data.label;
+            
+    //         if (edge.data.label.length > 10) {
+    //             edge.data.label = edge.data.label.substring(0, 8) + "..";
+    //         }
 
-            return edge;
-        }
-
-        if (source === target) {  // if selfloop
-            data.selfloop = true;
-        }
-
-        var edge = this.particleSystem.getEdges(source.name, target.name)[0]; // there should only be one...
-
-        if (edge !== undefined) { // if ege is already defined then concat the labels.
-            edge.data.label += ", " + data.label;
-
-            if (edge.data.label.length > 10) {
-                edge.data.label = edge.data.label.substring(0, 8) + "..";
-            }
-
-            return edge;
-        }
-
-        return this.particleSystem.addEdge(source.name, target.name, data);
-    }
+    //         return edge;
+    //     }
+        
+    //     return this.particleSystem.addEdge(source.name, target.name, data);
+    // }
 
     /**
      * expand the graph from a single node, get it successors and add them to the graph
      * @param {Node} selNode Optional parameter, if not given this.selectedNode will be expanded.
      */
-    public expandGraph(selNode? : Node) : void {
-        if (selNode !== undefined) { // if given a node to expand, change this.selectedNode.
-            this.handler.selectedNode = selNode;
-        }
+    // public expandGraph(selNode? : Node) : void {        
+    //     if (selNode !== undefined) { // if given a node to expand, change this.selectedNode.
+    //         this.handler.selectedNode = selNode;
+    //     }
 
-        if (!this.handler.selectedNode.expanded) { // if not expanded, then expand.
-            this.handler.selectedNode.expanded = true;
+    //     if (!this.handler.selectedNode.expanded) { // if not expanded, then expand.
+    //         this.handler.selectedNode.expanded = true;
+    //         var successors : any[] = this.getSuccessors(this.handler.selectedNode);
+            
+    //         for (var i = 0, max = successors.length; i < max; i++) {
+    //             var targetNode = this.addNodeToGraph(successors[i].targetid.toString(), successors[i].data);
+    //             this.addEdgeToGraph(this.handler.selectedNode, targetNode, {label:successors[i].action});
+    //         }
+    //     }
+    // }
 
-            var successors : any[] = this.getSuccessors(this.handler.selectedNode); // Get successors of the node
-
-            for (var i = 0, max = successors.length; i < max; i++) {
-                var targetNode = this.addNodeToGraph(successors[i].targetid.toString(), successors[i].data); // add targetnode to the graph
-                this.addEdgeToGraph(this.handler.selectedNode, targetNode, {label:successors[i].action}); // add the edge between selectedNode and targetNode
-            }
-        }
-    }
-
-    /* Just test function */
-    private myid = 1;
-    public getSuccessors(curNode : Node) : any[] {
-        return [{action:"a", targetid: this.myid, data:{label: "asd.B"}}, {action:"b", targetid: this.myid, data:{label: "asd.B"}}, {action:"c", targetid: ++this.myid, data:{label: "asd.B"}}];
-    }
+    // /* Just test function */
+    // private myid = 1;
+    // public getSuccessors(curNode : Node) : any[] {
+    //     return [{action:"a", targetid: this.myid, data:{label: "asd.B"}}, {action:"b", targetid: this.myid, data:{label: "asd.B"}}, {action:"c", targetid: ++this.myid, data:{label: "asd.B"}}];
+    // }
 }
-
-
-

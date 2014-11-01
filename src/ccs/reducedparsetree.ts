@@ -21,8 +21,8 @@ module Traverse {
 
         dispatchNamedProcess(process : ccs.NamedProcess) {
             if (!this.cache[process.id]) {
-                process.subProcess = process.subProcess.dispatchOn(this);
                 this.cache[process.id] = true;
+                process.subProcess = process.subProcess.dispatchOn(this);
             }
             return process;
         }
@@ -87,6 +87,31 @@ module Traverse {
                 this.cache[process.id] = true;
             }
             return process;
+        }
+    }
+
+    export class ReducingSuccessorGenerator implements ccs.ProcessVisitor<ccs.TransitionSet> {
+        
+        private succGenerator : ccs.SuccessorGenerator;
+        private reducer : ProcessTreeReducer;
+
+        constructor(public graph : ccs.Graph, public successorCache?, public reducerCache?) {
+            this.successorCache = successorCache || {};
+            this.reducerCache = reducerCache || {};
+            this.succGenerator = new ccs.SuccessorGenerator(graph, this.successorCache);
+            this.reducer = new ProcessTreeReducer(graph, this.reducerCache);
+        }
+
+        visit(process : ccs.Process) : ccs.TransitionSet {
+            var transitionSet = this.succGenerator.visit(process);
+            return this.reduceSuccessors(transitionSet);
+        }
+
+        private reduceSuccessors(transitionSet : ccs.TransitionSet) {
+            transitionSet.forEach(transition => {
+                transition.targetProcess = this.reducer.visit(transition.targetProcess);
+            });
+            return transitionSet;
         }
     }
 }

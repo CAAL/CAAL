@@ -109,7 +109,7 @@ module CCS {
                 this.isComplement === other.isComplement;
         }
         toString() {
-            return (this.isComplement ? "!" : "") + this.label;
+            return (this.isComplement ? "'" : "") + this.label;
         }
         clone() {
             return new Action(this.label, this.isComplement);
@@ -465,6 +465,10 @@ module CCS {
             return new TransitionSet(this.transitions);
         }
 
+        count() : number {
+            return this.transitions.length;
+        }
+
         applyRestrictionSet(labels : LabelSet) : TransitionSet {
             var count = this.transitions.length,
                 allCurrent = this.transitions,
@@ -482,11 +486,13 @@ module CCS {
 
         applyRelabelSet(relabels : RelabellingSet) : void {
             var allCurrent = this.transitions,
+                newLabel,
                 transition;
-            for (var i = 0, max = allCurrent.length; i < max; i++){
+            for (var i = 0, max = allCurrent.length; i < max; i++) {
                 transition = allCurrent[i];
                 if (relabels.hasRelabelForLabel(transition.action.label)) {
-                    transition.action.label = relabels.toLabelForFromLabel(transition.action.label);
+                    newLabel = relabels.toLabelForFromLabel(transition.action.label);
+                    transition.action = new Action(newLabel, transition.action.isComplement);
                 }
             }
         }
@@ -496,6 +502,18 @@ module CCS {
                 f(this.transitions[i]);
             }
         }
+
+        // mergeOnActions() : any {
+        //     var copy = this.transitions.slice(0),
+        //         merged = {}, actionStr, transition, mergedArr;
+        //     for (var i = 0, max = this.transitions.length; i < max; i++) {
+        //         transition = this.transitions[i];
+        //         actionStr = transition.action.toString();
+        //         mergedArr = merged[actionStr] || [];
+        //         mergedArr.push(transition.targetProcess);
+        //     }
+        //     return mergedArr;
+        // }
     }
 
     export class SuccessorGenerator implements ProcessVisitor<TransitionSet>, ProcessDispatchHandler<TransitionSet> {
@@ -547,23 +565,25 @@ module CCS {
                 leftSet = process.leftProcess.dispatchOn(this);
                 rightSet = process.rightProcess.dispatchOn(this);
                 
+
                 leftSet.forEach(leftTransition => {
                     //COM1
                     transitionSet.add(new Transition(leftTransition.action.clone(),
                         this.graph.newCompositionProcess(leftTransition.targetProcess, process.rightProcess)));
 
+                    //COM3
                     rightSet.forEach(rightTransition => {
-                        //COM2
-                        transitionSet.add(new Transition(rightTransition.action.clone(),
-                            this.graph.newCompositionProcess(process.leftProcess, rightTransition.targetProcess)));
-
-                        //COM3
                         if (leftTransition.action.label === rightTransition.action.label &&
                             leftTransition.action.isComplement !== rightTransition.action.isComplement) {
                             transitionSet.add(new Transition(new Action("tau", false),
                                 this.graph.newCompositionProcess(leftTransition.targetProcess, rightTransition.targetProcess)));
                         }
                     });
+                });
+                //COM2
+                rightSet.forEach(rightTransition => {
+                    transitionSet.add(new Transition(rightTransition.action.clone(),
+                    this.graph.newCompositionProcess(process.leftProcess, rightTransition.targetProcess)));
                 });
             }
             return transitionSet;
