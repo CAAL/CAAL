@@ -182,6 +182,7 @@ interface SnapPaper {
     g(...varargs:any[]): any;
     gradient(gradient: string) : any;
     group(): any;
+    group(...varargs: SnapElement[]): any;
     image(src: string, x: number, y: number, width: number, height: number): any;
     line(x1: number, y1: number, x2: number, y2:number): any;
     mask() : any;
