@@ -144,6 +144,7 @@ module CCS {
         private constructErrors = [];
         private definedSets = {};
         private allSets = []; //We never remove.. Use index as id.
+        private allRelabellings = []; //Same as allSets
 
         constructor() {
             this.cache.structural = {}; //used structural sharing
@@ -222,13 +223,14 @@ module CCS {
             return existing;
         }
 
-        newRestrictedProcess(process, restriction : LabelSet) {
+        newRestrictedProcess(process, restrictedLabels : LabelSet) {
             //For now return just new instead of structural sharing
-            var restriction = this.getOrInsertLabelSet(restriction),
-                key = "\\" + process.id + "," + this.indexOfLabelSet(restriction),
-                existing = this.cache.structural[key];
+            var key, existing;
+            restrictedLabels = this.getOrInsertLabelSet(restrictedLabels);
+            key = "\\" + process.id + "," + this.indexOfLabelSet(restrictedLabels);
+            existing = this.cache.structural[key];
             if (!existing) {
-                existing = this.cache.structural[key] = new RestrictionProcess(this.nextId++, process, restriction);
+                existing = this.cache.structural[key] = new RestrictionProcess(this.nextId++, process, restrictedLabels);
                 this.processes[existing.id] = existing;
             }
             return existing;
@@ -245,9 +247,14 @@ module CCS {
         }
 
         newRelabelingProcess(process, relabellings : RelabellingSet) {
-            //Same as reasoning as restriction
-            var existing = new RelabellingProcess(this.nextId++, process, relabellings);
-            this.processes[existing.id] = existing;
+            var key, existing;
+            relabellings = this.getOrInsertRelabellingSet(relabellings);
+            key = "[" + process.id + "," + this.indexOfRelabellingSet(relabellings);
+            existing = this.cache.structural[key];
+            if (!existing) {
+                existing = this.cache.structural[key] = new RelabellingProcess(this.nextId++, process, relabellings);
+                this.processes[existing.id] = existing;
+            }
             return existing;
         }
 
@@ -299,21 +306,37 @@ module CCS {
         }
 
         private getOrInsertLabelSet(labelSet : LabelSet) : LabelSet {
-            var index = this.indexOfLabelSet(labelSet);
+            return this.getOrInsertObjectInArray(labelSet, this.allSets);
+        }
 
-            if (index === -1) {
-                this.allSets.push(labelSet);
-            } else {
-                labelSet = this.allSets[index];
-            }
-            return labelSet;
+        private getOrInsertRelabellingSet(relabellings : RelabellingSet) : RelabellingSet {
+            return this.getOrInsertObjectInArray(relabellings, this.allRelabellings);
         }
 
         private indexOfLabelSet(labelSet : LabelSet) : number {
+            return this.indexInArrayUsingEquals(labelSet, this.allSets);
+        }
+
+        private indexOfRelabellingSet(relabellings : RelabellingSet) : number {
+            return this.indexInArrayUsingEquals(relabellings, this.allRelabellings);
+        }
+
+        private getOrInsertObjectInArray<T>(object : T, array : T[]) : T {
+            var index = this.indexInArrayUsingEquals<T>(object, array),
+                result = object;
+            if (index === -1) {
+                array.push(object);
+            } else {
+                result = array[index];
+            }
+            return result;
+        }
+
+        private indexInArrayUsingEquals<T>(object : T, array : T[]) : number {
             var current;
-            for (var i = 0, max = this.allSets.length; i < max; ++i) {
-                current = this.allSets[i];
-                if (current.equals(labelSet)) {
+            for (var i = 0; i < array.length; i++) {
+                current = array[i];
+                if (current.equals(object)) {
                     return i;
                 }
             }
@@ -325,22 +348,16 @@ module CCS {
         private froms = [];
         private tos = [];
 
-        constructor(relabellings? : {from: string; to: string}[]) {
-            if (relabellings) {
-                relabellings.forEach( (relabel) => {
-                    if (relabel.from !== "tau" && relabel.to !== "tau") {
-                        this.froms.push(relabel.from);
-                        this.tos.push(relabel.to);
-                    }
-                });
-            }
-        }
-
-        clone() : RelabellingSet {
-            var result = new RelabellingSet();
-            result.froms = this.froms.slice();
-            result.tos = this.tos.slice();
-            return result;
+        constructor(relabellings : {from: string; to: string}[]) {
+            relabellings.forEach( (relabel) => {
+                if (relabel.from === "tau" || relabel.to === "tau") {
+                    throw new Error("Cannot relabel from or to tau");
+                }
+                this.froms.push(relabel.from);
+                this.tos.push(relabel.to);
+            });
+            this.froms.sort();
+            this.tos.sort();
         }
 
         forEach(f : (from : string, to : string) => void, thisObject?) {
@@ -360,6 +377,14 @@ module CCS {
                 result = this.tos[index];
             }
             return result;
+        }
+
+        equals(other : RelabellingSet) {
+            for (var i = 0; i < this.froms.length; i++) {
+                if (this.froms[i] !== other.froms[i]) return false;
+                if (this.tos[i] !== other.tos[i]) return false;
+            }
+            return true;
         }
 
         toString() : string {
@@ -544,18 +569,6 @@ module CCS {
                 f(this.transitions[i]);
             }
         }
-
-        // mergeOnActions() : any {
-        //     var copy = this.transitions.slice(0),
-        //         merged = {}, actionStr, transition, mergedArr;
-        //     for (var i = 0, max = this.transitions.length; i < max; i++) {
-        //         transition = this.transitions[i];
-        //         actionStr = transition.action.toString();
-        //         mergedArr = merged[actionStr] || [];
-        //         mergedArr.push(transition.targetProcess);
-        //     }
-        //     return mergedArr;
-        // }
     }
 
     export class SuccessorGenerator implements ProcessVisitor<TransitionSet>, ProcessDispatchHandler<TransitionSet> {
@@ -663,7 +676,7 @@ module CCS {
                 subTransitionSet = process.subProcess.dispatchOn(this).clone();
                 subTransitionSet.applyRelabelSet(process.relabellings);
                 subTransitionSet.forEach(transition => {
-                    var newRelabelling = this.graph.newRelabelingProcess(transition.targetProcess, process.relabellings.clone());
+                    var newRelabelling = this.graph.newRelabelingProcess(transition.targetProcess, process.relabellings);
                     transitionSet.add(new Transition(transition.action.clone(), newRelabelling));
                 });
             }
