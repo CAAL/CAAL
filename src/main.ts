@@ -53,9 +53,13 @@ console.log(traceHeight);
 var canvas = new SnapCanvas("#trace", traceWidth, traceHeight);
 canvas.draw();
 
-$(window).resize(function () {
+function resizeCanvas() {
     traceWidth = document.getElementById("trace").clientWidth;
     traceHeight = document.getElementById("trace").clientHeight;
     canvas.setSize(traceWidth, traceHeight);
-});
+}
 
+var resizeTimer;
+$(window).resize(function () {
+    resizeTimer = setTimeout(resizeCanvas, 100);
+});
