@@ -7,6 +7,7 @@ class Project {
     private titleId: string;
     private descriptionId: string;
     private editor: any;
+    private id: number;
     private title: string;
     private description: string;
 
@@ -22,14 +23,22 @@ class Project {
         this.defaultCCS = defaultCCS;
         this.titleId = titleId;
         this.descriptionId = descriptionId;
-        this.editor = ace.edit(editorId);
+        this.editor = ace.edit($(editorId)[0]);
 
         /* Set default values */
-        this.update(this.defaultTitle, this.defaultDescription, this.defaultCCS);
+        this.reset();
 
         /* Register event handlers */
         $(this.titleId).focusout(() => this.onTitleChanged());
         $(this.descriptionId).focusout(() => this.onDescriptionChanged());
+    }
+
+    public getId(): number {
+        return this.id;
+    }
+
+    public setId(id: number): void {
+        this.id = id;
     }
 
     public getTitle(): string {
@@ -59,20 +68,22 @@ class Project {
         this.editor.clearSelection();
     }
 
-    public update(title: string, description: string, ccs: string): void {
+    public update(id: number, title: string, description: string, ccs: string): void {
+        this.setId(id);
         this.setTitle(title);
         this.setDescription(description);
         this.setCCS(ccs);
     }
 
     public reset(): void {
-        this.update(this.defaultTitle, this.defaultDescription, this.defaultCCS);
+        this.update(null, this.defaultTitle, this.defaultDescription, this.defaultCCS);
     }
 
     public toJSON(): Object {
         return {
-            title: this.getTitle(),
-            description: this.getDescription(),
+            id: this.id,
+            title: this.title,
+            description: this.description,
             ccs: this.getCCS()
         };
     }

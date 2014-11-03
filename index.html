@@ -36,33 +36,71 @@
             <div class="row">
                 <div class="col-sm-3 col-md-2 sidebar">
                     <ul class="nav nav-sidebar">
-                        <li><a id="new">New Project<i class="fa fa-plus pull-right"></i></a></li>
-                        <li><a id="save">Save<i class="fa fa-floppy-o pull-right"></i></a></li>
+                        <li id="new-btn"><a>New Project<i class="fa fa-plus pull-right"></i></a></li>
+                        <li id="save-btn"><a>Save<i class="fa fa-floppy-o pull-right"></i></a></li>
                     </ul>
                     <ul class="nav nav-sidebar">
-                        <li class="active"><a href="#">Edit<i class="fa fa-code pull-right"></i></a></li>
-                        <li><a>Visualize<i class="fa fa-video-camera pull-right"></i></a></li>
+                        <li id="edit-btn"><a>Edit<i class="fa fa-code pull-right"></i></a></li>
+                        <li id="explore-btn"><a>Explore<i class="fa fa-video-camera pull-right"></i></a></li>
                         <li><a>Verify<i class="fa fa-check pull-right"></i></a></li>
                     </ul>
                     <ul class="nav nav-sidebar">
-                        <li><a id="import">Import<i class="fa fa-upload pull-right"></i></a></li>
+                        <li id="import-btn"><a>Import<i class="fa fa-upload pull-right"></i></a></li>
                         <input type="file" id="import-input" class="hidden" accept=".ccs" />
-                        <li><a id="export">Export<i class="fa fa-download pull-right"></i></a></li>
+                        <li id="export-btn"><a>Export<i class="fa fa-download pull-right"></i></a></li>
                     </ul>
                     <ul class="nav nav-sidebar">
-                        <li><a id="projects">My Projects<i class="fa fa-folder-open pull-right"></i></a>
+                        <li id="projects-btn"><a>My Projects<i class="fa fa-folder-open pull-right"></i></a>
                             <ul id="projects-list" class="nav nav-sidebar sub-nav"></ul>
                         </li>
-                        <li><a id="examples">Examples<i class="fa fa-folder-open pull-right"></i></a></li>
+                        <li id="examples-btn"><a>Examples<i class="fa fa-folder-open pull-right"></i></a></li>
                         <ul id="examples-list" class="nav nav-sidebar sub-nav"></ul>
                     </ul>
                 </div>
                 <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
                     <h1 id="project-title" contenteditable="true"></h1>
                     <h4 id="project-desc" contenteditable="true"></h4>
-                    <div id="editor"></div>
-                    <button type="button" id="parse" class="btn btn-default pull-right">Parse</button>
-                    <svg id="trace"></svg>
+                    <div id="main-content" class="container-fluid" style="position:relative; height:100%">
+                        <div id="editor-container">
+                    	   <div id="editor"></div>
+                    	   <button type="button" id="parse" class="btn btn-default pull-right">Parse</button>
+	                       <svg id="trace"></svg>
+                        </div>
+                        <div id="explorer-container" style="display: none;">
+  						    <canvas id="arbor-canvas" style="border: 1px solid black"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="viz-mode-dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title">Select initial process</h4>
+                    </div>
+                    <div class="modal-body" id="viz-mode-dialog-body">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="explain-dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="explain-dialog-title"></h4>
+                    </div>
+                    <div class="modal-body">
+                        <p id="explain-dialog-body-par"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -72,8 +110,9 @@
         <script src="lib/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
         <script src="lib/ace/src/ext-language_tools.js"></script>
         <script type="text/javascript" src="lib/ccs_grammar.js"></script>
-        <script type="text/javascript" src="lib/ccs.js"></script>
-        <script src="src/main.js"></script>
-        <script src="test.js"></script>
+        <script type="text/javascript" src="lib/arbor.js"></script>
+        <script type="text/javascript" src="lib/graphics.js"></script>
+        <script type="text/javascript" src="lib/main.js"></script>
+        <script type="text/javascript" src="test.js"></script>
     </body>
 </html>

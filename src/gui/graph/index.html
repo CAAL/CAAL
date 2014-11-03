@@ -7,11 +7,24 @@
 	<title>arbor.js CCS-Workbench</title>
 	<link rel="stylesheet" href="../../../css/style.css" type="text/css">
       <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+  <script src="../../../lib/jquery-1.11.1.min.js"></script>
+  <script src="../../../lib/arbor.js"></script>
+  <script src="../../../lib/graphics.js"></script>
+  <script src="../../../lib/graph.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function(){
+        var renderer = new Renderer(document.getElementById("viewport"));
+        var graph = new ArborGraph(renderer);
+        graph.init()
+        $("#freezeButton").on("click", function() {
+                graph.freeze.call(graph);
+        });
+    })
+  </script>
 </head>
 <body>
   <canvas id="viewport" width="1200" height="600" style="border: 1px solid black"></canvas>
 
-  <script src="../../../lib/jquery-1.11.1.min.js"></script>
 
   <!-- run from the original source files: -->
   <!-- <script src="../../src/etc.js"></script>
@@ -27,13 +40,11 @@
        <script src="../../src/dev.js"></script> -->
 
   <!-- run from the minified library file: -->
-  <script src="../../../lib/arbor.js"></script>  
-  <script src="../../../lib/graphics.js"></script>  
 
-  <script src="graph.js"></script>
-  <script src="renderer.js"></script>
-  <script src="handler.js"></script>
-  <!-- <script src="../../../lib/gui.js"></script> -->
+
+  <!-- // <script src="graph.js"></script> -->
+  <!-- // <script src="renderer.js"></script> -->
+  <!-- // <script src="handler.js"></script>*/ -->
 
 <button  id="freezeButton" type="button">Freeze</button>
 
