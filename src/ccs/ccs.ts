@@ -569,6 +569,10 @@ module CCS {
                 f(this.transitions[i]);
             }
         }
+
+        toArray() : Transition[] {
+            return this.transitions.slice(0);
+        }
     }
 
     export class SuccessorGenerator implements ProcessVisitor<TransitionSet>, ProcessDispatchHandler<TransitionSet> {

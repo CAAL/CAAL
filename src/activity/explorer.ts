@@ -1,26 +1,43 @@
-/// <reference path="activity.ts" />
 /// <reference path="../../lib/jquery.d.ts" />
+/// <reference path="activity.ts" />
 /// <reference path="../ccs/ccs.ts" />
-/// <reference path="../gui/graph/graph.ts" />
+/// <reference path="../gui/arbor/arbor.ts" />
+/// <reference path="../gui/arbor/renderer.ts" />
+/// <reference path="../gui/gui.ts" />
 
 module Activity {
 
     import ccs = CCS;
+    import ProcessGraphUI = GUI.ProcessGraphUI;
+    import ArborGraph = GUI.ArborGraph;
+
+    function groupBy<T>(arr : T[], keyFn : (T) => any) : any {
+        var groupings = {},
+            key, elem, group;
+        for (var i = 0; i < arr.length; i++) {
+            elem = arr[i];
+            key = keyFn(elem);
+            group = groupings[key];
+            if (!group) group = groupings[key] = [];
+            group.push(elem);
+        }
+        return groupings;
+    }
 
     export class Explorer extends Activity { 
         private canvas: any;
         private renderer: Renderer;
-        private arborGraph: ArborGraph;
+        private uiGraph: ProcessGraphUI;
         private bindedResizeFn;
-        private graph : CCS.Graph;
-        private succGenerator : CCS.ProcessVisitor<CCS.TransitionSet>;
+        private graph : ccs.Graph;
+        private succGenerator : ccs.ProcessVisitor<ccs.TransitionSet>;
         private initialProcessName : string;
 
         constructor(canvas) {
             super();
             this.canvas = canvas;
             this.renderer = new Renderer(canvas);
-            this.arborGraph = new ArborGraph(this.renderer);
+            this.uiGraph = new ArborGraph(this.renderer);
         }
 
         beforeShow(configuration) {
@@ -35,29 +52,30 @@ module Activity {
         afterShow(): void {
             this.bindedResizeFn = this.resize.bind(this);
             $(window).on("resize", this.bindedResizeFn);
-            this.arborGraph.onClick = (processId) => {
+            this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId));
-            };
+            });
             this.resize(); 
         }
 
         afterHide() {
             $(window).unbind("resize", this.bindedResizeFn)
             this.bindedResizeFn = null;
-            this.arborGraph.onClick = null;
+            this.uiGraph.clearOnSelectListener();
             this.graph = null;
             this.succGenerator = null;
         }
 
         private clear() : void {
-            this.arborGraph.clear();
+            this.uiGraph.clearAll();
         }
 
         private showProcess(process : ccs.Process) {
             var data;
             if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
+            if (this.uiGraph.getProcessDataObject(process.id)) return;
             data = {label: this.labelFor(process), status: "unexpanded"};
-            this.arborGraph.showNode(process.id, data);
+            this.uiGraph.showProcess(process.id, data);
         }
 
         private labelFor(process : ccs.Process) : string{
@@ -72,24 +90,20 @@ module Activity {
             if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
             this.showProcess(process);
             this.showProcessAsExplored(process);
-            var transitions = this.succGenerator.visit(process);
-            var edgeAdder = this.arborGraph.addOutgoingEdgesFrom(process.id);
-            transitions.forEach(transition => {
-                this.showTransition(edgeAdder, transition);
-            }); 
-            edgeAdder.finish();
+            var transitions = this.succGenerator.visit(process).toArray();
+            var groupedByTargetProcessId = groupBy(transitions, t => t.targetProcess.id);
+            transitions.forEach(t => this.showProcess(t.targetProcess));
+            Object.keys(groupedByTargetProcessId).forEach(tProcId => {
+                var group = groupedByTargetProcessId[tProcId],
+                    datas = group.map(t => {
+                        return {label: t.action.toString()};
+                    });
+                this.uiGraph.showTransitions(process.id, tProcId, datas);
+            });
         }
 
         private showProcessAsExplored(process : ccs.Process) : void {
-            this.arborGraph.changeNodeData(process.id, {status: "expanded"});
-        }
-
-        private showTransition(edgeAdder, transition) {
-            var action = transition.action,
-                toProcess = transition.targetProcess,
-                actionLabel = action.toString();
-            this.showProcess(toProcess);
-            edgeAdder.addTarget(toProcess.id, {label: actionLabel});
+            this.uiGraph.getProcessDataObject(process.id).status = "expanded";
         }
 
         private resize(): void {

@@ -2,7 +2,8 @@ node_modules
 src/*.js
 src/ccs/*.js
 src/gui/*.js
-src/gui/graph/*.js
+src/activity/*.js
+src/gui/arbor/*.js
 npm-debug.log
 lib/ccs.js
 lib/ccs_grammar.js
