@@ -4,6 +4,7 @@
 /// <reference path="../lib/ace.d.ts" />
 /// <reference path="ccs/ccs.ts" />
 /// <reference path="ccs/reducedparsetree.ts" />
+/// <reference path="ccs/util.ts" />
 /// <reference path="gui/project.ts" />
 /// <reference path="gui/sidebar.ts" />
 /// <reference path="gui/storage.ts" />

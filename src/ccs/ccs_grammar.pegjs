@@ -31,7 +31,7 @@ Statements = Statement Statements
 Statement = Assignment
 		  / SetDeclaration
 
-SetDeclaration = _ "set" _ name:Identifier _ "=" _ "{" _ labels:LabelList _ "}" _ ";" { return g.defineSet(name, labels); }
+SetDeclaration = _ "set" _ name:Identifier _ "=" _ "{" _ labels:LabelList _ "}" _ ";" { return g.defineNamedSet(name, new ccs.LabelSet(labels || [])); }
 
 Assignment
 	= (_ "agent" Whitespace)? _ name:Identifier _ "=" _ P:Process _ ";" { return g.newNamedProcess(name, P); }

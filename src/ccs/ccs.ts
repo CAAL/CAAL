@@ -99,20 +99,34 @@ module CCS {
     }
 
     export class Action {
-        constructor(public label : string, public isComplement : boolean) {
+        private label : string;
+        private complement : boolean;
+        
+        constructor(label : string, isComplement : boolean) {
             if (label === "tau" && isComplement) {
                 throw new Error("tau has no complement");
             }
+            this.label = label;
+            this.complement = isComplement;
         }
+
+        getLabel() : string {
+            return this.label;
+        }
+
+        isComplement() : boolean {
+            return this.complement;
+        }
+
         equals(other : Action) {
             return this.label === other.label &&
-                this.isComplement === other.isComplement;
+                this.complement === other.complement;
         }
         toString() {
-            return (this.isComplement ? "'" : "") + this.label;
+            return (this.complement ? "'" : "") + this.label;
         }
         clone() {
-            return new Action(this.label, this.isComplement);
+            return new Action(this.label, this.complement);
         }
     } 
 
@@ -129,6 +143,7 @@ module CCS {
         private namedProcesses = {}
         private constructErrors = [];
         private definedSets = {};
+        private allSets = []; //We never remove.. Use index as id.
 
         constructor() {
             this.cache.structural = {}; //used structural sharing
@@ -209,8 +224,13 @@ module CCS {
 
         newRestrictedProcess(process, restriction : LabelSet) {
             //For now return just new instead of structural sharing
-            var existing = new RestrictionProcess(this.nextId++, process, restriction);
-            this.processes[existing.id] = existing;
+            var restriction = this.getOrInsertLabelSet(restriction),
+                key = "\\" + process.id + "," + this.indexOfLabelSet(restriction),
+                existing = this.cache.structural[key];
+            if (!existing) {
+                existing = this.cache.structural[key] = new RestrictionProcess(this.nextId++, process, restriction);
+                this.processes[existing.id] = existing;
+            }
             return existing;
         }
 
@@ -218,7 +238,8 @@ module CCS {
             var labelSet = this.definedSets[setName];
             if (!labelSet) {
                 this.constructErrors.push({name: "UndefinedSet", message: "Set '" + setName + "' has not been defined"});
-                labelSet = new LabelSet();
+                //Fallback for empty set
+                labelSet = this.getOrInsertLabelSet(new LabelSet([]));
             }
             return this.newRestrictedProcess(process, labelSet);
         }
@@ -230,11 +251,11 @@ module CCS {
             return existing;
         }
 
-        defineSet(name, labels) {
+        defineNamedSet(name, labelSet : LabelSet) {
             if (this.definedSets[name]) {
                 this.constructErrors.push({name: "DuplicateSetDefinition", message: "Set '" + name + "' has already been defined"});
             }
-            this.definedSets[name] = new LabelSet(labels);
+            this.definedSets[name] = this.getOrInsertLabelSet(labelSet);;
         }
 
         processById(id) {
@@ -275,6 +296,28 @@ module CCS {
             //Unguarded recursion checking requires all processes to defined.
             if (errors.length === 0) addUnguardedRecursionErrors();
             return errors;
+        }
+
+        private getOrInsertLabelSet(labelSet : LabelSet) : LabelSet {
+            var index = this.indexOfLabelSet(labelSet);
+
+            if (index === -1) {
+                this.allSets.push(labelSet);
+            } else {
+                labelSet = this.allSets[index];
+            }
+            return labelSet;
+        }
+
+        private indexOfLabelSet(labelSet : LabelSet) : number {
+            var current;
+            for (var i = 0, max = this.allSets.length; i < max; ++i) {
+                current = this.allSets[i];
+                if (current.equals(labelSet)) {
+                    return i;
+                }
+            }
+            return -1;
         }
     }
 
@@ -330,61 +373,31 @@ module CCS {
     export class LabelSet {
         private labels : string[] = [];
 
-        constructor(labels?) {
-            if (labels) {
-                this.addAll(labels);
+        constructor(labels : string[]) {
+            var temp = labels.slice(0), 
+                cur, next;
+            if (temp.length > 0) {
+                temp.sort();
+                //Don't add the first of duplicates
+                cur = temp[0];
+                for (var i=1; i < temp.length; i++) {
+                    next = temp[i];
+                    if (cur !== next) {
+                        this.labels.push(cur);
+                    }
+                    cur = next;
+                }
+                //Add the last
+                this.labels.push(cur);
             }
-        }
-
-        clone() : LabelSet {
-            return new LabelSet(this.labels);
         }
 
         toArray() : string[] {
             return this.labels.slice(0);
         }
 
-        add(label) : LabelSet {
-            if (this.labels.indexOf(label) === -1) {
-                this.labels.push(label);
-            }
-            return this;
-        }
-
-        addAll(labels) : LabelSet {
-            for (var i = 0, max = labels.length; i < max; i++) {
-                this.add(labels[i]);
-            }
-            return this;
-        }
-
-        remove(labels) : LabelSet {
-            var allCurrent = this.labels,
-                count = allCurrent.length,
-                i = 0;
-            while (i < count) {
-                if (labels.indexOf(allCurrent[i]) !== -1) {
-                    allCurrent[i] = allCurrent[--count];
-                } else {
-                    ++i;
-                }
-            }
-            allCurrent.length = count;
-            return this;
-        }
-
-        contains(label) : boolean {
+        contains(label : string) : boolean {
             return this.labels.indexOf(label) !== -1;
-        }
-
-        unionWith(set : LabelSet) : LabelSet {
-            this.addAll(set.labels);
-            return this;
-        }
-
-        differenceWith(set : LabelSet) : LabelSet {
-            this.remove(set.labels);
-            return this;
         }
 
         empty() : boolean {
@@ -399,6 +412,35 @@ module CCS {
             for (var i = 0, max = this.labels.length; i < max; i++){
                 f(this.labels[i]);
             }
+        }
+
+        equals(other : LabelSet) {
+            var myLabels = this.labels,
+                otherLabels = other.labels;
+            if (myLabels.length !== other.labels.length) return false;
+            for (var i = 0; i < myLabels.length; i++) {
+                if (myLabels[i] !== otherLabels[i]) return false;
+            }
+            return true;
+        }
+
+        union(other : LabelSet) : LabelSet {
+            return LabelSet.Union(this, other);
+        }
+
+        static Union(... sets : LabelSet[]) {
+            var result = new LabelSet([]),
+                si, li, curSet;
+            for (si = 0; si < sets.length; si++) {
+                curSet = sets[si];
+                for (li = 0; li < curSet.labels.length; li++) {
+                    if (!result.contains(curSet.labels[li])) {
+                        result.labels.push(curSet.labels[li]);
+                    }
+                }
+            }
+            result.labels.sort();
+            return result;
         }
 
         toString() {
@@ -492,7 +534,7 @@ module CCS {
                 transition = allCurrent[i];
                 if (relabels.hasRelabelForLabel(transition.action.label)) {
                     newLabel = relabels.toLabelForFromLabel(transition.action.label);
-                    transition.action = new Action(newLabel, transition.action.isComplement);
+                    transition.action = new Action(newLabel, transition.action.isComplement());
                 }
             }
         }
@@ -574,7 +616,7 @@ module CCS {
                     //COM3
                     rightSet.forEach(rightTransition => {
                         if (leftTransition.action.label === rightTransition.action.label &&
-                            leftTransition.action.isComplement !== rightTransition.action.isComplement) {
+                            leftTransition.action.isComplement() !== rightTransition.action.isComplement()) {
                             transitionSet.add(new Transition(new Action("tau", false),
                                 this.graph.newCompositionProcess(leftTransition.targetProcess, rightTransition.targetProcess)));
                         }
@@ -606,7 +648,7 @@ module CCS {
                 subTransitionSet = process.subProcess.dispatchOn(this).clone();
                 subTransitionSet.applyRestrictionSet(process.restrictedLabels);
                 subTransitionSet.forEach(transition => {
-                    var newRestriction = this.graph.newRestrictedProcess(transition.targetProcess, process.restrictedLabels.clone());
+                    var newRestriction = this.graph.newRestrictedProcess(transition.targetProcess, process.restrictedLabels);
                     transitionSet.add(new Transition(transition.action.clone(), newRestriction));
                 });
             }

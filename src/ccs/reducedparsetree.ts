@@ -64,7 +64,7 @@ module Traverse {
                 // (P \ L1) \L2 => P \ (L1 Union L2)
                 if (process.subProcess instanceof ccs.RestrictionProcess) {
                     var subRestriction = <ccs.RestrictionProcess>process.subProcess;
-                    var mergedLabels = subRestriction.restrictedLabels.clone().unionWith(process.restrictedLabels);
+                    var mergedLabels = subRestriction.restrictedLabels.union(process.restrictedLabels);
                     process = this.graph.newRestrictedProcess(subRestriction.subProcess, mergedLabels);
                 }
                 // 0 \ L => 0
