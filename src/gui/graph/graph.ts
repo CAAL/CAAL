@@ -21,18 +21,69 @@ class ArborGraph {
         };
     }
 
-    public addNode(nodeId, data) {
-        this.sys.addNode(nodeId, data);
+    //Creates or updates a node. Default data is used to fill keys if undefined.
+    public showNode(nodeId, defaultData) {
+        var node = this.sys.getNode(nodeId),
+            data;
+        if (node) {
+            //Use existing data ast most up to date.
+            data = {};
+            this.overrideKeys(data, defaultData);
+            this.overrideKeys(data, node.data);
+            node.data = data;
+        } else {
+            data = {};
+            this.overrideKeys(data, defaultData);
+            node = this.sys.addNode(nodeId, data);
+        }
     }
 
-    public addEdge(nodeFromId, nodeToId, data) {
+    public changeNodeData(nodeId, data) {
+        var node = this.sys.getNode(nodeId);
+        if (node) {
+            this.overrideKeys(node.data, data);
+        }
+    }
+
+    private overrideKeys(obj, overrideKeyVals) {
+        for (var key in overrideKeyVals) {
+            obj[key] = overrideKeyVals[key];
+        }
+    }
+
+    private showEdge(nodeFromId, nodeToId, data) {
         //Arbor only allows one directed edge between two nodes.
         var edges = this.sys.getEdges(nodeFromId, nodeToId),
             edge = edges.length > 0 ? edges[0] : null;
         if (!edge) {
             edge = this.sys.addEdge(nodeFromId, nodeToId, data);
+        } else {
+            edge.data = data;
         }
-        edge.data = data;
+    }
+
+    public addOutgoingEdgesFrom(fromProcessId) {
+        var targets = {},
+            arborGraph = this;
+
+        var add = (targetId : string, data) => {
+            targets[targetId] = targets[targetId] || [];
+            targets[targetId].push(data);
+        };
+
+        var finish = () => {
+            for (var targetProcessId in targets) {
+                arborGraph.showEdge(fromProcessId, targetProcessId, {
+                    datas: targets[targetProcessId]
+                });
+            }
+            targets = null;
+        };
+        
+        return {
+            addTarget: add,
+            finish: finish
+        };
     }
 
     public clear() {

@@ -110,7 +110,7 @@ module Main {
             callback = (configuration) => {
                 //Did it want to open?
                 if (!configuration) return;
-                   if (this.currentActivityName) {
+                if (this.currentActivityName) {
                     this.closeActivity(this.currentActivityName);
                 }
                 this.currentActivityName = newActivityName;

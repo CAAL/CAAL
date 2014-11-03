@@ -64,11 +64,8 @@ class Renderer {
                 return str.length > 10 ? str.substring(0,8) + ".." : str;
             }
 
-            var edgeLabels = that.particleSystem.getEdges(edge.source, edge.target).map(edge => {
-                return strShorten(edge.data.label || "");
-            });
-
-            var label = edgeLabels.join(",");
+            // var label = /*strShorten(*/edge.data.agLabels.join(",")/*)*/;
+            var label = edge.data.datas.map((data) => data.label).join(",");
 
             that.ctx.save();
             that.ctx.strokeStyle = "rgb(196, 196, 196)"; //Edge color
