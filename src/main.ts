@@ -9,9 +9,9 @@
 /// <reference path="gui/sidebar.ts" />
 /// <reference path="gui/storage.ts" />
 /// <reference path="gui/examples.ts" />
-/// <reference path="activities.ts" />
-
-//Hotfix for next week.
+/// <reference path="activity/activity.ts" />
+/// <reference path="activity/editor.ts" />
+/// <reference path="activity/explorer.ts" />
 
 declare var CCSParser;
 
@@ -41,13 +41,13 @@ $(document).ready(function() {
     var activityHandler = new Main.ActivityHandler();
     activityHandler.addActivity(
             "editor", 
-            new Activities.Editor(editor, "editor"),
+            new Activity.Editor(editor, "editor"),
             (callback) => { callback({}); },
             "editor-container",
             "edit-btn");
     activityHandler.addActivity(
             "explorer",
-            new Activities.Explorer($("#arbor-canvas")[0]),
+            new Activity.Explorer($("#arbor-canvas")[0]),
             setupExplorerActivityFn,
             "explorer-container",
             "explore-btn");
@@ -65,7 +65,7 @@ module Main {
             // });
         }
 
-        public addActivity(name : string, activity : Activities.Activity, setupFn : (callback) => void, containerId : string, buttonId : string) {
+        public addActivity(name : string, activity : Activity.Activity, setupFn : (callback) => void, containerId : string, buttonId : string) {
             if (this.activities[name]) throw new Error("Activity with the name '" + name + "' already exists");
             this.activities[name] = {
                 activity: activity,
