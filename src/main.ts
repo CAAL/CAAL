@@ -46,12 +46,9 @@ $('#editor').click(function() { editor.focus(); });
 /* Trace / Raphael */
 var traceWidth = document.getElementById("trace").clientWidth;
 var traceHeight = document.getElementById("trace").clientHeight;
-console.log(traceWidth);
-console.log(traceHeight);
 
 /* Raphael canvas drawing */
 var canvas = new SnapCanvas("#trace", traceWidth, traceHeight);
-canvas.draw();
 
 function resizeCanvas() {
     traceWidth = document.getElementById("trace").clientWidth;
@@ -61,5 +58,6 @@ function resizeCanvas() {
 
 var resizeTimer;
 $(window).resize(function () {
+    clearTimeout(resizeTimer);
     resizeTimer = setTimeout(resizeCanvas, 100);
 });

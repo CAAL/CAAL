@@ -6,8 +6,11 @@ class SnapCanvas {
     private currentY: number;
     public paper: SnapPaper;
     
+    private traces: Trace[] = [Trace.GetTrace(this), Trace.GetTrace(this)];
+    
     constructor(htmlElement: string, public canvasWidth: number, public canvasHeight: number) {
         this.paper = Snap(htmlElement);
+        this.draw();
     }
     
     public setSize(width: number, height: number) {
@@ -18,12 +21,12 @@ class SnapCanvas {
     }
     
     public draw() {
-        var traces: Trace[] = [Trace.GetTrace(this), Trace.GetTrace(this)];
-        
+        //var traces: Trace[] = [Trace.GetTrace(this), Trace.GetTrace(this)];
+    
         this.currentX = Trace.LineBorder;
         this.currentY = Trace.LineBorder;
         
-        traces.forEach( (item) => {
+        this.traces.forEach( (item) => {
             item.draw(this, this.currentX, this.currentY);
             this.currentY += item.height; // should be equal to one or more LineHeight
             this.currentY += Trace.LineSpacing * 2;
@@ -38,9 +41,9 @@ interface Drawable {
 }
 
 class Trace implements Drawable {
-    static LineHeight = 40;
-    static LineSpacing = 25;
-    static LineBorder = 15;
+    static LineHeight: number = 40;
+    static LineSpacing: number = 25;
+    static LineBorder: number = 15;
     
     // save how much space the trace used in the canvas
     public width: number = 0;
@@ -62,8 +65,11 @@ class Trace implements Drawable {
     }
     
     public draw(snapCanvas: SnapCanvas, x: number, y: number) {
+        this.height = Trace.LineHeight; 
+        
         this.drawables.forEach( (item) => {
             if (x + item.width + Trace.LineBorder > snapCanvas.canvasWidth) {
+                console.log("x: "+x+" canvasWidth: "+snapCanvas.canvasWidth);
                 x = Trace.LineBorder;
                 y += Trace.LineHeight + Trace.LineSpacing
                 this.height += Trace.LineHeight + Trace.LineSpacing;
