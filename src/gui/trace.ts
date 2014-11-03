@@ -13,6 +13,7 @@ class SnapCanvas {
     public setSize(width: number, height: number) {
         this.canvasWidth = width;
         this.canvasHeight = height;
+        this.paper.clear();
         this.draw();
     }
     
