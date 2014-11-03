@@ -186,7 +186,7 @@ class Renderer {
             angle += Math.PI*2;
         }
 
-        var cpOffset = arbor.Point(Math.cos(angle), -Math.sin(angle)).multiply(60);
+        var cpOffset = arbor.Point(Math.cos(angle), -Math.sin(angle)).multiply(45);
         var cp = midPoint.add(cpOffset);
         var start = (nodeBox1 && this.intersect_line_box(pt1, cp, nodeBox1)) || pt1;
         var end = (nodeBox2 && this.intersect_line_box(cp, pt2, nodeBox2)) || pt2;
