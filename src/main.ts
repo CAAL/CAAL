@@ -17,6 +17,9 @@ declare var CCSParser;
 
 var editor;
 var isDialogOpen = false;
+var canvas;
+var traceWidth;
+var traceHeight;
 
 $(document).ready(function() {
     editor = ace.edit("editor");
@@ -54,11 +57,11 @@ $(document).ready(function() {
     activityHandler.selectActivity("editor");
 
     /* Trace / Raphael */
-    var traceWidth = document.getElementById("trace").clientWidth;
-    var traceHeight = document.getElementById("trace").clientHeight;
+    traceWidth = document.getElementById("trace").clientWidth;
+    traceHeight = document.getElementById("trace").clientHeight;
 
     /* Raphael canvas drawing */
-    var canvas = new SnapCanvas("#trace", traceWidth, traceHeight);
+    canvas = new SnapCanvas("#trace", traceWidth, traceHeight);
 
     var resizeTimer;
     $(window).resize(function () {
@@ -202,7 +205,7 @@ function getGraph() {
 }
 
 function resizeCanvas() {
-    traceWidth = document.getElementById("trace").clientWidth;
-    traceHeight = document.getElementById("trace").clientHeight;
+    var traceWidth = document.getElementById("trace").clientWidth;
+    var traceHeight = document.getElementById("trace").clientHeight;
     canvas.setSize(traceWidth, traceHeight);
 }
