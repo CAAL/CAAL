@@ -53,3 +53,9 @@ console.log(traceHeight);
 var canvas = new RaphaelCanvas("trace", traceWidth, traceHeight);
 canvas.draw();
 
+$(window).resize(function () {
+    traceWidth = document.getElementById("trace").clientWidth;
+    traceHeight = document.getElementById("trace").clientHeight;
+    canvas.setSize(traceWidth, traceHeight);
+});
+
