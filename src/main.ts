@@ -50,6 +50,6 @@ console.log(traceWidth);
 console.log(traceHeight);
 
 /* Raphael canvas drawing */
-var canvas = new RaphaelCanvas("trace", traceWidth, traceHeight);
+var canvas = new SnapCanvas("#trace", traceWidth, traceHeight);
 canvas.draw();
 
