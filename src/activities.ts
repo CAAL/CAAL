@@ -120,7 +120,7 @@ module Activities {
         private showTransition(edgeAdder, transition) {
             var action = transition.action,
                 toProcess = transition.targetProcess,
-                actionLabel = (action.isComplement ? "'" : "") + action.label;
+                actionLabel = action.toString();
             this.showProcess(toProcess);
             edgeAdder.addTarget(toProcess.id, {label: actionLabel});
         }
