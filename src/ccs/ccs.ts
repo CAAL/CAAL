@@ -105,7 +105,7 @@ module CCS {
     export class Action {
         private label : string;
         private complement : boolean;
-        
+
         constructor(label : string, isComplement : boolean) {
             if (label === "tau" && isComplement) {
                 throw new Error("tau has no complement");
@@ -132,7 +132,7 @@ module CCS {
         clone() {
             return new Action(this.label, this.complement);
         }
-    } 
+    }
 
     interface Error {
         name : string;
@@ -368,7 +368,7 @@ module CCS {
         private labels : string[] = [];
 
         constructor(labels : string[]) {
-            var temp = labels.slice(0), 
+            var temp = labels.slice(0),
                 cur, next;
             if (temp.length > 0) {
                 temp.sort();
@@ -481,7 +481,7 @@ module CCS {
         add(transition : Transition) {
             var allCurrent = this.transitions;
             for (var i = 0, max = allCurrent.length; i < max; i++){
-                if (transition.equals(allCurrent[i])) break;
+                if (transition.equals(allCurrent[i])) return this;
             }
             allCurrent.push(transition);
             return this;
@@ -615,7 +615,7 @@ module CCS {
                 transitionSet = this.cache[process.id] = new TransitionSet();
                 leftSet = process.leftProcess.dispatchOn(this);
                 rightSet = process.rightProcess.dispatchOn(this);
-                
+
 
                 leftSet.forEach(leftTransition => {
                     //COM1
