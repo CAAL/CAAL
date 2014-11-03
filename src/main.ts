@@ -1,5 +1,6 @@
 //# sourceMappingURL=main.js.map
 /// <reference path="../lib/jquery.d.ts" />
+/// <reference path="../lib/bootstrap.d.ts" />
 /// <reference path="../lib/ace.d.ts" />
 /// <reference path="ccs/ccs.ts" />
 /// <reference path="ccs/reducedparsetree.ts" />
