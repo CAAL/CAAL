@@ -115,3 +115,7 @@ body {
 .ace_scrollbar {
     display: none !important;
 }
+
+pre.ccs-error {
+    border: 1px solid red;
+}

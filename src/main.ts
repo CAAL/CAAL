@@ -41,7 +41,7 @@ $(document).ready(function() {
     var activityHandler = new Main.ActivityHandler();
     activityHandler.addActivity(
             "editor", 
-            new Activity.Editor(editor, "editor"),
+            new Activity.Editor(editor, "editor", $("#editor-status-div")[0], $("#parse")[0]),
             (callback) => { callback({}); },
             "editor-container",
             "edit-btn");
