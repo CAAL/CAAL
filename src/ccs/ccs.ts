@@ -143,8 +143,9 @@ module CCS {
         private namedProcesses = {}
         private constructErrors = [];
         private definedSets = {};
-        private allSets = []; //We never remove.. Use index as id.
-        private allRelabellings = []; //Same as allSets
+        //Uses index as uid.
+        private allRestrictedSets = new GrowingIndexedArraySet<LabelSet>();
+        private allRelabellings = new GrowingIndexedArraySet<RelabellingSet>()
 
         constructor() {
             this.cache.structural = {}; //used structural sharing
@@ -226,8 +227,8 @@ module CCS {
         newRestrictedProcess(process, restrictedLabels : LabelSet) {
             //For now return just new instead of structural sharing
             var key, existing;
-            restrictedLabels = this.getOrInsertLabelSet(restrictedLabels);
-            key = "\\" + process.id + "," + this.indexOfLabelSet(restrictedLabels);
+            restrictedLabels = this.allRestrictedSets.getOrAdd(restrictedLabels);
+            key = "\\" + process.id + "," + this.allRestrictedSets.indexOf(restrictedLabels);
             existing = this.cache.structural[key];
             if (!existing) {
                 existing = this.cache.structural[key] = new RestrictionProcess(this.nextId++, process, restrictedLabels);
@@ -241,15 +242,15 @@ module CCS {
             if (!labelSet) {
                 this.constructErrors.push({name: "UndefinedSet", message: "Set '" + setName + "' has not been defined"});
                 //Fallback for empty set
-                labelSet = this.getOrInsertLabelSet(new LabelSet([]));
+                labelSet = this.allRestrictedSets.getOrAdd(new LabelSet([]));
             }
             return this.newRestrictedProcess(process, labelSet);
         }
 
         newRelabelingProcess(process, relabellings : RelabellingSet) {
             var key, existing;
-            relabellings = this.getOrInsertRelabellingSet(relabellings);
-            key = "[" + process.id + "," + this.indexOfRelabellingSet(relabellings);
+            relabellings = this.allRelabellings.getOrAdd(relabellings);
+            key = "[" + process.id + "," + this.allRelabellings.indexOf(relabellings);
             existing = this.cache.structural[key];
             if (!existing) {
                 existing = this.cache.structural[key] = new RelabellingProcess(this.nextId++, process, relabellings);
@@ -262,7 +263,7 @@ module CCS {
             if (this.definedSets[name]) {
                 this.constructErrors.push({name: "DuplicateSetDefinition", message: "Set '" + name + "' has already been defined"});
             }
-            this.definedSets[name] = this.getOrInsertLabelSet(labelSet);;
+            this.definedSets[name] = this.allRestrictedSets.getOrAdd(labelSet);
         }
 
         processById(id) {
@@ -303,44 +304,6 @@ module CCS {
             //Unguarded recursion checking requires all processes to defined.
             if (errors.length === 0) addUnguardedRecursionErrors();
             return errors;
-        }
-
-        private getOrInsertLabelSet(labelSet : LabelSet) : LabelSet {
-            return this.getOrInsertObjectInArray(labelSet, this.allSets);
-        }
-
-        private getOrInsertRelabellingSet(relabellings : RelabellingSet) : RelabellingSet {
-            return this.getOrInsertObjectInArray(relabellings, this.allRelabellings);
-        }
-
-        private indexOfLabelSet(labelSet : LabelSet) : number {
-            return this.indexInArrayUsingEquals(labelSet, this.allSets);
-        }
-
-        private indexOfRelabellingSet(relabellings : RelabellingSet) : number {
-            return this.indexInArrayUsingEquals(relabellings, this.allRelabellings);
-        }
-
-        private getOrInsertObjectInArray<T>(object : T, array : T[]) : T {
-            var index = this.indexInArrayUsingEquals<T>(object, array),
-                result = object;
-            if (index === -1) {
-                array.push(object);
-            } else {
-                result = array[index];
-            }
-            return result;
-        }
-
-        private indexInArrayUsingEquals<T>(object : T, array : T[]) : number {
-            var current;
-            for (var i = 0; i < array.length; i++) {
-                current = array[i];
-                if (current.equals(object)) {
-                    return i;
-                }
-            }
-            return -1;
         }
     }
 
@@ -685,6 +648,35 @@ module CCS {
                 });
             }
             return transitionSet;
+        }
+    }
+
+    class GrowingIndexedArraySet<T> {
+            
+        private elements = [];
+
+        constructor() { }
+
+        getOrAdd(element : T) : T {
+            var result = element,
+                index = this.indexOf(element);
+            if (index === -1) {
+                this.elements.push(element);
+            } else {
+                result = this.elements[index];
+            }
+            return result;
+        }
+
+        get(index : number) : T {
+            return index >= this.elements.length ? null : this.elements[index];
+        }
+
+        indexOf(element : T) : number {
+            for (var i = 0; i < this.elements.length; i++) {
+                if (this.elements[i].equals(element)) return i;
+            }
+            return -1;
         }
     }
 }
