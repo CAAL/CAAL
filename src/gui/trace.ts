@@ -5,8 +5,6 @@ class SnapCanvas {
     private currentX: number;
     private currentY: number;
     public paper: SnapPaper;
-
-    
     
     private traces: Trace[] = [Trace.GetTrace(this), Trace.GetTrace(this)];
     
@@ -31,7 +29,6 @@ class SnapCanvas {
         this.traces.forEach( (item) => {
             item.draw(this, this.currentX, this.currentY);
             this.currentY += item.height; // should be equal to one or more LineHeight
-            this.currentY += Trace.LineSpacing * 2;
         });
     }
 }
@@ -90,7 +87,7 @@ class Trace implements Drawable {
     constructor(public paper: SnapCanvas, private drawables: Drawable[]) { }
     
     static GetTrace(snapCanvas: SnapCanvas) : Trace {
-        var drawables: Drawable[]  = [new Square(40, Trace.LineHeight, "a"), new Arrow(40, Trace.LineHeight, "a")];
+        var drawables: Drawable[]  = [new Square(40, Trace.LineHeight, "a"), new Arrow(40, Trace.LineHeight, "abe")];
         for (var i: number = 1; i < 25; i++) {
             drawables.push(new Circle(40, Trace.LineHeight, "o"));
             drawables.push(new Arrow(40, Trace.LineHeight, "abe"));
@@ -107,7 +104,6 @@ class Trace implements Drawable {
         
         this.drawables.forEach( (item) => {
             if (x + item.width + Trace.LineBorder > snapCanvas.canvasWidth) {
-                console.log("x: "+x+" canvasWidth: "+snapCanvas.canvasWidth);
                 x = Trace.LineBorder;
                 y += Trace.LineHeight + Trace.LineSpacing
                 this.height += Trace.LineHeight + Trace.LineSpacing;
@@ -118,6 +114,7 @@ class Trace implements Drawable {
         });
         
         this.width = x;
+        this.height += Trace.LineSpacing * 2;
     }
 }
 
@@ -126,18 +123,18 @@ class Circle extends Tip implements Drawable {
     constructor(public width: number, public height: number, private text: string) {
         super(text);
         this.width = this.height;
-        
     }
 
     public draw(snapCanvas: SnapCanvas, x: number, y: number) {
         var radius = this.height/2;
-    
+        
+        var filter: SnapElement = snapCanvas.paper.filter(Snap.filter.shadow(0, 0, 1));
+        
         var circle: SnapElement = snapCanvas.paper.circle(x + radius, y + radius, radius);
-        circle.attr({"fill": "#2a6496", "stroke": "#000"});
+        circle.attr({"fill": "#2a6496", "stroke": "#000", "stroke-width": 0, "filter": filter});
 
         this.addTip(circle);
     }
-
 }
 
 class Square implements Drawable {
@@ -157,8 +154,10 @@ class Square implements Drawable {
         // set width of the square to make room for the text
         this.width = (textWidth + margin*2 > this.width) ? textWidth + margin*2 : this.width;
         
+        var filter = snapCanvas.paper.filter(Snap.filter.shadow(0, 0, 1));
+        
         var rect: SnapElement = snapCanvas.paper.rect(x, y, this.width, this.height);
-        rect.attr({"fill": "#2a6496", "stroke": "#000"});
+        rect.attr({"fill": "#2a6496", "stroke": "#000", "stroke-width": 0, "filter": filter});
         
         // group the elements to make text appear on top of the rectangle
         snapCanvas.paper.group(rect, text);
@@ -199,8 +198,8 @@ class Arrow implements Drawable {
         
         // draw arrow head
         var headSize = 5;
-        var offset = 1;
-        var headX = x + this.width - headSize - offset;
+        var offset = -1;
+        var headX = x + this.width - headSize + offset;
         var headStartY = y + this.height/2 - headSize;
         var headEndY = y + this.height/2 + headSize;
         
@@ -208,5 +207,13 @@ class Arrow implements Drawable {
         head.attr({"stroke": "black", 
 	               "stroke-width": strokeWidth,
                    "fill-opacity":0});
+    }
+    
+    private drawStandardArrow() {
+        
+    }
+    
+    private drawLineBreakArrow() {
+        
     }
 }
