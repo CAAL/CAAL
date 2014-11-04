@@ -79,6 +79,7 @@ class Trace implements Drawable {
     static LineHeight: number = 40;
     static LineSpacing: number = 25;
     static LineBorder: number = 15;
+    static DrawableWidth: number = 40;
     
     // save how much space the trace used in the canvas
     public width: number = 0;
@@ -87,12 +88,12 @@ class Trace implements Drawable {
     constructor(public paper: SnapCanvas, private drawables: Drawable[]) { }
     
     static GetTrace(snapCanvas: SnapCanvas) : Trace {
-        var drawables: Drawable[]  = [new Square(40, Trace.LineHeight, "a"), new Arrow(40, Trace.LineHeight, "abe")];
+        var drawables: Drawable[]  = [new Square(Trace.DrawableWidth, Trace.LineHeight, "a"), new Arrow(Trace.DrawableWidth, Trace.LineHeight, "abe")];
         for (var i: number = 1; i < 25; i++) {
-            drawables.push(new Circle(40, Trace.LineHeight, "o"));
-            drawables.push(new Arrow(40, Trace.LineHeight, "abe"));
+            drawables.push(new Circle(Trace.DrawableWidth, Trace.LineHeight, "o"));
+            drawables.push(new Arrow(Trace.DrawableWidth, Trace.LineHeight, "abe"));
         }
-        drawables.push(new Square(40, Trace.LineHeight, "TTo"));
+        drawables.push(new Square(Trace.DrawableWidth, Trace.LineHeight, "TTo"));
         var trace = new Trace(snapCanvas, drawables);
         // TODO: fix method structure
         
@@ -209,11 +210,54 @@ class Arrow implements Drawable {
                    "fill-opacity":0});
     }
     
-    private drawStandardArrow() {
+    private TEMP() {
+        /* TEMP code: */
         
+        // make sure there is room for another circle and a linebreak arrow
+        if (x + Trace.LineBorder + this.width + Trace.DrawableWidth + Trace.DrawableWidth/2 < snapCanvas.canvasWidth) {
+            // draw standard arrow
+        }
+        else {
+            // draw linebreak arrow
+            this.width += Trace.DrawableWidth + Trace.DrawableWidth/2; // make Trace do a linebreak
+        }
     }
     
-    private drawLineBreakArrow() {
+    private drawStandardArrow(x: number, y: number, text: SnapElement) {
         
+        var line: SnapElement = snapCanvas.paper.path("M"+x+","+(y+(this.height / 2))+"H"+(x+this.width));
+        
+        var strokeWidth: number = 2;
+        line.attr({"stroke": "black", 
+	               "stroke-width": strokeWidth});
+        
+        // center text right above the arrow
+        var textPosition = (y + this.height/2) - strokeWidth - 2; // 2 units above the line
+        text.attr({"x": x+this.width/2, "y": textPosition});
+        
+        // draw arrow head
+        var headSize = 5;
+        var offset = -1;
+        var headX = x + this.width - headSize + offset;
+        var headStartY = y + this.height/2 - headSize;
+        var headEndY = y + this.height/2 + headSize;
+        
+        var head = snapCanvas.paper.path("M"+headX+","+headStartY+"L"+(x+this.width-offset)+","+(y+(this.height / 2))+"L"+headX+","+headEndY);
+        head.attr({"stroke": "black", 
+	               "stroke-width": strokeWidth,
+                   "fill-opacity":0});
+    }
+    
+    private drawLineBreakArrow(x: number, y: number, text: SnapElement) {
+        this.width = Trace.DrawableWidth;
+        
+        var x1 = this.width/2,
+            y1 = (Trace.LineHeight + Trace.LineSpacing) / 4,
+            x2 = x,
+            y2 = (Trace.LineHeight + Trace.LineSpacing) / 2;
+        
+        var line: SnapElement = snapCanvas.paper.path("M"+x+","+(y+(this.height / 2))+
+                                                      "H"+(x+(this.width/2))+
+                                                      "Q"+x1+","+y1+","+x2+","+y2);
     }
 }
