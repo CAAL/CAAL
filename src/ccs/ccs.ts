@@ -161,7 +161,7 @@ module CCS {
                 namedProcess.subProcess = process;
             } else {
                 this.constructErrors.push({name: "DuplicateProcessDefinition",
-                    messsage: "Duplicate definition of process '" + processName + "'"});
+                    message: "Duplicate definition of process '" + processName + "'"});
             }
             return namedProcess;
         }
