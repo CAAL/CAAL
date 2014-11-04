@@ -47,7 +47,7 @@ $(document).ready(function() {
             "edit-btn");
     activityHandler.addActivity(
             "explorer",
-            new Activity.Explorer($("#arbor-canvas")[0]),
+            new Activity.Explorer($("#arbor-canvas")[0], $("#explorer-status-div")[0], new Traverse.CCSNotationVisitor()),
             setupExplorerActivityFn,
             "explorer-container",
             "explore-btn");
@@ -59,11 +59,7 @@ module Main {
         private currentActivityName : string = "";
         private activities = {};
 
-        public constructor() {
-            // $(document).on('activityChanged', (evt, activity) => {
-            //     this.selectActivity(activity);
-            // });
-        }
+        public constructor() {}
 
         public addActivity(name : string, activity : Activity.Activity, setupFn : (callback) => void, containerId : string, buttonId : string) {
             if (this.activities[name]) throw new Error("Activity with the name '" + name + "' already exists");

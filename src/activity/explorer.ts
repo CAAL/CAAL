@@ -4,12 +4,14 @@
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="../gui/gui.ts" />
+/// <reference path="../ccs/util.ts" />
 
 module Activity {
 
     import ccs = CCS;
     import ProcessGraphUI = GUI.ProcessGraphUI;
     import ArborGraph = GUI.ArborGraph;
+    import CCSNotationVisitor = Traverse.CCSNotationVisitor;
 
     function groupBy<T>(arr : T[], keyFn : (T) => any) : any {
         var groupings = {},
@@ -32,10 +34,14 @@ module Activity {
         private graph : ccs.Graph;
         private succGenerator : ccs.ProcessVisitor<ccs.TransitionSet>;
         private initialProcessName : string;
+        private statusDiv;
+        private notationVisitor : CCSNotationVisitor;
 
-        constructor(canvas) {
+        constructor(canvas, statusDiv, notationVisitor : CCSNotationVisitor) {
             super();
             this.canvas = canvas;
+            this.statusDiv = statusDiv;
+            this.notationVisitor = notationVisitor;
             this.renderer = new Renderer(canvas);
             this.uiGraph = new ArborGraph(this.renderer);
         }
@@ -91,6 +97,7 @@ module Activity {
             this.showProcess(process);
             this.showProcessAsExplored(process);
             var transitions = this.succGenerator.visit(process).toArray();
+            this.updateStatusAreaTransitions(process, transitions);
             var groupedByTargetProcessId = groupBy(transitions, t => t.targetProcess.id);
             transitions.forEach(t => this.showProcess(t.targetProcess));
             Object.keys(groupedByTargetProcessId).forEach(tProcId => {
@@ -100,6 +107,32 @@ module Activity {
                     });
                 this.uiGraph.showTransitions(process.id, tProcId, datas);
             });
+        }
+
+        private updateStatusAreaTransitions(fromProcess, transitions : ccs.Transition[]) {
+            var lines = [
+                "Process '" + this.labelFor(fromProcess) + "' can do the following transitions:",
+                ""
+            ];
+            function padRight(str, n) {
+                var padding = Math.max(n - str.length, 0);
+                return str + Array(padding+1).join(" ");
+            }
+            transitions.forEach(t => {
+                var text = padRight("--- " + t.action.toString(), 24) + " -->  " +
+                    this.labelFor(t.targetProcess) + " = " +
+                    this.notationVisitor.visit(t.targetProcess);
+                lines.push(text);
+            });    
+            this.updateStatusArea(lines.join('\n'));                 
+        }
+
+        private updateStatusArea(preFormatted : string) {
+            var $statusDiv = $(this.statusDiv),
+                preElement = document.createElement("pre");
+            $statusDiv.empty();
+            $(preElement).text(preFormatted);
+            $statusDiv.append(preElement);
         }
 
         private showProcessAsExplored(process : ccs.Process) : void {
