@@ -123,3 +123,13 @@ body {
     float: left;
     margin-top: 15px;
 }
+
+#tip{
+    position : absolute;
+    border : 1px solid gray;
+    background-color : #efefef;
+    padding : 3px;
+    z-index: 1000;
+    /* set this to create word wrap */
+    max-width: 200px;
+}

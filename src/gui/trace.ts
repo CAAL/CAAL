@@ -5,6 +5,8 @@ class SnapCanvas {
     private currentX: number;
     private currentY: number;
     public paper: SnapPaper;
+
+    
     
     private traces: Trace[] = [Trace.GetTrace(this), Trace.GetTrace(this)];
     
@@ -32,6 +34,42 @@ class SnapCanvas {
             this.currentY += Trace.LineSpacing * 2;
         });
     }
+}
+
+class Tip {
+
+    static tip;
+    static over;
+    static tipText;
+
+    constructor(private elementText) {
+        Tip.tip = $("#tip").hide();
+        Tip.over = false;
+
+        $(document).mousemove(function(e){
+            if(Tip.over) {
+                Tip.tip.css("left", e.clientX+20).css("top", e.clientY+20);
+                Tip.tip.text(Tip.tipText);
+            }
+        });
+    }
+
+    private hoverIn(element) {
+        Tip.tipText = this.elementText;
+        Tip.tip.show();
+        Tip.over = true;
+    }
+
+    private hoverOut(element) {
+        Tip.tip.hide();
+        Tip.over = false;
+    }
+
+    public addTip(element: SnapElement) {
+        element.hover( () => this.hoverIn(element), () => this.hoverOut(element));
+    }
+
+    
 }
 
 interface Drawable {
@@ -83,18 +121,23 @@ class Trace implements Drawable {
     }
 }
 
-class Circle implements Drawable {
+class Circle extends Tip implements Drawable {
 
     constructor(public width: number, public height: number, private text: string) {
+        super(text);
         this.width = this.height;
+        
     }
 
     public draw(snapCanvas: SnapCanvas, x: number, y: number) {
         var radius = this.height/2;
     
         var circle: SnapElement = snapCanvas.paper.circle(x + radius, y + radius, radius);
-        circle.attr({"fill": "#f00", "stroke": "#000"});
+        circle.attr({"fill": "#2a6496", "stroke": "#000"});
+
+        this.addTip(circle);
     }
+
 }
 
 class Square implements Drawable {
@@ -115,7 +158,7 @@ class Square implements Drawable {
         this.width = (textWidth + margin*2 > this.width) ? textWidth + margin*2 : this.width;
         
         var rect: SnapElement = snapCanvas.paper.rect(x, y, this.width, this.height);
-        rect.attr({"fill": "#f00", "stroke": "#000"});
+        rect.attr({"fill": "#2a6496", "stroke": "#000"});
         
         // group the elements to make text appear on top of the rectangle
         snapCanvas.paper.group(rect, text);
