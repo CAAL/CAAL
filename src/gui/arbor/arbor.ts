@@ -68,7 +68,6 @@ module GUI {
         }
 
         freeze() : void {
-            window.bad = this.sys;
             this.sys.stop();
         }
 
