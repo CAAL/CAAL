@@ -343,6 +343,8 @@ module CCS {
         }
 
         equals(other : RelabellingSet) {
+            if (other === this) return true;
+            if (other.froms.length !== this.froms.length) return false;
             for (var i = 0; i < this.froms.length; i++) {
                 if (this.froms[i] !== other.froms[i]) return false;
                 if (this.tos[i] !== other.tos[i]) return false;
@@ -405,6 +407,7 @@ module CCS {
         equals(other : LabelSet) {
             var myLabels = this.labels,
                 otherLabels = other.labels;
+            if (other === this) return true;
             if (myLabels.length !== other.labels.length) return false;
             for (var i = 0; i < myLabels.length; i++) {
                 if (myLabels[i] !== otherLabels[i]) return false;
