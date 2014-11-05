@@ -47,7 +47,7 @@ $(document).ready(function() {
             "edit-btn");
     activityHandler.addActivity(
             "explorer",
-            new Activity.Explorer($("#arbor-canvas")[0], $("#explorer-status-div")[0], new Traverse.CCSNotationVisitor()),
+            new Activity.Explorer($("#arbor-canvas")[0], $("#explorer-status-div")[0], $("#explorer-freeze-btn")[0], new Traverse.CCSNotationVisitor()),
             setupExplorerActivityFn,
             "explorer-container",
             "explore-btn");

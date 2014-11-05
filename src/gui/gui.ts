@@ -13,6 +13,9 @@ module GUI {
 
         setOnSelectListener(f : (identifier) => void) : void;
         clearOnSelectListener() : void;
+
+        freeze() : void;
+        unfreeze() : void;
     }
 
 

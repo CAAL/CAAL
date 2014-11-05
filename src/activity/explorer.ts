@@ -27,19 +27,22 @@ module Activity {
     }
 
     export class Explorer extends Activity { 
-        private canvas: any;
+        private canvas;
+        private freezeBtn;
         private renderer: Renderer;
         private uiGraph: ProcessGraphUI;
         private bindedResizeFn;
+        private bindedFreezeFn;
         private graph : ccs.Graph;
         private succGenerator : ccs.ProcessVisitor<ccs.TransitionSet>;
         private initialProcessName : string;
         private statusDiv;
         private notationVisitor : CCSNotationVisitor;
 
-        constructor(canvas, statusDiv, notationVisitor : CCSNotationVisitor) {
+        constructor(canvas, statusDiv, freezeBtn, notationVisitor : CCSNotationVisitor) {
             super();
             this.canvas = canvas;
+            this.freezeBtn = freezeBtn;
             this.statusDiv = statusDiv;
             this.notationVisitor = notationVisitor;
             this.renderer = new Renderer(canvas);
@@ -56,17 +59,22 @@ module Activity {
         }
 
         afterShow(): void {
+            var that = this;
             this.bindedResizeFn = this.resize.bind(this);
             $(window).on("resize", this.bindedResizeFn);
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId));
             });
+            this.uiGraph.unfreeze();
+            this.bindedFreezeFn = this.toggleFreeze.bind(this);
+            $(this.freezeBtn).on("click", this.bindedFreezeFn);
             this.resize(); 
         }
 
         afterHide() {
             $(window).unbind("resize", this.bindedResizeFn)
             this.bindedResizeFn = null;
+            $(this.freezeBtn).unbind("click", this.freezeBtn);
             this.uiGraph.clearOnSelectListener();
             this.graph = null;
             this.succGenerator = null;
@@ -74,6 +82,15 @@ module Activity {
 
         private clear() : void {
             this.uiGraph.clearAll();
+        }
+
+        private toggleFreeze() {
+            var $freezeBtn = $(this.freezeBtn),
+                isFreezing = $freezeBtn.text() === "Unfreeze",
+                newValueText = isFreezing ? "Freeze" : "Unfreeze",
+                doFreeze = !isFreezing;
+            $freezeBtn.text(newValueText);
+            doFreeze ? this.uiGraph.freeze() : this.uiGraph.unfreeze();
         }
 
         private showProcess(process : ccs.Process) {
@@ -107,6 +124,7 @@ module Activity {
                     });
                 this.uiGraph.showTransitions(process.id, tProcId, datas);
             });
+            this.uiGraph.freeze();
         }
 
         private updateStatusAreaTransitions(fromProcess, transitions : ccs.Transition[]) {
