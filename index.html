@@ -59,13 +59,14 @@
         </nav>
 
         <!-- Main content -->
-        <div class="container">
+        <div id="main-content" class="container" style="position:relative; height:100%">
             <div id="project">
                 <h4 class="pull-left">Alternating Bit Protocol</h4>
-                <button type="button" class="btn btn-default pull-right"><i class="fa fa-check"></i> Check Syntax</button>
+                <button id="parse" type="button" class="btn btn-default pull-right"><i class="fa fa-check"></i> Check Syntax</button>
             </div>
             <div id="editor-container">
                 <div id="editor"></div>
+                <div id="editor-status-div"></div>
                 <div class="alert alert-success alert-dismissible" role="alert">
                     <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
                     <strong>Success!</strong> No syntax errors.
@@ -73,9 +74,13 @@
             </div>
             <div id="explorer-container">
                 <canvas id="arbor-canvas"></canvas>
+                <button type="button" id="explorer-freeze-btn" class="btn btn-default pull-right">Freeze</button>
+                <br style="clear: both; margin-bottom: 50px;">
+                <div id="explorer-status-div"></div>
             </div>
         </div>
 
+        <!-- Modals -->
         </div>
         <div class="modal fade" id="viz-mode-dialog">
             <div class="modal-dialog">

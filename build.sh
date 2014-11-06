@@ -3,7 +3,7 @@
 MAIN_SRC="./src/main.ts"
 MAIN_DEST="./lib/main.js"
 
-CCS_PARSE_SRC=".src/ccs/ccs.ts"
+CCS_PARSE_SRC="./src/ccs/ccs.ts"
 CCS_PARSE_DEST="./lib/ccs.js"
 
 # generate the parser

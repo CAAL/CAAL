@@ -41,13 +41,13 @@ $(document).ready(function() {
     var activityHandler = new Main.ActivityHandler();
     activityHandler.addActivity(
             "editor", 
-            new Activity.Editor(editor, "editor"),
+            new Activity.Editor(editor, "editor", $("#editor-status-div")[0], $("#parse")[0]),
             (callback) => { callback({}); },
             "editor-container",
             "edit-btn");
     activityHandler.addActivity(
             "explorer",
-            new Activity.Explorer($("#arbor-canvas")[0]),
+            new Activity.Explorer($("#arbor-canvas")[0], $("#explorer-status-div")[0], $("#explorer-freeze-btn")[0], new Traverse.CCSNotationVisitor()),
             setupExplorerActivityFn,
             "explorer-container",
             "explore-btn");
@@ -59,11 +59,7 @@ module Main {
         private currentActivityName : string = "";
         private activities = {};
 
-        public constructor() {
-            // $(document).on('activityChanged', (evt, activity) => {
-            //     this.selectActivity(activity);
-            // });
-        }
+        public constructor() {}
 
         public addActivity(name : string, activity : Activity.Activity, setupFn : (callback) => void, containerId : string, buttonId : string) {
             if (this.activities[name]) throw new Error("Activity with the name '" + name + "' already exists");

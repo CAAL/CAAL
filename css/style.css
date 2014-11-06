@@ -23,3 +23,11 @@ html, body {
 .alert {
     margin-top: 10px;
 }
+
+pre.ccs-error {
+    border: 1px solid red;
+}
+
+#editor-container, #explorer-container {
+    display: none;
+}
