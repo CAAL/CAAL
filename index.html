@@ -12,72 +12,77 @@
         <link href="css/style.css" rel="stylesheet">
     </head>
     <body>
-        <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-            <div class="container-fluid">
+        <!-- Top navigation -->
+        <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
                 <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
                         <span class="sr-only">Toggle navigation</span>
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
-                    <a class="navbar-brand" href="index.html">CCSTool</a>
                 </div>
-                <div class="navbar-collapse collapse">
+                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                    <ul class="nav navbar-nav">
+                        <li><a>New Project</a></li>
+                        <li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown">Save <span class="caret"></span></a>
+                            <ul class="dropdown-menu" role="menu">
+                                <li><a>To My Projects</a></li>
+                                <li><a>To File</a></li>
+                            </ul>
+                        </li>
+                        <li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown">Load <span class="caret"></span></a>
+                            <ul class="dropdown-menu" role="menu">
+                                <li><a>From File</a></li>
+                                <li class="divider"></li>
+                                <li role="presentation" class="dropdown-header">My Projects</li>
+                                <li><a>Some Project</a></li>
+                                <li><a>Some Other Project</a></li>
+                                <li role="presentation" class="dropdown-header">Examples</li>
+                                <li><a>Alternating Bit Protocol</a></li>
+                            </ul>
+                        </li>
+                        <li id="edit-btn" class="active"><a>Edit</a></li>
+                        <li id="explore-btn"><a>Explore</a></li>
+                        <li><a>Verify</a></li>
+                    </ul>
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="#">About</a></li>
-                        <li><a href="#">Help</a></li>
+                        <li><a>About</a></li>
+                        <li><a>Help</a></li>
                         <li><a href="https://github.com/figa12/CCS-tool"><i class="fa fa-github fa-lg"></i></a></li>
                     </ul>
                 </div>
             </div>
-        </div>
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-sm-3 col-md-2 sidebar">
-                    <ul class="nav nav-sidebar">
-                        <li id="new-btn"><a>New Project<i class="fa fa-plus pull-right"></i></a></li>
-                        <li id="save-btn"><a>Save<i class="fa fa-floppy-o pull-right"></i></a></li>
-                    </ul>
-                    <ul class="nav nav-sidebar">
-                        <li id="edit-btn"><a>Edit<i class="fa fa-code pull-right"></i></a></li>
-                        <li id="explore-btn"><a>Explore<i class="fa fa-video-camera pull-right"></i></a></li>
-                        <li><a>Verify<i class="fa fa-check pull-right"></i></a></li>
-                    </ul>
-                    <ul class="nav nav-sidebar">
-                        <li id="import-btn"><a>Import<i class="fa fa-upload pull-right"></i></a></li>
-                        <input type="file" id="import-input" class="hidden" accept=".ccs" />
-                        <li id="export-btn"><a>Export<i class="fa fa-download pull-right"></i></a></li>
-                    </ul>
-                    <ul class="nav nav-sidebar">
-                        <li id="projects-btn"><a>My Projects<i class="fa fa-folder-open pull-right"></i></a>
-                            <ul id="projects-list" class="nav nav-sidebar sub-nav"></ul>
-                        </li>
-                        <li id="examples-btn"><a>Examples<i class="fa fa-folder-open pull-right"></i></a></li>
-                        <ul id="examples-list" class="nav nav-sidebar sub-nav"></ul>
-                    </ul>
-                </div>
-                <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-                    <h1 id="project-title" contenteditable="true"></h1>
-                    <h4 id="project-desc" contenteditable="true"></h4>
-                    <div id="main-content" class="container-fluid" style="position:relative; height:100%">
-                        <div id="editor-container">
-                    	   <div id="editor"></div>
-                    	   <button type="button" id="parse" class="btn btn-default pull-right">Parse</button>	
-                        </div>
-                        <div id="explorer-container" style="display: none;">
-  						    <canvas id="arbor-canvas" style="border: 1px solid black"></canvas>
-                        </div>
-                    </div>
+        </nav>
+
+        <!-- Main content -->
+        <div class="container">
+            <div id="project">
+                <h4 class="pull-left">Alternating Bit Protocol</h4>
+                <button type="button" class="btn btn-default pull-right"><i class="fa fa-check"></i> Check Syntax</button>
+            </div>
+            <div id="editor-container">
+                <div id="editor"></div>
+                <div class="alert alert-success alert-dismissible" role="alert">
+                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <strong>Success!</strong> No syntax errors.
                 </div>
             </div>
+            <div id="explorer-container">
+                <canvas id="arbor-canvas"></canvas>
+            </div>
+        </div>
+
         </div>
         <div class="modal fade" id="viz-mode-dialog">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                        <h4 class="modal-title">Select initial process</h4>
+                        <h4 class="modal-title">Select Initial Process</h4>
                     </div>
                     <div class="modal-body" id="viz-mode-dialog-body">
                     </div>
