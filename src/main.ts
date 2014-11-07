@@ -122,7 +122,8 @@ function setupExplorerActivityFn(callback) : any {
     var graph = getGraph(),
         successorGenerator = new Traverse.ReducingSuccessorGenerator(graph),
         namedProcesses = graph.getNamedProcesses(),
-        $dialogBody = $("#viz-mode-dialog-body"),
+        $dialogList = $("#viz-mode-dialog-body-list"),
+        $depthSelect = $("#viz-mode-dialog-depth"),
         $dialog = $("#viz-mode-dialog");
     //Important only one dialog at a time.
     if (isShowingDialog()) return callback(null);
@@ -131,25 +132,29 @@ function setupExplorerActivityFn(callback) : any {
         showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
         return callback(null);
     }
-        
-    function makeConfiguration(processName) {
+
+    function makeConfiguration(processName, expandDepth) {
         return {
             graph: graph,
             successorGenerator: successorGenerator,
-            initialProcessName: processName
+            initialProcessName: processName,
+            expandDepth: expandDepth
         };
     }
 
-    $dialogBody.children().remove();
+    $dialogList.children().remove();
     namedProcesses.sort().forEach(processName => {
         var $element = $(document.createElement("button"));
         $element.addClass("btn btn-default btn-lg btn-block");
         $element.text(processName);
         $element.on("click", () => {
             $dialog.modal("hide");
-            callback(makeConfiguration(processName));
+            callback(makeConfiguration(
+                processName,
+                parseInt($depthSelect.val(), 10)
+            ));
         });
-        $dialogBody.append($element);
+        $dialogList.append($element);
     });
 
     $dialog.modal("show");
