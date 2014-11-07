@@ -1,12 +1,14 @@
 /// <reference path="../../lib/snap.d.ts" />
 
+enum TraceType {Single, Double, Collapsed};
+
 class SnapCanvas {
     
     private currentX: number;
     private currentY: number;
     public paper: SnapPaper;
     
-    private traces: Trace[] = [Trace.GetTrace(this), Trace.GetTrace(this)];
+    private traces: Trace[] = [Trace.GetTrace(this, TraceType.Collapsed), Trace.GetTrace(this, TraceType.Double), Trace.GetTrace(this, TraceType.Single)];
     
     constructor(htmlElement: string, public canvasWidth: number, public canvasHeight: number) {
         this.paper = Snap(htmlElement);
@@ -86,16 +88,46 @@ class Trace implements Drawable {
     
     public measureWidth(snapCanvas: SnapCanvas) { /* empty */ }
     
-    static GetTrace(snapCanvas: SnapCanvas) : Trace {
-        var drawables: Drawable[]  = [new Square(Trace.DrawableWidth, Trace.LineHeight, "a"), new Arrow(Trace.DrawableWidth, Trace.LineHeight, "abe")];
-        for (var i: number = 1; i < 25; i++) {
-            drawables.push(new Circle(Trace.DrawableWidth, Trace.LineHeight, "o"));
-            drawables.push(new Arrow(Trace.DrawableWidth, Trace.LineHeight, "abe"));
-        }
-        drawables.push(new Square(Trace.DrawableWidth, Trace.LineHeight, "TTo"));
-        var trace = new Trace(snapCanvas, drawables);
+    static GetTrace(snapCanvas: SnapCanvas, traceType: TraceType) : Trace {
+        var drawables: Drawable[] = [new Circle(Trace.DrawableWidth, Trace.LineHeight, "Process: P")];
         
-        return trace;
+        /* Examples of each type of trace representation */
+        var elements: number = 6;
+        var action: string = "act";
+        var text: string = "Process: P";
+        switch(traceType) {
+            case TraceType.Single:
+                drawables.push(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
+                drawables.push(new Circle(Trace.DrawableWidth, Trace.LineHeight, text));
+                drawables.push(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, "τ"));
+                for (var i: number = 1; i < elements; i++) {
+                    drawables.push(new Circle(Trace.DrawableWidth, Trace.LineHeight, text));
+                    drawables.push(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
+                    
+                    if (i != elements-1) {
+                        drawables.push(new Circle(Trace.DrawableWidth, Trace.LineHeight, text));
+                        drawables.push(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, "τ"));
+                    }
+                }
+                break;
+            case TraceType.Double:
+                drawables.push(new DoubleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
+                for (var i: number = 1; i < elements; i++) {
+                    drawables.push(new Circle(Trace.DrawableWidth, Trace.LineHeight, text));
+                    drawables.push(new DoubleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
+                }
+                break;
+            case TraceType.Collapsed:
+                var text: string = "";
+                for (var i: number = 0; i < elements; i++) {
+                    text += action;
+                    if (i != elements-1) text += ".";
+                }
+                drawables.push(new DoubleArrow(Trace.DrawableWidth, Trace.LineHeight, text));
+                break;
+        }
+        drawables.push(new Circle(Trace.DrawableWidth, Trace.LineHeight, text));
+        return new Trace(snapCanvas, drawables);
     }
     
     public draw(snapCanvas: SnapCanvas, x: number, y: number) {
@@ -184,10 +216,12 @@ class Square implements Drawable {
 
 class Arrow implements Drawable {
     
-    private initialWidth: number;
-    private textElement: SnapElement;
+    static StrokeWidth: number = 2;
     
-    constructor(public width: number, public height: number, private text: string) {
+    private initialWidth: number;
+    public textElement: SnapElement;
+    
+    constructor(public width: number, public height: number, public text: string) {
         this.initialWidth = this.width;
     }
 
@@ -198,7 +232,7 @@ class Arrow implements Drawable {
         var margin: number = (this.height - fontSize) / 2;
 
         this.textElement = snapCanvas.paper.text(0, 0, this.text); // x and y doesnt matter here, move it below
-        this.textElement.attr({"font-family": "Inconsolata", "font-weight": "bold", "font-size": fontSize, "text-anchor":"middle"});
+        this.textElement.attr({"font-family": "monospace", "font-weight": "bold", "font-size": fontSize, "text-anchor":"middle"});
 
         var textWidth: number = this.textElement.getBBox().width;
         
@@ -207,68 +241,82 @@ class Arrow implements Drawable {
     }
     
     public draw(snapCanvas: SnapCanvas, x: number, y: number) {
-        //this.width = this.initialWidth;
-        
+        /* Arrow is meant as a super class, override draw in subclasses */
+        throw "Arrow.Draw() not implemented";
+    }
+}
+
+class SingleArrow extends Arrow {
+    
+    constructor(width: number, height: number, text: string) {
+        super(width, height, text);
+    }
+    
+    public draw(snapCanvas: SnapCanvas, x: number, y: number) {
         if (this.textElement == undefined) {
             this.measureWidth(snapCanvas);
         }
         
-        this.drawStandardArrow(snapCanvas, x, y);
-        // make sure there is room for another circle and a linebreak arrow
-        /*if (x + Trace.LineBorder + this.width + Trace.DrawableWidth + Trace.DrawableWidth < snapCanvas.canvasWidth) {
-            this.drawStandardArrow(snapCanvas, x, y, text);
-        }
-        else {
-            this.drawLinebreakArrow(snapCanvas, x, y, text);
-            this.width += Trace.DrawableWidth + Trace.DrawableWidth; // make Trace do a linebreak
-        }*/
-    }
-    
-    private drawStandardArrow(snapCanvas: SnapCanvas, x: number, y: number) {
-        
         var line: SnapElement = snapCanvas.paper.path("M"+x+","+(y+(this.height / 2))+"H"+(x+this.width));
         
-        var strokeWidth: number = 2;
         line.attr({"stroke": "black", 
-	               "stroke-width": strokeWidth});
+	               "stroke-width": Arrow.StrokeWidth});
         
         // center text right above the arrow
-        var textPosition = (y + this.height/2) - strokeWidth - 2; // 2 units above the line
+        var textPosition = (y + this.height/2) - Arrow.StrokeWidth - 2; // 2 units above the line
         this.textElement.attr({"x": x+this.width/2, "y": textPosition});
         
         // draw arrow head
         var headSize = 5;
-        var offset = -1;
+        var offset = -(Arrow.StrokeWidth/2);
         var headX = x + this.width - headSize + offset;
         var headStartY = y + this.height/2 - headSize;
         var headEndY = y + this.height/2 + headSize;
         
         var head = snapCanvas.paper.path("M"+headX+","+headStartY+"L"+(x+this.width+offset)+","+(y+(this.height / 2))+"L"+headX+","+headEndY);
         head.attr({"stroke": "black", 
-	               "stroke-width": strokeWidth,
+	               "stroke-width": Arrow.StrokeWidth,
                    "fill-opacity":0});
     }
+}
+
+class DoubleArrow extends Arrow {
     
-    /*private drawLinebreakArrow(snapCanvas: SnapCanvas, x: number, y: number, text: SnapElement) {
-        this.width = Trace.DrawableWidth;
+    constructor(width: number, height: number, text: string) {
+        super(width, height, text);
+    }
+    
+    public draw(snapCanvas: SnapCanvas, x: number, y: number) {
         
-        var x1 = x,
-            y1 = y + (this.height / 2),
-            x2 = x1 + this.width,
-            y2 = y1,
-            x3 = x2,
-            y3 = y2 + (Trace.LineHeight + Trace.LineSpacing) / 2,
-            x4 = x1,
-            y4 = y3;
+        var arrowWidth = 4;
+        var y1 = y + (this.height/2) - (arrowWidth/2);
+        var y2 = y + (this.height/2) + (arrowWidth/2);
         
-        var line: SnapElement = snapCanvas.paper.path("M"+x+","+y1+
-                                                      "C"+x2+","+y2+","+x3+","+y3+","+x4+","+y4+
-                                                      "H"+Trace.LineBorder);
+        var lineEndOffset = -(arrowWidth / 2 + 1);
         
-        var strokeWidth: number = 2;
-        line.attr({"stroke": "black", 
-	               "stroke-width": strokeWidth,
-                   "fill-opacity": 0});
+        // TODO: adjust width
+        var line1: SnapElement = snapCanvas.paper.path("M"+x+","+y1+"H"+(x+this.width+lineEndOffset));
+        var line2: SnapElement = snapCanvas.paper.path("M"+x+","+y2+"H"+(x+this.width+lineEndOffset));
         
-    }*/
+        line1.attr({"stroke": "black", 
+	               "stroke-width": Arrow.StrokeWidth});
+        line2.attr({"stroke": "black", 
+	               "stroke-width": Arrow.StrokeWidth});
+        
+        // center text right above the arrow
+        var textPosition = y1 - Arrow.StrokeWidth - 2; // 2 units above the line
+        this.textElement.attr({"x": x+this.width/2, "y": textPosition});
+        
+        // draw arrow head
+        var headSize = 6;
+        var offset = -(Arrow.StrokeWidth/2);
+        var headX = x + this.width - headSize + offset;
+        var headStartY = y + this.height/2 - headSize;
+        var headEndY = y + this.height/2 + headSize;
+        
+        var head = snapCanvas.paper.path("M"+headX+","+headStartY+"L"+(x+this.width+offset)+","+(y+(this.height / 2))+"L"+headX+","+headEndY);
+        head.attr({"stroke": "black", 
+	               "stroke-width": Arrow.StrokeWidth,
+                   "fill-opacity":0});
+    }
 }
