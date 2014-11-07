@@ -83,7 +83,20 @@
                         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
                         <h4 class="modal-title">Select initial process</h4>
                     </div>
+
                     <div class="modal-body" id="viz-mode-dialog-body">
+                        <label for="viz-mode-dialog-depth">Select how deep to expand</label>
+                        <select class="form-control" id="viz-mode-dialog-depth">
+                            <option selected>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>5</option>
+                            <option>10</option>
+                            <option>100</option>
+                            <option>500</option>
+                        </select><br>
+                        <p>Select initial process</p>
+                        <div id="viz-mode-dialog-body-list"></div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>

@@ -38,6 +38,7 @@ module Activity {
         private initialProcessName : string;
         private statusDiv;
         private notationVisitor : CCSNotationVisitor;
+        private expandDepth : number = 1;
 
         constructor(canvas, statusDiv, freezeBtn, notationVisitor : CCSNotationVisitor) {
             super();
@@ -54,8 +55,9 @@ module Activity {
             this.graph = configuration.graph;
             this.succGenerator = configuration.successorGenerator;
             this.initialProcessName = configuration.initialProcessName;
+            this.expandDepth = configuration.expandDepth;
             this.clear();
-            this.expand(this.graph.processByName(this.initialProcessName));
+            this.expand(this.graph.processByName(this.initialProcessName), 1);
         }
 
         afterShow(): void {
@@ -63,7 +65,7 @@ module Activity {
             this.bindedResizeFn = this.resize.bind(this);
             $(window).on("resize", this.bindedResizeFn);
             this.uiGraph.setOnSelectListener((processId) => {
-                this.expand(this.graph.processById(processId));
+                this.expand(this.graph.processById(processId), this.expandDepth);
             });
             this.uiGraph.unfreeze();
             this.bindedFreezeFn = this.toggleFreeze.bind(this);
@@ -109,22 +111,39 @@ module Activity {
             return label;
         }
 
-        private expand(process : ccs.Process) {
+        private expand(process : ccs.Process, depth) {
             if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
-            this.showProcess(process);
-            this.showProcessAsExplored(process);
-            var transitions = this.succGenerator.visit(process).toArray();
-            this.updateStatusAreaTransitions(process, transitions);
-            var groupedByTargetProcessId = groupBy(transitions, t => t.targetProcess.id);
-            transitions.forEach(t => this.showProcess(t.targetProcess));
-            Object.keys(groupedByTargetProcessId).forEach(tProcId => {
-                var group = groupedByTargetProcessId[tProcId],
-                    datas = group.map(t => {
-                        return {label: t.action.toString()};
-                    });
-                this.uiGraph.showTransitions(process.id, tProcId, datas);
-            });
-            this.uiGraph.freeze();
+            var allTransitions = this.expandBFS(process, depth);
+            this.updateStatusAreaTransitions(process, allTransitions[process.id]);
+            for (var fromId in allTransitions) {
+                var fromProcess = this.graph.processById(fromId);
+                this.showProcess(fromProcess);
+                this.showProcessAsExplored(fromProcess);
+                var groupedByTargetProcessId = groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
+                Object.keys(groupedByTargetProcessId).forEach(tProcId => {
+                    var group = groupedByTargetProcessId[tProcId],
+                        datas = group.map(t => { return {label: t.action.toString()}; });
+                    this.showProcess(this.graph.processById(tProcId));
+                    this.uiGraph.showTransitions(fromProcess.id, tProcId, datas);
+                });
+            }
+        }
+
+        private expandBFS(process : ccs.Process, maxDepth) {
+            var result = {},
+                queue = [[1, process]], //non-emptying array as queue.
+                depth, qIdx, fromProcess, transitions;
+            for (qIdx = 0; qIdx < queue.length; qIdx++) {
+                depth = queue[qIdx][0];
+                fromProcess = queue[qIdx][1];
+                result[fromProcess.id] = transitions = this.succGenerator.visit(fromProcess);
+                transitions.forEach(t => {
+                    if (!result[t.targetProcess.id] && depth < maxDepth) {
+                        queue.push([depth + 1, t.targetProcess]);
+                    }
+                });
+            }
+            return result;
         }
 
         private updateStatusAreaTransitions(fromProcess, transitions : ccs.Transition[]) {
