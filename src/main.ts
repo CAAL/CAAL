@@ -31,7 +31,7 @@ $(document).ready(function() {
     var activityHandler = new Main.ActivityHandler();
     activityHandler.addActivity(
             "editor", 
-            new Activity.Editor(editor, "editor", $("#editor-status-div")[0], $("#parse")[0]),
+            new Activity.Editor(editor, "#parse", "#status-area"),
             (callback) => { callback({}); },
             "editor-container",
             "edit-btn");
@@ -111,8 +111,6 @@ module Main {
 
         public selectActivity(newActivityName : string): void {
             var newActivityData, callback;
-            //Don't do the work if not necessary
-            if (newActivityName === this.currentActivityName) return;
             newActivityData = this.activities[newActivityName];
             if (!newActivityData) return;
             callback = (configuration) => {

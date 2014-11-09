@@ -71,7 +71,10 @@
             </div>
             <div id="editor-container">
                 <div id="editor"></div>
-                <div id="editor-status-div"></div>
+                <div id="status-area" class="alert alert-dismissible" role="alert">
+                    <button type="button" class="close" data-hide="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <p></p>
+                </div>
             </div>
             <div id="explorer-container">
                 <canvas id="arbor-canvas"></canvas>
@@ -82,7 +85,6 @@
         </div>
 
         <!-- Modals -->
-        </div>
         <div class="modal fade" id="viz-mode-dialog">
             <div class="modal-dialog">
                 <div class="modal-content">
