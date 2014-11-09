@@ -126,7 +126,6 @@ class Load extends MenuItem {
 
         for (var i = 0; i < projects.length; i++) {
             if (projects[i].id === id) {
-                this.session.setObj
                 this.project.update(id, projects[i].title, projects[i].ccs);
                 this.activityHandler.selectActivity("editor");
                 break;
