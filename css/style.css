@@ -1,7 +1,10 @@
 html, body {
     height: 100%;
-    padding-top: 40px;
     font-family: normal "Open Sans";
+}
+
+a {
+    cursor: pointer;
 }
 
 #project {

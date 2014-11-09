@@ -13,7 +13,7 @@
     </head>
     <body>
         <!-- Top navigation -->
-        <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <nav class="navbar navbar-default" role="navigation">
             <div class="container">
                 <div class="navbar-header">
                     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
@@ -25,24 +25,29 @@
                 </div>
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav">
-                        <li><a>New Project</a></li>
+                        <li id="new-btn"><a>New Project</a></li>
                         <li class="dropdown">
                             <a class="dropdown-toggle" data-toggle="dropdown">Save <span class="caret"></span></a>
                             <ul class="dropdown-menu" role="menu">
-                                <li><a>To My Projects</a></li>
-                                <li><a>To File</a></li>
+                                <li id="save-projects-btn"><a>To My Projects</a></li>
+                                <li><a id="save-file-btn">To File</a></li>
                             </ul>
                         </li>
                         <li class="dropdown">
                             <a class="dropdown-toggle" data-toggle="dropdown">Load <span class="caret"></span></a>
                             <ul class="dropdown-menu" role="menu">
-                                <li><a>From File</a></li>
+                                <li id="load-file-btn"><a>From File</a></li>
+                                <input type="file" id="file-input" class="hidden" accept=".ccs-project" />
                                 <li class="divider"></li>
-                                <li role="presentation" class="dropdown-header">My Projects</li>
-                                <li><a>Some Project</a></li>
-                                <li><a>Some Other Project</a></li>
-                                <li role="presentation" class="dropdown-header">Examples</li>
-                                <li><a>Alternating Bit Protocol</a></li>
+                                <li id="projects-list" class="dropdown-header" role="presentation">My Projects</li>
+                                <li class="divider"></li>
+                                <li id="examples-list" class="dropdown-header" role="presentation">Examples</li>
+                            </ul>
+                        </li>
+                        <li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown">Delete <span class="caret"></span></a>
+                            <ul class="dropdown-menu" role="menu">
+                                <li id="delete-list" class="dropdown-header" role="presentation">My Projects</li>
                             </ul>
                         </li>
                         <li id="edit-btn" class="active"><a>Edit</a></li>
@@ -59,18 +64,14 @@
         </nav>
 
         <!-- Main content -->
-        <div id="main-content" class="container" style="position:relative; height:100%">
+        <div class="container">
             <div id="project">
-                <h4 class="pull-left">Alternating Bit Protocol</h4>
+                <h4 id="project-title" class="pull-left" contenteditable="true">Alternating Bit Protocol</h4>
                 <button id="parse" type="button" class="btn btn-default pull-right"><i class="fa fa-check"></i> Check Syntax</button>
             </div>
             <div id="editor-container">
                 <div id="editor"></div>
                 <div id="editor-status-div"></div>
-                <div class="alert alert-success alert-dismissible" role="alert">
-                    <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                    <strong>Success!</strong> No syntax errors.
-                </div>
             </div>
             <div id="explorer-container">
                 <canvas id="arbor-canvas"></canvas>

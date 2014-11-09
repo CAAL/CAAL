@@ -6,7 +6,7 @@
 /// <reference path="ccs/reducedparsetree.ts" />
 /// <reference path="ccs/util.ts" />
 /// <reference path="gui/project.ts" />
-/// <reference path="gui/sidebar.ts" />
+/// <reference path="gui/menu.ts" />
 /// <reference path="gui/storage.ts" />
 /// <reference path="gui/examples.ts" />
 /// <reference path="activity/activity.ts" />
@@ -23,20 +23,10 @@ $(document).ready(function() {
 
     var project = new Project(
         'Untitled Project', // Default title
-        'No description ...', // Default description
         '* Enter your program here', // Initial editor content
-        '#project-title', '#project-desc', '#editor'
+        '#project-title',
+        editor
     );
-
-    new New('#new-btn', project);
-    new Save('#save-btn', project);
-    new Import('#import-input', project);
-    new Export('#export-btn', project);
-    new MyProjects('#projects-btn', '#projects-list', project);
-    new Examples('#examples-btn', '#examples-list', project);
-
-    /* Simulate click on hidden <input> element */
-    $('#import-btn').click(function() { $('#import-input').click() });
 
     var activityHandler = new Main.ActivityHandler();
     activityHandler.addActivity(
@@ -52,6 +42,27 @@ $(document).ready(function() {
             "explorer-container",
             "explore-btn");
     activityHandler.selectActivity("editor");
+
+    new New('#new-btn', null, project, activityHandler);
+
+    var saveIds = {
+        saveFileId: '#save-file-btn',
+        saveProjectsId: '#save-projects-btn'
+    };
+    new Save(null, saveIds, project, activityHandler);
+
+    var loadIds = {
+        loadFileId: '#load-file-btn',
+        fileInputId: '#file-input',
+        projectsId: '#projects-list',
+        examplesId: '#examples-list'
+    };
+    new Load(null, loadIds, project, activityHandler);
+
+    var deleteIds = {
+        deleteId: '#delete-list',
+    }
+    new Delete(null, deleteIds, project, activityHandler);
 });
 
 module Main {
