@@ -1,36 +1,23 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="../../lib/ace.d.ts" />
+
 class Project {
     private defaultTitle: string;
-    private defaultDescription: string;
     private defaultCCS: string;
     private titleId: string;
-    private descriptionId: string;
     private editor: any;
     private id: number;
     private title: string;
-    private description: string;
 
-    public constructor(defaultTitle: string,
-                defaultDescription: string,
-                defaultCCS: string,
-                titleId: string,
-                descriptionId: string,
-                editorId: string)
-    {
+    public constructor(defaultTitle: string, defaultCCS: string, titleId: string, editor: any) {
         this.defaultTitle = defaultTitle;
-        this.defaultDescription = defaultDescription;
         this.defaultCCS = defaultCCS;
         this.titleId = titleId;
-        this.descriptionId = descriptionId;
-        this.editor = ace.edit($(editorId)[0]);
+        this.editor = editor;
 
-        /* Set default values */
         this.reset();
 
-        /* Register event handlers */
         $(this.titleId).focusout(() => this.onTitleChanged());
-        $(this.descriptionId).focusout(() => this.onDescriptionChanged());
     }
 
     public getId(): number {
@@ -50,15 +37,6 @@ class Project {
         $(this.titleId).text(this.title);
     }
 
-    public getDescription(): string {
-        return this.description;
-    }
-
-    public setDescription(description: string): void {
-        this.description = description;
-        $(this.descriptionId).text(this.description);
-    }
-
     public getCCS(): string {
         return this.editor.getSession().getValue();
     }
@@ -68,31 +46,25 @@ class Project {
         this.editor.clearSelection();
     }
 
-    public update(id: number, title: string, description: string, ccs: string): void {
+    public update(id: number, title: string, ccs: string): void {
         this.setId(id);
         this.setTitle(title);
-        this.setDescription(description);
         this.setCCS(ccs);
     }
 
     public reset(): void {
-        this.update(null, this.defaultTitle, this.defaultDescription, this.defaultCCS);
+        this.update(null, this.defaultTitle, this.defaultCCS);
     }
 
     public toJSON(): Object {
         return {
-            id: this.id,
-            title: this.title,
-            description: this.description,
+            id: this.getId(),
+            title: this.getTitle(),
             ccs: this.getCCS()
         };
     }
 
     private onTitleChanged(): void {
         this.title = $(this.titleId).text();
-    }
-
-    private onDescriptionChanged(): void {
-        this.description = $(this.descriptionId).text();
     }
 }
