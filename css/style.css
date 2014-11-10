@@ -25,6 +25,10 @@ a {
     }
 }
 
+.dropdown-menu {
+    min-width: 0px;
+}
+
 #project {
     margin: 20px 0 10px 0;
     padding-bottom: 10px;
