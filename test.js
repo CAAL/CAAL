@@ -4,7 +4,7 @@ var ccs = CCS,
     parser = CCSParser;
 
 $(document).ready(function() {
-    $("#parse").on("click", function () {
+    $("#parse-btn").on("click", function () {
         var programText = editor.getValue(),
             graph = new ccs.Graph(),
             n = 10,
