@@ -12,6 +12,7 @@
 /// <reference path="activity/activity.ts" />
 /// <reference path="activity/editor.ts" />
 /// <reference path="activity/explorer.ts" />
+/// <reference path="activity/verifier.ts" />
 
 declare var CCSParser;
 
@@ -41,6 +42,12 @@ $(document).ready(function() {
             setupExplorerActivityFn,
             "explorer-container",
             "explore-btn");
+    activityHandler.addActivity(
+            "verifier",
+            new Activity.Verifier("#toggle-select"),
+            (callback) => { callback({}); },
+            "verifier-container",
+            "verify-btn");
     activityHandler.selectActivity("editor");
 
     new New('#new-btn', null, project, activityHandler);

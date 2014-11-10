@@ -8,6 +8,10 @@ a {
     cursor: pointer;
 }
 
+input[type=checkbox] {
+    cursor: pointer;
+}
+
 .navbar-right li:last-child a {
     padding-right: 0;
 }
@@ -29,6 +33,10 @@ a {
     min-width: 0px;
 }
 
+.table-hover td {
+    cursor: pointer;
+}
+
 #project {
     margin: 20px 0 10px 0;
     padding-bottom: 10px;
@@ -42,7 +50,7 @@ a {
     padding: 5px 0;
 }
 
-#editor-container, #explorer-container {
+#editor-container, #explorer-container, #verifier-container {
     display: none;
 }
 

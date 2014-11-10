@@ -55,7 +55,7 @@
                         <li class="divider-vertical"></li>
                         <li id="edit-btn" class="active"><a>Edit</a></li>
                         <li id="explore-btn"><a>Explore</a></li>
-                        <li><a>Verify</a></li>
+                        <li id="verify-btn"><a>Verify</a></li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
                         <li><a>About</a></li>
@@ -65,33 +65,31 @@
                 </div>
             </div>
         </nav>
-
         <!-- Main content -->
         <div class="container">
+            <!-- Editor -->
             <div id="editor-container">
-
-                    <h4 id="project-title" class="pull-left" contenteditable="true">Alternating Bit Protocol</h4>
-                    <div class="btn-group pull-right">
-                        <button id="parse-btn" type="button" class="btn btn-default">Parse</button>
-                        <button id="clear-btn" type="button" class="btn btn-default">Clear</button>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                Font Size
-                                <span class="caret"></span>
-                            </button>
-                            <ul id="font-size-btn" class="dropdown-menu" role="menu">
-                                <li><a>10</a></li>
-                                <li><a>12</a></li>
-                                <li><a>14 <i class="fa fa-check"></i></a></li>
-                                <li><a>16</a></li>
-                                <li><a>18</a></li>
-                                <li><a>20</a></li>
-                                <li><a>22</a></li>
-                                <li><a>24</a></li>
-                            </ul>
-                        </div>
+                <h4 id="project-title" class="pull-left" contenteditable="true">Alternating Bit Protocol</h4>
+                <div class="btn-group pull-right">
+                    <button id="parse-btn" type="button" class="btn btn-default">Parse</button>
+                    <button id="clear-btn" type="button" class="btn btn-default">Clear</button>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                            Font Size
+                            <span class="caret"></span>
+                        </button>
+                        <ul id="font-size-btn" class="dropdown-menu" role="menu">
+                            <li><a>10</a></li>
+                            <li><a>12</a></li>
+                            <li><a>14 <i class="fa fa-check"></i></a></li>
+                            <li><a>16</a></li>
+                            <li><a>18</a></li>
+                            <li><a>20</a></li>
+                            <li><a>22</a></li>
+                            <li><a>24</a></li>
+                        </ul>
                     </div>
-
+                </div>
                 <div class="clearfix"></div>
                 <div id="editor-border">
                     <div id="editor"></div>
@@ -101,11 +99,72 @@
                     <p></p>
                 </div>
             </div>
+            <!-- Explorer -->
             <div id="explorer-container">
                 <canvas id="arbor-canvas"></canvas>
                 <button type="button" id="explorer-freeze-btn" class="btn btn-default pull-right">Freeze</button>
                 <br style="clear: both; margin-bottom: 50px;">
                 <div id="explorer-status-div"></div>
+            </div>
+            <!-- Verifier -->
+            <div id="verifier-container">
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th class="col-md-1 text-center">Result</th>
+                                        <th class="col-md-2">State(s)</th>
+                                        <th class="col-md-8">Property</th>
+                                        <th class="col-md-1 text-center"><input id="toggle-select" type="checkbox" value=""></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-center"><i class="fa fa-exclamation"></i></td>
+                                        <td>P, Q</td>
+                                        <td>Strong Bisimulation</td>
+                                        <td class="text-center"><input type="checkbox" value=""></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center"><i class="fa fa-check"></i></td>
+                                        <td>P, Q</td>
+                                        <td>Weak Bisimulation</td>
+                                        <td class="text-center"><input type="checkbox" value=""></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center"><i class="fa fa-question"></i></td>
+                                        <td>P, Q</td>
+                                        <td>Trace Equivalence</td>
+                                        <td class="text-center"><input type="checkbox" value=""></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="btn-group pull-right">
+                                <button id="delete-prop-btn" type="button" class="btn btn-default">Delete</button>
+                                <button id="verify-prop-btn" type="button" class="btn btn-default">Verify</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                Property
+                                <span class="caret"></span>
+                            </button>
+                            <ul id="font-size-btn" class="dropdown-menu" role="menu">
+                                <li class="dropdown-header" role="presentation">Equivalence</li>
+                                <li><a>Strong Bisimulation</a></li>
+                                <li><a>Weak Bisimulation</a></li>
+                                <li><a>Trace Equivalence</a></li>
+                                <li class="divider"></li>
+                                <li class="dropdown-header" role="presentation">Model Checking</li>
+                                <li><a>μ-calculus</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

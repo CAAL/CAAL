@@ -107,5 +107,4 @@ module Activity {
             this.statusArea.show();
         }
     }
-
 }
