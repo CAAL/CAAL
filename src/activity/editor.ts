@@ -22,7 +22,7 @@ module Activity {
                 enableBasicAutocompletion: true,
                 maxLines: Infinity,
                 showPrintMargin: false,
-                fontSize: 14,
+                fontSize: 16,
                 fontFamily: "Inconsolata",
             });
 
