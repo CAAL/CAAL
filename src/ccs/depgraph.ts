@@ -4,47 +4,6 @@ module DependencyGraph {
 
     import ccs = CCS;
 
-    export function buildDummyLts() {
-        // a.(b.0 + c.0)
-        var edges = {};
-        edges["aroot"] = [
-            ["a", "asplit"]
-        ];
-        edges["asplit"] = [
-            ["b", "null"],
-            ["c", "null"]
-        ];
-        edges["null"] = [];
-
-        // a.b.0 + a.c.0
-        edges["bsplit"] = [
-            ["a", "bleft"],
-            ["a", "bright"]
-        ];
-        edges["bleft"] = [
-            ["b", "null"]
-        ];
-        edges["bright"] = [
-            ["c", "null"]
-        ];
-        return makeDummyLtsOfEdges(edges);
-    }
-
-    function makeDummyLtsOfEdges(edges) {
-        var o : any = {};
-        o.getSuccessors = function (id) {
-            var tSet = new ccs.TransitionSet();
-            edges[id].forEach(pairs => {
-                var action = new ccs.Action(pairs[0], false),
-                    targetProcess = {id: pairs[1], dispatchOn: (x) => {}},
-                    newTransition = new ccs.Transition(action, targetProcess);
-                tSet.add(newTransition);
-            });
-            return tSet;
-        };
-        return o;
-    }
-
     export class BisimulationDG implements DependencyGraph {
 
         private succGen;
@@ -150,48 +109,6 @@ module DependencyGraph {
     export interface DependencyGraph {
         getHyperEdges(identifier) : any[][];
     }
-
-
-
-    function testDG() {
-        var o : any = {};
-        var edges = [];
-
-        /*
-            t = a.(b.0 + c.0)
-            s = a.b.0 + a.c.0
-
-            t2 = b.0 + c.0
-            t3 = t4 = 0
-
-            s2 = b.0
-            s4 = 0
-            s3 = c.0
-            s5 = 0
-        */
-
-        edges[0] = [ [1, 2, 3] ];  // s, t
-        edges[1] = [ [4] ];  // s -- a --> s2, t 
-                        // s can take 'a' to s2, then t process must match.
-        edges[2] = [ [5] ]; // s -- a --> s3, t
-        edges[3] = [ [4], [5] ]; // s, t --a -- > 2
-        edges[4] = [ [7, 8, 9] ];  // s2, t2
-        edges[5] = [ [6, 11, 12] ];  // s3, t2
-        edges[6] = [ [13] ]; // s3, t2 -- c --> t4
-        edges[7] = [ ]; // s2, t2 -- c --> t4
-        edges[8] = [ [10] ]; // s2 -- b --> s4, t2
-        edges[9] = [ [10] ]; // s2, t2 -- b --> t3
-        edges[10] = [ [] ]; // s4, t3
-        edges[11] = [ [13] ]; // s3 -- c --> s5, t2
-        edges[12] = [ ]; // s3, t2 -- b --> t3
-        edges[13] = [ [] ];  // s5, t4
-
-        o.getHyperEdges = function (k) {
-            return edges[k];
-        }
-        return o;
-    }
-
 
     export function liuSmolkaLocal2(m, graph) : boolean {
         var S_ZERO = 1, S_ONE = 2, S_BOTTOM = 3;
