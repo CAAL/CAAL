@@ -32,7 +32,7 @@ function printListing(graph, prefix) {
 function simulate(processName, graph, n) {
     n = n || 10;
     var program = graph.root;
-    var sc = new ccs.SuccessorGenerator(graph, graph.cache.successors, graph);
+    var sc = new ccs.StrictSuccessorGenerator(graph, graph.cache.successors, graph);
     var ccsn = new tvs.CCSNotationVisitor();
     //Must run it on program to cache all variable definitions.
     var currentNode = graph.processByName(processName);

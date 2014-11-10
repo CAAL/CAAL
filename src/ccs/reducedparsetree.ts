@@ -90,20 +90,20 @@ module Traverse {
         }
     }
 
-    export class ReducingSuccessorGenerator implements ccs.ProcessVisitor<ccs.TransitionSet> {
+    export class ReducingSuccessorGenerator implements ccs.SuccessorGenerator {
         
-        private succGenerator : ccs.SuccessorGenerator;
+        private succGenerator : ccs.StrictSuccessorGenerator;
         private reducer : ProcessTreeReducer;
 
         constructor(public graph : ccs.Graph, public successorCache?, public reducerCache?) {
             this.successorCache = successorCache || {};
             this.reducerCache = reducerCache || {};
-            this.succGenerator = new ccs.SuccessorGenerator(graph, this.successorCache);
+            this.succGenerator = new ccs.StrictSuccessorGenerator(graph, this.successorCache);
             this.reducer = new ProcessTreeReducer(graph, this.reducerCache);
         }
 
-        visit(process : ccs.Process) : ccs.TransitionSet {
-            var transitionSet = this.succGenerator.visit(process);
+        getSuccessors(process : ccs.Process) : ccs.TransitionSet {
+            var transitionSet = this.succGenerator.getSuccessors(process);
             return this.reduceSuccessors(transitionSet);
         }
 

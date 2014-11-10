@@ -34,7 +34,7 @@ module Activity {
         private bindedResizeFn;
         private bindedFreezeFn;
         private graph : ccs.Graph;
-        private succGenerator : ccs.ProcessVisitor<ccs.TransitionSet>;
+        private succGenerator : ccs.SuccessorGenerator;
         private initialProcessName : string;
         private statusDiv;
         private notationVisitor : CCSNotationVisitor;
@@ -136,7 +136,7 @@ module Activity {
             for (qIdx = 0; qIdx < queue.length; qIdx++) {
                 depth = queue[qIdx][0];
                 fromProcess = queue[qIdx][1];
-                result[fromProcess.id] = transitions = this.succGenerator.visit(fromProcess);
+                result[fromProcess.id] = transitions = this.succGenerator.getSuccessors(fromProcess);
                 transitions.forEach(t => {
                     if (!result[t.targetProcess.id] && depth < maxDepth) {
                         queue.push([depth + 1, t.targetProcess]);

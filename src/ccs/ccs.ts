@@ -21,6 +21,10 @@ module CCS {
         visit(process : Process) : T;
     }
 
+    export interface SuccessorGenerator {
+        getSuccessors(process : Process) : TransitionSet;
+    }
+
     export class NullProcess implements Process {
         constructor(public id : number) {
         }
@@ -530,6 +534,10 @@ module CCS {
             }
         }
 
+        transitionsForAction(action : Action) : Transition[] {
+            return this.transitions.filter((transition) => action.equals(transition.action));
+        }
+
         forEach(f : (transition : Transition) => any) {
             for (var i = 0, max = this.transitions.length; i < max; i++){
                 f(this.transitions[i]);
@@ -541,13 +549,13 @@ module CCS {
         }
     }
 
-    export class SuccessorGenerator implements ProcessVisitor<TransitionSet>, ProcessDispatchHandler<TransitionSet> {
+    export class StrictSuccessorGenerator implements SuccessorGenerator, ProcessDispatchHandler<TransitionSet> {
 
         constructor(public graph : Graph, public cache?) {
             this.cache = cache || {};
         }
 
-        visit(process : Process) : TransitionSet {
+        getSuccessors(process : Process) : TransitionSet {
             //Move recursive calling into loop with stack here
             //if overflow becomes an issue.
             return this.cache[process.id] = process.dispatchOn(this);
