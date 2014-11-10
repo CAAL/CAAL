@@ -8,9 +8,8 @@ module Activity {
     export class Editor extends Activity {
         private editor: any;
         private statusArea: any;
-        private closeButton: any;
 
-        public constructor(editor: any, parseButtonId: string, statusAreaId: string) {
+        public constructor(editor: any, clearButtonId: string, parseButtonId: string, statusAreaId: string) {
             super();
             this.editor = editor;
             this.statusArea = $(statusAreaId);
@@ -26,6 +25,7 @@ module Activity {
                 fontFamily: "Inconsolata",
             });
 
+            $(clearButtonId).on("click", () => this.clear());
             $(parseButtonId).on("click", () => this.parse());
 
             this.statusArea.children("button").on("click", () => {
@@ -38,6 +38,12 @@ module Activity {
         }
 
         public afterShow(): void {
+            this.editor.focus();
+        }
+
+        private clear(): void {
+            this.editor.setValue("");
+            this.statusArea.hide();
             this.editor.focus();
         }
 
