@@ -8,11 +8,13 @@ module Activity {
     export class Editor extends Activity {
         private editor: any;
         private statusArea: any;
+        private fontSizeButtonId: string;
 
-        public constructor(editor: any, clearButtonId: string, parseButtonId: string, statusAreaId: string) {
+        public constructor(editor: any, parseButtonId: string, statusAreaId: string, clearButtonId: string, fontSizeButtonId: string) {
             super();
             this.editor = editor;
             this.statusArea = $(statusAreaId);
+            this.fontSizeButtonId = fontSizeButtonId;
 
             this.editor.setTheme("ace/theme/crisp");
             this.editor.getSession().setMode("ace/mode/ccs");
@@ -25,12 +27,14 @@ module Activity {
                 fontFamily: "Inconsolata",
             });
 
-            $(clearButtonId).on("click", () => this.clear());
             $(parseButtonId).on("click", () => this.parse());
-
             this.statusArea.children("button").on("click", () => {
                 this.statusArea.hide();
             });
+
+            $(clearButtonId).on("click", () => this.clear());
+
+            $(fontSizeButtonId).children("li").on("click", e => this.setFontSize(e));
         }
 
         public beforeShow(): void {
@@ -47,10 +51,15 @@ module Activity {
             this.editor.focus();
         }
 
-        private getGraph(): CCS.Graph {
-            var graph = new CCS.Graph();
-                CCSParser.parse(this.editor.getValue(), {ccs: CCS, graph: graph});
-            return graph;
+        private setFontSize(e): void {
+            var selected = " <i class=\"fa fa-check\"></i>";
+
+            $(this.fontSizeButtonId).find("a").each(function() {
+                $(this).children("i").remove();
+                if ($(this).text() === e.target.text) {$(this).append(selected)}
+            });
+
+            this.editor.setFontSize(parseInt(e.target.text));
         }
 
         private parse(): void {
@@ -70,6 +79,12 @@ module Activity {
                     this.updateStatusArea("Unknown Error: " + error.toString(), "alert-danger");
                 }
             }
+        }
+
+        private getGraph(): CCS.Graph {
+            var graph = new CCS.Graph();
+                CCSParser.parse(this.editor.getValue(), {ccs: CCS, graph: graph});
+            return graph;
         }
 
         private updateStatusArea(errorString: string, errorClass: string): void {

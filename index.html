@@ -69,13 +69,30 @@
         <!-- Main content -->
         <div class="container">
             <div id="editor-container">
-                <div id="project">
+
                     <h4 id="project-title" class="pull-left" contenteditable="true">Alternating Bit Protocol</h4>
                     <div class="btn-group pull-right">
-                        <button id="clear" type="button" class="btn btn-default"><i class="fa fa-eraser"></i> Clear</button>
-                        <button id="parse" type="button" class="btn btn-default"><i class="fa fa-check"></i> Check Syntax</button>
+                        <button id="parse-btn" type="button" class="btn btn-default">Parse</button>
+                        <button id="clear-btn" type="button" class="btn btn-default">Clear</button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                Font Size
+                                <span class="caret"></span>
+                            </button>
+                            <ul id="font-size-btn" class="dropdown-menu" role="menu">
+                                <li><a>10</a></li>
+                                <li><a>12</a></li>
+                                <li><a>14</a></li>
+                                <li><a>16 <i class="fa fa-check"></i></a></li>
+                                <li><a>18</a></li>
+                                <li><a>20</a></li>
+                                <li><a>22</a></li>
+                                <li><a>24</a></li>
+                            </ul>
+                        </div>
                     </div>
-                </div>
+
+                <div class="clearfix"></div>
                 <div id="editor-border">
                     <div id="editor"></div>
                 </div>
