@@ -1,11 +1,7 @@
 var examples = [
     {
         title: "Alternating Bit Protocol",
-        ccs: "********************************\n" +
-             "*** Alternating Bit Protocol ***\n" +
-             "********************************\n" +
-             "\n" +
-             "* Sender\n" +
+        ccs: "* Sender\n" +
              "agent Send0 = acc.Sending0;\n" +
              "agent Sending0 = 'left0.Sending0 + leftAck0.Send1 + leftAck1.Sending0;\n" +
              "agent Send1 = acc.Sending1;\n" +
