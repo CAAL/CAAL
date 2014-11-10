@@ -1,10 +1,15 @@
 html, body {
-    height: 100%;
-    font-family: normal "Open Sans";
+    margin: 0 0 20px 0;
+    padding: 0;
+    font-family: normal "Open Sans", "Arial";
 }
 
 a {
     cursor: pointer;
+}
+
+.navbar-right li:last-child a {
+    padding-right: 0;
 }
 
 #project {
@@ -15,18 +20,16 @@ a {
 }
 
 #project h4 {
+    position: relative;
+    top: 10px;
     margin: 0;
-    padding-top: 15px;
-}
-
-.alert {
-    margin-top: 10px;
-}
-
-pre.ccs-error {
-    border: 1px solid red;
+    padding: 5px 0;
 }
 
 #editor-container, #explorer-container {
     display: none;
+}
+
+#editor {
+    margin-bottom: 10px;
 }
