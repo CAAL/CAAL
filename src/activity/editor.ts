@@ -35,7 +35,6 @@ module Activity {
 
         public beforeShow(): void {
             this.statusArea.hide();
-            console.log('lol');
         }
 
         public afterShow(): void {
