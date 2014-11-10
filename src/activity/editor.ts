@@ -10,7 +10,13 @@ module Activity {
         private statusArea: any;
         private fontSizeButtonId: string;
 
-        public constructor(editor: any, parseButtonId: string, statusAreaId: string, clearButtonId: string, fontSizeButtonId: string) {
+        public constructor(editor: any,
+                           editorId: string,
+                           parseButtonId: string,
+                           statusAreaId: string,
+                           clearButtonId: string,
+                           fontSizeButtonId: string) 
+        {
             super();
             this.editor = editor;
             this.statusArea = $(statusAreaId);
@@ -23,9 +29,12 @@ module Activity {
                 enableBasicAutocompletion: true,
                 maxLines: Infinity,
                 showPrintMargin: false,
-                fontSize: 16,
+                fontSize: 14,
                 fontFamily: "Inconsolata",
             });
+
+            // Focus editor whenever its parent element is clicked.
+            $(editorId).on("click", () => {this.editor.focus()});
 
             $(parseButtonId).on("click", () => this.parse());
             this.statusArea.children("button").on("click", () => {

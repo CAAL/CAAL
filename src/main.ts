@@ -21,14 +21,9 @@ var isDialogOpen = false;
 $(document).ready(function() {
     editor = ace.edit("editor");
 
-    var defaultEditorContent = "***************\n" +
-                               "*** CSSTool ***\n" +
-                               "***************\n" +
-                               "\n" +
-                               "* Press Ctrl + Space for autocompletion";
     var project = new Project(
         "Untitled Project",
-        defaultEditorContent,
+        null,
         "#project-title",
         editor
     );
@@ -36,7 +31,7 @@ $(document).ready(function() {
     var activityHandler = new Main.ActivityHandler();
     activityHandler.addActivity(
             "editor", 
-            new Activity.Editor(editor, "#parse-btn", "#status-area", "#clear-btn", "#font-size-btn"),
+            new Activity.Editor(editor, "#editor", "#parse-btn", "#status-area", "#clear-btn", "#font-size-btn"),
             (callback) => { callback({}); },
             "editor-container",
             "edit-btn");
