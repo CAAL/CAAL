@@ -102,8 +102,8 @@ module Traverse {
             this.reducer = new ProcessTreeReducer(graph, this.reducerCache);
         }
 
-        getSuccessors(process : ccs.Process) : ccs.TransitionSet {
-            var transitionSet = this.succGenerator.getSuccessors(process);
+        getSuccessors(processId) : ccs.TransitionSet {
+            var transitionSet = this.succGenerator.getSuccessors(processId);
             return this.reduceSuccessors(transitionSet);
         }
 

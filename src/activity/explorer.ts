@@ -136,7 +136,7 @@ module Activity {
             for (qIdx = 0; qIdx < queue.length; qIdx++) {
                 depth = queue[qIdx][0];
                 fromProcess = queue[qIdx][1];
-                result[fromProcess.id] = transitions = this.succGenerator.getSuccessors(fromProcess);
+                result[fromProcess.id] = transitions = this.succGenerator.getSuccessors(fromProcess.id);
                 transitions.forEach(t => {
                     if (!result[t.targetProcess.id] && depth < maxDepth) {
                         queue.push([depth + 1, t.targetProcess]);
