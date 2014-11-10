@@ -45,7 +45,7 @@ class Tip {
 
         $(document).mousemove(function(e){
             if(Tip.over) {
-                Tip.tip.css("left", e.clientX+20).css("top", e.clientY+20);
+                Tip.tip.css("left", e.clientX+10).css("top", e.clientY+50);
                 Tip.tip.text(Tip.tipText);
             }
         });
@@ -118,12 +118,12 @@ class Trace implements Drawable {
                 }
                 break;
             case TraceType.Collapsed:
-                var text: string = "";
+                var t: string = "";
                 for (var i: number = 0; i < elements; i++) {
-                    text += action;
-                    if (i != elements-1) text += ".";
+                    t += action;
+                    if (i != elements-1) t += ".";
                 }
-                drawables.push(new DoubleArrow(Trace.DrawableWidth, Trace.LineHeight, text));
+                drawables.push(new DoubleArrow(Trace.DrawableWidth, Trace.LineHeight, t));
                 break;
         }
         drawables.push(new Circle(Trace.DrawableWidth, Trace.LineHeight, text));
