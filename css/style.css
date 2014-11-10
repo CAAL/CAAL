@@ -12,6 +12,19 @@ a {
     padding-right: 0;
 }
 
+.navbar .divider-vertical {
+    height: 50px;
+    margin: 0 9px;
+    border-right: 1px solid #ffffff;
+    border-left: 1px solid #f2f2f2;
+}
+
+@media (max-width: 767px) {
+    .navbar-collapse .nav > .divider-vertical {
+        display: none;
+    }
+}
+
 #project {
     margin: 20px 0 10px 0;
     padding-bottom: 10px;
