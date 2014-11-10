@@ -36,6 +36,6 @@ var examples = [
         ccs: "S1 = right.S2 + down.S3;\n" +
              "S2 = down.S4 + left.S1;\n" +
              "S3 = up.S1 + right.S4;\n" +
-             "S4 = up.S2 + left.S3;\n"
+             "S4 = up.S2 + left.S3;"
     }
 ]
