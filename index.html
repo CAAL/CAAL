@@ -16,15 +16,17 @@
         <nav class="navbar navbar-default" role="navigation">
             <div class="container">
                 <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
                         <span class="sr-only">Toggle navigation</span>
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                         <span class="icon-bar"></span>
                     </button>
+                    <a class="navbar-brand" href="index.html">CCSTool</a>
                 </div>
-                <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <div class="collapse navbar-collapse" id="navbar-collapse">
                     <ul class="nav navbar-nav">
+                        <li class="divider-vertical"></li>
                         <li id="new-btn"><a>New Project</a></li>
                         <li class="dropdown">
                             <a class="dropdown-toggle" data-toggle="dropdown">Save <span class="caret"></span></a>
@@ -50,6 +52,7 @@
                                 <li id="delete-list" class="dropdown-header" role="presentation">My Projects</li>
                             </ul>
                         </li>
+                        <li class="divider-vertical"></li>
                         <li id="edit-btn" class="active"><a>Edit</a></li>
                         <li id="explore-btn"><a>Explore</a></li>
                         <li><a>Verify</a></li>
@@ -65,13 +68,38 @@
 
         <!-- Main content -->
         <div class="container">
-            <div id="project">
-                <h4 id="project-title" class="pull-left" contenteditable="true">Alternating Bit Protocol</h4>
-                <button id="parse" type="button" class="btn btn-default pull-right"><i class="fa fa-check"></i> Check Syntax</button>
-            </div>
             <div id="editor-container">
-                <div id="editor"></div>
-                <div id="editor-status-div"></div>
+
+                    <h4 id="project-title" class="pull-left" contenteditable="true">Alternating Bit Protocol</h4>
+                    <div class="btn-group pull-right">
+                        <button id="parse-btn" type="button" class="btn btn-default">Parse</button>
+                        <button id="clear-btn" type="button" class="btn btn-default">Clear</button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                Font Size
+                                <span class="caret"></span>
+                            </button>
+                            <ul id="font-size-btn" class="dropdown-menu" role="menu">
+                                <li><a>10</a></li>
+                                <li><a>12</a></li>
+                                <li><a>14</a></li>
+                                <li><a>16 <i class="fa fa-check"></i></a></li>
+                                <li><a>18</a></li>
+                                <li><a>20</a></li>
+                                <li><a>22</a></li>
+                                <li><a>24</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                <div class="clearfix"></div>
+                <div id="editor-border">
+                    <div id="editor"></div>
+                </div>
+                <div id="status-area" class="alert alert-dismissible" role="alert">
+                    <button type="button" class="close" data-hide="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <p></p>
+                </div>
             </div>
             <div id="explorer-container">
                 <canvas id="arbor-canvas"></canvas>
@@ -82,7 +110,6 @@
         </div>
 
         <!-- Modals -->
-        </div>
         <div class="modal fade" id="viz-mode-dialog">
             <div class="modal-dialog">
                 <div class="modal-content">

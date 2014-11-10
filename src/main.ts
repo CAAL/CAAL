@@ -21,17 +21,22 @@ var isDialogOpen = false;
 $(document).ready(function() {
     editor = ace.edit("editor");
 
+    var defaultEditorContent = "***************\n" +
+                               "*** CSSTool ***\n" +
+                               "***************\n" +
+                               "\n" +
+                               "* Press Ctrl + Space for autocompletion";
     var project = new Project(
-        'Untitled Project', // Default title
-        '* Enter your program here', // Initial editor content
-        '#project-title',
+        "Untitled Project",
+        defaultEditorContent,
+        "#project-title",
         editor
     );
 
     var activityHandler = new Main.ActivityHandler();
     activityHandler.addActivity(
             "editor", 
-            new Activity.Editor(editor, "editor", $("#editor-status-div")[0], $("#parse")[0]),
+            new Activity.Editor(editor, "#parse-btn", "#status-area", "#clear-btn", "#font-size-btn"),
             (callback) => { callback({}); },
             "editor-container",
             "edit-btn");
@@ -111,8 +116,6 @@ module Main {
 
         public selectActivity(newActivityName : string): void {
             var newActivityData, callback;
-            //Don't do the work if not necessary
-            if (newActivityName === this.currentActivityName) return;
             newActivityData = this.activities[newActivityName];
             if (!newActivityData) return;
             callback = (configuration) => {
