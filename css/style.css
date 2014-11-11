@@ -47,6 +47,7 @@ canvas {
     cursor: pointer;
 }
 
+
 /*
  * Activity styles
  */
@@ -62,6 +63,7 @@ canvas {
  */
 
 #editor-border {
+    margin-bottom: 20px;
     padding: 5px;
     border: 1px solid #e7e7e7;
     border-radius: 5px;

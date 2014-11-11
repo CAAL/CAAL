@@ -240,7 +240,7 @@ module Activity {
             var width = this.canvas.parentNode.clientWidth;
             var offsetTop = $("#arbor-canvas").offset().top;
             var offsetBottom = $(this.statusTableContainer).height() + 20; // Parent container margin = 20.
-            var height = Math.max(400, window.innerHeight - offsetTop - offsetBottom);
+            var height = Math.max(350, window.innerHeight - offsetTop - offsetBottom);
             this.canvas.width = width;
             this.canvas.height = height;
             this.renderer.resize(width, height);
