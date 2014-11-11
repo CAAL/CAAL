@@ -36,15 +36,15 @@ module Activity {
         private graph : ccs.Graph;
         private succGenerator : ccs.SuccessorGenerator;
         private initialProcessName : string;
-        private statusDiv;
+        private statusTableContainer;
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
 
-        constructor(canvas, statusDiv, freezeBtn, notationVisitor : CCSNotationVisitor) {
+        constructor(canvas, statusTableContainer, freezeBtn, notationVisitor : CCSNotationVisitor) {
             super();
             this.canvas = canvas;
             this.freezeBtn = freezeBtn;
-            this.statusDiv = statusDiv;
+            this.statusTableContainer = statusTableContainer;
             this.notationVisitor = notationVisitor;
             this.renderer = new Renderer(canvas);
             this.uiGraph = new ArborGraph(this.renderer);
@@ -147,29 +147,18 @@ module Activity {
         }
 
         private updateStatusAreaTransitions(fromProcess, transitions : ccs.Transition[]) {
-            var lines = [
-                "Process '" + this.labelFor(fromProcess) + "' can do the following transitions:",
-                ""
-            ];
-            function padRight(str, n) {
-                var padding = Math.max(n - str.length, 0);
-                return str + Array(padding+1).join(" ");
-            }
-            transitions.forEach(t => {
-                var text = padRight("--- " + t.action.toString(), 24) + " -->  " +
-                    this.labelFor(t.targetProcess) + " = " +
-                    this.notationVisitor.visit(t.targetProcess);
-                lines.push(text);
-            });    
-            this.updateStatusArea(lines.join('\n'));                 
-        }
+            var body = $(this.statusTableContainer).find("tbody");
+            body.empty();
 
-        private updateStatusArea(preFormatted : string) {
-            var $statusDiv = $(this.statusDiv),
-                preElement = document.createElement("pre");
-            $statusDiv.empty();
-            $(preElement).text(preFormatted);
-            $statusDiv.append(preElement);
+            transitions.forEach(t => {
+                var row = $("<tr></tr>");
+                var source = $("<td></td>").append(this.labelFor(fromProcess));
+                var action = $("<td></td>").append(t.action.toString());
+                var name = $("<td></td>").append(this.labelFor(t.targetProcess));
+                var target = $("<td></td>").append(this.notationVisitor.visit(t.targetProcess));
+                row.append(source, action, name, target);
+                body.append(row);
+            });          
         }
 
         private showProcessAsExplored(process : ccs.Process) : void {
@@ -178,11 +167,10 @@ module Activity {
 
         private resize(): void {
             var width = this.canvas.parentNode.clientWidth;
-            var height = this.canvas.parentNode.clientHeight;
-            height = width * 4 / 10;
+            var height = Math.max(400, window.innerHeight - $("#arbor-canvas").offset().top - $(this.statusTableContainer).height());
             this.canvas.width = width;
             this.canvas.height = height;
             this.renderer.resize(width, height);
         }
     }
-}    
+}
