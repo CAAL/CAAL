@@ -21,6 +21,10 @@ module CCS {
         visit(process : Process) : T;
     }
 
+    export interface SuccessorGenerator {
+        getSuccessors(processId) : TransitionSet;
+    }
+
     export class NullProcess implements Process {
         constructor(public id : number) {
         }
@@ -530,6 +534,27 @@ module CCS {
             }
         }
 
+        possibleActions() : Action[] {
+            var actions = [],
+                action, found;
+            for (var i = 0; i < this.transitions.length; i++) {
+                action = this.transitions[i].action;
+                found = false;
+                for (var j = 0; j < actions.length; j++) {
+                    if (action.equals(actions[j])) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) actions.push(action);
+            }
+            return actions;
+        }
+
+        transitionsForAction(action : Action) : Transition[] {
+            return this.transitions.filter((transition) => action.equals(transition.action));
+        }
+
         forEach(f : (transition : Transition) => any) {
             for (var i = 0, max = this.transitions.length; i < max; i++){
                 f(this.transitions[i]);
@@ -541,15 +566,16 @@ module CCS {
         }
     }
 
-    export class SuccessorGenerator implements ProcessVisitor<TransitionSet>, ProcessDispatchHandler<TransitionSet> {
+    export class StrictSuccessorGenerator implements SuccessorGenerator, ProcessDispatchHandler<TransitionSet> {
 
         constructor(public graph : Graph, public cache?) {
             this.cache = cache || {};
         }
 
-        visit(process : Process) : TransitionSet {
+        getSuccessors(processId) : TransitionSet {
             //Move recursive calling into loop with stack here
             //if overflow becomes an issue.
+            var process = this.graph.processById(processId);
             return this.cache[process.id] = process.dispatchOn(this);
         }
 
@@ -653,6 +679,83 @@ module CCS {
             return transitionSet;
         }
     }
+
+    // export interface Set<T> {
+    //     // union(other : Set<T>) : Set<T>;
+    //     difference(other : Set<T>) : Set<T>;
+    //     toArray() : T[];
+    //     has(element : T) : boolean;
+    // }
+
+    // export interface MutableSet<T> extends Set<T> {
+    //     add(element : T);
+    //     remove(element : T);
+    // } 
+
+    // export interface Equitable<T> {
+    //     equals(other : T) : boolean;
+    // }
+
+    // class ArraySet<T> implements MutableSet<T> {
+    //     private elements : T[] = [];
+
+    //     constructor() {
+    //     }
+
+    //     add(element : T) {
+    //         if (!this.has(element)) {
+    //             this.elements.push(element);
+    //         }
+    //     }
+
+    //     union(other : Set<T>) : Set<T> {
+    //         var result = new ArraySet(),
+    //             otherElements = other.toArray();
+    //         result.elements = this.elements.slice(0);
+    //         for (var i=0; i < otherElements.length; i++) {
+    //             result.add(otherElements[i]);
+    //         }
+    //         return result;
+    //     }
+
+    //     difference(other : Set<T>) : Set<T> {
+    //         var result = new ArraySet(),
+    //             resultElements = [],
+    //             element;
+    //         for (var i=0; i < this.elements.length; i++) {
+    //             element = this.elements[i];
+    //             if (!other.has(element)) {
+    //                 resultElements.push(element);
+    //             }
+    //         }
+    //         result.elements = resultElements;
+    //         return result;
+    //     }
+
+    //     remove(element : T) {
+    //         var index = this.indexOf(element),
+    //             curLen = this.elements.length;
+    //         if (index !== -1) {
+    //             this.elements[index] = this.elements[curLen - 1];
+    //             this.elements.length = curLen - 1;
+    //         }
+    //     }
+
+    //     toArray() : T[] {
+    //         return this.elements.slice(0);
+    //     }
+
+    //     has(element : T) : boolean {
+    //         return this.indexOf(element) !== -1;
+    //     }
+
+    //     private indexOf(element) {
+    //        for (var i=0; i < this.elements.length; i++) {
+    //             if (this.elements[i].equals(element)) return i;
+    //         }
+    //         return -1; 
+    //     }
+    // }
 
     class GrowingIndexedArraySet<T> {
             

@@ -4,6 +4,7 @@ src/ccs/*.js
 src/gui/*.js
 src/activity/*.js
 src/gui/arbor/*.js
+test/*.js
 npm-debug.log
 lib/ccs.js
 lib/ccs_grammar.js
