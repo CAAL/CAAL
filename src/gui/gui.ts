@@ -1,6 +1,6 @@
 
 module GUI {
-    
+
     export interface ProcessGraphUI {
 
         clearAll() : void;

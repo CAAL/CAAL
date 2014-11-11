@@ -26,7 +26,7 @@ module Activity {
         return groupings;
     }
 
-    export class Explorer extends Activity { 
+    export class Explorer extends Activity {
         private canvas;
         private freezeBtn;
         private renderer: Renderer;
@@ -67,16 +67,18 @@ module Activity {
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId), this.expandDepth);
             });
+            //this.uiGraph.toggleFreeze(false);
             this.uiGraph.unfreeze();
             this.bindedFreezeFn = this.toggleFreeze.bind(this);
             $(this.freezeBtn).on("click", this.bindedFreezeFn);
-            this.resize(); 
+            this.resize();
         }
 
         afterHide() {
             $(window).unbind("resize", this.bindedResizeFn)
             this.bindedResizeFn = null;
-            $(this.freezeBtn).unbind("click", this.freezeBtn);
+            this.uiGraph.unfreeze();
+            $(this.freezeBtn).unbind("click", this.bindedFreezeFn);
             this.uiGraph.clearOnSelectListener();
             this.graph = null;
             this.succGenerator = null;
@@ -87,10 +89,11 @@ module Activity {
         }
 
         private toggleFreeze() {
-            var $freezeBtn = $(this.freezeBtn),
-                isFreezing = $freezeBtn.text() === "Unfreeze",
-                newValueText = isFreezing ? "Freeze" : "Unfreeze",
-                doFreeze = !isFreezing;
+            var $freezeBtn = $(this.freezeBtn);
+            this.isFreezing = $freezeBtn.text() === "Unfreeze";
+
+            var newValueText = this.isFreezing ? "Freeze" : "Unfreeze",
+                doFreeze = !this.isFreezing;
             $freezeBtn.text(newValueText);
             doFreeze ? this.uiGraph.freeze() : this.uiGraph.unfreeze();
         }
@@ -160,8 +163,8 @@ module Activity {
                     this.labelFor(t.targetProcess) + " = " +
                     this.notationVisitor.visit(t.targetProcess);
                 lines.push(text);
-            });    
-            this.updateStatusArea(lines.join('\n'));                 
+            });
+            this.updateStatusArea(lines.join('\n'));
         }
 
         private updateStatusArea(preFormatted : string) {
@@ -185,4 +188,4 @@ module Activity {
             this.renderer.resize(width, height);
         }
     }
-}    
+}
