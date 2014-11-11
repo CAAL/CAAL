@@ -47,17 +47,21 @@ canvas {
     cursor: pointer;
 }
 
+/*
+ * Activity styles
+ */
+
+#editor-container, #explorer-container, #verifier-container {
+    margin-bottom: 20px;
+    display: none;
+}
+
 
 /*
  * Editor activity styles
  */
 
-#editor-container, #explorer-container, #verifier-container {
-    display: none;
-}
-
 #editor-border {
-    margin-bottom: 20px;
     padding: 5px;
     border: 1px solid #e7e7e7;
     border-radius: 5px;
@@ -74,8 +78,8 @@ canvas {
  */
 
 #status-table-container {
-    height: 125px;
-    max-height: 125px;
+    height: 155px;
+    max-height: 155px;
     overflow-y: auto;
 }
 
