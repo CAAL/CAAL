@@ -1,22 +1,22 @@
 interface ParticleSystem {
     /*Vars*/
     renderer : Object;
-    
+
     /*Constructor*/
     (repulsion : number, stiffness : number, friction : number) : ParticleSystem;
     (repulsion : number, stiffness : number, friction : number, gravity : boolean, fps : number, dt : number, precision : number) : ParticleSystem;
-    
+
     /*Functions*/
     screenSize(width : number, height : number) : void;
     screenPadding(top : number) : void;
     screenPadding(top : number, bottom : number) : void;
     screenPadding(top : number, right : number, bottom : number, left : number) : void;
-    
+
     nearest(p : Point) : refNode;
-    fromScreen(p : Point) : Point; 
+    fromScreen(p : Point) : Point;
     toScreen(p : Point) : Point;
     parameters(o : Object) : void;
-    
+
     /* Nodes */
     addNode(name : string, object : Object) : Node;
     getNode(name : string);
@@ -28,16 +28,16 @@ interface ParticleSystem {
     getEdgesFrom(node) : Edge[];
     getEdgesTo(node) : Edge[];
     pruneEdge(edge : Edge);
-    
+
     /* Iteration */
 
     eachNode(f : (n : Node, pt : Point) => void) : void;
-    eachEdge(f : (e : Edge, p1 : Point, p2 : Point) => void) : void; 
+    eachEdge(f : (e : Edge, p1 : Point, p2 : Point) => void) : void;
 
     prune(f : (node : Node, from : Edge[], to : Edge[]) => void);
 
-    start();
-    stop();
+    start(unpause: boolean) : void;
+    stop() : void;
 
 }
 

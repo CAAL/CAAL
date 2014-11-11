@@ -85,8 +85,8 @@ class Renderer {
                 /*Draw normal edge*/
                 that.drawNormalEdge(pt1, pt2, that.nodeBoxes[edge.source.name], that.nodeBoxes[edge.target.name],
                         arrowLength, arrowWidth, chevronColor, label)
-            }     
-            that.ctx.restore();       
+            }
+            that.ctx.restore();
         });
     }
 
@@ -305,7 +305,7 @@ class Renderer {
              this.intersect_line_line(p1, p2, tr, br) ||
              this.intersect_line_line(p1, p2, br, bl) ||
              this.intersect_line_line(p1, p2, bl, tl) ||
-             null;
+             arbor.Point(p2.x, p2.y);
     }
 
     /**
@@ -330,17 +330,17 @@ class Renderer {
     //     }
 
     //     var edge = this.particleSystem.getEdges(source.name, target.name)[0]; // there should only be one...
-        
+
     //     if (edge !== undefined) { // if ege is already defined then concat the labels.
     //         edge.data.label += ", " + data.label;
-            
+
     //         if (edge.data.label.length > 10) {
     //             edge.data.label = edge.data.label.substring(0, 8) + "..";
     //         }
 
     //         return edge;
     //     }
-        
+
     //     return this.particleSystem.addEdge(source.name, target.name, data);
     // }
 
@@ -348,7 +348,7 @@ class Renderer {
      * expand the graph from a single node, get it successors and add them to the graph
      * @param {Node} selNode Optional parameter, if not given this.selectedNode will be expanded.
      */
-    // public expandGraph(selNode? : Node) : void {        
+    // public expandGraph(selNode? : Node) : void {
     //     if (selNode !== undefined) { // if given a node to expand, change this.selectedNode.
     //         this.handler.selectedNode = selNode;
     //     }
@@ -356,7 +356,7 @@ class Renderer {
     //     if (!this.handler.selectedNode.expanded) { // if not expanded, then expand.
     //         this.handler.selectedNode.expanded = true;
     //         var successors : any[] = this.getSuccessors(this.handler.selectedNode);
-            
+
     //         for (var i = 0, max = successors.length; i < max; i++) {
     //             var targetNode = this.addNodeToGraph(successors[i].targetid.toString(), successors[i].data);
     //             this.addEdgeToGraph(this.handler.selectedNode, targetNode, {label:successors[i].action});

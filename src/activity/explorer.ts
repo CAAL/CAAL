@@ -26,30 +26,95 @@ module Activity {
         return groupings;
     }
 
-    export class Explorer extends Activity { 
+    export class Explorer extends Activity {
         private canvas;
         private freezeBtn;
+        private fullscreenBtn;
         private renderer: Renderer;
         private uiGraph: ProcessGraphUI;
         private bindedResizeFn;
         private bindedFreezeFn;
+        private bindedFullscreenFn;
         private graph : ccs.Graph;
         private succGenerator : ccs.SuccessorGenerator;
         private initialProcessName : string;
         private statusTableContainer;
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
-
-        constructor(canvas, statusTableContainer, freezeBtn, notationVisitor : CCSNotationVisitor) {
+        private fullscreen: boolean = false;
+        
+        constructor(canvas, statusTableContainer, freezeBtn, fullscreenBtn, notationVisitor : CCSNotationVisitor) {
             super();
             this.canvas = canvas;
-            this.freezeBtn = freezeBtn;
             this.statusTableContainer = statusTableContainer;
+            this.freezeBtn = freezeBtn;
+            this.fullscreenBtn = fullscreenBtn;
             this.notationVisitor = notationVisitor;
             this.renderer = new Renderer(canvas);
             this.uiGraph = new ArborGraph(this.renderer);
+            
+            this.bindedFullscreenFn = this.openFullscreen.bind(this);
+            $(this.fullscreenBtn).on("click", this.bindedFullscreenFn);
+            
+            $(document).on("fullscreenchange", () => this.fullscreenChanged());
+            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
         }
 
+        private openFullscreen() {
+            if (this.canvas.requestFullscreen) {
+                this.canvas.requestFullscreen();
+            } else if (this.canvas.msRequestFullscreen) {
+                this.canvas.msRequestFullscreen();
+            } else if (this.canvas.mozRequestFullScreen) {
+                this.canvas.mozRequestFullScreen();
+            } else if (this.canvas.webkitRequestFullscreen) {
+                this.canvas.webkitRequestFullscreen();
+            }
+            /*if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {
+                if (this.canvas.requestFullscreen) {
+                    this.canvas.requestFullscreen();
+                } else if (this.canvas.msRequestFullscreen) {
+                    this.canvas.msRequestFullscreen();
+                } else if (this.canvas.mozRequestFullScreen) {
+                    this.canvas.mozRequestFullScreen();
+                } else if (this.canvas.webkitRequestFullscreen) {
+                    this.canvas.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (this.canvas.msExitFullscreen) {
+                    document.msExitFullscreen();
+                } else if (this.canvas.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (this.canvas.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }*/
+        }
+        
+        private fullscreenChanged() {
+            this.fullscreen = !this.fullscreen;
+
+            if (this.fullscreen) {
+                $(window).unbind("resize", this.bindedResizeFn)
+                this.bindedResizeFn = null;
+
+                var width = screen.width,
+                height = screen.height;
+            
+                this.canvas.width = width;
+                this.canvas.height = height;
+                
+                this.renderer.resize(width, height);
+            } else {
+                this.bindedResizeFn = this.resize.bind(this);
+                $(window).on("resize", this.bindedResizeFn);
+            }
+        }
+        
         beforeShow(configuration) {
             this.clear();
             this.graph = configuration.graph;
@@ -67,16 +132,18 @@ module Activity {
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId), this.expandDepth);
             });
+            //this.uiGraph.toggleFreeze(false);
             this.uiGraph.unfreeze();
             this.bindedFreezeFn = this.toggleFreeze.bind(this);
             $(this.freezeBtn).on("click", this.bindedFreezeFn);
-            this.resize(); 
+            this.resize();
         }
 
         afterHide() {
             $(window).unbind("resize", this.bindedResizeFn)
             this.bindedResizeFn = null;
-            $(this.freezeBtn).unbind("click", this.freezeBtn);
+            this.uiGraph.unfreeze();
+            $(this.freezeBtn).unbind("click", this.bindedFreezeFn);
             this.uiGraph.clearOnSelectListener();
             this.graph = null;
             this.succGenerator = null;
