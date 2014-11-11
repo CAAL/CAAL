@@ -38,17 +38,17 @@ module Activity {
         private graph : ccs.Graph;
         private succGenerator : ccs.SuccessorGenerator;
         private initialProcessName : string;
-        private statusDiv;
+        private statusTableContainer;
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
         private fullscreen: boolean = false;
 
-        constructor(canvas, statusDiv, freezeBtn, fullscreenBtn, notationVisitor : CCSNotationVisitor) {
+        constructor(canvas, statusTableContainer, freezeBtn, fullscreenBtn, notationVisitor : CCSNotationVisitor) {
             super();
             this.canvas = canvas;
+            this.statusTableContainer = statusTableContainer;
             this.freezeBtn = freezeBtn;
             this.fullscreenBtn = fullscreenBtn;
-            this.statusDiv = statusDiv;
             this.notationVisitor = notationVisitor;
             this.renderer = new Renderer(canvas);
             this.uiGraph = new ArborGraph(this.renderer);
@@ -93,21 +93,25 @@ module Activity {
                     document.webkitExitFullscreen();
                 }
             }*/
-
-            var width = screen.width,
-                height = screen.height;
-
-            this.canvas.width = width;
-            this.canvas.height = height;
-
-            this.renderer.resize(width, height);
         }
 
         private fullscreenChanged() {
             this.fullscreen = !this.fullscreen;
 
-            if (!this.fullscreen) {
-                this.resize();
+            if (this.fullscreen) {
+                $(window).unbind("resize", this.bindedResizeFn)
+                this.bindedResizeFn = null;
+
+                var width = screen.width,
+                height = screen.height;
+            
+                this.canvas.width = width;
+                this.canvas.height = height;
+                
+                this.renderer.resize(width, height);
+            } else {
+                this.bindedResizeFn = this.resize.bind(this);
+                $(window).on("resize", this.bindedResizeFn);
             }
         }
 
@@ -124,7 +128,7 @@ module Activity {
         afterShow(): void {
             var that = this;
             this.bindedResizeFn = this.resize.bind(this);
-            //$(window).on("resize", this.bindedResizeFn);
+            $(window).on("resize", this.bindedResizeFn);
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId), this.expandDepth);
             });
@@ -214,29 +218,18 @@ module Activity {
         }
 
         private updateStatusAreaTransitions(fromProcess, transitions : ccs.Transition[]) {
-            var lines = [
-                "Process '" + this.labelFor(fromProcess) + "' can do the following transitions:",
-                ""
-            ];
-            function padRight(str, n) {
-                var padding = Math.max(n - str.length, 0);
-                return str + Array(padding+1).join(" ");
-            }
-            transitions.forEach(t => {
-                var text = padRight("--- " + t.action.toString(), 24) + " -->  " +
-                    this.labelFor(t.targetProcess) + " = " +
-                    this.notationVisitor.visit(t.targetProcess);
-                lines.push(text);
-            });
-            this.updateStatusArea(lines.join('\n'));
-        }
+            var body = $(this.statusTableContainer).find("tbody");
+            body.empty();
 
-        private updateStatusArea(preFormatted : string) {
-            var $statusDiv = $(this.statusDiv),
-                preElement = document.createElement("pre");
-            $statusDiv.empty();
-            $(preElement).text(preFormatted);
-            $statusDiv.append(preElement);
+            transitions.forEach(t => {
+                var row = $("<tr></tr>");
+                var source = $("<td></td>").append(this.labelFor(fromProcess));
+                var action = $("<td></td>").append(t.action.toString());
+                var name = $("<td></td>").append(this.labelFor(t.targetProcess));
+                var target = $("<td></td>").append(this.notationVisitor.visit(t.targetProcess));
+                row.append(source, action, name, target);
+                body.append(row);
+            });          
         }
 
         private showProcessAsExplored(process : ccs.Process) : void {
@@ -245,8 +238,9 @@ module Activity {
 
         private resize(): void {
             var width = this.canvas.parentNode.clientWidth;
-            var height = this.canvas.parentNode.clientHeight;
-            height = width * 4 / 10;
+            var offsetTop = $("#arbor-canvas").offset().top;
+            var offsetBottom = $(this.statusTableContainer).height() + 20; // Parent container margin = 20.
+            var height = Math.max(400, window.innerHeight - offsetTop - offsetBottom);
             this.canvas.width = width;
             this.canvas.height = height;
             this.renderer.resize(width, height);

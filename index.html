@@ -101,11 +101,26 @@
             </div>
             <!-- Explorer -->
             <div id="explorer-container">
+                <div id="explorer-controls" class="btn-group pull-right">
+                    <button id="explorer-freeze-btn" type="button" class="btn btn-default">Freeze</button>
+                    <button id="explorer-fullscreen-btn" type="button" class="btn btn-default">Fullscreen</button>
+                </div>
+                <div class="clearfix"></div>
                 <canvas id="arbor-canvas"></canvas>
-                <button type="button" id="explorer-freeze-btn" class="btn btn-default pull-right">Freeze</button>
-                <button type="button" id="explorer-fullscreen-btn" class="btn btn-default pull-right">Fullscreen</button>
-                <br style="clear: both; margin-bottom: 50px;">
-                <div id="explorer-status-div"></div>
+                <div id="status-table-container">
+                    <table id="status-table" class="table table-responsive table-striped table-condensed" >
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Action</th>
+                                <th>Target</th>
+                                <th>Target Definition</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <!-- Verifier -->
             <div id="verifier-container">
