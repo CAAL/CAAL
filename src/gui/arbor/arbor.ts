@@ -5,13 +5,13 @@
 /// <reference path="handler.ts" />
 /// <reference path="../gui.ts" />
 
-module GUI { 
+module GUI {
 
     export class ArborGraph implements GUI.ProcessGraphUI {
         private sys : ParticleSystem;
         private renderer : Renderer;
         private handler : Handler;
-        public onClick : Function = null; 
+        public onClick : Function = null;
 
         constructor(renderer) {
             this.sys = arbor.ParticleSystem(500, 3000, 0.95);
@@ -72,7 +72,7 @@ module GUI {
         }
 
         unfreeze() : void {
-            this.sys.start();
+            this.sys.start(true);
         }
     }
 }
