@@ -8,6 +8,7 @@ test/*.js
 npm-debug.log
 lib/ccs.js
 lib/ccs_grammar.js
+lib/hml_grammar.js
 lib/ace
 lib/main.js
 *.js.map
