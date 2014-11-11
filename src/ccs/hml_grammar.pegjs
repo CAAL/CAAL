@@ -4,6 +4,9 @@
 	function strFirstAndRest(first, rest) {
 		return first + rest.join('');
 	}
+
+    var ccs = options.ccs,
+        hml = options.hml;
 }
 
 start
@@ -11,42 +14,41 @@ start
 
 Formula = Disjunction
 
-Disjunction = _ P:Conjunction Whitespace _ "or" Whitespace _ Q:Disjunction { return {type: "or", left: P, right: Q}; }
-			/ Conjunction
+Disjunction = _ P:Conjunction Whitespace _ "or" Whitespace _ Q:Disjunction { return new hml.DisjFormula(P, Q); }
+			/ P:Conjunction { return P; }
 
-Conjunction =  _ M:Modal Whitespace _ "and" Whitespace _ P:Conjunction { return {type: "and", left: M, right: P}; }
-			/ Modal
+Conjunction =  _ M:Modal Whitespace _ "and" Whitespace _ P:Conjunction { return new hml.ConjFormula(M, P); }
+			/ M:Modal { return M; }
 
-Modal = _ "[" _ A:Action _ "]" _ F:Formula { return {type: "forall", action: A, formula: F}}
-	  / _ "<" _ A:Action _ ">" _ F:Formula { return {type: "exists", action: A, formula: F}}
+Modal = _ "[" _ A:Action _ "]" _ F:Modal { return new hml.ForAllFormula(A, F); }
+	  / _ "<" _ A:Action _ ">" _ F:Modal { return new hml.ExistsFormula(A, F); }
 	  / Unary
 
 Unary = ParenFormula
-	  / _ "tt" { return {type: "true"}; }
-	  / _ "ff" { return {type: "false"}; }
+	  / _ "tt" { return new hml.TrueFormula(); }
+	  / _ "ff" { return new hml.FalseFormula(); }
 
 ParenFormula = _ "(" _ F:Formula _ ")" { return F; }
 
 IdentifierRest
-	= rest:[A-Za-z0-9?!_'\-#]*  { return rest; }
+    = rest:[A-Za-z0-9?!_'\-#]*  { return rest; }
 
-Action
-	= [!'] label:Label { return "'" + label; }
-	/ label:Label { return label; }
+Action "action"
+    = ['] label:Label { return new ccs.Action(label, true); }
+    / label:Label { return new ccs.Action(label, false); }
 
 //Valid name for actions
-Label
-	= first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
+Label "label"
+    = first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
 
-Whitespace
-	= [ \r\n\t]
+Whitespace "whitespace"
+    = [ \t]
 
-Comment = "*" [^\r\n]* "\r"? "\n"?
+Comment "comment" = "*" [^\r\n]* "\r"? "\n"?
 
 //Useful utility
-_ = Whitespace* Comment _
-  / Whitespace*
+_ = (Whitespace / Newline)* Comment _
+  / (Whitespace / Newline)*
 
-Newline
-	= "\r\n" / "\n" / "\r"
-
+Newline "newline"
+    = "\r\n" / "\n" / "\r"

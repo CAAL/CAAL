@@ -7,8 +7,11 @@ CCS_PARSE_SRC="./src/ccs/ccs.ts"
 CCS_PARSE_DEST="./lib/ccs.js"
 
 # generate the parser
-echo "Building Parser"
+echo "Building CCS Parser"
 pegjs --cache -e CCSParser src/ccs/ccs_grammar.pegjs lib/ccs_grammar.js
+
+echo "Building HML Parser"
+pegjs --cache -e HMLParser src/ccs/hml_grammar.pegjs lib/hml_grammar.js
 
 echo "Integrating Parser into Ace Module"
 mkdir -p modules/ace/lib/ace/mode/ccs
