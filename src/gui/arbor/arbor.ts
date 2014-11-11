@@ -14,7 +14,8 @@ module GUI {
         public onClick : Function = null;
 
         constructor(renderer) {
-            this.sys = arbor.ParticleSystem(500, 3000, 0.95);
+            //this.sys = arbor.ParticleSystem(500, 3000, 0.95);
+            this.sys = arbor.ParticleSystem(400, 1000, 0.5);
             this.sys.parameters({gravity:true});
             this.renderer = renderer;
             this.sys.renderer = renderer;
