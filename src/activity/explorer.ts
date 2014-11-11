@@ -89,11 +89,10 @@ module Activity {
         }
 
         private toggleFreeze() {
-            var $freezeBtn = $(this.freezeBtn);
-            this.isFreezing = $freezeBtn.text() === "Unfreeze";
-
-            var newValueText = this.isFreezing ? "Freeze" : "Unfreeze",
-                doFreeze = !this.isFreezing;
+            var $freezeBtn = $(this.freezeBtn),
+                isFreezing = $freezeBtn.text() === "Unfreeze",
+                newValueText = isFreezing ? "Freeze" : "Unfreeze",
+                doFreeze = !isFreezing;
             $freezeBtn.text(newValueText);
             doFreeze ? this.uiGraph.freeze() : this.uiGraph.unfreeze();
         }
