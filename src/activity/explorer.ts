@@ -42,7 +42,7 @@ module Activity {
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
         private fullscreen: boolean = false;
-        
+
         constructor(canvas, statusDiv, freezeBtn, fullscreenBtn, notationVisitor : CCSNotationVisitor) {
             super();
             this.canvas = canvas;
@@ -52,10 +52,10 @@ module Activity {
             this.notationVisitor = notationVisitor;
             this.renderer = new Renderer(canvas);
             this.uiGraph = new ArborGraph(this.renderer);
-            
+
             this.bindedFullscreenFn = this.openFullscreen.bind(this);
             $(this.fullscreenBtn).on("click", this.bindedFullscreenFn);
-            
+
             $(document).on("fullscreenchange", () => this.fullscreenChanged());
             $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
             $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
@@ -93,24 +93,24 @@ module Activity {
                     document.webkitExitFullscreen();
                 }
             }*/
-            
+
             var width = screen.width,
                 height = screen.height;
-            
+
             this.canvas.width = width;
             this.canvas.height = height;
-            
+
             this.renderer.resize(width, height);
         }
-        
+
         private fullscreenChanged() {
             this.fullscreen = !this.fullscreen;
-            
+
             if (!this.fullscreen) {
                 this.resize();
             }
         }
-        
+
         beforeShow(configuration) {
             this.clear();
             this.graph = configuration.graph;
@@ -128,7 +128,6 @@ module Activity {
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId), this.expandDepth);
             });
-            //this.uiGraph.toggleFreeze(false);
             this.uiGraph.unfreeze();
             this.bindedFreezeFn = this.toggleFreeze.bind(this);
             $(this.freezeBtn).on("click", this.bindedFreezeFn);
@@ -176,13 +175,16 @@ module Activity {
 
         private expand(process : ccs.Process, depth) {
             if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
+
             var allTransitions = this.expandBFS(process, depth);
             this.updateStatusAreaTransitions(process, allTransitions[process.id]);
+
             for (var fromId in allTransitions) {
                 var fromProcess = this.graph.processById(fromId);
                 this.showProcess(fromProcess);
                 this.showProcessAsExplored(fromProcess);
                 var groupedByTargetProcessId = groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
+
                 Object.keys(groupedByTargetProcessId).forEach(tProcId => {
                     var group = groupedByTargetProcessId[tProcId],
                         datas = group.map(t => { return {label: t.action.toString()}; });
@@ -190,6 +192,8 @@ module Activity {
                     this.uiGraph.showTransitions(fromProcess.id, tProcId, datas);
                 });
             }
+
+            this.uiGraph.setSelected(process.id.toString());
         }
 
         private expandBFS(process : ccs.Process, maxDepth) {

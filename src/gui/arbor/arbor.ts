@@ -11,6 +11,7 @@ module GUI {
         private sys : ParticleSystem;
         private renderer : Renderer;
         private handler : Handler;
+        private selectedNode : Node = null;
         public onClick : Function = null;
 
         constructor(renderer) {
@@ -44,6 +45,20 @@ module GUI {
                 edge.data.datas = datas;
             } else {
                 this.sys.addEdge(fromId, toId, {datas: datas});
+            }
+        }
+
+        setSelected(name: string){
+            if(!name) return;
+            var newSelectedNode = this.sys.getNode(''+name);
+
+            if(this.selectedNode && newSelectedNode) {
+                this.selectedNode.data.status = null; // clear the previous selected
+            }
+
+            if(newSelectedNode) {
+                this.selectedNode = newSelectedNode; // get the node
+                this.selectedNode.data.status = 'selected'; // set it as selected, and let the renderer handle the rest.
             }
         }
 

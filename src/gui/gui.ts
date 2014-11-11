@@ -12,6 +12,7 @@ module GUI {
         getTransitionDataObjects(fromId, toId) : any[];
 
         setOnSelectListener(f : (identifier) => void) : void;
+        setSelected(name : string) : void;
         clearOnSelectListener() : void;
 
         freeze() : void;

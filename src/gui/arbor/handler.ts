@@ -8,7 +8,7 @@ class Handler {
     public mouseP : Point = null;
     public onClick : Function = null;
     private isDragging = false;
-    private mouseDownPos; 
+    private mouseDownPos;
     public clickDistance = 50;
 
     public renderer : Renderer = null;

@@ -11,7 +11,8 @@ class Renderer {
 
     private nodeStatusColors = {
         "unexpanded": "rgb(160,160,160)",
-        "expanded": "rgb(51, 65, 185)"
+        "expanded": "rgb(51, 65, 185)",
+        "selected": "rgb(245, 50, 50"
     }
 
     constructor(canvas : HTMLCanvasElement) {
