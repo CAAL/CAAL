@@ -8,17 +8,19 @@ class Renderer {
     public ctx : CanvasRenderingContext2D;
     public gfx : any; // Graphics lib
     public particleSystem : ParticleSystem = null;
-    private selectedNodeName : string = null;
-
+    public selectedNode : Node = null;
+    public hoverNode : Node  = null;
+    
     private nodeStatusColors = {
         "unexpanded": "rgb(160,160,160)",
         "expanded": "rgb(51, 65, 185)",
-        "selected": "rgb(245, 50, 50"
+        "selected": "rgb(245, 50, 50)"
     }
 
-    // private highlightSettings = {
-    //     "color" : 
-    // }
+    private highlightSettings = {
+         "color" : "rgb(245, 50, 50)", //Edge color
+         "lineWidth" : 2.0
+    }
 
     constructor(canvas : HTMLCanvasElement) {
       this.canvas = canvas;
@@ -40,6 +42,7 @@ class Renderer {
 
     public redraw() {
         if (!this.particleSystem) {
+            console.log("Particlesystem is not yet defined in the renderer")
             return;
         }
 
@@ -60,7 +63,7 @@ class Renderer {
             // draw a line from pt1 to pt2
             var arrowLength = 13;
             var arrowWidth = 6;
-            var chevronColor = edge.data.color || "#4D4D4D";
+            var chevronColor = "#4D4D4D";
 
             var isSelfloop = edge.source.name === edge.target.name;
             var oppo = this.particleSystem.getEdges(edge.target, edge.source)[0];
@@ -73,8 +76,16 @@ class Renderer {
             var label = edge.data.datas.map((data) => data.label).join(",");
 
             this.ctx.save();
-            this.ctx.strokeStyle = "rgb(196, 196, 196)"; //Edge color
-            this.ctx.lineWidth = 2.0;
+            
+            this.ctx.strokeStyle = edge.data.color || "rgb(196, 196, 196)"; // Edge color
+            this.ctx.lineWidth = edge.data.lineWidth || 2.0; // Edge line width
+            
+            if (this.hoverNode !== null && this.selectedNode !== null){
+                if (edge.target.name == this.hoverNode.name && edge.source.name == this.selectedNode.name) {
+                    this.ctx.strokeStyle = edge.data.color || this.highlightSettings.color; // Edge color
+                    this.ctx.lineWidth = edge.data.lineWidth || this.highlightSettings.lineWidth; // Edge line width
+                }
+            }
 
             if(isSelfloop){
                 this.drawSelfEdge(pt1, pt2, arrowLength, arrowWidth, chevronColor, label, this.nodeBoxes[edge.target.name]);
@@ -225,10 +236,6 @@ class Renderer {
 
         if (label && label.length > 10) {
             label = node.data.label = label.substring(0,8) + "..";
-        }
-
-        if (node.data.status == "selected"){
-            this.selectedNodeName = node.name;
         }
 
         this.ctx.fillStyle = this.nodeStatusColors[node.data.status] || this.nodeStatusColors["expanded"];

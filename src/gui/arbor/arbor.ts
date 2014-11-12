@@ -12,7 +12,6 @@ module GUI {
         private renderer : Renderer;
         private handler : Handler;
         private selectedNode : Node = null;
-        public onClick : Function = null;
 
         constructor(renderer) {
             //this.sys = arbor.ParticleSystem(500, 3000, 0.95);
@@ -48,18 +47,28 @@ module GUI {
             }
         }
 
-        setSelected(name: string){
+        setSelected(name: string) {
             if(!name) return;
-            var newSelectedNode = this.sys.getNode(''+name);
+            var newSelectedNode = this.sys.getNode(name);
 
-            if(this.selectedNode && newSelectedNode) {
-                this.selectedNode.data.status = null; // clear the previous selected
+            if(this.renderer.selectedNode && newSelectedNode) {
+                this.renderer.selectedNode.data.status = null; // clear the previous selected
             }
 
             if(newSelectedNode) {
-                this.selectedNode = newSelectedNode; // get the node
-                this.selectedNode.data.status = 'selected'; // set it as selected, and let the renderer handle the rest.
+                this.renderer.selectedNode = newSelectedNode; // get the node
+                this.renderer.selectedNode.data.status = 'selected'; // set it as selected, and let the renderer handle the rest.
             }
+        }
+
+        setHover(name : string) : void {
+            this.renderer.hoverNode = this.sys.getNode(name);
+            this.renderer.redraw();
+        }
+
+        clearHover() : void {
+            this.renderer.hoverNode = null;
+            this.renderer.redraw();
         }
 
         getTransitionDataObjects(fromId : string, toId : string) : Object[] {
@@ -75,8 +84,29 @@ module GUI {
                 f(nodeId);
             };
         }
+
         clearOnSelectListener() : void {
             this.handler.onClick = null;
+        }
+
+        setHoverOnListener(f : (identifier : string) => void) : void {
+            this.handler.hoverOn = (nodeId) => {
+                f(nodeId);
+            }
+        }
+
+        clearHoverOutListener() : void {
+            this.handler.hoverOn = null;
+        }
+
+        setHoverOutListener(f : (identifier : string) => void) : void {
+            this.handler.hoverOut = (nodeId) => {
+                f(nodeId);
+            }
+        }
+
+        clearHoverOnListener() : void {
+            this.handler.hoverOut = null;
         }
 
         clearAll() : void {

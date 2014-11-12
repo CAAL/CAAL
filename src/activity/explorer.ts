@@ -143,6 +143,16 @@ module Activity {
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId), this.expandDepth);
             });
+
+            this.uiGraph.setHoverOnListener((processId) => {
+                this.uiGraph.setHover(processId);
+            });
+
+            this.uiGraph.setHoverOutListener(() => {
+                this.uiGraph.clearHover();
+            });
+
+
             this.uiGraph.unfreeze();
             this.bindedFreezeFn = this.toggleFreeze.bind(this);
             $(this.freezeBtn).on("click", this.bindedFreezeFn);
