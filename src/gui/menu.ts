@@ -189,19 +189,19 @@ class Delete extends MenuItem {
         var projects = this.storage.getObj('projects');
         var id = e.data.id;
 
-        if (projects.length === 1) {
-            this.storage.delete('projects');
-        } else {
-            for (var i = 0; i < projects.length; i++) {
-                if (projects[i].id === id) {
+        for (var i = 0; i < projects.length; i++) {
+            if (projects[i].id === id) {
+                if (projects.length === 1) {
+                    this.storage.delete('projects');
+                } else {
                     projects.splice(i, 1);
                     this.storage.setObj('projects', projects);
-                    break;
                 }
+                this.project.setId(null);
+                $(document).trigger('delete');
+                break;
             }
         }
-
-        $(document).trigger('delete');
     }
 
     private showProjects(): void {
