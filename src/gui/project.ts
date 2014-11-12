@@ -56,7 +56,7 @@ class Project {
         this.update(null, this.defaultTitle, this.defaultCCS);
     }
 
-    public toJSON(): Object {
+    public toJSON(): any {
         return {
             id: this.getId(),
             title: this.getTitle(),

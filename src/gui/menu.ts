@@ -40,7 +40,9 @@ class Save extends MenuItem {
     }
 
     private saveToFile(): void {
-        var blob = new Blob([JSON.stringify(this.project.toJSON())], {type: 'text/plain'});
+        var json = this.project.toJSON();
+        json.id = null;
+        var blob = new Blob([JSON.stringify(json)], {type: 'text/plain'});
         $(this.elementIds.saveFileId).attr('href', URL.createObjectURL(blob));
         $(this.elementIds.saveFileId).attr('download', this.project.getTitle() + '.ccs-project');
     }
@@ -114,7 +116,7 @@ class Load extends MenuItem {
 
         reader.onload = () => {
             var project = JSON.parse(reader.result);
-            this.project.update(project.id, project.title, project.ccs);
+            this.project.update(null, project.title, project.ccs);
             this.activityHandler.selectActivity("editor");
             $(this.elementIds.fileInputId).replaceWith($(this.elementIds.fileInputId).val('').clone(true)); // Clear input field.
         }
