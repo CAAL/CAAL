@@ -8,12 +8,17 @@ class Renderer {
     public ctx : CanvasRenderingContext2D;
     public gfx : any; // Graphics lib
     public particleSystem : ParticleSystem = null;
+    private selectedNodeName : string = null;
 
     private nodeStatusColors = {
         "unexpanded": "rgb(160,160,160)",
         "expanded": "rgb(51, 65, 185)",
         "selected": "rgb(245, 50, 50"
     }
+
+    // private highlightSettings = {
+    //     "color" : 
+    // }
 
     constructor(canvas : HTMLCanvasElement) {
       this.canvas = canvas;
@@ -38,18 +43,17 @@ class Renderer {
             return;
         }
 
-        var that = this;
         // redraw will be called repeatedly during the run.
         this.gfx.clear();
 
-        that.particleSystem.eachNode(function(node : Node, pt : Point) {
+        this.particleSystem.eachNode((node : Node, pt : Point) => {
             // node: {mass:#, p:{x,y}, name:"", data:{}}
             // pt:   {x:#, y:#}  node position in screen coords
-            that.drawRectNode(node, pt);
+            this.drawRectNode(node, pt);
         });
 
         // draw the edges
-        that.particleSystem.eachEdge(function(edge : Edge, pt1 : Point, pt2 : Point){
+        this.particleSystem.eachEdge((edge : Edge, pt1 : Point, pt2 : Point) => {
             // edge: {source:Node, target:Node, length:#, data:{}}
             // pt1:  {x:#, y:#}  source position in screen coords
             // pt2:  {x:#, y:#}  target position in screen coords
@@ -59,7 +63,7 @@ class Renderer {
             var chevronColor = edge.data.color || "#4D4D4D";
 
             var isSelfloop = edge.source.name === edge.target.name;
-            var oppo = that.particleSystem.getEdges(edge.target, edge.source)[0];
+            var oppo = this.particleSystem.getEdges(edge.target, edge.source)[0];
 
             function strShorten(str) {
                 return str.length > 10 ? str.substring(0,8) + ".." : str;
@@ -68,26 +72,26 @@ class Renderer {
             // var label = /*strShorten(*/edge.data.agLabels.join(",")/*)*/;
             var label = edge.data.datas.map((data) => data.label).join(",");
 
-            that.ctx.save();
-            that.ctx.strokeStyle = "rgb(196, 196, 196)"; //Edge color
-            that.ctx.lineWidth = 1.6;
+            this.ctx.save();
+            this.ctx.strokeStyle = "rgb(196, 196, 196)"; //Edge color
+            this.ctx.lineWidth = 2.0;
 
             if(isSelfloop){
-                that.drawSelfEdge(pt1, pt2, arrowLength, arrowWidth, chevronColor, label, that.nodeBoxes[edge.target.name]);
+                this.drawSelfEdge(pt1, pt2, arrowLength, arrowWidth, chevronColor, label, this.nodeBoxes[edge.target.name]);
             }
             else if (oppo != undefined) {
                 /* Bend the edges, otherwise the two edges will "overlap" eachother*/
                 if (edge.source == oppo.target && edge.target == oppo.source) {
-                    that.drawBendingEdge(pt1, pt2, that.nodeBoxes[edge.source.name], that.nodeBoxes[edge.target.name],
+                    this.drawBendingEdge(pt1, pt2, this.nodeBoxes[edge.source.name], this.nodeBoxes[edge.target.name],
                         arrowLength, arrowWidth, chevronColor, label);
                 }
             }
             else {
                 /*Draw normal edge*/
-                that.drawNormalEdge(pt1, pt2, that.nodeBoxes[edge.source.name], that.nodeBoxes[edge.target.name],
+                this.drawNormalEdge(pt1, pt2, this.nodeBoxes[edge.source.name], this.nodeBoxes[edge.target.name],
                         arrowLength, arrowWidth, chevronColor, label)
             }
-            that.ctx.restore();
+            this.ctx.restore();
         });
     }
 
@@ -223,6 +227,10 @@ class Renderer {
             label = node.data.label = label.substring(0,8) + "..";
         }
 
+        if (node.data.status == "selected"){
+            this.selectedNodeName = node.name;
+        }
+
         this.ctx.fillStyle = this.nodeStatusColors[node.data.status] || this.nodeStatusColors["expanded"];
 
         this.gfx.rect(pt.x-textWidth/2, pt.y-10, textWidth, 26, 8, {fill:this.ctx.fillStyle}); // draw the node rect
@@ -308,66 +316,4 @@ class Renderer {
              this.intersect_line_line(p1, p2, bl, tl) ||
              arbor.Point(p2.x, p2.y);
     }
-
-    /**
-     * adds a single node to the graph.
-     * @param  {number} nodeId The unique name of the node.
-     * @param  {string} label    The label the of the node.
-     * @return {Node}            Returns the node, just added.
-     */
-    // public addNodeToGraph(name : string, data : any) : Node{
-    //     var label = data.label
-    //     if (label){
-    //         if(label.length > 10){
-    //             label = label.substring(0,8) + "..";
-    //         }
-    //     }
-    //     return this.particleSystem.addNode(name, data);
-    // }
-
-    // public addEdgeToGraph(source: Node, target: Node, data: any) : Edge {
-    //     if (source === target) {  // if selfloop
-    //         data.selfloop = true;
-    //     }
-
-    //     var edge = this.particleSystem.getEdges(source.name, target.name)[0]; // there should only be one...
-
-    //     if (edge !== undefined) { // if ege is already defined then concat the labels.
-    //         edge.data.label += ", " + data.label;
-
-    //         if (edge.data.label.length > 10) {
-    //             edge.data.label = edge.data.label.substring(0, 8) + "..";
-    //         }
-
-    //         return edge;
-    //     }
-
-    //     return this.particleSystem.addEdge(source.name, target.name, data);
-    // }
-
-    /**
-     * expand the graph from a single node, get it successors and add them to the graph
-     * @param {Node} selNode Optional parameter, if not given this.selectedNode will be expanded.
-     */
-    // public expandGraph(selNode? : Node) : void {
-    //     if (selNode !== undefined) { // if given a node to expand, change this.selectedNode.
-    //         this.handler.selectedNode = selNode;
-    //     }
-
-    //     if (!this.handler.selectedNode.expanded) { // if not expanded, then expand.
-    //         this.handler.selectedNode.expanded = true;
-    //         var successors : any[] = this.getSuccessors(this.handler.selectedNode);
-
-    //         for (var i = 0, max = successors.length; i < max; i++) {
-    //             var targetNode = this.addNodeToGraph(successors[i].targetid.toString(), successors[i].data);
-    //             this.addEdgeToGraph(this.handler.selectedNode, targetNode, {label:successors[i].action});
-    //         }
-    //     }
-    // }
-
-    // /* Just test function */
-    // private myid = 1;
-    // public getSuccessors(curNode : Node) : any[] {
-    //     return [{action:"a", targetid: this.myid, data:{label: "asd.B"}}, {action:"b", targetid: this.myid, data:{label: "asd.B"}}, {action:"c", targetid: ++this.myid, data:{label: "asd.B"}}];
-    // }
 }
