@@ -12,16 +12,16 @@ Setup
 All you need is [Node.js](http://nodejs.org/) and npm installed.
 Clone this repository and run the following commands in the root directory of the repository:
 ```bash
-    npm install
-    git submodule init
-    git submodule update
-    cd modules/ace
-    npm install
+npm install
+git submodule init
+git submodule update
+cd modules/ace
+npm install
 ```
 
 Building
 -----------
 ```bash
-    npm run build
+npm run build
 ```
 This will run the ``` build.sh ``` script, which will compile all of the Typescript files, and compile any potential changes in the Ace submodule.
