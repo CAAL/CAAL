@@ -111,11 +111,16 @@ module Activity {
                 $(window).unbind("resize", this.bindedResizeFn)
                 this.bindedResizeFn = null;
                 
-                var width = this.fullscreenContainer.clientWidth,
-                    height = this.fullscreenContainer.clientHeight;
+                var margin: number = 0,
+                    width: number = this.fullscreenContainer.clientWidth - margin*2,
+                    height: number = this.fullscreenContainer.clientHeight - margin*2;
                 
                 this.canvas.width = width;
                 this.canvas.height = height;
+                this.canvas.style.marginTop = margin+"px";
+                this.canvas.style.marginLeft = margin+"px";
+                this.canvas.style.marginRight = margin+"px";
+                this.canvas.style.marginBottom = margin+"px";
                 
                 this.renderer.resize(width, height);
             }

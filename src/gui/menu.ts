@@ -40,7 +40,9 @@ class Save extends MenuItem {
     }
 
     private saveToFile(): void {
-        var blob = new Blob([JSON.stringify(this.project.toJSON())], {type: 'text/plain'});
+        var json = this.project.toJSON();
+        json.id = null;
+        var blob = new Blob([JSON.stringify(json)], {type: 'text/plain'});
         $(this.elementIds.saveFileId).attr('href', URL.createObjectURL(blob));
         $(this.elementIds.saveFileId).attr('download', this.project.getTitle() + '.ccs-project');
     }
@@ -114,7 +116,7 @@ class Load extends MenuItem {
 
         reader.onload = () => {
             var project = JSON.parse(reader.result);
-            this.project.update(project.id, project.title, project.ccs);
+            this.project.update(null, project.title, project.ccs);
             this.activityHandler.selectActivity("editor");
             $(this.elementIds.fileInputId).replaceWith($(this.elementIds.fileInputId).val('').clone(true)); // Clear input field.
         }
@@ -187,24 +189,19 @@ class Delete extends MenuItem {
         var projects = this.storage.getObj('projects');
         var id = e.data.id;
 
-        if (projects.length === 1) {
-            this.storage.delete('projects');
-        } else {
-            for (var i = 0; i < projects.length; i++) {
-                if (projects[i].id === id) {
+        for (var i = 0; i < projects.length; i++) {
+            if (projects[i].id === id) {
+                if (projects.length === 1) {
+                    this.storage.delete('projects');
+                } else {
                     projects.splice(i, 1);
                     this.storage.setObj('projects', projects);
-                    break;
                 }
+                this.project.setId(null);
+                $(document).trigger('delete');
+                break;
             }
         }
-
-        if (id === this.project.getId()) {
-            this.project.reset();
-            this.activityHandler.selectActivity('editor');
-        }
-
-        $(document).trigger('delete');
     }
 
     private showProjects(): void {
