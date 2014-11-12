@@ -67,6 +67,11 @@ module Activity {
             $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
             $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
             $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
+            
+            $(document).on("fullscreenerror", () => this.fullscreenError());
+            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
+            $(document).on("mozfullscreenerror", () => this.fullscreenError());
+            $(document).on("MSFullscreenError", () => this.fullscreenError());
         }
 
         private toggleFullscreen() {
@@ -114,8 +119,6 @@ module Activity {
             if (!this.fullscreen) {
                 this.bindedResizeFn = this.resize.bind(this);
                 $(window).on("resize", this.bindedResizeFn);
-                
-                //this.resize(); // can we trust the above to always resize the canvas?
             } else {
                 $(window).unbind("resize", this.bindedResizeFn)
                 this.bindedResizeFn = null;
@@ -126,6 +129,7 @@ module Activity {
                 
                 this.canvas.width = width;
                 this.canvas.height = height;
+                
                 this.canvas.style.marginTop = margin+"px";
                 this.canvas.style.marginLeft = margin+"px";
                 this.canvas.style.marginRight = margin+"px";
@@ -133,6 +137,13 @@ module Activity {
                 
                 this.renderer.resize(width, height);
             }
+        }
+        
+        private fullscreenError() {
+            console.log("Fullscreen error");
+            
+            this.bindedResizeFn = this.resize.bind(this);
+            $(window).on("resize", this.bindedResizeFn);
         }
 
         beforeShow(configuration) {
