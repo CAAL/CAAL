@@ -201,11 +201,6 @@ class Delete extends MenuItem {
             }
         }
 
-        if (id === this.project.getId()) {
-            this.project.reset();
-            this.activityHandler.selectActivity('editor');
-        }
-
         $(document).trigger('delete');
     }
 
