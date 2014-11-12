@@ -4,6 +4,7 @@
   "description": "Workbench for CCS",
   "main": "",
   "dependencies": {
+    "typescript": "1.*",
     "pegjs": "~0.8.0"
   },
   "devDependencies": {},
