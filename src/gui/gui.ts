@@ -12,8 +12,17 @@ module GUI {
         getTransitionDataObjects(fromId, toId) : any[];
 
         setOnSelectListener(f : (identifier) => void) : void;
-        setSelected(name : string) : void;
         clearOnSelectListener() : void;
+
+        setHoverOnListener(f : (identifier) => void ) : void;
+        clearHoverOnListener() : void;
+
+        setHoverOutListener(f : (identifier) => void ) : void;
+        clearHoverOutListener() : void;
+
+        setSelected(name : string) : void;
+        setHover(name: string) : void;
+        clearHover() : void;
 
         freeze() : void;
         unfreeze() : void;

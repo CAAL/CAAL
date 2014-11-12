@@ -15,6 +15,7 @@
 /// <reference path="activity/verifier.ts" />
 
 declare var CCSParser;
+import ccs = CCS;
 
 var editor;
 var isDialogOpen = false;
@@ -132,11 +133,34 @@ module Main {
             newActivityData.setupFn(callback);
         }
     }
+
+    export function getGraph() {
+        var graph = new CCS.Graph();
+            CCSParser.parse(editor.getValue(), {ccs: CCS, graph: graph});
+        return graph;
+    }
+
+    export function getStrictSuccGenerator(graph) : ccs.SuccessorGenerator {
+        var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
+            treeReducer = new Traverse.ProcessTreeReducer(graph),
+            reducingGenerator = new Traverse.ReducingSuccessorGenerator(strictGenerator, treeReducer);
+        return reducingGenerator;
+    }
+
+    export function getWeakSuccGenerator(graph) : ccs.SuccessorGenerator {
+        //Wait do we build the, weak generator on top of the strict directly and then reduce?
+        //or do we take take the strict one, reduce it, then apply the weak on top?  <-- this right now.
+        var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
+            treeReducer = new Traverse.ProcessTreeReducer(graph),
+            reducingGenerator = new Traverse.ReducingSuccessorGenerator(strictGenerator, treeReducer),
+            weakGenerator = new Traverse.WeakSuccessorGenerator(reducingGenerator);
+        return weakGenerator;
+    }
 }
 
 function setupExplorerActivityFn(callback) : any {
-    var graph = getGraph(),
-        successorGenerator = new Traverse.ReducingSuccessorGenerator(graph),
+    var graph = Main.getGraph(),
+        succGenerator = Main.getStrictSuccGenerator(graph),
         namedProcesses = graph.getNamedProcesses(),
         $dialogList = $("#viz-mode-dialog-body-list"),
         $depthSelect = $("#viz-mode-dialog-depth"),
@@ -152,7 +176,7 @@ function setupExplorerActivityFn(callback) : any {
     function makeConfiguration(processName, expandDepth) {
         return {
             graph: graph,
-            successorGenerator: successorGenerator,
+            successorGenerator: succGenerator,
             initialProcessName: processName,
             expandDepth: expandDepth
         };
@@ -197,10 +221,4 @@ function isShowingDialog() : boolean {
         }
     };
     return false;
-}
-
-function getGraph() {
-    var graph = new CCS.Graph();
-        CCSParser.parse(editor.getValue(), {ccs: CCS, graph: graph});
-    return graph;
 }

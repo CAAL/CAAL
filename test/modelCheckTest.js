@@ -16,9 +16,16 @@ var tvs = Traverse,
     ccs = CCS,
     hml = HML;
 
+function getStrictSuccGenerator(graph) {
+    var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
+        treeReducer = new tvs.ProcessTreeReducer(graph),
+        reducingGenerator = new tvs.ReducingSuccessorGenerator(strictGenerator, treeReducer);
+    return reducingGenerator;
+}
+
 function checkFormula(program, processName, formula) {
     var graph = new CCSParser.parse(program, {ccs: CCS}),
-        succGen = new tvs.ReducingSuccessorGenerator(graph),
+        succGen = getStrictSuccGenerator(graph),
         formula = HMLParser.parse(formula, {ccs: ccs, hml: hml}),
         dg = new dgMod.ModelCheckingDG(succGen, graph.processByName(processName).id, formula);
     return dgMod.liuSmolkaLocal2(0, dg);

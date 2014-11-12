@@ -14,9 +14,17 @@ var tvs = Traverse,
     dgMod = DependencyGraph,
     ccs = CCS;
 
+
+function getStrictSuccGenerator(graph) {
+    var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
+        treeReducer = new tvs.ProcessTreeReducer(graph),
+        reducingGenerator = new tvs.ReducingSuccessorGenerator(strictGenerator, treeReducer);
+    return reducingGenerator;
+}
+
 function testNotSimilar() {
     var graph = CCSParser.parse("P = a.(b.0 + c.0); Q = a.b.0 + a.c.0;", {ccs: CCS}),
-        succGen = new tvs.ReducingSuccessorGenerator(graph);
+        succGen = getStrictSuccGenerator(graph),
         dg = new dgMod.BisimulationDG(
             succGen,
             graph.processByName("P").id,
@@ -27,7 +35,7 @@ function testNotSimilar() {
 
 function testSimilar() {
     var graph = CCSParser.parse("P = a.(b.0 + c.0); Q = a.(b.0 + c.0) + a.(c.0 + b.0);", {ccs: CCS}),
-        succGen = new tvs.ReducingSuccessorGenerator(graph);
+        succGen = getStrictSuccGenerator(graph);
         dg = new dgMod.BisimulationDG(
             succGen,
             graph.processByName("P").id,

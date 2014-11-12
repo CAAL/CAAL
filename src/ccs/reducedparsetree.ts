@@ -90,17 +90,39 @@ module Traverse {
         }
     }
 
+    export class WeakSuccessorGenerator implements ccs.SuccessorGenerator {
+
+        constructor(public strictSuccGenerator : ccs.SuccessorGenerator,  public cache?) {
+            this.cache = cache || {};
+        }
+
+        getSuccessors(processId) {
+            var result = new ccs.TransitionSet(),
+                visited = {}, toVisit = [processId];
+            if (this.cache[processId]) return this.cache[processId];
+
+            while (toVisit.length > 0) {
+                var visitingId = toVisit.pop();
+                if (!visited[visitingId]) {
+                    visited[visitingId] = true;
+                    var successors = this.strictSuccGenerator.getSuccessors(visitingId);
+                    successors.forEach(transition => {
+                        if (transition.action.getLabel() === "tau") {
+                            toVisit.push(transition.targetProcess.id);
+                        } else {
+                            result.add(transition);
+                        }
+                    });
+                }
+            }
+            this.cache[processId] = result;
+            return result;
+        }
+    }
+
     export class ReducingSuccessorGenerator implements ccs.SuccessorGenerator {
         
-        private succGenerator : ccs.StrictSuccessorGenerator;
-        private reducer : ProcessTreeReducer;
-
-        constructor(public graph : ccs.Graph, public successorCache?, public reducerCache?) {
-            this.successorCache = successorCache || {};
-            this.reducerCache = reducerCache || {};
-            this.succGenerator = new ccs.StrictSuccessorGenerator(graph, this.successorCache);
-            this.reducer = new ProcessTreeReducer(graph, this.reducerCache);
-        }
+        constructor(public succGenerator : ccs.SuccessorGenerator, public reducer : ProcessTreeReducer) { }
 
         getSuccessors(processId) : ccs.TransitionSet {
             var transitionSet = this.succGenerator.getSuccessors(processId);
