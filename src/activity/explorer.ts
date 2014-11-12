@@ -44,7 +44,6 @@ module Activity {
         private statusTableContainer;
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
-        private fullscreen: boolean = false;
         
         constructor(canvas, fullscreenContainer, statusTableContainer, freezeBtn, saveBtn, fullscreenBtn, notationVisitor : CCSNotationVisitor) {
             super();
@@ -74,17 +73,12 @@ module Activity {
             $(document).on("MSFullscreenError", () => this.fullscreenError());
         }
 
+        private isFullscreen(): boolean {
+            return !!document.fullscreenElement || !!document.mozFullScreenElement || !!document.webkitFullscreenElement || !!document.msFullscreenElement;
+        }
+        
         private toggleFullscreen() {
-            /*if (this.fullscreenContainer.requestFullscreen) {
-                this.fullscreenContainer.requestFullscreen();
-            } else if (this.fullscreenContainer.msRequestFullscreen) {
-                this.fullscreenContainer.msRequestFullscreen();
-            } else if (this.fullscreenContainer.mozRequestFullScreen) {
-                this.fullscreenContainer.mozRequestFullScreen();
-            } else if (this.fullscreenContainer.webkitRequestFullscreen) {
-                this.fullscreenContainer.webkitRequestFullscreen();
-            }*/
-            if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {
+            if (!this.isFullscreen()) {
                 if (this.fullscreenContainer.requestFullscreen) {
                     this.fullscreenContainer.requestFullscreen();
                 } else if (this.fullscreenContainer.msRequestFullscreen) {
@@ -116,24 +110,20 @@ module Activity {
             this.fullscreen = !this.fullscreen;
             $(this.fullscreenBtn).text(this.fullscreen ? "Exit" : "Fullscreen");
             
-            if (!this.fullscreen) {
+            if (!this.isFullscreen()) {
                 this.bindedResizeFn = this.resize.bind(this);
                 $(window).on("resize", this.bindedResizeFn);
             } else {
                 $(window).unbind("resize", this.bindedResizeFn)
                 this.bindedResizeFn = null;
                 
-                var margin: number = 0,
-                    width: number = this.fullscreenContainer.clientWidth - margin*2,
-                    height: number = this.fullscreenContainer.clientHeight - margin*2;
+                // the clientWidth is updated before width
+                var width: number = this.canvas.clientWidth,
+                    height: number = this.canvas.clientHeight;
                 
+                // let the canvas know how big it is going to be, the renderer uses canvas.width and canvas.height values to scale itself
                 this.canvas.width = width;
                 this.canvas.height = height;
-                
-                this.canvas.style.marginTop = margin+"px";
-                this.canvas.style.marginLeft = margin+"px";
-                this.canvas.style.marginRight = margin+"px";
-                this.canvas.style.marginBottom = margin+"px";
                 
                 this.renderer.resize(width, height);
             }
