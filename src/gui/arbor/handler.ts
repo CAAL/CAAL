@@ -19,7 +19,7 @@ class Handler {
     constructor(renderer : Renderer) {
         this.renderer = renderer;
         $(this.renderer.canvas).bind('mousedown', {handler: this}, this.clicked);
-        $(this.renderer.canvas).bind('mousemove', {handler: this}, this.hover);
+        $(this.renderer.canvas).bind('mousemove', {handler: this}, this.hover); // event for hovering over a node
     }
 
     public clicked(e): boolean {

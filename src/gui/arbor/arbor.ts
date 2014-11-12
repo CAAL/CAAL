@@ -59,16 +59,17 @@ module GUI {
                 this.renderer.selectedNode = newSelectedNode; // get the node
                 this.renderer.selectedNode.data.status = 'selected'; // set it as selected, and let the renderer handle the rest.
             }
+            this.renderer.redraw(); // redraw the image to change the color of the selected node.
         }
 
         setHover(name : string) : void {
             this.renderer.hoverNode = this.sys.getNode(name);
-            this.renderer.redraw();
+            this.renderer.redraw(); // redraw to change the color of the edge.
         }
 
         clearHover() : void {
             this.renderer.hoverNode = null;
-            this.renderer.redraw();
+            this.renderer.redraw(); // redraw to clear the color of the edge.
         }
 
         getTransitionDataObjects(fromId : string, toId : string) : Object[] {
