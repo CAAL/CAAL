@@ -65,12 +65,12 @@ canvas {
 #fullscreen-container:full-screen                 { width: 100%; height: 100%; }
 #fullscreen-container:fullscreen                   { width: 100%; height: 100%; }
 
-#fullscreen-container:-webkit-full-screen div { position: absolute; top: 0; right: 0; }
-#fullscreen-container:-moz-full-screen div       { position: absolute; top: 0; right: 0; }
-#fullscreen-container:-ms-full-screen div         { position: absolute; top: 0; right: 0; }
-#fullscreen-container:-full-screen div               { position: absolute; top: 0; right: 0; }
-#fullscreen-container:full-screen div                 { position: absolute; top: 0; right: 0; }
-#fullscreen-container:fullscreen div                   { position: absolute; top: 0; right: 0; }
+#fullscreen-container:-webkit-full-screen div { position: absolute; top: 10px; right: 10px; }
+#fullscreen-container:-moz-full-screen div       { position: absolute; top: 10px; right: 10px; }
+#fullscreen-container:-ms-full-screen div         { position: absolute; top: 10px; right: 10px; }
+#fullscreen-container:-full-screen div               { position: absolute; top: 10px; right: 10px; }
+#fullscreen-container:full-screen div                 { position: absolute; top: 10px; right: 10px; }
+#fullscreen-container:fullscreen div                   { position: absolute; top: 10px; right: 10px; }
 
 
 /*
