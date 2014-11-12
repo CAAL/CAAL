@@ -5,6 +5,7 @@
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="../gui/gui.ts" />
 /// <reference path="../ccs/util.ts" />
+/// <reference path="../../lib/suppressWarnings.d.ts" />
 
 module Activity {
 
@@ -28,6 +29,7 @@ module Activity {
 
     export class Explorer extends Activity {
         private canvas;
+        private fullscreenContainer;
         private freezeBtn;
         private fullscreenBtn;
         private renderer: Renderer;
@@ -42,10 +44,11 @@ module Activity {
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
         private fullscreen: boolean = false;
-
-        constructor(canvas, statusTableContainer, freezeBtn, fullscreenBtn, notationVisitor : CCSNotationVisitor) {
+        
+        constructor(canvas, fullscreenContainer, statusTableContainer, freezeBtn, fullscreenBtn, notationVisitor : CCSNotationVisitor) {
             super();
             this.canvas = canvas;
+            this.fullscreenContainer = fullscreenContainer;
             this.statusTableContainer = statusTableContainer;
             this.freezeBtn = freezeBtn;
             this.fullscreenBtn = fullscreenBtn;
@@ -53,7 +56,7 @@ module Activity {
             this.renderer = new Renderer(canvas);
             this.uiGraph = new ArborGraph(this.renderer);
 
-            this.bindedFullscreenFn = this.openFullscreen.bind(this);
+            this.bindedFullscreenFn = this.toggleFullscreen.bind(this);
             $(this.fullscreenBtn).on("click", this.bindedFullscreenFn);
 
             $(document).on("fullscreenchange", () => this.fullscreenChanged());
@@ -62,56 +65,59 @@ module Activity {
             $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
         }
 
-        private openFullscreen() {
-            if (this.canvas.requestFullscreen) {
-                this.canvas.requestFullscreen();
-            } else if (this.canvas.msRequestFullscreen) {
-                this.canvas.msRequestFullscreen();
-            } else if (this.canvas.mozRequestFullScreen) {
-                this.canvas.mozRequestFullScreen();
-            } else if (this.canvas.webkitRequestFullscreen) {
-                this.canvas.webkitRequestFullscreen();
-            }
-            /*if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {
-                if (this.canvas.requestFullscreen) {
-                    this.canvas.requestFullscreen();
-                } else if (this.canvas.msRequestFullscreen) {
-                    this.canvas.msRequestFullscreen();
-                } else if (this.canvas.mozRequestFullScreen) {
-                    this.canvas.mozRequestFullScreen();
-                } else if (this.canvas.webkitRequestFullscreen) {
-                    this.canvas.webkitRequestFullscreen();
+        private toggleFullscreen() {
+            /*if (this.fullscreenContainer.requestFullscreen) {
+                this.fullscreenContainer.requestFullscreen();
+            } else if (this.fullscreenContainer.msRequestFullscreen) {
+                this.fullscreenContainer.msRequestFullscreen();
+            } else if (this.fullscreenContainer.mozRequestFullScreen) {
+                this.fullscreenContainer.mozRequestFullScreen();
+            } else if (this.fullscreenContainer.webkitRequestFullscreen) {
+                this.fullscreenContainer.webkitRequestFullscreen();
+            }*/
+            if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {
+                if (this.fullscreenContainer.requestFullscreen) {
+                    this.fullscreenContainer.requestFullscreen();
+                } else if (this.fullscreenContainer.msRequestFullscreen) {
+                    this.fullscreenContainer.msRequestFullscreen();
+                } else if (this.fullscreenContainer.mozRequestFullScreen) {
+                    this.fullscreenContainer.mozRequestFullScreen();
+                } else if (this.fullscreenContainer.webkitRequestFullscreen) {
+                    this.fullscreenContainer.webkitRequestFullscreen();
                 }
             } else {
                 if (document.exitFullscreen) {
                     document.exitFullscreen();
-                } else if (this.canvas.msExitFullscreen) {
+                } else if (document.msExitFullscreen) {
                     document.msExitFullscreen();
-                } else if (this.canvas.mozCancelFullScreen) {
+                } else if (document.mozCancelFullScreen) {
                     document.mozCancelFullScreen();
-                } else if (this.canvas.webkitExitFullscreen) {
+                } else if (document.webkitExitFullscreen) {
                     document.webkitExitFullscreen();
                 }
-            }*/
+            }
         }
 
         private fullscreenChanged() {
             this.fullscreen = !this.fullscreen;
-
-            if (this.fullscreen) {
+            $(this.fullscreenBtn).text(this.fullscreen ? "Exit fullscreen" : "Open fullscreen");
+            
+            if (!this.fullscreen) {
+                this.bindedResizeFn = this.resize.bind(this);
+                $(window).on("resize", this.bindedResizeFn);
+                
+                //this.resize(); // can we trust the above to always resize the canvas?
+            } else {
                 $(window).unbind("resize", this.bindedResizeFn)
                 this.bindedResizeFn = null;
-
-                var width = screen.width,
-                height = screen.height;
-            
+                
+                var width = this.fullscreenContainer.clientWidth,
+                    height = this.fullscreenContainer.clientHeight;
+                
                 this.canvas.width = width;
                 this.canvas.height = height;
                 
                 this.renderer.resize(width, height);
-            } else {
-                this.bindedResizeFn = this.resize.bind(this);
-                $(window).on("resize", this.bindedResizeFn);
             }
         }
 
