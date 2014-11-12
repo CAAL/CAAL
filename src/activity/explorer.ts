@@ -107,7 +107,7 @@ module Activity {
         }
 
         private fullscreenChanged() {
-            $(this.fullscreenBtn).text(this.isFullscreen() ? "Exit fullscreen" : "Open fullscreen");
+            $(this.fullscreenBtn).text(this.isFullscreen() ? "Exit" : "Fullscreen");
             this.resize();
         }
         
@@ -116,7 +116,7 @@ module Activity {
             // user might have entered fullscreen and gone out of it, treat as fullscreen changed
             this.fullscreenChanged();
         }
-
+        
         beforeShow(configuration) {
             this.clear();
             this.graph = configuration.graph;
