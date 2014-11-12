@@ -31,6 +31,7 @@ module Activity {
         private canvas;
         private fullscreenContainer;
         private freezeBtn;
+        private saveBtn;
         private fullscreenBtn;
         private renderer: Renderer;
         private uiGraph: ProcessGraphUI;
@@ -45,12 +46,13 @@ module Activity {
         private expandDepth : number = 1;
         private fullscreen: boolean = false;
         
-        constructor(canvas, fullscreenContainer, statusTableContainer, freezeBtn, fullscreenBtn, notationVisitor : CCSNotationVisitor) {
+        constructor(canvas, fullscreenContainer, statusTableContainer, freezeBtn, saveBtn, fullscreenBtn, notationVisitor : CCSNotationVisitor) {
             super();
             this.canvas = canvas;
             this.fullscreenContainer = fullscreenContainer;
             this.statusTableContainer = statusTableContainer;
             this.freezeBtn = freezeBtn;
+            this.saveBtn = saveBtn;
             this.fullscreenBtn = fullscreenBtn;
             this.notationVisitor = notationVisitor;
             this.renderer = new Renderer(canvas);
@@ -58,6 +60,8 @@ module Activity {
 
             this.bindedFullscreenFn = this.toggleFullscreen.bind(this);
             $(this.fullscreenBtn).on("click", this.bindedFullscreenFn);
+
+            $(this.saveBtn).on("click", () => this.saveCanvas());
 
             $(document).on("fullscreenchange", () => this.fullscreenChanged());
             $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
@@ -98,9 +102,14 @@ module Activity {
             }
         }
 
+        private saveCanvas() {
+            $(this.saveBtn).attr("href", this.canvas.toDataURL("image/png"));
+            $(this.saveBtn).attr("download", this.initialProcessName + ".png");
+        }
+
         private fullscreenChanged() {
             this.fullscreen = !this.fullscreen;
-            $(this.fullscreenBtn).text(this.fullscreen ? "Exit fullscreen" : "Open fullscreen");
+            $(this.fullscreenBtn).text(this.fullscreen ? "Exit" : "Fullscreen");
             
             if (!this.fullscreen) {
                 this.bindedResizeFn = this.resize.bind(this);
