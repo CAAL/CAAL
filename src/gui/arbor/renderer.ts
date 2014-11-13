@@ -76,15 +76,19 @@ class Renderer {
             var label = edge.data.datas.map((data) => data.label).join(",");
 
             this.ctx.save();
-            
-            this.ctx.strokeStyle = edge.data.color || "rgb(196, 196, 196)"; // Edge color
-            this.ctx.lineWidth = edge.data.lineWidth || 2.0; // Edge line width
-            
-            if (this.hoverNode !== null && this.selectedNode !== null){
-                if (edge.target.name == this.hoverNode.name && edge.source.name == this.selectedNode.name) {
-                    this.ctx.strokeStyle = edge.data.color || this.highlightSettings.color; // Edge color
-                    this.ctx.lineWidth = edge.data.lineWidth || this.highlightSettings.lineWidth; // Edge line width
-                }
+            // if (this.hoverNode !== null && this.selectedNode !== null){
+            //     if (edge.target.name == this.hoverNode.name && edge.source.name == this.selectedNode.name) {
+            //         this.ctx.strokeStyle = edge.data.color || this.highlightSettings.color; // Edge color
+            //         this.ctx.lineWidth = edge.data.lineWidth || this.highlightSettings.lineWidth; // Edge line width
+            //     }
+            // }
+
+            if (edge.data.highlight){
+                this.ctx.strokeStyle = edge.data.color || this.highlightSettings.color; // Edge color
+                this.ctx.lineWidth = edge.data.lineWidth || this.highlightSettings.lineWidth; // Edge line width
+            }else{
+                this.ctx.strokeStyle = edge.data.color || "rgb(196, 196, 196)"; // Edge color
+                this.ctx.lineWidth = edge.data.lineWidth || 2.0; // Edge line width
             }
 
             if(isSelfloop){

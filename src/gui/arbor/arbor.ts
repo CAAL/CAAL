@@ -11,7 +11,7 @@ module GUI {
         private sys : ParticleSystem;
         private renderer : Renderer;
         private handler : Handler;
-        private selectedNode : Node = null;
+        private highlightedEdges : Edge[] = [];
 
         constructor(renderer) {
             //this.sys = arbor.ParticleSystem(500, 3000, 0.95);
@@ -22,7 +22,7 @@ module GUI {
             this.handler = new Handler(renderer);
         }
 
-        showProcess(nodeId : string, data : Object) : void {
+        public showProcess(nodeId : string, data : Object) : void {
             var node = this.sys.getNode(nodeId);
             if (node) {
                 node.data = data;
@@ -31,13 +31,13 @@ module GUI {
             }
         }
 
-        getProcessDataObject(nodeId : string) : Object {
+        public getProcessDataObject(nodeId : string) : Object {
             var node = this.sys.getNode(nodeId),
                 data = node ? node.data : null;
             return data;
         }
 
-        showTransitions(fromId : string, toId : string, datas : Object[]) {
+        public showTransitions(fromId : string, toId : string, datas : Object[]) {
             var edges = this.sys.getEdges(fromId, toId),
                 edge = edges.length > 0 ? edges[0] : null;
             if (edge) {
@@ -47,7 +47,7 @@ module GUI {
             }
         }
 
-        setSelected(name: string) {
+        public setSelected(name: string) {
             if(!name) return;
             var newSelectedNode = this.sys.getNode(name);
 
@@ -62,17 +62,48 @@ module GUI {
             this.renderer.redraw(); // redraw the image to change the color of the selected node.
         }
 
-        setHover(name : string) : void {
+        public setHover(name : string) : void {
             this.renderer.hoverNode = this.sys.getNode(name);
-            this.renderer.redraw(); // redraw to change the color of the edge.
+            this.highlightEdges();
         }
 
-        clearHover() : void {
+        public clearHover() : void {
             this.renderer.hoverNode = null;
-            this.renderer.redraw(); // redraw to clear the color of the edge.
+            this.removeHighlightEdges();
         }
 
-        getTransitionDataObjects(fromId : string, toId : string) : Object[] {
+        private highlightEdges(){
+            var edges = [];
+            if(this.renderer.selectedNode !== this.renderer.hoverNode){
+                edges = this.sys.getEdges(this.renderer.selectedNode, this.renderer.hoverNode);
+            } else {
+                edges = this.sys.getEdgesFrom(this.renderer.selectedNode);
+            }
+            
+            if(edges.length > 0){
+                for (var i = 0; i < edges.length; i++){
+                    edges[i].data.highlight = true;
+                    this.highlightedEdges.push(edges[i]);
+                }
+                this.renderer.redraw();
+            }
+        }
+
+        private removeHighlightEdges() : void { 
+            if(this.highlightedEdges.length > 0){
+                while(this.highlightedEdges.length> 0){
+                    var edge = this.highlightedEdges.pop();
+                    edge.data.highlight = false;
+                }
+                this.renderer.redraw();
+            }
+        }
+
+        public hightlightPath() : void {
+            // when given a trace(path) all edges should be highlighted
+        }
+
+        public getTransitionDataObjects(fromId : string, toId : string) : Object[] {
             var edges = this.sys.getEdges(fromId, toId),
                 edge = edges.length > 0 ? edges[0] : null,
                 datas = edge && edge.data ? edge.data.datas : null;
@@ -80,45 +111,45 @@ module GUI {
         }
 
         /* Event handling */
-        setOnSelectListener(f : (identifier : string) => void) : void {
+        public setOnSelectListener(f : (identifier : string) => void) : void {
             this.handler.onClick = (nodeId) => {
                 f(nodeId);
             };
         }
 
-        clearOnSelectListener() : void {
+        public clearOnSelectListener() : void {
             this.handler.onClick = null;
         }
 
-        setHoverOnListener(f : (identifier : string) => void) : void {
+        public setHoverOnListener(f : (identifier : string) => void) : void {
             this.handler.hoverOn = (nodeId) => {
                 f(nodeId);
             }
         }
 
-        clearHoverOutListener() : void {
+        public clearHoverOutListener() : void {
             this.handler.hoverOn = null;
         }
 
-        setHoverOutListener(f : (identifier : string) => void) : void {
+        public setHoverOutListener(f : (identifier : string) => void) : void {
             this.handler.hoverOut = (nodeId) => {
                 f(nodeId);
             }
         }
 
-        clearHoverOnListener() : void {
+        public clearHoverOnListener() : void {
             this.handler.hoverOut = null;
         }
 
-        clearAll() : void {
+        public clearAll() : void {
             this.sys.prune((node, from, to) => true);
         }
 
-        freeze() : void {
+        public freeze() : void {
             this.sys.stop();
         }
 
-        unfreeze() : void {
+        public unfreeze() : void {
             this.sys.start(true);
         }
     }
