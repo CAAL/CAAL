@@ -159,9 +159,7 @@ module Main {
 }
 
 function setupExplorerActivityFn(callback) : any {
-    var graph = Main.getGraph(),
-        succGenerator = Main.getStrictSuccGenerator(graph),
-        namedProcesses = graph.getNamedProcesses(),
+    var namedProcesses = Main.getGraph().getNamedProcesses(),
         $dialogList = $("#viz-mode-dialog-body-list"),
         $depthSelect = $("#viz-mode-dialog-depth"),
         $dialog = $("#viz-mode-dialog");
@@ -174,6 +172,8 @@ function setupExplorerActivityFn(callback) : any {
     }
 
     function makeConfiguration(processName, expandDepth) {
+        var graph = Main.getGraph(),
+            succGenerator = Main.getWeakSuccGenerator(graph);
         return {
             graph: graph,
             successorGenerator: succGenerator,

@@ -185,7 +185,7 @@ module CCS {
         }
 
         newActionPrefixProcess(action : Action, nextProcess : Process) {
-            var key = "." + action.toString() + nextProcess.id;
+            var key = "." + action.toString() + "." + nextProcess.id;
             var existing = this.cache.structural[key];
             if (!existing) {
                 existing = this.cache.structural[key] = new ActionPrefixProcess(this.nextId++, action, nextProcess);

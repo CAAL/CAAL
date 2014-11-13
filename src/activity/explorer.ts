@@ -124,6 +124,7 @@ module Activity {
             this.succGenerator = configuration.successorGenerator;
             this.initialProcessName = configuration.initialProcessName;
             this.expandDepth = configuration.expandDepth;
+            this.notationVisitor.clearCache();
             this.clear();
             this.expand(this.graph.processByName(this.initialProcessName), 1);
         }

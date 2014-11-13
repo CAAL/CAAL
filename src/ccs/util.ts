@@ -126,9 +126,14 @@ module Traverse {
     export class CCSNotationVisitor implements ccs.ProcessVisitor<string>, ccs.ProcessDispatchHandler<string> {
 
         private insideNamedProcess = undefined;
+        private cache;
 
-        constructor(public cache?) {
-            this.cache = cache || {};
+        constructor() {
+            this.clearCache();
+        }
+
+        clearCache() {
+            this.cache = {};
         }
 
         visit(process : ccs.Process) {
