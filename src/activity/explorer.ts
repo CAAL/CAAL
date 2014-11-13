@@ -158,6 +158,8 @@ module Activity {
             this.uiGraph.unfreeze();
             $(this.freezeBtn).unbind("click", this.bindedFreezeFn);
             this.uiGraph.clearOnSelectListener();
+            this.uiGraph.clearHoverOnListener();
+            this.uiGraph.clearHoverOutListener();
             this.graph = null;
             this.succGenerator = null;
         }
