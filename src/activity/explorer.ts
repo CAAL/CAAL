@@ -107,33 +107,14 @@ module Activity {
         }
 
         private fullscreenChanged() {
-            this.fullscreen = !this.fullscreen;
-            $(this.fullscreenBtn).text(this.fullscreen ? "Exit" : "Fullscreen");
-            
-            if (!this.isFullscreen()) {
-                this.bindedResizeFn = this.resize.bind(this);
-                $(window).on("resize", this.bindedResizeFn);
-            } else {
-                $(window).unbind("resize", this.bindedResizeFn)
-                this.bindedResizeFn = null;
-                
-                // the clientWidth is updated before width
-                var width: number = this.canvas.clientWidth,
-                    height: number = this.canvas.clientHeight;
-                
-                // let the canvas know how big it is going to be, the renderer uses canvas.width and canvas.height values to scale itself
-                this.canvas.width = width;
-                this.canvas.height = height;
-                
-                this.renderer.resize(width, height);
-            }
+            $(this.fullscreenBtn).text(this.isFullscreen() ? "Exit fullscreen" : "Open fullscreen");
+            this.resize();
         }
         
         private fullscreenError() {
             console.log("Fullscreen error");
-            
-            this.bindedResizeFn = this.resize.bind(this);
-            $(window).on("resize", this.bindedResizeFn);
+            // user might have entered fullscreen and gone out of it, treat as fullscreen changed
+            this.fullscreenChanged();
         }
 
         beforeShow(configuration) {
@@ -269,9 +250,14 @@ module Activity {
 
         private resize(): void {
             var width = this.canvas.parentNode.clientWidth;
-            var offsetTop = $("#arbor-canvas").offset().top;
-            var offsetBottom = $(this.statusTableContainer).height() + 20; // Parent container margin = 20.
-            var height = Math.max(350, window.innerHeight - offsetTop - offsetBottom);
+            var height;
+            if (!this.isFullscreen()) {
+                var offsetTop = $("#arbor-canvas").offset().top;
+                var offsetBottom = $(this.statusTableContainer).height() + 20; // Parent container margin = 20.
+                height = Math.max(350, window.innerHeight - offsetTop - offsetBottom);
+            } else {
+                height = this.canvas.parentNode.clientHeight;
+            }
             this.canvas.width = width;
             this.canvas.height = height;
             this.renderer.resize(width, height);
