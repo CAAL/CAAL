@@ -113,6 +113,7 @@ module Activity {
         
         private fullscreenError() {
             console.log("Fullscreen error");
+            
             // user might have entered fullscreen and gone out of it, treat as fullscreen changed
             this.fullscreenChanged();
         }
