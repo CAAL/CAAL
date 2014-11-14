@@ -173,7 +173,7 @@ function setupExplorerActivityFn(callback) : any {
 
     function makeConfiguration(processName, expandDepth) {
         var graph = Main.getGraph(),
-            succGenerator = Main.getStrictSuccGenerator(graph);
+            succGenerator = Main.getWeakSuccGenerator(graph);
         return {
             graph: graph,
             successorGenerator: succGenerator,

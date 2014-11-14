@@ -8,6 +8,11 @@ module DependencyGraph {
 
     export class BisimulationDG implements DependencyGraph {
 
+        /** The dependency graph is constructed with disjunction
+            as conjunction and vica versa, since bisimulation is
+            maximal fixed-point. The result marking should be
+            inverted **/
+
         private succGen;
         private nextIdx;
         private nodes = [];
@@ -52,17 +57,17 @@ module DependencyGraph {
                     key = toLeftId + "-" + toRightId;
                     //Have we already solved the resulting (s1, t1) pair?
                     if (this.pairToNodeId[key]) {
-                        result.push([this.pairToNodeId[key]]);
+                        result.push(this.pairToNodeId[key]);
                     } else {
                         //Build the node.
                         var newIndex = this.nextIdx++;
                         this.pairToNodeId[key] = newIndex;
                         this.constructData[newIndex] = [0, toLeftId, toRightId];
-                        result.push([newIndex]);
+                        result.push(newIndex);
                     }
                 }
             });
-            return result;
+            return [result];
         }
 
         private getNodeForRightTransition(data) {
@@ -77,33 +82,33 @@ module DependencyGraph {
                     toLeftId = leftTransition.targetProcess.id;
                     key = toLeftId + "-" + toRightId;
                     if (this.pairToNodeId[key]) {
-                        result.push([this.pairToNodeId[key]]);
+                        result.push(this.pairToNodeId[key]);
                     } else {
                         var newIndex = this.nextIdx++;
                         this.pairToNodeId[key] = newIndex;
                         this.constructData[newIndex] = [0, toLeftId, toRightId];
-                        result.push([newIndex]);
+                        result.push(newIndex);
                     }
                 }
             });
-            return result;
+            return [result];
         }
 
         private getProcessPairStates(leftProcessId, rightProcessId) {
-            var hyperedge = [];
+            var hyperedges = [];
             var leftTransitions = this.succGen.getSuccessors(leftProcessId);
             var rightTransitions = this.succGen.getSuccessors(rightProcessId);
             leftTransitions.forEach(leftTransition => {
                 var newNodeIdx = this.nextIdx++;
                 this.constructData[newNodeIdx] = [1, leftTransition.action, leftTransition.targetProcess.id, rightProcessId];
-                hyperedge.push(newNodeIdx);
+                hyperedges.push([newNodeIdx]);
             });
             rightTransitions.forEach(rightTransition => {
                 var newNodeIdx = this.nextIdx++;
                 this.constructData[newNodeIdx] = [2, rightTransition.action, rightTransition.targetProcess.id, leftProcessId];
-                hyperedge.push(newNodeIdx);
+                hyperedges.push([newNodeIdx]);
             });
-            return [hyperedge];
+            return hyperedges;
         }
     }
 
@@ -273,5 +278,10 @@ module DependencyGraph {
             }
         }
         return A.get(m) === S_ONE;
+    }
+
+    export function isBisimilar(ltsSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId) {
+        var dg = new BisimulationDG(ltsSuccGen, leftProcessId, rightProcessId);
+        return !liuSmolkaLocal2(0, dg);
     }
 }
