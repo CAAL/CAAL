@@ -11,9 +11,4 @@ TEST_DEP_DEST="./test/dependencies.js"
 # 	echo "-- Compilation not necessary"
 # fi
 
-for testfile in "bisimulationTest.js" "modelCheckTest.js"
-do
-	echo ""
-	echo "- Running test file $testfile"
-	node test/$testfile
-done
+echo "Run 'test.html' in the browser"
