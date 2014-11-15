@@ -196,7 +196,7 @@ module DependencyGraph {
         getHyperEdges(identifier) : any[][];
     }
 
-    export function liuSmolkaLocal2(m, graph) : boolean {
+    export function liuSmolkaLocal2(m, graph) : any {
         var S_ZERO = 1, S_ONE = 2, S_BOTTOM = 3;
 
         // A[k]
@@ -277,11 +277,26 @@ module DependencyGraph {
                 }
             }
         }
-        return A.get(m) === S_ONE;
+        return {
+            getMarking: function(dgNodeId) {
+                return A.get(dgNodeId);
+            },
+            ZERO: S_ZERO,
+            ONE: S_ONE,
+            UNKNOWN: S_BOTTOM
+        }
     }
 
     export function isBisimilar(ltsSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId) {
-        var dg = new BisimulationDG(ltsSuccGen, leftProcessId, rightProcessId);
-        return !liuSmolkaLocal2(0, dg);
+        var dg = new BisimulationDG(ltsSuccGen, leftProcessId, rightProcessId),
+            marking = liuSmolkaLocal2(0, dg);
+        //Bisimulation is maximal fixed point, the marking is reversed.
+        return marking.getMarking(0) === marking.ZERO;
+    }
+
+    export function checkFormula(formula, succGen, processId) {
+        var dg = new ModelCheckingDG(succGen, processId, formula),
+            marking = liuSmolkaLocal2(0, dg);
+        return marking.getMarking(0) === marking.ONE;
     }
 }
