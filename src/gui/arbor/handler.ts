@@ -5,27 +5,33 @@
 class Handler {
     public selectedNode : Node = null;
     public draggedObject : refNode = null;
+    public hoverNode : refNode = null;
     public mouseP : Point = null;
     public onClick : Function = null;
+    public hoverOn : Function = null;
+    public hoverOut : Function = null;
     private isDragging = false;
-    private mouseDownPos; 
+    private mouseDownPos;
     public clickDistance = 50;
-
+    public hoverDistance = 30;
     public renderer : Renderer = null;
 
     constructor(renderer : Renderer) {
         this.renderer = renderer;
         $(this.renderer.canvas).bind('mousedown', {handler: this}, this.clicked);
+        $(this.renderer.canvas).bind('mousemove', {handler: this}, this.hover); // event for hovering over a node
     }
 
     public clicked(e): boolean {
         var h = e.data.handler;
+        var pos = $(h.renderer.canvas).offset();
+        
         if (!h.renderer.particleSystem) {
             return false;
         }
+        
         h.isDragging = false;
 
-        var pos = $(h.renderer.canvas).offset();
         h.mouseDownPos = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
         h.mouseP = h.mouseDownPos;
         h.draggedObject = h.renderer.particleSystem.nearest(h.mouseP);
@@ -38,10 +44,34 @@ class Handler {
         return false;
     }
 
+    public hover(e) : boolean { 
+        var h = e.data.handler;
+        
+        var pos = $(h.renderer.canvas).offset();
+        var s = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
+
+        var newHoverNode = h.renderer.particleSystem.nearest(s);
+
+        // On hover event
+        if (h.hoverNode == null && newHoverNode.distance <= h.hoverDistance) {
+            if (h.hoverOn) {
+                h.hoverNode = newHoverNode;
+                h.hoverOn(h.hoverNode.node.name);
+            }
+        } 
+        else if (h.hoverNode !== null && newHoverNode.distance > h.hoverDistance) {
+            if (h.hoverOut){   
+                h.hoverOut(h.hoverNode.node.name);
+                h.hoverNode = null;      
+            }
+        }
+
+        return false;
+    }
+
     public dragged(e): boolean {
         var h = e.data.handler;
-        var pos = $(h.renderer.canvas).offset();
-        var old_nearest = h.draggedObject && h.draggedObject.node._id
+        
         var pos = $(h.renderer.canvas).offset();
         var s = arbor.Point(e.pageX-pos.left, e.pageY-pos.top)
 
@@ -50,7 +80,7 @@ class Handler {
             h.selectedNode.fixed = true;
         }
 
-        //Drag node visually around
+        // Drag node visually around
         if (h.isDragging) {
             var p = h.renderer.particleSystem.fromScreen(s);
             h.selectedNode.p = p;
@@ -62,17 +92,19 @@ class Handler {
     public dropped(e): any {
         var h = e.data.handler,
             nodeReference = h.selectedNode;
+        
         h.selectedNode.fixed = false;
+        
         if (nodeReference && !h.isDragging && h.onClick) {
             h.onClick(nodeReference.name);
-            // setTimeout(() => {
-            //     h.onClick(nodeReference.name);
-            // }, 1);
         }
+        
         h.selectedNode = null;
         h.draggedObject = null;
+        
         $(h.renderer.canvas).unbind('mousemove', h.dragged);
         $(window).unbind('mouseup', h.dropped);
+        
         h.mouseP = null;
 
         return false;

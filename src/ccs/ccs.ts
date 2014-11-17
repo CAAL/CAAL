@@ -21,6 +21,10 @@ module CCS {
         visit(process : Process) : T;
     }
 
+    export interface SuccessorGenerator {
+        getSuccessors(processId) : TransitionSet;
+    }
+
     export class NullProcess implements Process {
         constructor(public id : number) {
         }
@@ -99,22 +103,36 @@ module CCS {
     }
 
     export class Action {
-        constructor(public label : string, public isComplement : boolean) {
+        private label : string;
+        private complement : boolean;
+
+        constructor(label : string, isComplement : boolean) {
             if (label === "tau" && isComplement) {
                 throw new Error("tau has no complement");
             }
+            this.label = label;
+            this.complement = isComplement;
         }
+
+        getLabel() : string {
+            return this.label;
+        }
+
+        isComplement() : boolean {
+            return this.complement;
+        }
+
         equals(other : Action) {
             return this.label === other.label &&
-                this.isComplement === other.isComplement;
+                this.complement === other.complement;
         }
         toString() {
-            return (this.isComplement ? "'" : "") + this.label;
+            return (this.complement ? "'" : "") + this.label;
         }
         clone() {
-            return new Action(this.label, this.isComplement);
+            return new Action(this.label, this.complement);
         }
-    } 
+    }
 
     interface Error {
         name : string;
@@ -129,6 +147,9 @@ module CCS {
         private namedProcesses = {}
         private constructErrors = [];
         private definedSets = {};
+        //Uses index as uid.
+        private allRestrictedSets = new GrowingIndexedArraySet<LabelSet>();
+        private allRelabellings = new GrowingIndexedArraySet<RelabellingSet>()
 
         constructor() {
             this.cache.structural = {}; //used structural sharing
@@ -144,7 +165,7 @@ module CCS {
                 namedProcess.subProcess = process;
             } else {
                 this.constructErrors.push({name: "DuplicateProcessDefinition",
-                    messsage: "Duplicate definition of process '" + processName + "'"});
+                    message: "Duplicate definition of process '" + processName + "'"});
             }
             return namedProcess;
         }
@@ -164,7 +185,7 @@ module CCS {
         }
 
         newActionPrefixProcess(action : Action, nextProcess : Process) {
-            var key = "." + action.toString() + nextProcess.id;
+            var key = "." + action.toString() + "." + nextProcess.id;
             var existing = this.cache.structural[key];
             if (!existing) {
                 existing = this.cache.structural[key] = new ActionPrefixProcess(this.nextId++, action, nextProcess);
@@ -207,10 +228,16 @@ module CCS {
             return existing;
         }
 
-        newRestrictedProcess(process, restriction : LabelSet) {
+        newRestrictedProcess(process, restrictedLabels : LabelSet) {
             //For now return just new instead of structural sharing
-            var existing = new RestrictionProcess(this.nextId++, process, restriction);
-            this.processes[existing.id] = existing;
+            var key, existing;
+            restrictedLabels = this.allRestrictedSets.getOrAdd(restrictedLabels);
+            key = "\\" + process.id + "," + this.allRestrictedSets.indexOf(restrictedLabels);
+            existing = this.cache.structural[key];
+            if (!existing) {
+                existing = this.cache.structural[key] = new RestrictionProcess(this.nextId++, process, restrictedLabels);
+                this.processes[existing.id] = existing;
+            }
             return existing;
         }
 
@@ -218,23 +245,29 @@ module CCS {
             var labelSet = this.definedSets[setName];
             if (!labelSet) {
                 this.constructErrors.push({name: "UndefinedSet", message: "Set '" + setName + "' has not been defined"});
-                labelSet = new LabelSet();
+                //Fallback for empty set
+                labelSet = this.allRestrictedSets.getOrAdd(new LabelSet([]));
             }
             return this.newRestrictedProcess(process, labelSet);
         }
 
         newRelabelingProcess(process, relabellings : RelabellingSet) {
-            //Same as reasoning as restriction
-            var existing = new RelabellingProcess(this.nextId++, process, relabellings);
-            this.processes[existing.id] = existing;
+            var key, existing;
+            relabellings = this.allRelabellings.getOrAdd(relabellings);
+            key = "[" + process.id + "," + this.allRelabellings.indexOf(relabellings);
+            existing = this.cache.structural[key];
+            if (!existing) {
+                existing = this.cache.structural[key] = new RelabellingProcess(this.nextId++, process, relabellings);
+                this.processes[existing.id] = existing;
+            }
             return existing;
         }
 
-        defineSet(name, labels) {
+        defineNamedSet(name, labelSet : LabelSet) {
             if (this.definedSets[name]) {
                 this.constructErrors.push({name: "DuplicateSetDefinition", message: "Set '" + name + "' has already been defined"});
             }
-            this.definedSets[name] = new LabelSet(labels);
+            this.definedSets[name] = this.allRestrictedSets.getOrAdd(labelSet);
         }
 
         processById(id) {
@@ -282,22 +315,16 @@ module CCS {
         private froms = [];
         private tos = [];
 
-        constructor(relabellings? : {from: string; to: string}[]) {
-            if (relabellings) {
-                relabellings.forEach( (relabel) => {
-                    if (relabel.from !== "tau" && relabel.to !== "tau") {
-                        this.froms.push(relabel.from);
-                        this.tos.push(relabel.to);
-                    }
-                });
-            }
-        }
-
-        clone() : RelabellingSet {
-            var result = new RelabellingSet();
-            result.froms = this.froms.slice();
-            result.tos = this.tos.slice();
-            return result;
+        constructor(relabellings : {from: string; to: string}[]) {
+            relabellings.forEach( (relabel) => {
+                if (relabel.from === "tau" || relabel.to === "tau") {
+                    throw new Error("Cannot relabel from or to tau");
+                }
+                this.froms.push(relabel.from);
+                this.tos.push(relabel.to);
+            });
+            this.froms.sort();
+            this.tos.sort();
         }
 
         forEach(f : (from : string, to : string) => void, thisObject?) {
@@ -319,6 +346,16 @@ module CCS {
             return result;
         }
 
+        equals(other : RelabellingSet) {
+            if (other === this) return true;
+            if (other.froms.length !== this.froms.length) return false;
+            for (var i = 0; i < this.froms.length; i++) {
+                if (this.froms[i] !== other.froms[i]) return false;
+                if (this.tos[i] !== other.tos[i]) return false;
+            }
+            return true;
+        }
+
         toString() : string {
             return "RelabellingSet";
         }
@@ -330,61 +367,31 @@ module CCS {
     export class LabelSet {
         private labels : string[] = [];
 
-        constructor(labels?) {
-            if (labels) {
-                this.addAll(labels);
+        constructor(labels : string[]) {
+            var temp = labels.slice(0),
+                cur, next;
+            if (temp.length > 0) {
+                temp.sort();
+                //Don't add the first of duplicates
+                cur = temp[0];
+                for (var i=1; i < temp.length; i++) {
+                    next = temp[i];
+                    if (cur !== next) {
+                        this.labels.push(cur);
+                    }
+                    cur = next;
+                }
+                //Add the last
+                this.labels.push(cur);
             }
-        }
-
-        clone() : LabelSet {
-            return new LabelSet(this.labels);
         }
 
         toArray() : string[] {
             return this.labels.slice(0);
         }
 
-        add(label) : LabelSet {
-            if (this.labels.indexOf(label) === -1) {
-                this.labels.push(label);
-            }
-            return this;
-        }
-
-        addAll(labels) : LabelSet {
-            for (var i = 0, max = labels.length; i < max; i++) {
-                this.add(labels[i]);
-            }
-            return this;
-        }
-
-        remove(labels) : LabelSet {
-            var allCurrent = this.labels,
-                count = allCurrent.length,
-                i = 0;
-            while (i < count) {
-                if (labels.indexOf(allCurrent[i]) !== -1) {
-                    allCurrent[i] = allCurrent[--count];
-                } else {
-                    ++i;
-                }
-            }
-            allCurrent.length = count;
-            return this;
-        }
-
-        contains(label) : boolean {
+        contains(label : string) : boolean {
             return this.labels.indexOf(label) !== -1;
-        }
-
-        unionWith(set : LabelSet) : LabelSet {
-            this.addAll(set.labels);
-            return this;
-        }
-
-        differenceWith(set : LabelSet) : LabelSet {
-            this.remove(set.labels);
-            return this;
         }
 
         empty() : boolean {
@@ -399,6 +406,36 @@ module CCS {
             for (var i = 0, max = this.labels.length; i < max; i++){
                 f(this.labels[i]);
             }
+        }
+
+        equals(other : LabelSet) {
+            var myLabels = this.labels,
+                otherLabels = other.labels;
+            if (other === this) return true;
+            if (myLabels.length !== other.labels.length) return false;
+            for (var i = 0; i < myLabels.length; i++) {
+                if (myLabels[i] !== otherLabels[i]) return false;
+            }
+            return true;
+        }
+
+        union(other : LabelSet) : LabelSet {
+            return LabelSet.Union(this, other);
+        }
+
+        static Union(... sets : LabelSet[]) {
+            var result = new LabelSet([]),
+                si, li, curSet;
+            for (si = 0; si < sets.length; si++) {
+                curSet = sets[si];
+                for (li = 0; li < curSet.labels.length; li++) {
+                    if (!result.contains(curSet.labels[li])) {
+                        result.labels.push(curSet.labels[li]);
+                    }
+                }
+            }
+            result.labels.sort();
+            return result;
         }
 
         toString() {
@@ -444,7 +481,7 @@ module CCS {
         add(transition : Transition) {
             var allCurrent = this.transitions;
             for (var i = 0, max = allCurrent.length; i < max; i++){
-                if (transition.equals(allCurrent[i])) break;
+                if (transition.equals(allCurrent[i])) return this;
             }
             allCurrent.push(transition);
             return this;
@@ -492,9 +529,30 @@ module CCS {
                 transition = allCurrent[i];
                 if (relabels.hasRelabelForLabel(transition.action.label)) {
                     newLabel = relabels.toLabelForFromLabel(transition.action.label);
-                    transition.action = new Action(newLabel, transition.action.isComplement);
+                    transition.action = new Action(newLabel, transition.action.isComplement());
                 }
             }
+        }
+
+        possibleActions() : Action[] {
+            var actions = [],
+                action, found;
+            for (var i = 0; i < this.transitions.length; i++) {
+                action = this.transitions[i].action;
+                found = false;
+                for (var j = 0; j < actions.length; j++) {
+                    if (action.equals(actions[j])) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) actions.push(action);
+            }
+            return actions;
+        }
+
+        transitionsForAction(action : Action) : Transition[] {
+            return this.transitions.filter((transition) => action.equals(transition.action));
         }
 
         forEach(f : (transition : Transition) => any) {
@@ -503,28 +561,21 @@ module CCS {
             }
         }
 
-        // mergeOnActions() : any {
-        //     var copy = this.transitions.slice(0),
-        //         merged = {}, actionStr, transition, mergedArr;
-        //     for (var i = 0, max = this.transitions.length; i < max; i++) {
-        //         transition = this.transitions[i];
-        //         actionStr = transition.action.toString();
-        //         mergedArr = merged[actionStr] || [];
-        //         mergedArr.push(transition.targetProcess);
-        //     }
-        //     return mergedArr;
-        // }
+        toArray() : Transition[] {
+            return this.transitions.slice(0);
+        }
     }
 
-    export class SuccessorGenerator implements ProcessVisitor<TransitionSet>, ProcessDispatchHandler<TransitionSet> {
+    export class StrictSuccessorGenerator implements SuccessorGenerator, ProcessDispatchHandler<TransitionSet> {
 
         constructor(public graph : Graph, public cache?) {
             this.cache = cache || {};
         }
 
-        visit(process : Process) : TransitionSet {
+        getSuccessors(processId) : TransitionSet {
             //Move recursive calling into loop with stack here
             //if overflow becomes an issue.
+            var process = this.graph.processById(processId);
             return this.cache[process.id] = process.dispatchOn(this);
         }
 
@@ -564,7 +615,7 @@ module CCS {
                 transitionSet = this.cache[process.id] = new TransitionSet();
                 leftSet = process.leftProcess.dispatchOn(this);
                 rightSet = process.rightProcess.dispatchOn(this);
-                
+
 
                 leftSet.forEach(leftTransition => {
                     //COM1
@@ -574,7 +625,7 @@ module CCS {
                     //COM3
                     rightSet.forEach(rightTransition => {
                         if (leftTransition.action.label === rightTransition.action.label &&
-                            leftTransition.action.isComplement !== rightTransition.action.isComplement) {
+                            leftTransition.action.isComplement() !== rightTransition.action.isComplement()) {
                             transitionSet.add(new Transition(new Action("tau", false),
                                 this.graph.newCompositionProcess(leftTransition.targetProcess, rightTransition.targetProcess)));
                         }
@@ -592,7 +643,7 @@ module CCS {
         dispatchActionPrefixProcess(process : ActionPrefixProcess) {
             var transitionSet = this.cache[process.id];
             if (!transitionSet) {
-                process.nextProcess.dispatchOn(this).clone();
+                //process.nextProcess.dispatchOn(this).clone();
                 transitionSet = this.cache[process.id] = new TransitionSet([new Transition(process.action, process.nextProcess)]);
             }
             return transitionSet;
@@ -606,7 +657,7 @@ module CCS {
                 subTransitionSet = process.subProcess.dispatchOn(this).clone();
                 subTransitionSet.applyRestrictionSet(process.restrictedLabels);
                 subTransitionSet.forEach(transition => {
-                    var newRestriction = this.graph.newRestrictedProcess(transition.targetProcess, process.restrictedLabels.clone());
+                    var newRestriction = this.graph.newRestrictedProcess(transition.targetProcess, process.restrictedLabels);
                     transitionSet.add(new Transition(transition.action.clone(), newRestriction));
                 });
             }
@@ -621,11 +672,117 @@ module CCS {
                 subTransitionSet = process.subProcess.dispatchOn(this).clone();
                 subTransitionSet.applyRelabelSet(process.relabellings);
                 subTransitionSet.forEach(transition => {
-                    var newRelabelling = this.graph.newRelabelingProcess(transition.targetProcess, process.relabellings.clone());
+                    var newRelabelling = this.graph.newRelabelingProcess(transition.targetProcess, process.relabellings);
                     transitionSet.add(new Transition(transition.action.clone(), newRelabelling));
                 });
             }
             return transitionSet;
+        }
+    }
+
+    // export interface Set<T> {
+    //     // union(other : Set<T>) : Set<T>;
+    //     difference(other : Set<T>) : Set<T>;
+    //     toArray() : T[];
+    //     has(element : T) : boolean;
+    // }
+
+    // export interface MutableSet<T> extends Set<T> {
+    //     add(element : T);
+    //     remove(element : T);
+    // } 
+
+    // export interface Equitable<T> {
+    //     equals(other : T) : boolean;
+    // }
+
+    // class ArraySet<T> implements MutableSet<T> {
+    //     private elements : T[] = [];
+
+    //     constructor() {
+    //     }
+
+    //     add(element : T) {
+    //         if (!this.has(element)) {
+    //             this.elements.push(element);
+    //         }
+    //     }
+
+    //     union(other : Set<T>) : Set<T> {
+    //         var result = new ArraySet(),
+    //             otherElements = other.toArray();
+    //         result.elements = this.elements.slice(0);
+    //         for (var i=0; i < otherElements.length; i++) {
+    //             result.add(otherElements[i]);
+    //         }
+    //         return result;
+    //     }
+
+    //     difference(other : Set<T>) : Set<T> {
+    //         var result = new ArraySet(),
+    //             resultElements = [],
+    //             element;
+    //         for (var i=0; i < this.elements.length; i++) {
+    //             element = this.elements[i];
+    //             if (!other.has(element)) {
+    //                 resultElements.push(element);
+    //             }
+    //         }
+    //         result.elements = resultElements;
+    //         return result;
+    //     }
+
+    //     remove(element : T) {
+    //         var index = this.indexOf(element),
+    //             curLen = this.elements.length;
+    //         if (index !== -1) {
+    //             this.elements[index] = this.elements[curLen - 1];
+    //             this.elements.length = curLen - 1;
+    //         }
+    //     }
+
+    //     toArray() : T[] {
+    //         return this.elements.slice(0);
+    //     }
+
+    //     has(element : T) : boolean {
+    //         return this.indexOf(element) !== -1;
+    //     }
+
+    //     private indexOf(element) {
+    //        for (var i=0; i < this.elements.length; i++) {
+    //             if (this.elements[i].equals(element)) return i;
+    //         }
+    //         return -1; 
+    //     }
+    // }
+
+    class GrowingIndexedArraySet<T> {
+            
+        private elements = [];
+
+        constructor() { }
+
+        getOrAdd(element : T) : T {
+            var result = element,
+                index = this.indexOf(element);
+            if (index === -1) {
+                this.elements.push(element);
+            } else {
+                result = this.elements[index];
+            }
+            return result;
+        }
+
+        get(index : number) : T {
+            return index >= this.elements.length ? null : this.elements[index];
+        }
+
+        indexOf(element : T) : number {
+            for (var i = 0; i < this.elements.length; i++) {
+                if (this.elements[i].equals(element)) return i;
+            }
+            return -1;
         }
     }
 }

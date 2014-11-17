@@ -4,16 +4,21 @@
 /// <reference path="../lib/ace.d.ts" />
 /// <reference path="ccs/ccs.ts" />
 /// <reference path="ccs/reducedparsetree.ts" />
+/// <reference path="ccs/util.ts" />
+/// <reference path="ccs/depgraph.ts" />
 /// <reference path="gui/project.ts" />
-/// <reference path="gui/sidebar.ts" />
+/// <reference path="gui/menu.ts" />
 /// <reference path="gui/storage.ts" />
 /// <reference path="gui/examples.ts" />
+/// <reference path="activity/activity.ts" />
+/// <reference path="activity/editor.ts" />
+/// <reference path="activity/explorer.ts" />
+/// <reference path="activity/verifier.ts" />
 /// <reference path="activities.ts" />
 /// <reference path="gui/trace.ts" />
 
-//Hotfix for next week.
-
 declare var CCSParser;
+import ccs = CCS;
 
 var editor;
 var isDialogOpen = false;
@@ -21,67 +26,81 @@ var canvas;
 var traceWidth;
 var traceHeight;
 
-$(document).ready(function() {
-    editor = ace.edit("editor");
-
-    var project = new Project(
-        'Untitled Project', // Default title
-        'No description ...', // Default description
-        '* Enter your program here', // Initial editor content
-        '#project-title', '#project-desc', '#editor'
-    );
-
-    new New('#new-btn', project);
-    new Save('#save-btn', project);
-    new Import('#import-input', project);
-    new Export('#export-btn', project);
-    new MyProjects('#projects-btn', '#projects-list', project);
-    new Examples('#examples-btn', '#examples-list', project);
-
-    /* Simulate click on hidden <input> element */
-    $('#import-btn').click(function() { $('#import-input').click() });
-
-    var activityHandler = new Main.ActivityHandler();
-    activityHandler.addActivity(
-            "editor", 
-            new Activities.Editor(editor, "editor"),
-            (callback) => { callback({}); },
-            "editor-container",
-            "edit-btn");
-    activityHandler.addActivity(
-            "explorer",
-            new Activities.Explorer($("#arbor-canvas")[0]),
-            setupExplorerActivityFn,
-            "explorer-container",
-            "explore-btn");
-    activityHandler.selectActivity("editor");
-
-    /* Trace / Raphael */
-    traceWidth = document.getElementById("trace").clientWidth;
-    traceHeight = document.getElementById("trace").clientHeight;
-
-    /* Raphael canvas drawing */
-    canvas = new SnapCanvas("#trace", traceWidth, traceHeight);
-
-    var resizeTimer;
-    $(window).resize(function () {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(resizeCanvas, 100);
-    });
-});
-
 module Main {
+
+    export function setup() {
+        editor = ace.edit("editor");
+
+        var project = new Project(
+            "Untitled Project",
+            null,
+            "#project-title",
+            editor
+        );
+
+        var activityHandler = new Main.ActivityHandler();
+        activityHandler.addActivity(
+                "editor", 
+                new Activity.Editor(editor, "#editor", "#parse-btn", "#status-area", "#clear-btn", "#font-size-btn"),
+                (callback) => { callback({}); },
+                "editor-container",
+                "edit-btn");
+        activityHandler.addActivity(
+                "explorer",
+                new Activity.Explorer($("#arbor-canvas")[0], $("#fullscreen-container")[0], "#status-table-container", $("#explorer-freeze-btn")[0], "#explorer-save-btn", $("#explorer-fullscreen-btn")[0], new Traverse.CCSNotationVisitor()),
+                setupExplorerActivityFn,
+                "explorer-container",
+                "explore-btn");
+        activityHandler.addActivity(
+                "verifier",
+                new Activity.Verifier("#toggle-select"),
+                (callback) => { callback({}); },
+                "verifier-container",
+                "verify-btn");
+        activityHandler.selectActivity("editor");
+
+        /* Trace / Raphael */
+        traceWidth = document.getElementById("trace").clientWidth;
+        traceHeight = document.getElementById("trace").clientHeight;
+
+        /* Raphael canvas drawing */
+        canvas = new SnapCanvas("#trace", traceWidth, traceHeight);
+
+        var resizeTimer;
+        $(window).resize(function () {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeCanvas, 100);
+        });
+
+        new New('#new-btn', null, project, activityHandler);
+
+        var saveIds = {
+            saveFileId: '#save-file-btn',
+            saveProjectsId: '#save-projects-btn'
+        };
+        new Save(null, saveIds, project, activityHandler);
+
+        var loadIds = {
+            loadFileId: '#load-file-btn',
+            fileInputId: '#file-input',
+            projectsId: '#projects-list',
+            examplesId: '#examples-list'
+        };
+        new Load(null, loadIds, project, activityHandler);
+
+        var deleteIds = {
+            deleteId: '#delete-list',
+        }
+        new Delete(null, deleteIds, project, activityHandler);
+    }
+
     export class ActivityHandler {
         private currentActivityName : string = "";
         private activities = {};
 
-        public constructor() {
-            // $(document).on('activityChanged', (evt, activity) => {
-            //     this.selectActivity(activity);
-            // });
-        }
+        public constructor() {}
 
-        public addActivity(name : string, activity : Activities.Activity, setupFn : (callback) => void, containerId : string, buttonId : string) {
+        public addActivity(name : string, activity : Activity.Activity, setupFn : (callback) => void, containerId : string, buttonId : string) {
             if (this.activities[name]) throw new Error("Activity with the name '" + name + "' already exists");
             this.activities[name] = {
                 activity: activity,
@@ -120,8 +139,6 @@ module Main {
 
         public selectActivity(newActivityName : string): void {
             var newActivityData, callback;
-            //Don't do the work if not necessary
-            if (newActivityName === this.currentActivityName) return;
             newActivityData = this.activities[newActivityName];
             if (!newActivityData) return;
             callback = (configuration) => {
@@ -136,13 +153,35 @@ module Main {
             newActivityData.setupFn(callback);
         }
     }
+
+    export function getGraph() {
+        var graph = new CCS.Graph();
+            CCSParser.parse(editor.getValue(), {ccs: CCS, graph: graph});
+        return graph;
+    }
+
+    export function getStrictSuccGenerator(graph) : ccs.SuccessorGenerator {
+        var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
+            treeReducer = new Traverse.ProcessTreeReducer(graph),
+            reducingGenerator = new Traverse.ReducingSuccessorGenerator(strictGenerator, treeReducer);
+        return reducingGenerator;
+    }
+
+    export function getWeakSuccGenerator(graph) : ccs.SuccessorGenerator {
+        //Wait do we build the, weak generator on top of the strict directly and then reduce?
+        //or do we take take the strict one, reduce it, then apply the weak on top?  <-- this right now.
+        var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
+            treeReducer = new Traverse.ProcessTreeReducer(graph),
+            reducingGenerator = new Traverse.ReducingSuccessorGenerator(strictGenerator, treeReducer),
+            weakGenerator = new Traverse.WeakSuccessorGenerator(reducingGenerator);
+        return weakGenerator;
+    }
 }
 
 function setupExplorerActivityFn(callback) : any {
-    var graph = getGraph(),
-        successorGenerator = new Traverse.ReducingSuccessorGenerator(graph),
-        namedProcesses = graph.getNamedProcesses(),
-        $dialogBody = $("#viz-mode-dialog-body"),
+    var namedProcesses = Main.getGraph().getNamedProcesses(),
+        $dialogList = $("#viz-mode-dialog-body-list"),
+        $depthSelect = $("#viz-mode-dialog-depth"),
         $dialog = $("#viz-mode-dialog");
     //Important only one dialog at a time.
     if (isShowingDialog()) return callback(null);
@@ -151,25 +190,31 @@ function setupExplorerActivityFn(callback) : any {
         showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
         return callback(null);
     }
-        
-    function makeConfiguration(processName) {
+
+    function makeConfiguration(processName, expandDepth) {
+        var graph = Main.getGraph(),
+            succGenerator = Main.getStrictSuccGenerator(graph);
         return {
             graph: graph,
-            successorGenerator: successorGenerator,
-            initialProcessName: processName
+            successorGenerator: succGenerator,
+            initialProcessName: processName,
+            expandDepth: expandDepth
         };
     }
 
-    $dialogBody.children().remove();
+    $dialogList.children().remove();
     namedProcesses.sort().forEach(processName => {
         var $element = $(document.createElement("button"));
         $element.addClass("btn btn-default btn-lg btn-block");
         $element.text(processName);
         $element.on("click", () => {
             $dialog.modal("hide");
-            callback(makeConfiguration(processName));
+            callback(makeConfiguration(
+                processName,
+                parseInt($depthSelect.val(), 10)
+            ));
         });
-        $dialogBody.append($element);
+        $dialogList.append($element);
     });
 
     $dialog.modal("show");
@@ -196,12 +241,6 @@ function isShowingDialog() : boolean {
         }
     };
     return false;
-}
-
-function getGraph() {
-    var graph = new CCS.Graph();
-        CCSParser.parse(editor.getValue(), {ccs: CCS, graph: graph});
-    return graph;
 }
 
 function resizeCanvas() {

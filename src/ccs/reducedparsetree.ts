@@ -64,7 +64,7 @@ module Traverse {
                 // (P \ L1) \L2 => P \ (L1 Union L2)
                 if (process.subProcess instanceof ccs.RestrictionProcess) {
                     var subRestriction = <ccs.RestrictionProcess>process.subProcess;
-                    var mergedLabels = subRestriction.restrictedLabels.clone().unionWith(process.restrictedLabels);
+                    var mergedLabels = subRestriction.restrictedLabels.union(process.restrictedLabels);
                     process = this.graph.newRestrictedProcess(subRestriction.subProcess, mergedLabels);
                 }
                 // 0 \ L => 0
@@ -90,20 +90,42 @@ module Traverse {
         }
     }
 
-    export class ReducingSuccessorGenerator implements ccs.ProcessVisitor<ccs.TransitionSet> {
-        
-        private succGenerator : ccs.SuccessorGenerator;
-        private reducer : ProcessTreeReducer;
+    export class WeakSuccessorGenerator implements ccs.SuccessorGenerator {
 
-        constructor(public graph : ccs.Graph, public successorCache?, public reducerCache?) {
-            this.successorCache = successorCache || {};
-            this.reducerCache = reducerCache || {};
-            this.succGenerator = new ccs.SuccessorGenerator(graph, this.successorCache);
-            this.reducer = new ProcessTreeReducer(graph, this.reducerCache);
+        constructor(public strictSuccGenerator : ccs.SuccessorGenerator,  public cache?) {
+            this.cache = cache || {};
         }
 
-        visit(process : ccs.Process) : ccs.TransitionSet {
-            var transitionSet = this.succGenerator.visit(process);
+        getSuccessors(processId) {
+            var result = new ccs.TransitionSet(),
+                visited = {}, toVisit = [processId];
+            if (this.cache[processId]) return this.cache[processId];
+
+            while (toVisit.length > 0) {
+                var visitingId = toVisit.pop();
+                if (!visited[visitingId]) {
+                    visited[visitingId] = true;
+                    var successors = this.strictSuccGenerator.getSuccessors(visitingId);
+                    successors.forEach(transition => {
+                        if (transition.action.getLabel() === "tau") {
+                            toVisit.push(transition.targetProcess.id);
+                        } else {
+                            result.add(transition);
+                        }
+                    });
+                }
+            }
+            this.cache[processId] = result;
+            return result;
+        }
+    }
+
+    export class ReducingSuccessorGenerator implements ccs.SuccessorGenerator {
+        
+        constructor(public succGenerator : ccs.SuccessorGenerator, public reducer : ProcessTreeReducer) { }
+
+        getSuccessors(processId) : ccs.TransitionSet {
+            var transitionSet = this.succGenerator.getSuccessors(processId);
             return this.reduceSuccessors(transitionSet);
         }
 
