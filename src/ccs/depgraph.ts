@@ -1,10 +1,19 @@
 /// <reference path="ccs.ts" />
 /// <reference path="hml.ts" />
+/// <reference path="util.ts" />
 
 module DependencyGraph {
 
     import ccs = CCS;
     import hml = HML;
+
+    function copyHyperEdges(hyperEdges) {
+        var result = [];
+        for (var i=0; i < hyperEdges.length; i++) {
+            result.push(hyperEdges[i].slice(0));
+        }
+        return result;
+    }
 
     export class BisimulationDG implements DependencyGraph {
 
@@ -28,17 +37,20 @@ module DependencyGraph {
         getHyperEdges(identifier) {
             var type, data, result;
             //Have we already built this? Then return copy of the edges.
-            if (this.nodes[identifier]) return this.nodes[identifier].slice(0);
-            data = this.constructData[identifier];
-            type = data[0];
-            if (type === 0) { //It it a pair?
-                result = this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
-            } else if (type === 1) { // The left action and destination is fixed?
-                result = this.nodes[identifier] = this.getNodeForLeftTransition(data);
-            } else if (type === 2) { // The right action and destination is fixed?
-                result = this.nodes[identifier] = this.getNodeForRightTransition(data);
+            if (this.nodes[identifier]) {
+                result = this.nodes[identifier];
+            } else {
+                data = this.constructData[identifier];
+                type = data[0];
+                if (type === 0) { //It it a pair?
+                    result = this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
+                } else if (type === 1) { // The left action and destination is fixed?
+                    result = this.nodes[identifier] = this.getNodeForLeftTransition(data);
+                } else if (type === 2) { // The right action and destination is fixed?
+                    result = this.nodes[identifier] = this.getNodeForRightTransition(data);
+                }
             }
-            return result.slice(0);
+            return copyHyperEdges(result);
         }
 
         private getNodeForLeftTransition(data) {
@@ -110,6 +122,63 @@ module DependencyGraph {
             });
             return hyperedges;
         }
+
+        findDivergentTrace(marking) {
+            var that = this;
+
+            function selectEdgeMarkedOne(hyperEdges) {
+                for (var i=0; i < hyperEdges.length; i++) {
+                    var edge = hyperEdges[i];
+                    var allOne = true;
+                    for (var j=0; j < edge.length; j++) {
+                        if (marking.getMarking(edge[j]) !== marking.ONE) {
+                            allOne = false;
+                            break;
+                        }
+                    }
+                    if (allOne) {
+                        return edge.slice(0);
+                    }
+                }
+                throw "All targets must have been marked ONE for at least one target set";
+            }
+
+            function addTracePart(node) {
+                var data = that.constructData[node],
+                    type = data[0],
+                    text;
+                if (type === 0) {
+                    if (lastMove === "RIGHT") leftTrace.push(lastAction);
+                    leftTrace.push(data[1]);
+                    if (lastMove === "LEFT") rightTrace.push(lastAction);
+                    rightTrace.push(data[2]);
+                }
+                if (type === 1) {
+                    lastMove = "LEFT";
+                    lastAction = data[1];
+                    leftTrace.push(lastAction);
+                }
+                if (type === 2) {
+                    lastMove = "RIGHT";
+                    lastAction = data[1];
+                    rightTrace.push(lastAction);
+                }
+            }
+
+            var leftTrace = [ this.constructData[0][1] ];
+            var rightTrace = [ this.constructData[0][2] ];
+            var lastMove = "";
+            var lastAction;
+
+            var current = 0;
+            var nexts = selectEdgeMarkedOne(this.getHyperEdges(current));
+            while (nexts.length > 0) {
+                current = nexts[0];
+                addTracePart(current);
+                nexts = selectEdgeMarkedOne(this.getHyperEdges(current));
+            }
+            return {left: leftTrace, right: rightTrace};
+        }                
     }
 
     export class ModelCheckingDG implements DependencyGraph, hml.FormulaDispatchHandler<any[][]> {
@@ -132,15 +201,18 @@ module DependencyGraph {
         }
 
         getHyperEdges(identifier) {
-            var data, nodeId, formula;
-            if (this.nodes[identifier]) return this.nodes[identifier].slice(0);
-            data = this.constructData[identifier];
-            nodeId = data[0];
-            formula = data[1];
-            this.getForNodeId = nodeId;
-            var edges = formula.dispathOn(this);
-            this.nodes[identifier] = edges;
-            return edges.slice(0);
+            var data, nodeId, formula, result;
+            if (this.nodes[identifier]) {
+                result = this.nodes[identifier];
+            } else {
+                data = this.constructData[identifier];
+                nodeId = data[0];
+                formula = data[1];
+                this.getForNodeId = nodeId;
+                result = formula.dispathOn(this);
+                this.nodes[identifier] = result;
+            }
+            return copyHyperEdges(result);
         }
 
         dispatchDisjFormula(formula : hml.DisjFormula) {
@@ -196,7 +268,7 @@ module DependencyGraph {
         getHyperEdges(identifier) : any[][];
     }
 
-    export function liuSmolkaLocal2(m, graph) : boolean {
+    export function liuSmolkaLocal2(m, graph) : any {
         var S_ZERO = 1, S_ONE = 2, S_BOTTOM = 3;
 
         // A[k]
@@ -277,11 +349,43 @@ module DependencyGraph {
                 }
             }
         }
-        return A.get(m) === S_ONE;
+        return {
+            getMarking: function(dgNodeId) {
+                return A.get(dgNodeId);
+            },
+            ZERO: S_ZERO,
+            ONE: S_ONE,
+            UNKNOWN: S_BOTTOM
+        }
     }
 
-    export function isBisimilar(ltsSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId) {
-        var dg = new BisimulationDG(ltsSuccGen, leftProcessId, rightProcessId);
-        return !liuSmolkaLocal2(0, dg);
+    export function isBisimilar(ltsSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
+        var dg = new BisimulationDG(ltsSuccGen, leftProcessId, rightProcessId),
+            marking = liuSmolkaLocal2(0, dg);
+        //Bisimulation is maximal fixed point, the marking is reversed.
+        if (marking.getMarking(0) === marking.ONE && graph) {
+            var traces = dg.findDivergentTrace(marking)
+            console.log("Left does: ");
+            console.log(prettyPrintTrace(graph, traces.left));
+            console.log("Right does: ");
+            console.log(prettyPrintTrace(graph, traces.right));
+        }
+        return marking.getMarking(0) === marking.ZERO;
+    }
+
+    function prettyPrintTrace(graph, trace) {
+        var notation = new Traverse.CCSNotationVisitor(),
+            stringParts = [];
+        for (var i=0; i < trace.length; i++) {
+            if (i % 2 == 1) stringParts.push("---- " + trace[i].toString() + " ---->");
+            else stringParts.push(notation.visit(graph.processById(trace[i])));
+        }
+        return stringParts.join("\n\t");
+    }
+
+    export function checkFormula(formula, succGen, processId) {
+        var dg = new ModelCheckingDG(succGen, processId, formula),
+            marking = liuSmolkaLocal2(0, dg);
+        return marking.getMarking(0) === marking.ONE;
     }
 }

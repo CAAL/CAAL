@@ -14,9 +14,8 @@ function getStrictSuccGenerator(graph) {
 function checkFormula(program, processName, formula) {
     var graph = new CCSParser.parse(program, {ccs: CCS}),
         succGen = getStrictSuccGenerator(graph),
-        formula = HMLParser.parse(formula, {ccs: ccs, hml: hml}),
-        dg = new dgMod.ModelCheckingDG(succGen, graph.processByName(processName).id, formula);
-    return dgMod.liuSmolkaLocal2(0, dg);
+        formula = HMLParser.parse(formula, {ccs: ccs, hml: hml});
+    return dgMod.checkFormula(formula, succGen, graph.processByName(processName).id);
 }
 
 QUnit.module("Model Checking Tests");

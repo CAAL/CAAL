@@ -26,7 +26,7 @@ QUnit.test("Simple not bisimilar", function ( assert ) {
         succGen = getStrictSuccGenerator(graph),
         processP = graph.processByName("P"),
         processQ = graph.processByName("Q");
-    assert.ok(!dgMod.isBisimilar(succGen, processP.id, processQ.id), "P and Q should not be bisimilar");
+    assert.ok(!dgMod.isBisimilar(succGen, processP.id, processQ.id, graph), "P and Q should not be bisimilar");
 });
 
 QUnit.test("Simple bisimilar", function ( assert ) {
@@ -34,7 +34,7 @@ QUnit.test("Simple bisimilar", function ( assert ) {
         succGen = getStrictSuccGenerator(graph),
         processP = graph.processByName("P"),
         processQ = graph.processByName("Q");
-    assert.ok(dgMod.isBisimilar(succGen, processP.id, processQ.id), "P and Q should be bisimilar");
+    assert.ok(dgMod.isBisimilar(succGen, processP.id, processQ.id, graph), "P and Q should be bisimilar");
 });
 
 QUnit.test("Tau Cycles", function ( assert ) {
@@ -44,7 +44,7 @@ QUnit.test("Tau Cycles", function ( assert ) {
         succGen = getWeakSuccGenerator(graph),
         processP = graph.processByName("P"),
         processQ = graph.processByName("Q");
-    assert.ok(dgMod.isBisimilar(succGen, processP.id, processQ.id), "P and Q should be weakly bisimilar");
+    assert.ok(dgMod.isBisimilar(succGen, processP.id, processQ.id, graph), "P and Q should be weakly bisimilar");
 });
 
 QUnit.test("Alternative Bit Protocol", function ( assert) {
@@ -77,7 +77,7 @@ QUnit.test("Alternative Bit Protocol", function ( assert) {
         succGen = getWeakSuccGenerator(graph),
         protocol = graph.processByName("Protocol").id,
         spec = graph.processByName("Spec").id;
-    assert.ok(dgMod.isBisimilar(succGen, protocol, spec), "ABP Protocol should be bisimilar with Spec");
+    assert.ok(dgMod.isBisimilar(succGen, protocol, spec, graph), "ABP Protocol should be bisimilar with Spec");
 });
 
 QUnit.test("Alternative Bit Protocol", function ( assert) {
@@ -110,5 +110,5 @@ QUnit.test("Alternative Bit Protocol", function ( assert) {
         succGen = getWeakSuccGenerator(graph),
         protocol = graph.processByName("Protocol").id,
         spec = graph.processByName("Spec").id;
-    assert.ok(dgMod.isBisimilar(succGen, protocol, spec), "Modified ABP Protocol should be bisimilar with Spec");
+    assert.ok(dgMod.isBisimilar(succGen, protocol, spec, graph), "Modified ABP Protocol should be bisimilar with Spec");
 });

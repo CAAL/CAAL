@@ -5,6 +5,7 @@
 /// <reference path="ccs/ccs.ts" />
 /// <reference path="ccs/reducedparsetree.ts" />
 /// <reference path="ccs/util.ts" />
+/// <reference path="ccs/depgraph.ts" />
 /// <reference path="gui/project.ts" />
 /// <reference path="gui/menu.ts" />
 /// <reference path="gui/storage.ts" />
@@ -20,60 +21,61 @@ import ccs = CCS;
 var editor;
 var isDialogOpen = false;
 
-$(document).ready(function() {
-    editor = ace.edit("editor");
-
-    var project = new Project(
-        "Untitled Project",
-        null,
-        "#project-title",
-        editor
-    );
-
-    var activityHandler = new Main.ActivityHandler();
-    activityHandler.addActivity(
-            "editor", 
-            new Activity.Editor(editor, "#editor", "#parse-btn", "#status-area", "#clear-btn", "#font-size-btn"),
-            (callback) => { callback({}); },
-            "editor-container",
-            "edit-btn");
-    activityHandler.addActivity(
-            "explorer",
-            new Activity.Explorer($("#arbor-canvas")[0], $("#fullscreen-container")[0], "#status-table-container", $("#explorer-freeze-btn")[0], "#explorer-save-btn", $("#explorer-fullscreen-btn")[0], new Traverse.CCSNotationVisitor()),
-            setupExplorerActivityFn,
-            "explorer-container",
-            "explore-btn");
-    activityHandler.addActivity(
-            "verifier",
-            new Activity.Verifier("#toggle-select"),
-            (callback) => { callback({}); },
-            "verifier-container",
-            "verify-btn");
-    activityHandler.selectActivity("editor");
-
-    new New('#new-btn', null, project, activityHandler);
-
-    var saveIds = {
-        saveFileId: '#save-file-btn',
-        saveProjectsId: '#save-projects-btn'
-    };
-    new Save(null, saveIds, project, activityHandler);
-
-    var loadIds = {
-        loadFileId: '#load-file-btn',
-        fileInputId: '#file-input',
-        projectsId: '#projects-list',
-        examplesId: '#examples-list'
-    };
-    new Load(null, loadIds, project, activityHandler);
-
-    var deleteIds = {
-        deleteId: '#delete-list',
-    }
-    new Delete(null, deleteIds, project, activityHandler);
-});
-
 module Main {
+
+    export function setup() {
+        editor = ace.edit("editor");
+
+        var project = new Project(
+            "Untitled Project",
+            null,
+            "#project-title",
+            editor
+        );
+
+        var activityHandler = new Main.ActivityHandler();
+        activityHandler.addActivity(
+                "editor", 
+                new Activity.Editor(editor, "#editor", "#parse-btn", "#status-area", "#clear-btn", "#font-size-btn"),
+                (callback) => { callback({}); },
+                "editor-container",
+                "edit-btn");
+        activityHandler.addActivity(
+                "explorer",
+                new Activity.Explorer($("#arbor-canvas")[0], $("#fullscreen-container")[0], "#status-table-container", $("#explorer-freeze-btn")[0], "#explorer-save-btn", $("#explorer-fullscreen-btn")[0], new Traverse.CCSNotationVisitor()),
+                setupExplorerActivityFn,
+                "explorer-container",
+                "explore-btn");
+        activityHandler.addActivity(
+                "verifier",
+                new Activity.Verifier("#toggle-select"),
+                (callback) => { callback({}); },
+                "verifier-container",
+                "verify-btn");
+        activityHandler.selectActivity("editor");
+
+        new New('#new-btn', null, project, activityHandler);
+
+        var saveIds = {
+            saveFileId: '#save-file-btn',
+            saveProjectsId: '#save-projects-btn'
+        };
+        new Save(null, saveIds, project, activityHandler);
+
+        var loadIds = {
+            loadFileId: '#load-file-btn',
+            fileInputId: '#file-input',
+            projectsId: '#projects-list',
+            examplesId: '#examples-list'
+        };
+        new Load(null, loadIds, project, activityHandler);
+
+        var deleteIds = {
+            deleteId: '#delete-list',
+        }
+        new Delete(null, deleteIds, project, activityHandler);
+    }
+
     export class ActivityHandler {
         private currentActivityName : string = "";
         private activities = {};
@@ -173,7 +175,7 @@ function setupExplorerActivityFn(callback) : any {
 
     function makeConfiguration(processName, expandDepth) {
         var graph = Main.getGraph(),
-            succGenerator = Main.getWeakSuccGenerator(graph);
+            succGenerator = Main.getStrictSuccGenerator(graph);
         return {
             graph: graph,
             successorGenerator: succGenerator,
