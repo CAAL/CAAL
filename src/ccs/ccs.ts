@@ -643,7 +643,7 @@ module CCS {
         dispatchActionPrefixProcess(process : ActionPrefixProcess) {
             var transitionSet = this.cache[process.id];
             if (!transitionSet) {
-                process.nextProcess.dispatchOn(this).clone();
+                //process.nextProcess.dispatchOn(this).clone();
                 transitionSet = this.cache[process.id] = new TransitionSet([new Transition(process.action, process.nextProcess)]);
             }
             return transitionSet;
