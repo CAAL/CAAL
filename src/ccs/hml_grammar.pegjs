@@ -6,29 +6,39 @@
 	}
 
     var ccs = options.ccs,
-        hml = options.hml;
+        hml = options.hml,
+        formulas = new hml.FormulaSet();
 }
 
 start
-	= Formula
+	= Ps:Statements _ { return formulas; }
+	/ _ { return formulas; }
 
-Formula = Disjunction
+Statements = P:FixedPoint _ ";" Qs:Statements { return [P].concat(Qs); }
+		   / P:FixedPoint _ (";" _)? { return [P]; }
 
-Disjunction = _ P:Conjunction Whitespace _ "or" Whitespace _ Q:Disjunction { return new hml.DisjFormula(P, Q); }
+FixedPoint = _ V:Variable _ [mM][aA][xX] "=" _ P:Disjunction { return formulas.newMaxFixedPoint(V, P); }
+		   / _ V:Variable _ [mM][iI][nN] "=" _ P:Disjunction { return formulas.newMinFixedPoint(V, P); }
+		   / P:Disjunction { return formulas.unnamedMinFixedPoint(P); }
+
+Disjunction = P:Conjunction Whitespace _ "or" Whitespace _ Q:Disjunction { return formulas.newDisj(P, Q); }
 			/ P:Conjunction { return P; }
 
-Conjunction =  _ M:Modal Whitespace _ "and" Whitespace _ P:Conjunction { return new hml.ConjFormula(M, P); }
+Conjunction = M:Modal Whitespace _ "and" Whitespace _ P:Conjunction { return formulas.newConj(M, P); }
 			/ M:Modal { return M; }
 
-Modal = _ "[" _ A:Action _ "]" _ F:Modal { return new hml.ForAllFormula(A, F); }
-	  / _ "<" _ A:Action _ ">" _ F:Modal { return new hml.ExistsFormula(A, F); }
+Modal = _ "[" _ A:Action _ "]" _ F:Modal { return formulas.newForAll(A, F); }
+	  / _ "<" _ A:Action _ ">" _ F:Modal { return formulas.newExists(A, F); }
 	  / Unary
 
 Unary = ParenFormula
-	  / _ "tt" { return new hml.TrueFormula(); }
-	  / _ "ff" { return new hml.FalseFormula(); }
+	  / _ "tt" { return formulas.newTrue(); }
+	  / _ "ff" { return formulas.newFalse(); }
+	  / _ V:Variable { return formulas.referVariable(V); }
 
-ParenFormula = _ "(" _ F:Formula _ ")" { return F; }
+ParenFormula = _ "(" _ F:Disjunction _ ")" { return F; }
+
+Variable = letter:[A-Z] rest:IdentifierRest { return strFirstAndRest(letter, rest); }
 
 IdentifierRest
     = rest:[A-Za-z0-9?!_'\-#]*  { return rest; }

@@ -11,10 +11,10 @@ function getStrictSuccGenerator(graph) {
     return reducingGenerator;
 }
 
-function checkFormula(program, processName, formula) {
+function checkFormula(program, processName, strFormula) {
     var graph = new CCSParser.parse(program, {ccs: CCS}),
         succGen = getStrictSuccGenerator(graph),
-        formula = HMLParser.parse(formula, {ccs: ccs, hml: hml});
+        formula = HMLParser.parse(strFormula, {ccs: ccs, hml: hml}).getAllFormulas()[0];
     return dgMod.checkFormula(formula, succGen, graph.processByName(processName).id);
 }
 

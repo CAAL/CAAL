@@ -209,7 +209,7 @@ module DependencyGraph {
                 nodeId = data[0];
                 formula = data[1];
                 this.getForNodeId = nodeId;
-                result = formula.dispathOn(this);
+                result = formula.dispatchOn(this);
                 this.nodes[identifier] = result;
             }
             return copyHyperEdges(result);
