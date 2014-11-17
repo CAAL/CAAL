@@ -186,22 +186,35 @@ class Delete extends MenuItem {
     }
 
     private deleteFromStorage(e): void {
-        var projects = this.storage.getObj('projects');
-        var id = e.data.id;
+        var deleteModal = $('#delete-modal');
+        var deleteButton = $('#confirm-delete');
 
-        for (var i = 0; i < projects.length; i++) {
-            if (projects[i].id === id) {
-                if (projects.length === 1) {
-                    this.storage.delete('projects');
-                } else {
-                    projects.splice(i, 1);
-                    this.storage.setObj('projects', projects);
+        deleteModal.modal('show');
+
+        deleteModal.on('hide.bs.modal', function() {
+            deleteButton.off('click');
+        })
+
+        deleteButton.on('click', () => {
+            deleteModal.modal('hide');
+
+            var projects = this.storage.getObj('projects');
+            var id = e.data.id;
+
+            for (var i = 0; i < projects.length; i++) {
+                if (projects[i].id === id) {
+                    if (projects.length === 1) {
+                        this.storage.delete('projects');
+                    } else {
+                        projects.splice(i, 1);
+                        this.storage.setObj('projects', projects);
+                    }
+                    this.project.setId(null);
+                    $(document).trigger('delete');
+                    break;
                 }
-                this.project.setId(null);
-                $(document).trigger('delete');
-                break;
             }
-        }
+        });
     }
 
     private showProjects(): void {
