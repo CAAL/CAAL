@@ -197,18 +197,100 @@ module HML {
         getErrors() {
             var errors = this.errors.slice(0);
             this.undefinedVariables.forEach(variable => {
-                this.errors.push({name: "UndefinedVariable", message: "The variable '" + variable + "' has not been defined."});
+                errors.push({name: "UndefinedVariable", message: "The variable '" + variable + "' has not been defined."});
             });
+            if (errors.length === 0) {
+                var cycleChecker = new ReferenceCycleChecker();
+                Array.prototype.push.apply(errors, cycleChecker.check(this));
+            }
             return errors;
         }
 
-        formulaByName(variable) {
+        formulaByName(variable) : Formula {
             var result = this.namedFormulas[variable];
             return result ? result : null;
         }
 
+        getVariables() : string[] {
+            return Object.keys(this.namedFormulas);
+        }
+
         getAllFormulas() {
             return this.allFormulas.slice(0);
+        }
+    }
+
+    class ReferenceCycleChecker implements FormulaDispatchHandler<boolean> {
+
+        private hasSeen = [];
+        private formulaSet;
+        
+        private hasSeenButNotIn(variable) : boolean {
+            var index = this.hasSeen.indexOf(variable);
+            return index >= 0 && index < this.hasSeen.length-1;
+        }
+
+        private isInside(variable) : boolean {
+            return this.hasSeen.length > 0 ? (this.hasSeen[this.hasSeen.length-1] === variable) : false;
+        }
+
+        check(formulaSet : FormulaSet) {
+            var errors = [];
+            this.formulaSet = formulaSet;
+            var variables = formulaSet.getVariables();
+            variables.forEach(variable => {
+                if (formulaSet.formulaByName(variable).dispatchOn(this)) {
+                    errors.push({name: "NonAcyclicVariable", message: "The variable '" + variable + "' is not acyclic"});
+                }
+            });
+            this.formulaSet = null;
+            return errors;
+        }
+
+        dispatchDisjFormula(formula : DisjFormula) : boolean {
+            return formula.left.dispatchOn(this) || formula.right.dispatchOn(this);
+        }
+
+        dispatchConjFormula(formula : ConjFormula) : boolean {
+            return formula.left.dispatchOn(this) || formula.right.dispatchOn(this);
+        }
+
+        dispatchTrueFormula(formula : TrueFormula) : boolean {
+            return false;
+        }
+
+        dispatchFalseFormula(formula : FalseFormula) : boolean {
+            return false;
+        }
+
+        dispatchExistsFormula(formula : ExistsFormula) : boolean {
+            return formula.subFormula.dispatchOn(this);
+        }
+
+        dispatchForAllFormula(formula : ForAllFormula) : boolean {
+            return formula.subFormula.dispatchOn(this);
+        }
+
+        dispatchMinFixedPointFormula(formula : MinFixedPointFormula) : boolean {
+            if (this.hasSeenButNotIn(formula.variable)) return true;
+            if (this.isInside(formula.variable)) return false;
+            this.hasSeen.push(formula.variable);
+            var result = formula.subFormula.dispatchOn(this);
+            this.hasSeen.pop();
+            return result;
+        }
+
+        dispatchMaxFixedPointFormula(formula : MaxFixedPointFormula) : boolean {
+            if (this.hasSeenButNotIn(formula.variable)) return true;
+            if (this.isInside(formula.variable)) return false;
+            this.hasSeen.push(formula.variable);
+            var result = formula.subFormula.dispatchOn(this);
+            this.hasSeen.pop();
+            return result;
+        }
+
+        dispatchVariableFormula(formula : VariableFormula) : boolean {
+            return this.formulaSet.formulaByName(formula.variable).dispatchOn(this);
         }
     }
 }

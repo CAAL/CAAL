@@ -383,7 +383,7 @@ module DependencyGraph {
         return stringParts.join("\n\t");
     }
 
-    export function checkFormula(formula, succGen, processId) {
+    export function checkFormula(formula, formulaSet, succGen, processId) {
         var dg = new ModelCheckingDG(succGen, processId, formula),
             marking = liuSmolkaLocal2(0, dg);
         return marking.getMarking(0) === marking.ONE;
