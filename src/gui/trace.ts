@@ -8,7 +8,7 @@ class SnapCanvas {
     private currentY: number;
     public paper: SnapPaper;
     
-    private traces: Trace[] = [Trace.GetTrace(this, TraceType.Collapsed), Trace.GetTrace(this, TraceType.Double), Trace.GetTrace(this, TraceType.Single)];
+    private traces: Drawable[] = [new Game(Trace.GetTrace(this, TraceType.Single), Trace.GetTrace(this, TraceType.Single))];
     
     constructor(htmlElement: string, public canvasWidth: number, public canvasHeight: number) {
         this.paper = Snap(htmlElement);
@@ -72,6 +72,41 @@ interface Drawable {
     height: number;
     draw(snapCanvas: SnapCanvas, x: number, y: number);
     measureWidth(snapCanvas: SnapCanvas);
+}
+
+class Game implements Drawable {
+    public width: number = 0;
+    public height: number = 0;
+
+    constructor(private attacker: Trace, private defender: Trace) {
+        
+    }
+
+    public measureWidth(snapCanvas: SnapCanvas) { /* empty */ }
+    
+    public draw(snapCanvas: SnapCanvas, x: number, y: number) {
+        // Attacker
+        var attackerText = snapCanvas.paper.text(x, y, "Attacker"); // x and y doesnt matter here, move it below
+        attackerText.attr({"font-family": "monospace", "font-weight": "bold", "font-size": 12, "fill": "#000"});
+
+        y += attackerText.getBBox().height;
+        
+        this.attacker.draw(snapCanvas, x, y);
+
+        y += this.attacker.height;
+        
+        // Defender
+        var defenderText = snapCanvas.paper.text(x, y, "Defender"); // x and y doesnt matter here, move it below
+        defenderText.attr({"font-family": "monospace", "font-weight": "bold", "font-size": 12, "fill": "#000"});
+
+        y += defenderText.getBBox().height;
+
+        this.defender.draw(snapCanvas, x, y);
+
+        this.height = attackerText.getBBox().height + defenderText.getBBox().height + this.attacker.height + this.defender.height;
+        this.width = Math.max(attackerText.getBBox().width + defenderText.getBBox().width + this.attacker.width + this.defender.width);
+    }
+
 }
 
 class Trace implements Drawable {
@@ -188,7 +223,7 @@ class Square implements Drawable {
         var margin = (this.height - fontSize) / 2;
 
         this.textElement = snapCanvas.paper.text(0, 0, this.text); // x and y doesnt matter here, move it below
-        this.textElement.attr({"font-family": "Inconsolata", "font-size": fontSize, "text-anchor":"middle", "fill": "#FFF"});
+        this.textElement.attr({"font-family": "monospace", "font-weight": "bold", "font-size": fontSize, "text-anchor":"middle", "fill": "#FFF"});
 
         var textWidth = this.textElement.getBBox().width;
         

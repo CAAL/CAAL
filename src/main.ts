@@ -14,7 +14,6 @@
 /// <reference path="activity/editor.ts" />
 /// <reference path="activity/explorer.ts" />
 /// <reference path="activity/verifier.ts" />
-/// <reference path="activities.ts" />
 /// <reference path="gui/trace.ts" />
 
 declare var CCSParser;
