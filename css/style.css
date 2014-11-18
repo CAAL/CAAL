@@ -124,6 +124,7 @@ canvas {
 }
 
 #tip{
+    display: none;
     position : absolute;
     border : 1px solid gray;
     background-color : #efefef;

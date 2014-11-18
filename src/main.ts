@@ -38,19 +38,14 @@ module Main {
             editor
         );
 
-        /* Trace / Raphael */
-        traceWidth = document.getElementById("trace").clientWidth;
-        traceHeight = document.getElementById("trace").clientHeight;
-
-        /* Raphael canvas drawing */
-        canvas = new SnapCanvas("#trace", traceWidth, traceHeight);
-
+        var gameActivity: Activity.BisimulationGame = new Activity.BisimulationGame(document.getElementById("trace"), "game-actions-table-container");
+        
         var resizeTimer;
         $(window).resize(function () {
             clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(resizeCanvas, 100);
+            resizeTimer = setTimeout(() => gameActivity.resizeCanvas(), 100);
         });
-
+        
         var activityHandler = new Main.ActivityHandler();
         activityHandler.addActivity(
                 "editor", 
@@ -72,7 +67,7 @@ module Main {
                 "verify-btn");
         activityHandler.addActivity(
                 "game",
-            new Activity.BisimulationGame(canvas, "Protocol", "Spec"),
+                gameActivity,
                 (callback) => { callback({}); },
                 "game-container",
                 "game-btn");
@@ -247,10 +242,4 @@ function isShowingDialog() : boolean {
         }
     };
     return false;
-}
-
-function resizeCanvas() {
-    var traceWidth = document.getElementById("trace").clientWidth;
-    var traceHeight = document.getElementById("trace").clientHeight;
-    canvas.setSize(traceWidth, traceHeight);
 }

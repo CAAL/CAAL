@@ -13,20 +13,36 @@ module Activity {
     import dgMod = DependencyGraph;
 
     export class BisimulationGame extends Activity {
-        private graph;
-        private dependencyGraph;
+        private snapCanvas: SnapCanvas;
+        private graph: CCS.Graph;
+        private dependencyGraph: dgMod.BisimulationDG;
         private leftProcess;
         private rightProcess;
-        private succGen;
+        private succGen: ccs.SuccessorGenerator;
         private marking;
 
-        constructor(private snapCanvas: SnapCanvas, private leftProcessName, private rightProcessName) {
+        private leftProcessName: string;
+        private rightProcessName: string;
+        
+        constructor(private canvas, private actionsTable) {
             super();
+            
+            this.leftProcessName = "Protocol";
+            this.rightProcessName = "Spec";
         }
 
-        afterShow(): void {
-            this.graph = Main.getGraph();
-            this.succGen = Main.getStrictSuccGenerator(this.graph);
+        beforeShow(configuration): void {
+            /* Trace / Raphael */
+            traceWidth = this.canvas.clientWidth;
+            traceHeight = this.canvas.clientHeight;
+
+            /* Raphael canvas drawing */
+            this.snapCanvas = new SnapCanvas("#"+this.canvas.id, traceWidth, traceHeight);
+            
+            
+            
+            this.graph = Main.getGraph(); // use configuration instead
+            this.succGen = Main.getStrictSuccGenerator(this.graph); // use configuration instead
             
             this.leftProcess = this.graph.processByName(this.leftProcessName);
             this.rightProcess = this.graph.processByName(this.rightProcessName);
@@ -43,7 +59,18 @@ module Activity {
                 console.log("Right does: ");
                 console.log(this.prettyPrintTrace(this.graph, traces.right));
             }
-
+            
+            this.updateTable();
+        }
+        
+        public resizeCanvas() {
+            var traceWidth = this.canvas.clientWidth;
+            var traceHeight = this.canvas.clientHeight;
+            this.snapCanvas.setSize(traceWidth, traceHeight);
+        }
+        
+        afterShow(): void {
+            this.resizeCanvas();
         }
 
         private prettyPrintTrace(graph, trace) {
@@ -56,6 +83,36 @@ module Activity {
             return stringParts.join("\n\t");
         }
         
+        private setOnHoverListener(row) {
+            if(row){
+                $(row).hover(() => {
+                    $(row).css("background", "rgba(0, 0, 0, 0.07)");
+                }, 
+                () => {
+                    // clear highlight
+                    $(row).css("background", "");
+                });
+            }
+        }
+
+        private setOnClickListener(row) {
+            if(row){
+                $(row).on('click', () => {
+                    //var processName = $(row).children()[2].innerHTML;
+                    
+                });
+            }
+        }
+        
+        private updateTable() {
+            var hyperEdges = this.dependencyGraph.getHyperEdges(0);
+            
+            console.log(hyperEdges);
+            
+            for (var i = 0; i< hyperEdges.length; i++) {
+                
+            }
+        }
     }
     
 }
