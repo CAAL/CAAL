@@ -101,8 +101,8 @@ canvas {
  * Explorer activity styles
  */
 #status-table-container {
-    height: 155px;
-    max-height: 155px;
+    height: 230px;
+    max-height: 230px;
     overflow-y: auto;
 }
 
@@ -122,6 +122,6 @@ canvas {
     margin: 0;
 }
 
-#explorer-container tbody {
+#explorer-container tbody, #explorer-source-definition {
     font: normal 14px "Inconsolata";
 }

@@ -34,24 +34,38 @@ module Main {
         );
 
         var activityHandler = new Main.ActivityHandler();
+
         activityHandler.addActivity(
                 "editor", 
                 new Activity.Editor(editor, "#editor", "#parse-btn", "#status-area", "#clear-btn", "#font-size-btn"),
                 (callback) => { callback({}); },
                 "editor-container",
                 "edit-btn");
+
         activityHandler.addActivity(
                 "explorer",
-                new Activity.Explorer($("#arbor-canvas")[0], $("#fullscreen-container")[0], "#status-table-container", $("#explorer-freeze-btn")[0], "#explorer-save-btn", $("#explorer-fullscreen-btn")[0], new Traverse.CCSNotationVisitor()),
-                setupExplorerActivityFn,
-                "explorer-container",
-                "explore-btn");
+                new Activity.Explorer(
+                    {
+                        canvas: $("#arbor-canvas")[0],
+                        fullscreenContainer: $("#fullscreen-container")[0],
+                        statusTableContainer: $("#status-table-container")[0],
+                        freezeBtn: $("#explorer-freeze-btn")[0],
+                        saveBtn: "#explorer-save-btn",
+                        fullscreenBtn: $("#explorer-fullscreen-btn")[0],
+                        sourceDefinition: $("#explorer-source-definition")[0]
+                    },
+                    new Traverse.CCSNotationVisitor()),
+                    setupExplorerActivityFn,
+                    "explorer-container",
+                    "explore-btn");
+
         activityHandler.addActivity(
                 "verifier",
                 new Activity.Verifier("#toggle-select"),
                 (callback) => { callback({}); },
                 "verifier-container",
                 "verify-btn");
+
         activityHandler.selectActivity("editor");
 
         new New('#new-btn', null, project, activityHandler);

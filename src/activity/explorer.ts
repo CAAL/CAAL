@@ -29,38 +29,25 @@ module Activity {
 
     export class Explorer extends Activity {
         private canvas;
-        private fullscreenContainer;
-        private freezeBtn;
-        private saveBtn;
-        private fullscreenBtn;
         private renderer: Renderer;
         private uiGraph: ProcessGraphUI;
-        private bindedResizeFn;
-        private bindedFreezeFn;
-        private bindedFullscreenFn;
+        private bindedFns : any = {};
         private graph : ccs.Graph;
         private succGenerator : ccs.SuccessorGenerator;
         private initialProcessName : string;
-        private statusTableContainer;
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
-        private bindedHoverRowFn;
-        private bindedClickRowFn;
-        constructor(canvas, fullscreenContainer, statusTableContainer, freezeBtn, saveBtn, fullscreenBtn, notationVisitor : CCSNotationVisitor) {
+
+        constructor(private elements, notationVisitor : CCSNotationVisitor) {
             super();
-            this.canvas = canvas;
-            this.fullscreenContainer = fullscreenContainer;
-            this.statusTableContainer = statusTableContainer;
-            this.freezeBtn = freezeBtn;
-            this.saveBtn = saveBtn;
-            this.fullscreenBtn = fullscreenBtn;
+            this.canvas = elements.canvas;
             this.notationVisitor = notationVisitor;
-            this.renderer = new Renderer(canvas);
+            this.renderer = new Renderer(this.canvas);
             this.uiGraph = new ArborGraph(this.renderer);
 
-            this.bindedFullscreenFn = this.toggleFullscreen.bind(this);
-            $(this.fullscreenBtn).on("click", this.bindedFullscreenFn);
-            $(this.saveBtn).on("click", () => this.saveCanvas());
+            this.bindedFns.fullscreen = this.toggleFullscreen.bind(this);
+            $(this.elements.fullscreenBtn).on("click", this.bindedFns.fullscreen);
+            $(this.elements.saveBtn).on("click", () => this.saveCanvas());
 
             $(document).on("fullscreenchange", () => this.fullscreenChanged());
             $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
@@ -78,15 +65,16 @@ module Activity {
         }
         
         private toggleFullscreen() {
+            var fullScreenContainer = this.elements.fullscreenContainer;
             if (!this.isFullscreen()) {
-                if (this.fullscreenContainer.requestFullscreen) {
-                    this.fullscreenContainer.requestFullscreen();
-                } else if (this.fullscreenContainer.msRequestFullscreen) {
-                    this.fullscreenContainer.msRequestFullscreen();
-                } else if (this.fullscreenContainer.mozRequestFullScreen) {
-                    this.fullscreenContainer.mozRequestFullScreen();
-                } else if (this.fullscreenContainer.webkitRequestFullscreen) {
-                    this.fullscreenContainer.webkitRequestFullscreen();
+                if (fullScreenContainer.requestFullscreen) {
+                    fullScreenContainer.requestFullscreen();
+                } else if (fullScreenContainer.msRequestFullscreen) {
+                    fullScreenContainer.msRequestFullscreen();
+                } else if (fullScreenContainer.mozRequestFullScreen) {
+                    fullScreenContainer.mozRequestFullScreen();
+                } else if (fullScreenContainer.webkitRequestFullscreen) {
+                    fullScreenContainer.webkitRequestFullscreen();
                 }
             } else {
                 if (document.exitFullscreen) {
@@ -102,12 +90,12 @@ module Activity {
         }
 
         private saveCanvas() {
-            $(this.saveBtn).attr("href", this.canvas.toDataURL("image/png"));
-            $(this.saveBtn).attr("download", this.initialProcessName + ".png");
+            $(this.elements.saveBtn).attr("href", this.canvas.toDataURL("image/png"));
+            $(this.elements.saveBtn).attr("download", this.initialProcessName + ".png");
         }
 
         private fullscreenChanged() {
-            $(this.fullscreenBtn).text(this.isFullscreen() ? "Exit" : "Fullscreen");
+            $(this.elements.fullscreenBtn).text(this.isFullscreen() ? "Exit" : "Fullscreen");
             this.resize();
         }
         
@@ -131,8 +119,8 @@ module Activity {
 
         public afterShow(): void {
             var that = this;
-            this.bindedResizeFn = this.resize.bind(this);
-            $(window).on("resize", this.bindedResizeFn);
+            this.bindedFns.resize = this.resize.bind(this);
+            $(window).on("resize", this.bindedFns.resize);
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId), this.expandDepth);
             });
@@ -146,16 +134,16 @@ module Activity {
             });
 
             this.uiGraph.unfreeze();
-            this.bindedFreezeFn = this.toggleFreeze.bind(this);
-            $(this.freezeBtn).on("click", this.bindedFreezeFn);
+            this.bindedFns.freeze = this.toggleFreeze.bind(this);
+            $(this.elements.freezeBtn).on("click", this.bindedFns.freeze);
             this.resize();
         }
 
         public afterHide() {
-            $(window).unbind("resize", this.bindedResizeFn)
-            this.bindedResizeFn = null;
+            $(window).unbind("resize", this.bindedFns.resize)
+            this.bindedFns.resize = null;
             this.uiGraph.unfreeze();
-            $(this.freezeBtn).unbind("click", this.bindedFreezeFn);
+            $(this.elements.freezeBtn).unbind("click", this.bindedFns.freeze);
             this.uiGraph.clearOnSelectListener();
             this.uiGraph.clearHoverOnListener();
             this.uiGraph.clearHoverOutListener();
@@ -197,7 +185,7 @@ module Activity {
         }
 
         private toggleFreeze() {
-            var $freezeBtn = $(this.freezeBtn),
+            var $freezeBtn = $(this.elements.freezeBtn),
                 isFreezing = $freezeBtn.text() === "Unfreeze",
                 newValueText = isFreezing ? "Freeze" : "Unfreeze",
                 doFreeze = !isFreezing;
@@ -261,25 +249,29 @@ module Activity {
             return result;
         }
 
+        private forceExpandDefinition(process) : string {
+            if (process instanceof ccs.NamedProcess) {
+                return this.notationVisitor.visit((<ccs.NamedProcess>process).subProcess);
+            }
+            return this.notationVisitor.visit(process);
+        }
+
         private updateStatusAreaTransitions(fromProcess, transitions : ccs.Transition[]) {
-            var body = $(this.statusTableContainer).find("tbody");
+            var body = $(this.elements.statusTableContainer).find("tbody");
+            var $sourceDefinition = $(this.elements.sourceDefinition);
             body.empty();
 
-            var sourceLabelContainer = $("#source-label p");
-            var source = this.labelFor(fromProcess);
-            sourceLabelContainer.text("Source: " + source);
-
+            $sourceDefinition.text(this.labelFor(fromProcess) + " = " + this.forceExpandDefinition(fromProcess));
             transitions.forEach(t => {
                 var row = $("<tr></tr>");
-                var action = $("<td id='action'></td>").append(t.action.toString());
-                var name = $("<td id='name'></td>").append(this.labelFor(t.targetProcess));
-                var target = $("<td id='target'></td>").append(this.notationVisitor.visit(t.targetProcess));
+                var action = $("<td></td>").append(t.action.toString());
+                var name = $("<td></td>").append(this.labelFor(t.targetProcess));
+                var target = $("<td></td>").append(this.notationVisitor.visit(t.targetProcess));
                 row.append(action, name, target);
                 body.append(row);
                 this.setOnHoverListener(row);
                 this.setOnClickListener(row);
             });          
-
         }
 
         private showProcessAsExplored(process : ccs.Process) : void {
@@ -290,8 +282,8 @@ module Activity {
             var width = this.canvas.parentNode.clientWidth;
             var height;
             if (!this.isFullscreen()) {
-                var offsetTop = $("#arbor-canvas").offset().top;
-                var offsetBottom = $(this.statusTableContainer).height() + 20; // Parent container margin = 20.
+                var offsetTop = $(this.canvas).offset().top;
+                var offsetBottom = $(this.elements.statusTableContainer).height() + 20; // Parent container margin = 20.
                 height = Math.max(350, window.innerHeight - offsetTop - offsetBottom);
             } else {
                 height = this.canvas.parentNode.clientHeight;
