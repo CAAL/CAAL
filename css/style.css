@@ -100,11 +100,22 @@ canvas {
 /*
  * Explorer activity styles
  */
-
 #status-table-container {
     height: 155px;
     max-height: 155px;
     overflow-y: auto;
+}
+
+#source-label {
+    width: 15%;
+}
+
+#source-label p{
+    margin-top: 5px;    
+}
+
+#status-table {
+    width: 85%;
 }
 
 #explorer-container table {

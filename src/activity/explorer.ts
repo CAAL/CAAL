@@ -166,7 +166,7 @@ module Activity {
         private setOnHoverListener(row) {
             if(row){
                 $(row).hover(() => {
-                    var processName = $(row).children()[2].innerHTML; // 'target' is index 2, maybe this could be done in better way?
+                    var processName = row.find('#target').text();
                     var processId  = this.graph.processByName(processName).id;
                     this.uiGraph.setHover(processId.toString());
 
@@ -183,7 +183,7 @@ module Activity {
         private setOnClickListener(row) {
             if(row){
                 $(row).on('click', () => {
-                    var processName = $(row).children()[2].innerHTML; // 'target' is index 2, maybe this could be done in better way?
+                    var processName = row.find('#target').text();
                     this.expand(this.graph.processByName(processName), this.expandDepth);
 
                     /*clear previous hover*/
@@ -265,13 +265,16 @@ module Activity {
             var body = $(this.statusTableContainer).find("tbody");
             body.empty();
 
+            var sourceLabelContainer = $("#source-label p");
+            var source = this.labelFor(fromProcess);
+            sourceLabelContainer.text("Source: " + source);
+
             transitions.forEach(t => {
                 var row = $("<tr></tr>");
-                var source = $("<td></td>").append(this.labelFor(fromProcess));
-                var action = $("<td></td>").append(t.action.toString());
-                var name = $("<td></td>").append(this.labelFor(t.targetProcess));
-                var target = $("<td></td>").append(this.notationVisitor.visit(t.targetProcess));
-                row.append(source, action, name, target);
+                var action = $("<td id='action'></td>").append(t.action.toString());
+                var name = $("<td id='name'></td>").append(this.labelFor(t.targetProcess));
+                var target = $("<td id='target'></td>").append(this.notationVisitor.visit(t.targetProcess));
+                row.append(action, name, target);
                 body.append(row);
                 this.setOnHoverListener(row);
                 this.setOnClickListener(row);
