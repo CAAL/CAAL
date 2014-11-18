@@ -154,8 +154,7 @@ module Activity {
         private setOnHoverListener(row) {
             if(row){
                 $(row).hover(() => {
-                    var processName = row.find('#target').text();
-                    var processId  = this.graph.processByName(processName).id;
+                    var processId = row.data('targetId');
                     this.uiGraph.setHover(processId.toString());
 
                     $(row).css("background", "rgba(0, 0, 0, 0.07)");
@@ -171,8 +170,8 @@ module Activity {
         private setOnClickListener(row) {
             if(row){
                 $(row).on('click', () => {
-                    var processName = row.find('#target').text();
-                    this.expand(this.graph.processByName(processName), this.expandDepth);
+                    var processId = row.data('targetId');
+                    this.expand(this.graph.processById(processId), this.expandDepth);
 
                     /*clear previous hover*/
                     this.uiGraph.clearHover();
@@ -268,6 +267,7 @@ module Activity {
                 var name = $("<td></td>").append(this.labelFor(t.targetProcess));
                 var target = $("<td></td>").append(this.notationVisitor.visit(t.targetProcess));
                 row.append(action, name, target);
+                row.data("targetId", t.targetProcess.id);
                 body.append(row);
                 this.setOnHoverListener(row);
                 this.setOnClickListener(row);
