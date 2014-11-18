@@ -163,14 +163,6 @@ module Activity {
             this.succGenerator = null;
         }
 
-        private highlightRow(row){
-            
-        }
-
-        private unHighlightRow(row){
-            
-        }
-
         private setOnHoverListener(row) {
             if(row){
                 $(row).hover(() => {
