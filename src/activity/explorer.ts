@@ -44,7 +44,8 @@ module Activity {
         private statusTableContainer;
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
-        
+        private bindedHoverRowFn;
+        private bindedClickRowFn;
         constructor(canvas, fullscreenContainer, statusTableContainer, freezeBtn, saveBtn, fullscreenBtn, notationVisitor : CCSNotationVisitor) {
             super();
             this.canvas = canvas;
@@ -59,7 +60,6 @@ module Activity {
 
             this.bindedFullscreenFn = this.toggleFullscreen.bind(this);
             $(this.fullscreenBtn).on("click", this.bindedFullscreenFn);
-
             $(this.saveBtn).on("click", () => this.saveCanvas());
 
             $(document).on("fullscreenchange", () => this.fullscreenChanged());
@@ -129,7 +129,7 @@ module Activity {
             this.expand(this.graph.processByName(this.initialProcessName), 1);
         }
 
-        afterShow(): void {
+        public afterShow(): void {
             var that = this;
             this.bindedResizeFn = this.resize.bind(this);
             $(window).on("resize", this.bindedResizeFn);
@@ -145,14 +145,13 @@ module Activity {
                 this.uiGraph.clearHover();
             });
 
-
             this.uiGraph.unfreeze();
             this.bindedFreezeFn = this.toggleFreeze.bind(this);
             $(this.freezeBtn).on("click", this.bindedFreezeFn);
             this.resize();
         }
 
-        afterHide() {
+        public afterHide() {
             $(window).unbind("resize", this.bindedResizeFn)
             this.bindedResizeFn = null;
             this.uiGraph.unfreeze();
@@ -162,6 +161,43 @@ module Activity {
             this.uiGraph.clearHoverOutListener();
             this.graph = null;
             this.succGenerator = null;
+        }
+
+        private highlightRow(row){
+            
+        }
+
+        private unHighlightRow(row){
+            
+        }
+
+        private setOnHoverListener(row) {
+            if(row){
+                $(row).hover(() => {
+                    var processName = $(row).children()[2].innerHTML; // 'target' is index 2, maybe this could be done in better way?
+                    var processId  = this.graph.processByName(processName).id;
+                    this.uiGraph.setHover(processId);
+
+                    $(row).css("background", "rgba(0, 0, 0, 0.07)");
+                }, 
+                () => {
+                    /*clear highlight and hover*/
+                    this.uiGraph.clearHover();
+                    $(row).css("background", "");
+                });
+            }
+        }
+
+        private setOnClickListener(row) {
+            if(row){
+                $(row).on('click', () => {
+                    var processName = $(row).children()[2].innerHTML; // 'target' is index 2, maybe this could be done in better way?
+                    this.expand(this.graph.processByName(processName), this.expandDepth);
+
+                    /*clear previous hover*/
+                    this.uiGraph.clearHover();
+                });
+            }
         }
 
         private clear() : void {
@@ -245,7 +281,10 @@ module Activity {
                 var target = $("<td></td>").append(this.notationVisitor.visit(t.targetProcess));
                 row.append(source, action, name, target);
                 body.append(row);
+                this.setOnHoverListener(row);
+                this.setOnClickListener(row);
             });          
+
         }
 
         private showProcessAsExplored(process : ccs.Process) : void {
