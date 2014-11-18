@@ -74,11 +74,15 @@ module GUI {
 
         private highlightEdges(){
             var edges = [];
-            if(this.renderer.selectedNode !== this.renderer.hoverNode){
+            
+            edges = this.sys.getEdges(this.renderer.selectedNode, this.renderer.hoverNode);
+            
+            /* if(this.renderer.selectedNode !== this.renderer.hoverNode){
                 edges = this.sys.getEdges(this.renderer.selectedNode, this.renderer.hoverNode);
-            } else {
+            } 
+            else {
                 edges = this.sys.getEdgesFrom(this.renderer.selectedNode);
-            }
+            } */
             
             if(edges.length > 0){
                 for (var i = 0; i < edges.length; i++){

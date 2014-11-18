@@ -76,13 +76,6 @@ class Renderer {
             var label = edge.data.datas.map((data) => data.label).join(",");
 
             this.ctx.save();
-            // if (this.hoverNode !== null && this.selectedNode !== null){
-            //     if (edge.target.name == this.hoverNode.name && edge.source.name == this.selectedNode.name) {
-            //         this.ctx.strokeStyle = edge.data.color || this.highlightSettings.color; // Edge color
-            //         this.ctx.lineWidth = edge.data.lineWidth || this.highlightSettings.lineWidth; // Edge line width
-            //     }
-            // }
-
             if (edge.data.highlight){
                 this.ctx.strokeStyle = edge.data.color || this.highlightSettings.color; // Edge color
                 this.ctx.lineWidth = edge.data.lineWidth || this.highlightSettings.lineWidth; // Edge line width
