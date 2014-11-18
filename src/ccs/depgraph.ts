@@ -181,89 +181,6 @@ module DependencyGraph {
         }                
     }
 
-    export class ModelCheckingDG implements DependencyGraph, hml.FormulaDispatchHandler<any[][]> {
-
-        private succGen;
-        private TRUE_ID = 1;
-        private FALSE_ID = 2;
-        // the 0th index is set in the constructor.
-        // nodes[1] is tt, nodes[2] is ff - described by hyper edges.
-        private nodes = [ undefined, [ [] ], [ ] ];
-        private constructData = {};
-        private nextIdx;
-
-        private getForNodeId;
-
-        constructor(succGen : ccs.SuccessorGenerator, nodeId, formula : hml.Formula) {
-            this.succGen = succGen;
-            this.constructData[0] = [nodeId, formula];
-            this.nextIdx = 3;
-        }
-
-        getHyperEdges(identifier) {
-            var data, nodeId, formula, result;
-            if (this.nodes[identifier]) {
-                result = this.nodes[identifier];
-            } else {
-                data = this.constructData[identifier];
-                nodeId = data[0];
-                formula = data[1];
-                this.getForNodeId = nodeId;
-                result = formula.dispathOn(this);
-                this.nodes[identifier] = result;
-            }
-            return copyHyperEdges(result);
-        }
-
-        dispatchDisjFormula(formula : hml.DisjFormula) {
-            var leftIdx = this.nextIdx++,
-                rightIdx = this.nextIdx++;
-            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
-            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
-            return [ [leftIdx], [rightIdx] ];
-        }
-
-        dispatchConjFormula(formula : hml.ConjFormula) {
-            var leftIdx = this.nextIdx++,
-                rightIdx = this.nextIdx++;
-            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
-            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
-            return [ [leftIdx, rightIdx] ];          
-        }
-
-        dispatchTrueFormula(formula : hml.TrueFormula) {
-            return this.nodes[this.TRUE_ID];
-        }
-
-        dispatchFalseFormula(formula : hml.FalseFormula) {
-            return this.nodes[this.FALSE_ID];
-        }
-
-        dispatchExistsFormula(formula : hml.ExistsFormula) {
-            var hyperedges = [],
-                transitionSet = this.succGen.getSuccessors(this.getForNodeId),
-                transitions = transitionSet.transitionsForAction(formula.action);
-            transitions.forEach(transition => {
-                var newIdx = this.nextIdx++;
-                this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
-                hyperedges.push([newIdx]);
-            });
-            return hyperedges;
-        }
-
-        dispatchForAllFormula(formula : hml.ForAllFormula) {
-            var hyperedges = [],
-                transitionSet = this.succGen.getSuccessors(this.getForNodeId),
-                transitions = transitionSet.transitionsForAction(formula.action);
-            transitions.forEach(transition => {
-                var newIdx = this.nextIdx++;
-                this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
-                hyperedges.push(newIdx);
-            });
-            return [hyperedges];
-        }
-    }
-
     export interface DependencyGraph {
         getHyperEdges(identifier) : any[][];
     }
@@ -359,17 +276,232 @@ module DependencyGraph {
         }
     }
 
+    class MuCalculusMinModelCheckingDG implements DependencyGraph {
+        private TRUE_ID = 1;
+        private FALSE_ID = 2;
+        // the 0th index is set in the constructor.
+        // nodes[1] is tt, nodes[2] is ff - described by hyper edges.
+        private nodes = [ undefined, [ [] ], [ ] ];
+        private constructData = {};
+        private nextIdx;
+        private variableEdges = {};
+        private maxFixPoints = {};
+
+        private getForNodeId;
+
+        constructor(private succGen : ccs.SuccessorGenerator, nodeId, private formulaSet : hml.FormulaSet, formula : hml.Formula) {
+            this.constructData[0] = [nodeId, formula];
+            this.nextIdx = 3;
+        }
+
+        getHyperEdges(identifier) {
+            var data, nodeId, formula, result;
+            if (this.nodes[identifier]) {
+                result = this.nodes[identifier];
+            } else {
+                data = this.constructData[identifier];
+                nodeId = data[0];
+                formula = data[1];
+                this.getForNodeId = nodeId;
+                result = formula.dispatchOn(this);
+                this.nodes[identifier] = result;
+            }
+            return copyHyperEdges(result);
+        }
+
+        dispatchDisjFormula(formula : hml.DisjFormula) {
+            var leftIdx = this.nextIdx++,
+                rightIdx = this.nextIdx++;
+            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
+            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
+            return [ [leftIdx], [rightIdx] ];
+        }
+
+        dispatchConjFormula(formula : hml.ConjFormula) {
+            var leftIdx = this.nextIdx++,
+                rightIdx = this.nextIdx++;
+            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
+            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
+            return [ [leftIdx, rightIdx] ];          
+        }
+
+        dispatchTrueFormula(formula : hml.TrueFormula) {
+            return this.nodes[this.TRUE_ID];
+        }
+
+        dispatchFalseFormula(formula : hml.FalseFormula) {
+            return this.nodes[this.FALSE_ID];
+        }
+
+        dispatchExistsFormula(formula : hml.ExistsFormula) {
+            var hyperedges = [],
+                transitionSet = this.succGen.getSuccessors(this.getForNodeId),
+                transitions = transitionSet.transitionsForAction(formula.action);
+            transitions.forEach(transition => {
+                var newIdx = this.nextIdx++;
+                this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
+                hyperedges.push([newIdx]);
+            });
+            return hyperedges;
+        }
+
+        dispatchForAllFormula(formula : hml.ForAllFormula) {
+            var hyperedges = [],
+                transitionSet = this.succGen.getSuccessors(this.getForNodeId),
+                transitions = transitionSet.transitionsForAction(formula.action);
+            transitions.forEach(transition => {
+                var newIdx = this.nextIdx++;
+                this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
+                hyperedges.push(newIdx);
+            });
+            return [hyperedges];
+        }
+
+        dispatchMinFixedPointFormula(formula : hml.MinFixedPointFormula) {
+            return formula.subFormula.dispatchOn(this);
+        }
+
+        dispatchMaxFixedPointFormula(formula : hml.MaxFixedPointFormula) {
+            var maxDg = new MuCalculusMaxModelCheckingDG(this.succGen, this.getForNodeId, this.formulaSet, formula);
+            var marking = solveMuCalculusInternal(maxDg);
+            return marking.getMarking(0) === marking.ZERO ? this.nodes[this.TRUE_ID] : this.nodes[this.FALSE_ID];
+        }
+
+        dispatchVariableFormula(formula : hml.VariableFormula) {
+            var key = this.getForNodeId + "@" + formula.variable;
+            var variableEdge = this.variableEdges[key];
+            if (variableEdge) return [[variableEdge]];
+            this.variableEdges[key] = variableEdge = this.nextIdx++;
+            this.constructData[variableEdge] = [this.getForNodeId, this.formulaSet.formulaByName(formula.variable)];
+            return [[variableEdge]];
+        }
+    }
+
+    class MuCalculusMaxModelCheckingDG implements DependencyGraph {
+        private TRUE_ID = 1;
+        private FALSE_ID = 2;
+        // the 0th index is set in the constructor.
+        // nodes[1] is tt, nodes[2] is ff - described by hyper edges.
+        private nodes = [ undefined, [ [] ], [ ] ];
+        private constructData = {};
+        private nextIdx;
+        private variableEdges = {};
+        private maxFixPoints = {};
+
+        private getForNodeId;
+
+        constructor(private succGen : ccs.SuccessorGenerator, nodeId, private formulaSet : hml.FormulaSet, formula : hml.Formula) {
+            this.constructData[0] = [nodeId, formula];
+            this.nextIdx = 3;
+        }
+
+        getHyperEdges(identifier) {
+            var data, nodeId, formula, result;
+            if (this.nodes[identifier]) {
+                result = this.nodes[identifier];
+            } else {
+                data = this.constructData[identifier];
+                nodeId = data[0];
+                formula = data[1];
+                this.getForNodeId = nodeId;
+                result = formula.dispatchOn(this);
+                this.nodes[identifier] = result;
+            }
+            return copyHyperEdges(result);
+        }
+
+        /* Remember Max fixed point - dependency graph should be "inverted" */
+        dispatchDisjFormula(formula : hml.DisjFormula) {
+            var leftIdx = this.nextIdx++,
+                rightIdx = this.nextIdx++;
+            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
+            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
+            return [ [leftIdx, rightIdx] ];
+        }
+
+        dispatchConjFormula(formula : hml.ConjFormula) {
+            var leftIdx = this.nextIdx++,
+                rightIdx = this.nextIdx++;
+            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
+            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
+            return [ [leftIdx], [rightIdx] ];          
+        }
+
+        dispatchTrueFormula(formula : hml.TrueFormula) {
+            return this.nodes[this.FALSE_ID];
+        }
+
+        dispatchFalseFormula(formula : hml.FalseFormula) {
+            return this.nodes[this.TRUE_ID];
+        }
+
+        dispatchExistsFormula(formula : hml.ExistsFormula) {
+            var hyperedges = [],
+                transitionSet = this.succGen.getSuccessors(this.getForNodeId),
+                transitions = transitionSet.transitionsForAction(formula.action);
+            transitions.forEach(transition => {
+                var newIdx = this.nextIdx++;
+                this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
+                hyperedges.push(newIdx);
+            });
+            return [hyperedges];
+        }
+
+        dispatchForAllFormula(formula : hml.ForAllFormula) {
+            var hyperedges = [],
+                transitionSet = this.succGen.getSuccessors(this.getForNodeId),
+                transitions = transitionSet.transitionsForAction(formula.action);
+            transitions.forEach(transition => {
+                var newIdx = this.nextIdx++;
+                this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
+                hyperedges.push([newIdx]);
+            });
+            return hyperedges;
+        }
+
+        dispatchMinFixedPointFormula(formula : hml.MinFixedPointFormula) {
+            var minDg = new MuCalculusMinModelCheckingDG(this.succGen, this.getForNodeId, this.formulaSet, formula);
+            var marking = solveMuCalculusInternal(minDg);
+            return marking.getMarking(0) === marking.ZERO ? this.nodes[this.TRUE_ID] : this.nodes[this.FALSE_ID];
+        }
+
+        dispatchMaxFixedPointFormula(formula : hml.MaxFixedPointFormula) {
+            return formula.subFormula.dispatchOn(this);
+        }
+
+        dispatchVariableFormula(formula : hml.VariableFormula) {
+            var key = this.getForNodeId + "@" + formula.variable;
+            var variableEdge = this.variableEdges[key];
+            if (variableEdge) return [[variableEdge]];
+            variableEdge = this.nextIdx++;
+            this.variableEdges[key] = variableEdge;
+            this.constructData[variableEdge] = [this.getForNodeId, this.formulaSet.formulaByName(formula.variable)];
+            return [[variableEdge]];
+        }
+    }
+
+    function solveMuCalculusInternal(dg : DependencyGraph) : any {
+        var marking = liuSmolkaLocal2(0, dg);
+        return marking;
+    }
+
+    export function solveMuCalculus(formulaSet, formula, succGen, processId) : boolean {
+        var dg = new MuCalculusMinModelCheckingDG(succGen, processId, formulaSet, formula),
+            marking = solveMuCalculusInternal(dg);
+        return marking.getMarking(0) === marking.ONE;
+    }
+
     export function isBisimilar(ltsSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
         var dg = new BisimulationDG(ltsSuccGen, leftProcessId, rightProcessId),
             marking = liuSmolkaLocal2(0, dg);
         //Bisimulation is maximal fixed point, the marking is reversed.
-        if (marking.getMarking(0) === marking.ONE && graph) {
-            var traces = dg.findDivergentTrace(marking)
-            console.log("Left does: ");
-            console.log(prettyPrintTrace(graph, traces.left));
-            console.log("Right does: ");
-            console.log(prettyPrintTrace(graph, traces.right));
-        }
+        // if (marking.getMarking(0) === marking.ONE && graph) {
+        //     var traces = dg.findDivergentTrace(marking)
+        //     console.log("Left does: ");
+        //     console.log(prettyPrintTrace(graph, traces.left));
+        //     console.log("Right does: ");
+        //     console.log(prettyPrintTrace(graph, traces.right));
+        // }
         return marking.getMarking(0) === marking.ZERO;
     }
 
@@ -381,11 +513,5 @@ module DependencyGraph {
             else stringParts.push(notation.visit(graph.processById(trace[i])));
         }
         return stringParts.join("\n\t");
-    }
-
-    export function checkFormula(formula, succGen, processId) {
-        var dg = new ModelCheckingDG(succGen, processId, formula),
-            marking = liuSmolkaLocal2(0, dg);
-        return marking.getMarking(0) === marking.ONE;
     }
 }
