@@ -31,6 +31,12 @@ class SnapCanvas {
             this.currentY += item.height; // should be equal to one or more LineHeight
         });
     }
+    
+    static setTextAttr(textElement: SnapElement) {
+        var fontSize = Trace.LineHeight / 2.5;
+        textElement.attr({"font-family": "monospace", "font-weight": "bold", "font-size": fontSize, "text-anchor":"middle", "fill": "#000"});
+        return textElement;
+    }
 }
 
 class Tip {
@@ -87,7 +93,7 @@ class Game implements Drawable {
     public draw(snapCanvas: SnapCanvas, x: number, y: number) {
         // Attacker
         var attackerText = snapCanvas.paper.text(x, y, "Attacker"); // x and y doesnt matter here, move it below
-        attackerText.attr({"font-family": "monospace", "font-weight": "bold", "font-size": 12, "fill": "#000"});
+        SnapCanvas.setTextAttr(attackerText).attr({"text-anchor": "start"});
 
         y += attackerText.getBBox().height;
         
@@ -97,14 +103,14 @@ class Game implements Drawable {
         
         // Defender
         var defenderText = snapCanvas.paper.text(x, y, "Defender"); // x and y doesnt matter here, move it below
-        defenderText.attr({"font-family": "monospace", "font-weight": "bold", "font-size": 12, "fill": "#000"});
+        SnapCanvas.setTextAttr(defenderText).attr({"text-anchor": "start"});
 
         y += defenderText.getBBox().height;
 
         this.defender.draw(snapCanvas, x, y);
 
         this.height = attackerText.getBBox().height + defenderText.getBBox().height + this.attacker.height + this.defender.height;
-        this.width = Math.max(attackerText.getBBox().width + defenderText.getBBox().width + this.attacker.width + this.defender.width);
+        this.width = Math.max(attackerText.getBBox().width, defenderText.getBBox().width, this.attacker.width, this.defender.width);
     }
 
 }
@@ -223,7 +229,7 @@ class Square implements Drawable {
         var margin = (this.height - fontSize) / 2;
 
         this.textElement = snapCanvas.paper.text(0, 0, this.text); // x and y doesnt matter here, move it below
-        this.textElement.attr({"font-family": "monospace", "font-weight": "bold", "font-size": fontSize, "text-anchor":"middle", "fill": "#FFF"});
+        SnapCanvas.setTextAttr(this.textElement);
 
         var textWidth = this.textElement.getBBox().width;
         
@@ -267,8 +273,8 @@ class Arrow implements Drawable {
         var margin: number = (this.height - fontSize) / 2;
 
         this.textElement = snapCanvas.paper.text(0, 0, this.text); // x and y doesnt matter here, move it below
-        this.textElement.attr({"font-family": "monospace", "font-weight": "bold", "font-size": fontSize, "text-anchor":"middle"});
-
+        SnapCanvas.setTextAttr(this.textElement);
+        
         var textWidth: number = this.textElement.getBBox().width;
         
         // set width of the line to make room for the text
