@@ -14,6 +14,7 @@
 /// <reference path="activity/editor.ts" />
 /// <reference path="activity/explorer.ts" />
 /// <reference path="activity/verifier.ts" />
+/// <reference path="activity/game.ts" />
 /// <reference path="gui/trace.ts" />
 
 declare var CCSParser;
@@ -37,6 +38,19 @@ module Main {
             editor
         );
 
+        /* Trace / Raphael */
+        traceWidth = document.getElementById("trace").clientWidth;
+        traceHeight = document.getElementById("trace").clientHeight;
+
+        /* Raphael canvas drawing */
+        canvas = new SnapCanvas("#trace", traceWidth, traceHeight);
+
+        var resizeTimer;
+        $(window).resize(function () {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeCanvas, 100);
+        });
+
         var activityHandler = new Main.ActivityHandler();
         activityHandler.addActivity(
                 "editor", 
@@ -56,20 +70,13 @@ module Main {
                 (callback) => { callback({}); },
                 "verifier-container",
                 "verify-btn");
+        activityHandler.addActivity(
+                "game",
+            new Activity.BisimulationGame(canvas, "Protocol", "Spec"),
+                (callback) => { callback({}); },
+                "game-container",
+                "game-btn");
         activityHandler.selectActivity("editor");
-
-        /* Trace / Raphael */
-        traceWidth = document.getElementById("trace").clientWidth;
-        traceHeight = document.getElementById("trace").clientHeight;
-
-        /* Raphael canvas drawing */
-        canvas = new SnapCanvas("#trace", traceWidth, traceHeight);
-
-        var resizeTimer;
-        $(window).resize(function () {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(resizeCanvas, 100);
-        });
 
         new New('#new-btn', null, project, activityHandler);
 

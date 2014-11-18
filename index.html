@@ -1,272 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>CCSTool</title>
-        <link href='http://fonts.googleapis.com/css?family=Open+Sans:600' rel='stylesheet' type='text/css'>
-        <link href='http://fonts.googleapis.com/css?family=Inconsolata:400,700' rel='stylesheet' type='text/css'>
-        <link href="lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="lib/fontawesome/css/font-awesome.min.css" rel="stylesheet">
-        <link href="css/style.css" rel="stylesheet">
-        <script src="lib/jquery-1.11.1.min.js"></script>
-        <script src="lib/snap.svg-min.js"></script>
-        <script src="lib/bootstrap/dist/js/bootstrap.min.js"></script>
-        <script src="lib/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
-        <script src="lib/ace/src/ext-language_tools.js"></script>
-        <script type="text/javascript" src="lib/ccs_grammar.js"></script>
-        <script type="text/javascript" src="lib/arbor.js"></script>
-        <script type="text/javascript" src="lib/graphics.js"></script>
-        <script type="text/javascript" src="lib/main.js"></script>
-        <script type="text/javascript" src="test.js"></script>
-        <script type="text/javascript">
-            $(document).ready(Main.setup);
-        </script>
-    </head>
-    <body>
-        <!-- Top navigation -->
-        <nav class="navbar navbar-default" role="navigation">
-            <div class="container">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="index.html">CCSTool</a>
-                </div>
-                <div class="collapse navbar-collapse" id="navbar-collapse">
-                    <ul class="nav navbar-nav">
-                        <li class="divider-vertical"></li>
-                        <li id="new-btn"><a>New Project</a></li>
-                        <li class="dropdown">
-                            <a class="dropdown-toggle" data-toggle="dropdown">Save <span class="caret"></span></a>
-                            <ul class="dropdown-menu" role="menu">
-                                <li id="save-projects-btn"><a>To My Projects</a></li>
-                                <li><a id="save-file-btn">To File</a></li>
-                            </ul>
-                        </li>
-                        <li class="dropdown">
-                            <a class="dropdown-toggle" data-toggle="dropdown">Load <span class="caret"></span></a>
-                            <ul class="dropdown-menu" role="menu">
-                                <li id="load-file-btn"><a>From File</a></li>
-                                <input type="file" id="file-input" class="hidden" accept=".ccs-project" />
-                                <li class="divider"></li>
-                                <li id="projects-list" class="dropdown-header" role="presentation">My Projects</li>
-                                <li class="divider"></li>
-                                <li id="examples-list" class="dropdown-header" role="presentation">Examples</li>
-                            </ul>
-                        </li>
-                        <li class="dropdown">
-                            <a class="dropdown-toggle" data-toggle="dropdown">Delete <span class="caret"></span></a>
-                            <ul class="dropdown-menu" role="menu">
-                                <li id="delete-list" class="dropdown-header" role="presentation">My Projects</li>
-                            </ul>
-                        </li>
-                        <li class="divider-vertical"></li>
-                        <li id="edit-btn" class="active"><a>Edit</a></li>
-                        <li id="explore-btn"><a>Explore</a></li>
-                        <li id="verify-btn"><a>Verify</a></li>
-                    </ul>
-                    <ul class="nav navbar-nav navbar-right">
-                        <li><a>About</a></li>
-                        <li><a>Help</a></li>
-                        <li><a href="https://github.com/figa12/CCS-tool"><i class="fa fa-github fa-lg"></i></a></li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-        <!-- Main content -->
-        <div class="container">
-            <!-- Editor -->
-            <div id="editor-container">
-                <h4 id="project-title" class="pull-left" contenteditable="true">Alternating Bit Protocol</h4>
-                <div class="btn-group pull-right">
-                    <button id="parse-btn" type="button" class="btn btn-default">Parse</button>
-                    <button id="clear-btn" type="button" class="btn btn-default">Clear</button>
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                            Font Size
-                            <span class="caret"></span>
-                        </button>
-                        <ul id="font-size-btn" class="dropdown-menu" role="menu">
-                            <li><a>10</a></li>
-                            <li><a>12</a></li>
-                            <li><a>14 <i class="fa fa-check"></i></a></li>
-                            <li><a>16</a></li>
-                            <li><a>18</a></li>
-                            <li><a>20</a></li>
-                            <li><a>22</a></li>
-                            <li><a>24</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="clearfix"></div>
-                <div id="editor-border">
-                    <div id="editor"></div>
-                </div>
-                <div id="status-area" class="alert alert-dismissible" role="alert">
-                    <button type="button" class="close" data-hide="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                    <p></p>
-                </div>
-            </div>
-            <!-- Explorer -->
-            <div id="explorer-container">
-                <div id="fullscreen-container">
-                    <div class="btn-group pull-right">
-                        <button id="explorer-freeze-btn" type="button" class="btn btn-default">Freeze</button>
-                        <a id="explorer-save-btn" class="btn btn-default">Save Image</a>
-                        <button id="explorer-fullscreen-btn" type="button" class="btn btn-default">Fullscreen</button>
-                    </div>
-                    <div class="clearfix"></div>
-                    <canvas id="arbor-canvas"></canvas>
-                </div>
-                <div id="status-table-container">
-                    <table id="status-table" class="table table-responsive table-striped table-condensed" >
-                        <thead>
-                            <tr>
-                                <th>Source</th>
-                                <th>Action</th>
-                                <th>Target</th>
-                                <th>Target Definition</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <!-- Verifier -->
-            <div id="verifier-container">
-                <div class="row">
-                    <div class="col-md-7">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
-                                <thead>
-                                    <tr>
-                                        <th class="col-md-1 text-center">Result</th>
-                                        <th class="col-md-2">State(s)</th>
-                                        <th class="col-md-8">Property</th>
-                                        <th class="col-md-1 text-center"><input id="toggle-select" type="checkbox" value=""></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="text-center"><i class="fa fa-exclamation"></i></td>
-                                        <td>P, Q</td>
-                                        <td>Strong Bisimulation</td>
-                                        <td class="text-center"><input type="checkbox" value=""></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-center"><i class="fa fa-check"></i></td>
-                                        <td>P, Q</td>
-                                        <td>Weak Bisimulation</td>
-                                        <td class="text-center"><input type="checkbox" value=""></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-center"><i class="fa fa-question"></i></td>
-                                        <td>P, Q</td>
-                                        <td>Trace Equivalence</td>
-                                        <td class="text-center"><input type="checkbox" value=""></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                            <div class="btn-group pull-right">
-                                <button id="delete-prop-btn" type="button" class="btn btn-default">Delete</button>
-                                <button id="verify-prop-btn" type="button" class="btn btn-default">Verify</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-5">
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                Property
-                                <span class="caret"></span>
-                            </button>
-                            <ul id="font-size-btn" class="dropdown-menu" role="menu">
-                                <li class="dropdown-header" role="presentation">Equivalence</li>
-                                <li><a>Strong Bisimulation</a></li>
-                                <li><a>Weak Bisimulation</a></li>
-                                <li><a>Trace Equivalence</a></li>
-                                <li class="divider"></li>
-                                <li class="dropdown-header" role="presentation">Model Checking</li>
-                                <li><a>μ-calculus</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                  <div class="col-md-12">
-                    <svg id="trace"></svg>
-                  </div>
-                </div>
-            </div>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CCSTool</title>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:600' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Inconsolata:400,700' rel='stylesheet' type='text/css'>
+    <link href="lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="lib/fontawesome/css/font-awesome.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <script src="lib/jquery-1.11.1.min.js"></script>
+    <script src="lib/snap.svg-min.js"></script>
+    <script src="lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="lib/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="lib/ace/src/ext-language_tools.js"></script>
+    <script type="text/javascript" src="lib/ccs_grammar.js"></script>
+    <script type="text/javascript" src="lib/arbor.js"></script>
+    <script type="text/javascript" src="lib/graphics.js"></script>
+    <script type="text/javascript" src="lib/main.js"></script>
+    <script type="text/javascript" src="test.js"></script>
+    <script type="text/javascript">
+     $(document).ready(Main.setup);
+    </script>
+  </head>
+  <body>
+    <!-- Top navigation -->
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="index.html">CCSTool</a>
         </div>
+        <div class="collapse navbar-collapse" id="navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="divider-vertical"></li>
+            <li id="new-btn"><a>New Project</a></li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown">Save <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+                <li id="save-projects-btn"><a>To My Projects</a></li>
+                <li><a id="save-file-btn">To File</a></li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown">Load <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+                <li id="load-file-btn"><a>From File</a></li>
+                <input type="file" id="file-input" class="hidden" accept=".ccs-project" />
+                <li class="divider"></li>
+                <li id="projects-list" class="dropdown-header" role="presentation">My Projects</li>
+                <li class="divider"></li>
+                <li id="examples-list" class="dropdown-header" role="presentation">Examples</li>
+              </ul>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown">Delete <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+                <li id="delete-list" class="dropdown-header" role="presentation">My Projects</li>
+              </ul>
+            </li>
+            <li class="divider-vertical"></li>
+            <li id="edit-btn" class="active"><a>Edit</a></li>
+            <li id="explore-btn"><a>Explore</a></li>
+            <li id="verify-btn"><a>Verify</a></li>
+            <li id="game-btn"><a>Game</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a>About</a></li>
+            <li><a>Help</a></li>
+            <li><a href="https://github.com/figa12/CCS-tool"><i class="fa fa-github fa-lg"></i></a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <!-- Main content -->
+    <div class="container">
+      <!-- Editor -->
+      <div id="editor-container">
+        <h4 id="project-title" class="pull-left" contenteditable="true">Alternating Bit Protocol</h4>
+        <div class="btn-group pull-right">
+          <button id="parse-btn" type="button" class="btn btn-default">Parse</button>
+          <button id="clear-btn" type="button" class="btn btn-default">Clear</button>
+          <div class="btn-group">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+              Font Size
+              <span class="caret"></span>
+            </button>
+            <ul id="font-size-btn" class="dropdown-menu" role="menu">
+              <li><a>10</a></li>
+              <li><a>12</a></li>
+              <li><a>14 <i class="fa fa-check"></i></a></li>
+              <li><a>16</a></li>
+              <li><a>18</a></li>
+              <li><a>20</a></li>
+              <li><a>22</a></li>
+              <li><a>24</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="clearfix"></div>
+        <div id="editor-border">
+          <div id="editor"></div>
+        </div>
+        <div id="status-area" class="alert alert-dismissible" role="alert">
+          <button type="button" class="close" data-hide="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+          <p></p>
+        </div>
+      </div>
+      <!-- Explorer -->
+      <div id="explorer-container">
+        <div id="fullscreen-container">
+          <div class="btn-group pull-right">
+            <button id="explorer-freeze-btn" type="button" class="btn btn-default">Freeze</button>
+            <a id="explorer-save-btn" class="btn btn-default">Save Image</a>
+            <button id="explorer-fullscreen-btn" type="button" class="btn btn-default">Fullscreen</button>
+          </div>
+          <div class="clearfix"></div>
+          <canvas id="arbor-canvas"></canvas>
+        </div>
+        <div id="status-table-container">
+          <table id="status-table" class="table table-responsive table-striped table-condensed" >
+            <thead>
+              <tr>
+                <th>Source</th>
+                <th>Action</th>
+                <th>Target</th>
+                <th>Target Definition</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Verifier -->
+      <div id="verifier-container">
+        <div class="row">
+          <div class="col-md-7">
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr>
+                    <th class="col-md-1 text-center">Result</th>
+                    <th class="col-md-2">State(s)</th>
+                    <th class="col-md-8">Property</th>
+                    <th class="col-md-1 text-center"><input id="toggle-select" type="checkbox" value=""></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="text-center"><i class="fa fa-exclamation"></i></td>
+                    <td>P, Q</td>
+                    <td>Strong Bisimulation</td>
+                    <td class="text-center"><input type="checkbox" value=""></td>
+                  </tr>
+                  <tr>
+                    <td class="text-center"><i class="fa fa-check"></i></td>
+                    <td>P, Q</td>
+                    <td>Weak Bisimulation</td>
+                    <td class="text-center"><input type="checkbox" value=""></td>
+                  </tr>
+                  <tr>
+                    <td class="text-center"><i class="fa fa-question"></i></td>
+                    <td>P, Q</td>
+                    <td>Trace Equivalence</td>
+                    <td class="text-center"><input type="checkbox" value=""></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="btn-group pull-right">
+                <button id="delete-prop-btn" type="button" class="btn btn-default">Delete</button>
+                <button id="verify-prop-btn" type="button" class="btn btn-default">Verify</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="btn-group">
+              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                Property
+                <span class="caret"></span>
+              </button>
+              <ul id="font-size-btn" class="dropdown-menu" role="menu">
+                <li class="dropdown-header" role="presentation">Equivalence</li>
+                <li><a>Strong Bisimulation</a></li>
+                <li><a>Weak Bisimulation</a></li>
+                <li><a>Trace Equivalence</a></li>
+                <li class="divider"></li>
+                <li class="dropdown-header" role="presentation">Model Checking</li>
+                <li><a>μ-calculus</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <!-- Modals -->
-        <div id="delete-modal" class="modal fade">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                        <h4 class="modal-title">Confirm Delete</h4>
-                    </div>
-                    <div class="modal-body">
-                        <p>Are you sure you want to delete this project?</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                        <button id="confirm-delete" type="button" class="btn btn-primary">Delete</button>
-                    </div>
-                </div>
-            </div>
+      <div id="game-container">
+        <div class="row">
+          <div class="col-md-12">
+            <svg id="trace"/>
+          </div>
         </div>
-        <div class="modal fade" id="viz-mode-dialog">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                        <h4 class="modal-title">Select Initial Process</h4>
-                    </div>
+      </div>
 
-                    <div class="modal-body" id="viz-mode-dialog-body">
-                        <label for="viz-mode-dialog-depth">Select how deep to expand</label>
-                        <select class="form-control" id="viz-mode-dialog-depth">
-                            <option selected>1</option>
-                            <option>2</option>
-                            <option>3</option>
-                            <option>5</option>
-                            <option>10</option>
-                            <option>100</option>
-                            <option>500</option>
-                        </select><br>
-                        <p>Select initial process</p>
-                        <div id="viz-mode-dialog-body-list"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    </div>
-                </div>
+      <!-- Modals -->
+      <div id="delete-modal" class="modal fade">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+              <h4 class="modal-title">Confirm Delete</h4>
             </div>
-        </div>
-        <div class="modal fade" id="explain-dialog">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                        <h4 class="modal-title" id="explain-dialog-title"></h4>
-                    </div>
-                    <div class="modal-body">
-                        <p id="explain-dialog-body-par"></p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-                    </div>
-                </div>
+            <div class="modal-body">
+              <p>Are you sure you want to delete this project?</p>
             </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button id="confirm-delete" type="button" class="btn btn-primary">Delete</button>
+            </div>
+          </div>
         </div>
-        <div id="tip"></div>
-    </body>
+      </div>
+      <div class="modal fade" id="viz-mode-dialog">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+              <h4 class="modal-title">Select Initial Process</h4>
+            </div>
+
+            <div class="modal-body" id="viz-mode-dialog-body">
+              <label for="viz-mode-dialog-depth">Select how deep to expand</label>
+              <select class="form-control" id="viz-mode-dialog-depth">
+                <option selected>1</option>
+                <option>2</option>
+                <option>3</option>
+                <option>5</option>
+                <option>10</option>
+                <option>100</option>
+                <option>500</option>
+              </select><br>
+              <p>Select initial process</p>
+              <div id="viz-mode-dialog-body-list"></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal fade" id="explain-dialog">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+              <h4 class="modal-title" id="explain-dialog-title"></h4>
+            </div>
+            <div class="modal-body">
+              <p id="explain-dialog-body-par"></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tip"></div>
+  </body>
 </html>
