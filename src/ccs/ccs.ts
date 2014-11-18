@@ -270,12 +270,18 @@ module CCS {
             this.definedSets[name] = this.allRestrictedSets.getOrAdd(labelSet);
         }
 
-        processById(id) {
+        processById(id) : Process{
             return this.processes[id] || null;
         }
 
         processByName(name : string) {
-            return this.namedProcesses[name] || null;
+            var proc = this.namedProcesses[name] || null;
+            
+            if(proc == null){
+                proc = this.processes[name.slice(1)]
+            }
+
+            return proc;
         }
 
         getNamedProcesses() {

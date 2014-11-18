@@ -168,7 +168,7 @@ module Activity {
                 $(row).hover(() => {
                     var processName = $(row).children()[2].innerHTML; // 'target' is index 2, maybe this could be done in better way?
                     var processId  = this.graph.processByName(processName).id;
-                    this.uiGraph.setHover(processId);
+                    this.uiGraph.setHover(processId.toString());
 
                     $(row).css("background", "rgba(0, 0, 0, 0.07)");
                 }, 
