@@ -59,7 +59,8 @@ module Activity {
             this.marking = dgMod.liuSmolkaLocal2(0, this.dependencyGraph);
 
             // TODODODODO: First check whether or not it is bisimilar. Right now it is hardcoded to behave like it isnt.
-            this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(0))
+            this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(0));
+
         }
         
         public resizeCanvas() {
@@ -87,8 +88,7 @@ module Activity {
         private setOnClickListener(row) {
             if(row){
                 $(row).on('click', () => {
-                    //var processName = $(row).children()[2].innerHTML;
-                    
+                    this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()));
                 });
             }
         }
@@ -119,17 +119,33 @@ module Activity {
             table.empty();
 
             var hyperEdges = this.dependencyGraph.getHyperEdges(node);
-
+            
+            
             for (var i = 0; i< hyperEdges.length; i++) {
                 var edge = hyperEdges[i];
+                if(edge.length === 0)
+                    break;
+                
                 var data = this.dependencyGraph.constructData[edge[0]];
 
                 var row = $("<tr></tr>");
+                var nodeid = $("<td id='nodeid'></td>").append(edge[0]);
+                nodeid.css({display: "none"});
                 var LTS = $("<td id='LTS'></td>").append(this.lastMove ? this.rightProcessName : this.lastMove ? this.leftProcessName : "ERROR" );
                 var action = $("<td id='action'></td>").append(transition);
-                var destination = $("<td id='destination'></td>").append(  this.CCSNotation.visit(this.graph.processById(data[2]))  );
+                var destination = $("<td id='destination'></td>").append(
+                    this.CCSNotation.visit(
+                        (this.lastMove == "LEFT"
+                         ? this.graph.processById(data[2])
+                         : this.lastMove == "RIGHT"
+                         ? this.graph.processById(data[3])
+                         : "ERROR" )
+                    ));
 
-                row.append(LTS, action, destination);
+                this.setOnHoverListener(row);
+                this.setOnClickListener(row);
+
+                row.append(LTS, action, destination, nodeid);
                 table.append(row);
                 
             }

@@ -25,7 +25,7 @@ module DependencyGraph {
         private succGen;
         private nextIdx;
         private nodes = [];
-        private constructData = [];
+        public constructData = [];
         private pairToNodeId = {};
 
         constructor(succGen : ccs.SuccessorGenerator, leftNode, rightNode) {
