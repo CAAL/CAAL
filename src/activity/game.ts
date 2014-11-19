@@ -23,12 +23,18 @@ module Activity {
 
         private leftProcessName: string;
         private rightProcessName: string;
+
+        private lastMove = "";
+        private lastAction;
+
+        private CCSNotation;
         
         constructor(private canvas, private actionsTable) {
             super();
             
             this.leftProcessName = "Protocol";
             this.rightProcessName = "Spec";
+            this.CCSNotation = new Traverse.CCSNotationVisitor();
         }
 
         beforeShow(configuration): void {
@@ -52,15 +58,8 @@ module Activity {
             // Run liuSmolka algorithm to check for bisimilarity and get a marked dependency graph.
             this.marking = dgMod.liuSmolkaLocal2(0, this.dependencyGraph);
 
-            if (this.marking.getMarking(0) === this.marking.ONE && this.graph) {
-                var traces = this.dependencyGraph.findDivergentTrace(this.marking)
-                console.log("Left does: ");
-                console.log(this.prettyPrintTrace(this.graph, traces.left));
-                console.log("Right does: ");
-                console.log(this.prettyPrintTrace(this.graph, traces.right));
-            }
-            
-            this.updateTable();
+            // TODODODODO: First check whether or not it is bisimilar. Right now it is hardcoded to behave like it isnt.
+            this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(0))
         }
         
         public resizeCanvas() {
@@ -73,25 +72,15 @@ module Activity {
             this.resizeCanvas();
         }
 
-        private prettyPrintTrace(graph, trace) {
-            var notation = new Traverse.CCSNotationVisitor(),
-            stringParts = [];
-            for (var i=0; i < trace.length; i++) {
-                if (i % 2 == 1) stringParts.push("---- " + trace[i].toString() + " ---->");
-                else stringParts.push(notation.visit(graph.processById(trace[i])));
-            }
-            return stringParts.join("\n\t");
-        }
-        
         private setOnHoverListener(row) {
             if(row){
                 $(row).hover(() => {
                     $(row).css("background", "rgba(0, 0, 0, 0.07)");
                 }, 
-                () => {
-                    // clear highlight
-                    $(row).css("background", "");
-                });
+                             () => {
+                                 // clear highlight
+                                 $(row).css("background", "");
+                             });
             }
         }
 
@@ -103,16 +92,52 @@ module Activity {
                 });
             }
         }
+
+        private selectEdgeMarkedOne(hyperEdges) {
+            for (var i=0; i < hyperEdges.length; i++) {
+                var edge = hyperEdges[i];
+                var allOne = true;
+                for (var j=0; j < edge.length; j++) {
+                    if (this.marking.getMarking(edge[j]) !== this.marking.ONE) {
+                        allOne = false;
+                        break;
+                    }
+                }
+                if (allOne) {
+                    var data = this.dependencyGraph.constructData[edge[0]];
+                    console.log("I have taken: " + data[1].toString());
+                    this.lastMove = (data[0] == 1 ? "LEFT" : data[0] == 2 ? "RIGHT" : "");
+                    this.updateTable(edge.slice(0)[0], data[1].toString());
+                    return;
+                }
+            }
+            throw "All targets must have been marked ONE for at least one target set";
+        }
         
-        private updateTable() {
-            var hyperEdges = this.dependencyGraph.getHyperEdges(0);
-            
-            console.log(hyperEdges);
-            
+        private updateTable(node, transition) {
+            var table = $(this.actionsTable).find("tbody");
+            table.empty();
+
+            var hyperEdges = this.dependencyGraph.getHyperEdges(node);
+
             for (var i = 0; i< hyperEdges.length; i++) {
+                var edge = hyperEdges[i];
+                var data = this.dependencyGraph.constructData[edge[0]];
+
+                var row = $("<tr></tr>");
+                var LTS = $("<td id='LTS'></td>").append(this.lastMove ? this.rightProcessName : this.lastMove ? this.leftProcessName : "ERROR" );
+                var action = $("<td id='action'></td>").append(transition);
+                var destination = $("<td id='destination'></td>").append(  this.CCSNotation.visit(this.graph.processById(data[2]))  );
+
+                row.append(LTS, action, destination);
+                table.append(row);
                 
             }
+
+            
+            
         }
+        
     }
     
 }
