@@ -26,7 +26,7 @@ module DependencyGraph {
         private nextIdx;
         private nodes = [];
         private constructData = [];
-        private pairToNodeId = {};
+        private leftPairs = {};
 
         constructor(succGen : ccs.SuccessorGenerator, leftNode, rightNode) {
             this.succGen = succGen;
@@ -62,18 +62,22 @@ module DependencyGraph {
             // fromRightId must be able to match.
             var rightTransitions = this.succGen.getSuccessors(fromRightId);
             rightTransitions.forEach(rightTransition => {
-                var key, toRightId;
+                var existing, toRightId;
                 //Same action - possible candidate.
                 if (rightTransition.action.equals(action)) {
                     toRightId = rightTransition.targetProcess.id;
-                    key = toLeftId + "-" + toRightId;
+                    var rightIds = this.leftPairs[toLeftId];
+                    if (rightIds) {
+                        existing = rightIds[toRightId];
+                    }
                     //Have we already solved the resulting (s1, t1) pair?
-                    if (this.pairToNodeId[key]) {
-                        result.push(this.pairToNodeId[key]);
+                    if (existing) {
+                        result.push(existing);
                     } else {
                         //Build the node.
                         var newIndex = this.nextIdx++;
-                        this.pairToNodeId[key] = newIndex;
+                        if (!rightIds) this.leftPairs[toLeftId] = rightIds = {};
+                        rightIds[toRightId] = newIndex
                         this.constructData[newIndex] = [0, toLeftId, toRightId];
                         result.push(newIndex);
                     }
@@ -89,15 +93,21 @@ module DependencyGraph {
                 result = [];
             var leftTransitions = this.succGen.getSuccessors(fromLeftId);
             leftTransitions.forEach(leftTransition => {
-                var key, toLeftId;
+                var existing, toLeftId;
                 if (leftTransition.action.equals(action)) {
                     toLeftId = leftTransition.targetProcess.id;
-                    key = toLeftId + "-" + toRightId;
-                    if (this.pairToNodeId[key]) {
-                        result.push(this.pairToNodeId[key]);
+                    var rightIds = this.leftPairs[toLeftId];
+                    if (rightIds) {
+                        existing = rightIds[toRightId];
+                    }
+                    //Have we already solved the resulting (s1, t1) pair?
+                    if (existing) {
+                        result.push(existing);
                     } else {
+                        //Build the node.
                         var newIndex = this.nextIdx++;
-                        this.pairToNodeId[key] = newIndex;
+                        if (!rightIds) this.leftPairs[toLeftId] = rightIds = {};
+                        rightIds[toRightId] = newIndex
                         this.constructData[newIndex] = [0, toLeftId, toRightId];
                         result.push(newIndex);
                     }
