@@ -151,8 +151,17 @@ module Main {
     }
 
     export function getGraph() {
-        var graph = new CCS.Graph();
+        var graph = new CCS.Graph(),
+            bad = false;
+        try {
             CCSParser.parse(editor.getValue(), {ccs: CCS, graph: graph});
+            bad = graph.getErrors().length > 0;
+        } catch (error) {
+            bad = true;
+        }
+        if (bad) {
+            graph = null;
+        }
         return graph;
     }
 
@@ -175,12 +184,20 @@ module Main {
 }
 
 function setupExplorerActivityFn(callback) : any {
-    var namedProcesses = Main.getGraph().getNamedProcesses(),
+    var graph = Main.getGraph(),
         $dialogList = $("#viz-mode-dialog-body-list"),
         $depthSelect = $("#viz-mode-dialog-depth"),
-        $dialog = $("#viz-mode-dialog");
+        $dialog = $("#viz-mode-dialog"),
+        namedProcesses;
     //Important only one dialog at a time.
     if (isShowingDialog()) return callback(null);
+
+    if (!graph) {
+        showExplainDialog("Invalid Graph", "The graph could not be constructed. Do you have syntax errors?");
+        return callback(null);
+    }
+
+    namedProcesses = graph.getNamedProcesses();
     //First are they any named processes at all?
     if (namedProcesses.length === 0) {
         showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
@@ -188,8 +205,7 @@ function setupExplorerActivityFn(callback) : any {
     }
 
     function makeConfiguration(processName, expandDepth) {
-        var graph = Main.getGraph(),
-            succGenerator = Main.getStrictSuccGenerator(graph);
+        var succGenerator = Main.getStrictSuccGenerator(graph);
         return {
             graph: graph,
             successorGenerator: succGenerator,
