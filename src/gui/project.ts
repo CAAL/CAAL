@@ -1,5 +1,6 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="../../lib/ace.d.ts" />
+/// <reference path="property.ts" />
 
 class Project {
     private defaultTitle: string;
@@ -8,16 +9,28 @@ class Project {
     private editor: any;
     private id: number;
     private title: string;
+    private properties: Property.Property[];
 
     public constructor(defaultTitle: string, defaultCCS: string, titleId: string, editor: any) {
         this.defaultTitle = defaultTitle;
         this.defaultCCS = defaultCCS;
         this.titleId = titleId;
         this.editor = editor;
+        this.properties = Array();
 
         this.reset();
 
         $(this.titleId).focusout(() => this.onTitleChanged());
+    }
+
+    public update(id: number, title: string, ccs: string): void {
+        this.setId(id);
+        this.setTitle(title);
+        this.setCCS(ccs);
+    }
+
+    public reset(): void {
+        this.update(null, this.defaultTitle, this.defaultCCS);
     }
 
     public getId(): number {
@@ -37,6 +50,10 @@ class Project {
         $(this.titleId).text(this.title);
     }
 
+    private onTitleChanged(): void {
+        this.title = $(this.titleId).text();
+    }
+
     public getCCS(): string {
         return this.editor.getSession().getValue();
     }
@@ -46,14 +63,12 @@ class Project {
         this.editor.clearSelection();
     }
 
-    public update(id: number, title: string, ccs: string): void {
-        this.setId(id);
-        this.setTitle(title);
-        this.setCCS(ccs);
+    public getProperties(): Property.Property[] {
+        return this.properties;
     }
 
-    public reset(): void {
-        this.update(null, this.defaultTitle, this.defaultCCS);
+    public addProperty(property: Property.Property): void {
+        this.properties.push(property);
     }
 
     public toJSON(): any {
@@ -62,9 +77,5 @@ class Project {
             title: this.getTitle(),
             ccs: this.getCCS()
         };
-    }
-
-    private onTitleChanged(): void {
-        this.title = $(this.titleId).text();
     }
 }

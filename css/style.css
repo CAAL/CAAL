@@ -89,7 +89,7 @@ canvas {
     padding: 5px;
     border: 1px solid #e7e7e7;
     border-radius: 5px;
-    box-shadow: 0 6px 12px rgba(0,0,0,.175);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
 }
 
 #editor {
@@ -113,4 +113,17 @@ canvas {
 
 #explorer-container tbody {
     font: normal 14px "Inconsolata";
+}
+
+
+/*
+ * Verifier activity styles
+ */
+
+div[data-tab] {
+    display: none;
+}
+
+#property-selector {
+    margin-bottom: 20px;
 }

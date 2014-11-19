@@ -48,7 +48,7 @@ module Main {
                 "explore-btn");
         activityHandler.addActivity(
                 "verifier",
-                new Activity.Verifier("#toggle-select"),
+                new Activity.Verifier(project),
                 (callback) => { callback({}); },
                 "verifier-container",
                 "verify-btn");
