@@ -118,7 +118,6 @@ module Activity {
         }
 
         public afterShow(): void {
-            var that = this;
             this.bindedFns.resize = this.resize.bind(this);
             $(window).on("resize", this.bindedFns.resize);
             this.uiGraph.setOnSelectListener((processId) => {
@@ -133,16 +132,22 @@ module Activity {
                 this.uiGraph.clearHover();
             });
 
-            this.uiGraph.unfreeze();
+            this.uiGraph.unfreeze(); // unfreeze the graph 
+            $(this.elements.freezeBtn).text("Freeze"); // and reset the freezeBtn.
+
             this.bindedFns.freeze = this.toggleFreeze.bind(this);
             $(this.elements.freezeBtn).on("click", this.bindedFns.freeze);
+            
             this.resize();
         }
 
         public afterHide() {
             $(window).unbind("resize", this.bindedFns.resize)
             this.bindedFns.resize = null;
-            this.uiGraph.unfreeze();
+            
+            this.uiGraph.unfreeze(); // unfreeze the graph 
+            $(this.elements.freezeBtn).text("Freeze"); // and reset the freezeBtn.
+            
             $(this.elements.freezeBtn).unbind("click", this.bindedFns.freeze);
             this.uiGraph.clearOnSelectListener();
             this.uiGraph.clearHoverOnListener();
@@ -151,7 +156,7 @@ module Activity {
             this.succGenerator = null;
         }
 
-        private setOnHoverListener(row) {
+        private setOnHoverListener(row : JQuery) : void {
             if(row){
                 $(row).hover(() => {
                     var processId = row.data('targetId');
@@ -167,7 +172,7 @@ module Activity {
             }
         }
 
-        private setOnClickListener(row) {
+        private setOnClickListener(row : JQuery) : void {
             if(row){
                 $(row).on('click', () => {
                     var processId = row.data('targetId');
@@ -183,7 +188,7 @@ module Activity {
             this.uiGraph.clearAll();
         }
 
-        private toggleFreeze() {
+        private toggleFreeze() : void {
             var $freezeBtn = $(this.elements.freezeBtn),
                 isFreezing = $freezeBtn.text() === "Unfreeze",
                 newValueText = isFreezing ? "Freeze" : "Unfreeze",
@@ -192,7 +197,7 @@ module Activity {
             doFreeze ? this.uiGraph.freeze() : this.uiGraph.unfreeze();
         }
 
-        private showProcess(process : ccs.Process) {
+        private showProcess(process : ccs.Process) : void {
             var data;
             if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
             if (this.uiGraph.getProcessDataObject(process.id)) return;
@@ -208,10 +213,16 @@ module Activity {
             return label;
         }
 
-        private expand(process : ccs.Process, depth) {
+        private expand(process : ccs.Process, depth) : void {
             if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
 
             var allTransitions = this.expandBFS(process, depth);
+            
+            var isExpanded = false;
+            if(this.uiGraph.getProcessDataObject(process.id)){
+                isExpanded = this.uiGraph.getProcessDataObject(process.id).status == 'expanded' ? true : false;
+            }
+
             this.updateStatusAreaTransitions(process, allTransitions[process.id]);
 
             for (var fromId in allTransitions) {
@@ -228,6 +239,7 @@ module Activity {
                 });
             }
 
+            this.resetFreezeBtn(isExpanded);
             this.uiGraph.setSelected(process.id.toString());
         }
 
@@ -276,6 +288,15 @@ module Activity {
 
         private showProcessAsExplored(process : ccs.Process) : void {
             this.uiGraph.getProcessDataObject(process.id).status = "expanded";
+        }
+
+        private resetFreezeBtn(isExpanded? : boolean) : void {
+            if(isExpanded) { 
+                return;
+            }
+            else{
+                 $(this.elements.freezeBtn).text("Freeze"); // and reset the freezeBtn.
+            }
         }
 
         private resize(): void {
