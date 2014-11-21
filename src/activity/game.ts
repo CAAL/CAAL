@@ -120,7 +120,6 @@ module Activity {
 
             var hyperEdges = this.dependencyGraph.getHyperEdges(node);
             
-            
             for (var i = 0; i< hyperEdges.length; i++) {
                 var edge = hyperEdges[i];
                 if(edge.length === 0)
