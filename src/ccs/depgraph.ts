@@ -263,7 +263,7 @@ module DependencyGraph {
                 }
                 if (l.length === 0) {
                     A.set(k, S_ONE);
-                    W = D.get(k).concat(W);
+                    W = W.concat(D.get(k));
                 }
                 else if (A.get(headL) === S_ZERO) {
                     D.add(headL, [k, l]);
