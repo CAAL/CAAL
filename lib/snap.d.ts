@@ -181,8 +181,8 @@ interface SnapPaper {
     filter(filstr: string): any;
     g(...varargs:any[]): any;
     gradient(gradient: string) : any;
-    group(): any;
-    group(...varargs: SnapElement[]): any;
+    group(): SnapElement;
+    group(...varargs: SnapElement[]): SnapElement;
     image(src: string, x: number, y: number, width: number, height: number): any;
     line(x1: number, y1: number, x2: number, y2:number): any;
     mask() : any;
