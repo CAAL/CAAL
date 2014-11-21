@@ -529,13 +529,13 @@ module CCS {
 
         applyRelabelSet(relabels : RelabellingSet) : void {
             var allCurrent = this.transitions,
-                newLabel,
-                transition;
+                newLabel, oldAction, transition;
             for (var i = 0, max = allCurrent.length; i < max; i++) {
                 transition = allCurrent[i];
+                oldAction = transition.action;
                 if (relabels.hasRelabelForLabel(transition.action.label)) {
                     newLabel = relabels.toLabelForFromLabel(transition.action.label);
-                    transition.action = new Action(newLabel, transition.action.isComplement());
+                    allCurrent[i] = new Transition(new Action(newLabel, oldAction.isComplement()), transition.targetProcess);
                 }
             }
         }
