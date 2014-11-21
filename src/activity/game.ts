@@ -44,7 +44,7 @@ module Activity {
 
             /* Raphael canvas drawing */
             this.snapCanvas = new SnapCanvas("#"+this.canvas.id, traceWidth, traceHeight);
-            
+            this.snapCanvas.addDrawable(new SnapGame("Spec", "Protocol"));
             
             
             this.graph = Main.getGraph(); // use configuration instead
