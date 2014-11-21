@@ -484,16 +484,26 @@ module CCS {
             }
         }
 
-        add(transition : Transition) {
-            var allCurrent = this.transitions;
-            for (var i = 0, max = allCurrent.length; i < max; i++){
-                if (transition.equals(allCurrent[i])) return this;
+        add(transition : Transition) : void {
+            var index = this.indexOf(transition);
+            if (index === -1) {
+                this.transitions.push(transition);
             }
-            allCurrent.push(transition);
-            return this;
         }
 
-        addAll(transitions : Transition[]) {
+        contains(transition : Transition) : boolean {
+            return this.indexOf(transition) !== -1;
+        }
+
+        private indexOf(transition) : number {
+            var allCurrent = this.transitions;
+            for (var i = 0, max = allCurrent.length; i < max; i++){
+                if (transition.equals(allCurrent[i])) return i;
+            }
+            return -1;
+        }
+
+        addAll(transitions : Transition[]) : void {
             for (var i = 0, max = transitions.length; i < max; i++){
                 this.add(transitions[i]);
             }
