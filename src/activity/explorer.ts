@@ -37,6 +37,7 @@ module Activity {
         private initialProcessName : string;
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
+        private preExpandDept : number = 1;
 
         constructor(private elements, notationVisitor : CCSNotationVisitor) {
             super();
@@ -107,19 +108,22 @@ module Activity {
         }
         
         beforeShow(configuration) {
+            console.log(configuration);
             this.clear();
             this.graph = configuration.graph;
             this.succGenerator = configuration.successorGenerator;
             this.initialProcessName = configuration.initialProcessName;
-            this.expandDepth = configuration.expandDepth;
+            this.preExpandDept = configuration.expandDepth;
+            this.expandDepth = 1;
             this.notationVisitor.clearCache();
             this.clear();
-            this.expand(this.graph.processByName(this.initialProcessName), 1);
+            this.expand(this.graph.processByName(this.initialProcessName), this.preExpandDept);
         }
 
         public afterShow(): void {
             this.bindedFns.resize = this.resize.bind(this);
             $(window).on("resize", this.bindedFns.resize);
+            
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId), this.expandDepth);
             });
