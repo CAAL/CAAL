@@ -8,7 +8,7 @@ class SnapCanvas {
     private currentY: number;
     public paper: SnapPaper;
     
-    private traces: Drawable[] = [];
+    private drawables: Drawable[] = [];
     
     constructor(htmlElement: string, public canvasWidth: number, public canvasHeight: number) {
         this.paper = Snap(htmlElement);
@@ -16,21 +16,22 @@ class SnapCanvas {
     }
     
     public addDrawable(drawable: Drawable) {
-        this.traces.push(drawable);
+        this.drawables.push(drawable);
     }
     
     public setSize(width: number, height: number) {
         this.canvasWidth = width;
         this.canvasHeight = height;
-        this.paper.clear();
         this.draw();
     }
     
     public draw() {
+        this.paper.clear();
+
         this.currentX = Trace.LineBorder;
         this.currentY = Trace.LineBorder;
         
-        this.traces.forEach( (item) => {
+        this.drawables.forEach( (item) => {
             item.draw(this, this.currentX, this.currentY);
             this.currentY += item.height; // should be equal to one or more LineHeight
         });
