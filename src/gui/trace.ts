@@ -97,6 +97,10 @@ class SnapGame implements Drawable {
     constructor(private leftProcessName: string, private rightProcessName: string) {
         this.leftLts = new Trace([], false);
         this.rightLts = new Trace([], false);
+
+        // start states
+        this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.leftProcessName));
+        this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.rightProcessName));
     }
 
     public playLeft(action: string, destination: string, isAttacker: boolean, startState?: string) {
