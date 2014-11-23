@@ -15,7 +15,7 @@ module Activity {
     import CCSNotationVisitor = Traverse.CCSNotationVisitor;
 
     function groupBy<T>(arr : T[], keyFn : (T) => any) : any {
-        var groupings = {},
+        var groupings = Object.create(null),
             key, elem, group;
         for (var i = 0; i < arr.length; i++) {
             elem = arr[i];

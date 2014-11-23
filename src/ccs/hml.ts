@@ -122,7 +122,7 @@ module HML {
 
     export class FormulaSet {
         private allFormulas = [];
-        private namedFormulas = {};
+        private namedFormulas = Object.create(null);
         private undefinedVariables = [];
         private errors = [];
         constructor() {
