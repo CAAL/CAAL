@@ -55,7 +55,7 @@ class Tip {
 
         $(document).mousemove(function(e){
             if(Tip.over) {
-                Tip.tip.css("left", e.clientX+10).css("top", e.clientY+50);
+                Tip.tip.css("left", e.clientX).css("top", e.clientY); // dont add a value to clientX or clientY here, it's not relative to how the user has zoomed
                 Tip.tip.text(Tip.tipText);
             }
         });
@@ -99,8 +99,8 @@ class SnapGame implements Drawable {
         this.rightLts = new Trace([], false);
 
         // start states
-        this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.leftProcessName));
-        this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.rightProcessName));
+        this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.leftProcessName, "#222"));
+        this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.rightProcessName, "#222"));
     }
 
     public playLeft(action: string, destination: string, isAttacker: boolean, startState?: string) {
@@ -162,11 +162,11 @@ class SnapGame implements Drawable {
 }
 
 class Trace implements Drawable {
-    static LineHeight: number = 40;
-    static FontSize: number = 16;
+    static LineHeight: number = 30;
+    static FontSize: number = 14;
     static LineSpacing: number = 25;
     static LineBorder: number = 0;
-    static DrawableWidth: number = 40;
+    static DrawableWidth: number = 30;
     
     // save how much space the trace used in the canvas
     public width: number = 0;
@@ -282,10 +282,10 @@ class Trace implements Drawable {
     }
 }
 
-class Circle implements Drawable {
+class Circle extends Tip implements Drawable {
 
     constructor(public width: number, public height: number, private text: string) {
-        //super(text);
+        super(text);
         this.width = this.height;
     }
     
@@ -299,18 +299,21 @@ class Circle implements Drawable {
         var circle: SnapElement = snapCanvas.paper.circle(x + radius, y + radius, radius);
         circle.attr({"fill": "#2a6496", "stroke": "#000", "stroke-width": 0});
 
-        //this.addTip(circle);
+        this.addTip(circle);
         
         return circle;
     }
 }
 
-class Square implements Drawable {
+class Square extends Tip implements Drawable {
+    
+    static MaxTextLength: number = 25;
     
     private initialWidth: number;
     private textElement: SnapElement;
     
     constructor(public width: number, public height: number, private text: string, private color?: string) {
+        super(text);
         this.initialWidth = this.width;
     }
     
@@ -322,13 +325,20 @@ class Square implements Drawable {
         
         var margin = (this.height - Trace.FontSize) / 4;
 
-        this.textElement = snapCanvas.paper.text(0, 0, this.text); // x and y doesnt matter here, move it below
+        this.textElement = snapCanvas.paper.text(0, 0, this.getText()); // x and y doesnt matter here, move it below
         SnapCanvas.setTextAttr(this.textElement).attr({"fill": "#FFF"});
 
         var textWidth = this.textElement.getBBox().width;
         
         // set width of the square to make room for the text
         this.width = (textWidth + margin*2 > this.width) ? textWidth + margin*2 : this.width;
+    }
+    
+    private getText(): string {
+        if (this.text.length > Square.MaxTextLength - 3) // -3 for the dots "..."
+            return this.text.substring(0, Square.MaxTextLength) + "...";
+        else
+            return this.text;
     }
     
     public draw(snapCanvas: SnapCanvas, x: number, y: number): SnapElement {
@@ -347,7 +357,10 @@ class Square implements Drawable {
         this.textElement.attr({"x": x+this.width/2, "y": (y+this.height/2) + (this.height/2.5/2/2)}); // no idea why /2/2 looks right?!?!
         
         // group the elements to make text appear on top of the rectangle
-        return snapCanvas.paper.group(rect, this.textElement);
+        var group: SnapElement = snapCanvas.paper.group(rect, this.textElement);
+        
+        this.addTip(group);
+        return group;
     }
 }
 

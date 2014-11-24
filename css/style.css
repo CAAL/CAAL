@@ -132,4 +132,6 @@ canvas {
     z-index: 1000;
     /* set this to create word wrap */
     max-width: 200px;
+    margin-left: 6px;
+    margin-top: 6px;
 }
