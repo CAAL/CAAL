@@ -135,7 +135,7 @@ module Activity {
                         // Left
                         if(data[0] == 1) {
                             var destination =  this.CCSNotation.visit(this.graph.processById(data[2]));
-p                            this.snapGame.playLeft(action, destination, false);
+                            this.snapGame.playLeft(action, destination, false);
                             this.snapCanvas.draw();
                             // Right
                         } else if(data[0] == 2) {
