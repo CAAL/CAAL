@@ -160,8 +160,7 @@ module DependencyGraph {
 
             //Build the arrays of alternating process id, and actions.
             function buildTraces(dfs) {
-                var isPairState = true,
-                    leftTrace = [],
+                var leftTrace = [],
                     rightTrace = [],
                     node, leftMovedLast, constructData, type, action;
                 for (var i=0; i < dfs.length; i++) {
