@@ -53,7 +53,7 @@ module Activity {
             
             
             this.graph = Main.getGraph(); // use configuration instead
-            this.succGen = Main.getWeakSuccGenerator(this.graph); // use configuration instead
+            this.succGen = Main.getStrictSuccGenerator(this.graph); // use configuration instead
             
             this.leftProcess = this.graph.processByName(this.leftProcessName);
             this.rightProcess = this.graph.processByName(this.rightProcessName);
