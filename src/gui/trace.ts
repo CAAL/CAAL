@@ -120,8 +120,8 @@ class SnapGame implements Drawable {
                 (isAttacker ? SnapGame.AttackerColor : SnapGame.DefenderColor) ));
         }
 
-        this.rightLts.addDrawable(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, "action name"));
-        this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, "process destination name",
+        this.rightLts.addDrawable(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
+        this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, destination,
             (isAttacker ? SnapGame.AttackerColor : SnapGame.DefenderColor) ));
     }
     

@@ -20,6 +20,7 @@ module Activity {
         private rightProcess;
         private succGen: ccs.SuccessorGenerator;
         private marking;
+        private isBisimilar;
 
         private leftProcessName: string;
         private rightProcessName: string;
@@ -28,6 +29,8 @@ module Activity {
         private lastAction;
 
         private CCSNotation;
+
+        private snapGame: SnapGame;
         
         constructor(private canvas, private actionsTable) {
             super();
@@ -42,13 +45,15 @@ module Activity {
             traceWidth = this.canvas.clientWidth;
             traceHeight = this.canvas.clientHeight;
 
+            this.snapGame = new SnapGame("Protocol", "Spec");
+
             /* Raphael canvas drawing */
             this.snapCanvas = new SnapCanvas("#"+this.canvas.id, traceWidth, traceHeight);
-            this.snapCanvas.addDrawable(new SnapGame("Spec", "Protocol"));
+            this.snapCanvas.addDrawable(this.snapGame);
             
             
             this.graph = Main.getGraph(); // use configuration instead
-            this.succGen = Main.getStrictSuccGenerator(this.graph); // use configuration instead
+            this.succGen = Main.getWeakSuccGenerator(this.graph); // use configuration instead
             
             this.leftProcess = this.graph.processByName(this.leftProcessName);
             this.rightProcess = this.graph.processByName(this.rightProcessName);
@@ -58,8 +63,17 @@ module Activity {
             // Run liuSmolka algorithm to check for bisimilarity and get a marked dependency graph.
             this.marking = dgMod.liuSmolkaLocal2(0, this.dependencyGraph);
 
-            // TODODODODO: First check whether or not it is bisimilar. Right now it is hardcoded to behave like it isnt.
-            this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(0));
+            if (this.marking.getMarking(0) === this.marking.ONE) {
+                // The processes are NOT bisimilar. Take attacker role.
+                this.isBisimilar = false;
+                this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(0));
+                
+            } else if (this.marking.getMarking(0) === this.marking.ZERO) {
+                // The processes ARE bisimilar. Take defender role.
+                this.isBisimilar = true;
+                this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(0));
+                
+            }
 
         }
         
@@ -88,9 +102,54 @@ module Activity {
         private setOnClickListener(row) {
             if(row){
                 $(row).on('click', () => {
+
+                    if(this.lastMove == "RIGHT") {
+                        var destination =  row.find("#destination").html();
+                        var action = row.find("#action").html();
+                        console.log(action);
+                        this.snapGame.playLeft(action, destination, false);
+                        this.snapCanvas.draw();
+                        // Right
+                    } else if(this.lastMove == "LEFT") {
+                        var destination =  row.find("#destination").html();
+                        var action = row.find("#action").html();
+                        console.log(action);
+                        this.snapGame.playRight(action, destination, false);
+                        this.snapCanvas.draw();
+                    }
+                    
                     this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()));
                 });
             }
+        }
+
+        private selectEdgeMarkedZero(hyperEdges) {
+            for (var i=0; i < hyperEdges.length; i++) {
+                var edge = hyperEdges[i];
+                for (var j=0; j < edge.length; j++) {
+                    if (this.marking.getMarking(edge[j]) === this.marking.ZERO) {
+                        var data = this.dependencyGraph.constructData[edge[0]];
+                        var action = data[1].toString();
+                        console.log(action);
+
+                        // Left
+                        if(data[0] == 1) {
+                            var destination =  this.CCSNotation.visit(this.graph.processById(data[2]));
+p                            this.snapGame.playLeft(action, destination, false);
+                            this.snapCanvas.draw();
+                            // Right
+                        } else if(data[0] == 2) {
+                            var destination =  this.CCSNotation.visit(this.graph.processById(data[3]));
+                            this.snapGame.playRight(action, destination, false);
+                            this.snapCanvas.draw();
+                        }
+
+                        return;
+                    }
+                }
+            }
+
+            throw "One of the targets must be marked ZERO";
         }
 
         private selectEdgeMarkedOne(hyperEdges) {
@@ -105,7 +164,21 @@ module Activity {
                 }
                 if (allOne) {
                     var data = this.dependencyGraph.constructData[edge[0]];
-                    console.log("I have taken: " + data[1].toString());
+                    var action = data[1].toString();
+                    console.log(action);
+
+                    // Left
+                    if(data[0] == 1) {
+                        var destination =  this.CCSNotation.visit(this.graph.processById(data[2]));
+                        this.snapGame.playLeft(action, destination, true);
+                        this.snapCanvas.draw();
+                        // Right
+                    } else if(data[0] == 2) {
+                        var destination =  this.CCSNotation.visit(this.graph.processById(data[3]));
+                        this.snapGame.playRight(action, destination, true);
+                        this.snapCanvas.draw();
+                    }
+                    
                     this.lastMove = (data[0] == 1 ? "LEFT" : data[0] == 2 ? "RIGHT" : "");
                     this.updateTable(edge.slice(0)[0], data[1].toString());
                     return;
@@ -134,11 +207,9 @@ module Activity {
                 var action = $("<td id='action'></td>").append(transition);
                 var destination = $("<td id='destination'></td>").append(
                     this.CCSNotation.visit(
-                        (this.lastMove == "LEFT"
-                         ? this.graph.processById(data[2])
-                         : this.lastMove == "RIGHT"
-                         ? this.graph.processById(data[3])
-                         : "ERROR" )
+                        (this.lastMove == "LEFT" ? this.graph.processById(data[2]) :
+                         this.lastMove == "RIGHT" ? this.graph.processById(data[3]):
+                         "ERROR" )
                     ));
 
                 this.setOnHoverListener(row);
