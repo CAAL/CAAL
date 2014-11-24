@@ -46,34 +46,40 @@ class SnapCanvas {
 class Tip {
 
     static tip;
-    static over;
-    static tipText;
+    static over: boolean;
+    static tipText: string;
 
+    private static constructed: boolean = false;
+    
     constructor(private elementText) {
-        Tip.tip = $("#tip").hide();
-        Tip.over = false;
+        if (!Tip.constructed) {
+            Tip.tip = $("#tip").hide();
+            Tip.over = false;
 
-        $(document).mousemove(function(e){
-            if(Tip.over) {
-                Tip.tip.css("left", e.clientX).css("top", e.clientY); // dont add a value to clientX or clientY here, it's not relative to how the user has zoomed
-                Tip.tip.text(Tip.tipText);
-            }
-        });
+            $(document).mousemove(function(e){
+                if(Tip.over) {
+                    Tip.tip.css("left", e.clientX).css("top", e.clientY); // dont add a value to clientX or clientY here, it's not relative to how the user has zoomed
+                    Tip.tip.text(Tip.tipText);
+                }
+            });
+        }
     }
 
-    private hoverIn(element) {
+    private hoverIn() {
         Tip.tipText = this.elementText;
         Tip.tip.show();
         Tip.over = true;
     }
 
-    private hoverOut(element) {
+    private hoverOut() {
         Tip.tip.hide();
         Tip.over = false;
     }
-
-    public addTip(element: SnapElement) {
-        element.hover( () => this.hoverIn(element), () => this.hoverOut(element));
+    
+    /* overloaded method in typescript: */
+    public addTip(element: any): void;
+    public addTip(element: SnapElement): void {
+        element.hover( () => this.hoverIn(), () => this.hoverOut());
     }
 }
 
@@ -307,7 +313,7 @@ class Circle extends Tip implements Drawable {
 
 class Square extends Tip implements Drawable {
     
-    static MaxTextLength: number = 25;
+    static MaxTextLength: number = 27;
     
     private initialWidth: number;
     private textElement: SnapElement;
@@ -336,7 +342,7 @@ class Square extends Tip implements Drawable {
     
     private getText(): string {
         if (this.text.length > Square.MaxTextLength - 3) // -3 for the dots "..."
-            return this.text.substring(0, Square.MaxTextLength) + "...";
+            return this.text.substring(0, Square.MaxTextLength - 3) + "...";
         else
             return this.text;
     }
