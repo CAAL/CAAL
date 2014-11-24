@@ -53,7 +53,7 @@ module Activity {
             
             
             this.graph = Main.getGraph(); // use configuration instead
-            this.succGen = Main.getStrictSuccGenerator(this.graph); // use configuration instead
+            this.succGen = Main.getWeakSuccGenerator(this.graph); // use configuration instead
             
             this.leftProcess = this.graph.processByName(this.leftProcessName);
             this.rightProcess = this.graph.processByName(this.rightProcessName);
@@ -71,7 +71,8 @@ module Activity {
             } else if (this.marking.getMarking(0) === this.marking.ZERO) {
                 // The processes ARE bisimilar. Take defender role.
                 this.isBisimilar = true;
-                this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(0));
+                this.updateTable(0);
+                //this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(0));
                 
             }
 
@@ -99,54 +100,78 @@ module Activity {
             }
         }
 
-        private setOnClickListener(row) {
+        private setOnClickListener(row, data?) {
             if(row){
                 $(row).on('click', () => {
 
-                    if(this.lastMove == "RIGHT") {
-                        var destination =  row.find("#destination").html();
-                        var action = row.find("#action").html();
-                        console.log(action);
-                        this.snapGame.playLeft(action, destination, false);
-                        this.snapCanvas.draw();
-                        // Right
-                    } else if(this.lastMove == "LEFT") {
-                        var destination =  row.find("#destination").html();
-                        var action = row.find("#action").html();
-                        console.log(action);
-                        this.snapGame.playRight(action, destination, false);
-                        this.snapCanvas.draw();
+                    if (this.isBisimilar) {
+
+                        this.lastMove = (data[0] == 1 ? "LEFT" : data[0] == 2 ? "RIGHT" : "");
+
+                        if (this.lastMove === "LEFT") {
+                            var destination =  row.find("#destination").html();
+                            var action = row.find("#action").html();
+                            this.snapGame.playLeft(action, destination, true);
+                            this.snapCanvas.draw();
+                            
+                        } else if (this.lastMove === "RIGHT") {
+                            var destination =  row.find("#destination").html();
+                            var action = row.find("#action").html();
+                            this.snapGame.playRight(action, destination, true);
+                            this.snapCanvas.draw();
+                        }
+
+                        this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()), action);
+                        
+                        
+                    } else if (!this.isBisimilar) {
+                        if(this.lastMove == "RIGHT") {
+                            var destination =  row.find("#destination").html();
+                            var action = row.find("#action").html();
+                            this.snapGame.playLeft(action, destination, false);
+                            this.snapCanvas.draw();
+                            // Right
+                        } else if(this.lastMove == "LEFT") {
+                            var destination =  row.find("#destination").html();
+                            var action = row.find("#action").html();
+                            this.snapGame.playRight(action, destination, false);
+                            this.snapCanvas.draw();
+                        }
+
+                        this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()));
+                        
                     }
                     
-                    this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()));
                 });
             }
         }
+            
 
-        private selectEdgeMarkedZero(hyperEdges) {
+        private selectEdgeMarkedZero(hyperEdges, action) {
             for (var i=0; i < hyperEdges.length; i++) {
                 var edge = hyperEdges[i];
                 for (var j=0; j < edge.length; j++) {
                     if (this.marking.getMarking(edge[j]) === this.marking.ZERO) {
                         var data = this.dependencyGraph.constructData[edge[0]];
-                        var action = data[1].toString();
-                        console.log(action);
 
                         // Left
-                        if(data[0] == 1) {
+                        if(this.lastMove === "LEFT") {
                             var destination =  this.CCSNotation.visit(this.graph.processById(data[2]));
-                            this.snapGame.playLeft(action, destination, false);
+                            this.snapGame.playRight(action, destination, false);
                             this.snapCanvas.draw();
                             // Right
-                        } else if(data[0] == 2) {
-                            var destination =  this.CCSNotation.visit(this.graph.processById(data[3]));
-                            this.snapGame.playRight(action, destination, false);
+                        } else if(this.lastMove === "RIGHT") {
+                            var destination =  this.CCSNotation.visit(this.graph.processById(data[1]));
+                            this.snapGame.playLeft(action, destination, false);
                             this.snapCanvas.draw();
                         }
 
+                        this.updateTable(edge.slice(0)[0]);
                         return;
                     }
                 }
+
+                
             }
 
             throw "One of the targets must be marked ZERO";
@@ -165,7 +190,6 @@ module Activity {
                 if (allOne) {
                     var data = this.dependencyGraph.constructData[edge[0]];
                     var action = data[1].toString();
-                    console.log(action);
 
                     // Left
                     if(data[0] == 1) {
@@ -187,40 +211,67 @@ module Activity {
             throw "All targets must have been marked ONE for at least one target set";
         }
         
-        private updateTable(node, transition) {
+        private updateTable(node, transition?) {
             var table = $(this.actionsTable).find("tbody");
             table.empty();
 
             var hyperEdges = this.dependencyGraph.getHyperEdges(node);
-            
-            for (var i = 0; i< hyperEdges.length; i++) {
-                var edge = hyperEdges[i];
-                if(edge.length === 0)
-                    break;
-                
-                var data = this.dependencyGraph.constructData[edge[0]];
 
-                var row = $("<tr></tr>");
-                var nodeid = $("<td id='nodeid'></td>").append(edge[0]);
-                nodeid.css({display: "none"});
-                var LTS = $("<td id='LTS'></td>").append(this.lastMove ? this.rightProcessName : this.lastMove ? this.leftProcessName : "ERROR" );
-                var action = $("<td id='action'></td>").append(transition);
-                var destination = $("<td id='destination'></td>").append(
-                    this.CCSNotation.visit(
-                        (this.lastMove == "LEFT" ? this.graph.processById(data[2]) :
-                         this.lastMove == "RIGHT" ? this.graph.processById(data[3]):
-                         "ERROR" )
-                    ));
+            if (this.isBisimilar) {
 
-                this.setOnHoverListener(row);
-                this.setOnClickListener(row);
+                for (var i = 0; i < hyperEdges.length; i++) {
+                    var edge = hyperEdges[i];
+                    if (edge.length === 0)
+                        break;
 
-                row.append(LTS, action, destination, nodeid);
-                table.append(row);
-                
+                    var data = this.dependencyGraph.constructData[edge[0]];
+
+                    var row = $("<tr></tr>");
+                    var nodeid = $("<td id='nodeid'></td>").append(edge[0]);
+                    nodeid.css({display: "none"});
+                    var LTS = $("<td id='LTS'></td>").append(data[0] == 2 ? this.rightProcessName : data[0] == 1 ? this.leftProcessName : "ERROR" );
+                    var action = $("<td id='action'></td>").append(data[1].toString());
+                    var destination = $("<td id='destination'></td>").append(
+                        this.CCSNotation.visit(this.graph.processById(data[2])));
+
+                    this.setOnHoverListener(row);
+                    this.setOnClickListener(row, data);
+
+                    row.append(LTS, action, destination, nodeid);
+                    table.append(row);
+
+                }
+
+            } else if (!this.isBisimilar) {
+
+                for (var i = 0; i< hyperEdges.length; i++) {
+                    var edge = hyperEdges[i];
+                    if(edge.length === 0)
+                        break;
+                    
+                    var data = this.dependencyGraph.constructData[edge[0]];
+
+                    var row = $("<tr></tr>");
+                    var nodeid = $("<td id='nodeid'></td>").append(edge[0]);
+                    nodeid.css({display: "none"});
+                    var LTS = $("<td id='LTS'></td>").append(this.lastMove ? this.rightProcessName : this.lastMove ? this.leftProcessName : "ERROR" );
+                    var action = $("<td id='action'></td>").append(transition);
+                    var destination = $("<td id='destination'></td>").append(
+                        this.CCSNotation.visit(
+                            (this.lastMove == "LEFT" ? this.graph.processById(data[2]) :
+                             this.lastMove == "RIGHT" ? this.graph.processById(data[3]):
+                             "ERROR" )
+                        ));
+
+                    this.setOnHoverListener(row);
+                    this.setOnClickListener(row);
+
+                    row.append(LTS, action, destination, nodeid);
+                    table.append(row);
+                    
+                }
+
             }
-
-            
             
         }
         
