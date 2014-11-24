@@ -76,8 +76,6 @@ class Tip {
         Tip.over = false;
     }
     
-    /* overloaded method in typescript: */
-    public addTip(element: any): void;
     public addTip(element: SnapElement): void {
         element.hover( () => this.hoverIn(), () => this.hoverOut());
     }
@@ -97,6 +95,7 @@ class SnapGame implements Drawable {
     private leftLts: Trace;
     private rightLts: Trace;
     
+    static StartStateColor: string = "#222";
     static AttackerColor: string = "#FF0000";
     static DefenderColor: string = "#2600FF";
 
@@ -105,8 +104,8 @@ class SnapGame implements Drawable {
         this.rightLts = new Trace([], false);
 
         // start states
-        this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.leftProcessName, "#222"));
-        this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.rightProcessName, "#222"));
+        this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.leftProcessName, SnapGame.StartStateColor));
+        this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.rightProcessName, SnapGame.StartStateColor));
     }
 
     public playLeft(action: string, destination: string, isAttacker: boolean, startState?: string) {
@@ -136,14 +135,52 @@ class SnapGame implements Drawable {
     public draw(snapCanvas: SnapCanvas, x: number, y: number) {
         var group = snapCanvas.paper.group();
         
-        // Attacker
-        var attackerText = snapCanvas.paper.text(x, y, this.leftProcessName); // x and y doesnt matter here, move it below
-        SnapCanvas.setTextAttr(attackerText).attr({"text-anchor": "start"});
+        /* Legend: start */
+        var legendX = x;
+        
+        var startTextLegend = snapCanvas.paper.text(legendX, y, "Start state:");
+        SnapCanvas.setTextAttr(startTextLegend).attr({"text-anchor":"start"});
+        startTextLegend.attr({"y": y+startTextLegend.getBBox().height});
+        
+        legendX += startTextLegend.getBBox().width + 3;
+        
+        var startLegend: Square = new Square(Trace.DrawableWidth, Trace.LineHeight, "", SnapGame.StartStateColor);
+        startLegend.draw(snapCanvas, legendX, y);
+        
+        legendX += startLegend.width + Trace.DrawableWidth*2;
+        
+        /* Legend: attacker */
+        var attackerTextLegend = snapCanvas.paper.text(legendX, y, "Attacker:");
+        SnapCanvas.setTextAttr(attackerTextLegend).attr({"text-anchor":"start"});
+        attackerTextLegend.attr({"y": y+attackerTextLegend.getBBox().height});
+        
+        legendX += attackerTextLegend.getBBox().width + 3;
+        
+        var attackerLegend: Square = new Square(Trace.DrawableWidth, Trace.LineHeight, "", SnapGame.AttackerColor);
+        attackerLegend.draw(snapCanvas, legendX, y);
+        
+        legendX += attackerLegend.width + Trace.DrawableWidth*2;
+        
+        /* Legend: defender */
+        var defenderTextLegend = snapCanvas.paper.text(legendX, y, "Defender:");
+        SnapCanvas.setTextAttr(defenderTextLegend).attr({"text-anchor":"start"});
+        defenderTextLegend.attr({"y": y+defenderTextLegend.getBBox().height});
+        
+        legendX += attackerTextLegend.getBBox().width + 3;
+        
+        var defenderLegend: Square = new Square(Trace.DrawableWidth, Trace.LineHeight, "", SnapGame.DefenderColor);
+        defenderLegend.draw(snapCanvas, legendX, y);
+        
+        y += Trace.LineHeight*3;
+        
+        /* Attacker */
+        var attackerText = snapCanvas.paper.text(x, y, this.leftProcessName + " trace"); // x and y doesnt matter here, move it below
+        attackerText.attr({"font-family": "monospace", "font-weight": "bold", "font-size": Trace.FontSize + 6, "text-anchor":"start", "fill": "#000"});
         group.add(attackerText);
         
-        y += attackerText.getBBox().height;
+        //y += attackerText.getBBox().height;
         
-        attackerText.attr({"x": x, "y": y});
+        attackerText.attr({/*"x": x, */"y": y});
 
         y += attackerText.getBBox().height;
 
@@ -151,9 +188,9 @@ class SnapGame implements Drawable {
 
         y += this.leftLts.height;
         
-        // Defender
-        var defenderText = snapCanvas.paper.text(x, y, this.rightProcessName); // x and y doesnt matter here, move it below
-        SnapCanvas.setTextAttr(defenderText).attr({"text-anchor": "start"});
+        /* Defender */
+        var defenderText = snapCanvas.paper.text(x, y, this.rightProcessName + " trace"); // x and y doesnt matter here, move it below
+        defenderText.attr({"font-family": "monospace", "font-weight": "bold", "font-size": Trace.FontSize + 6, "text-anchor":"start", "fill": "#000"});
         group.add(defenderText);
 
         y += defenderText.getBBox().height;
@@ -324,17 +361,20 @@ class Square extends Tip implements Drawable {
     }
     
     public measureWidth(snapCanvas: SnapCanvas) {
-        if (this.textElement != undefined)
+        if (this.textElement != undefined) {
             return;
+        }
         
         this.width = this.initialWidth;
         
         var margin = (this.height - Trace.FontSize) / 4;
 
-        this.textElement = snapCanvas.paper.text(0, 0, this.getText()); // x and y doesnt matter here, move it below
+        this.textElement = snapCanvas.paper.text(snapCanvas.canvasWidth/2, snapCanvas.canvasHeight/2, this.getText()); // x and y doesnt matter here, move it below
         SnapCanvas.setTextAttr(this.textElement).attr({"fill": "#FFF"});
-
+        
         var textWidth = this.textElement.getBBox().width;
+        
+        this.textElement.remove(); // cleanup, when you move its position, it will be redrawn by snap
         
         // set width of the square to make room for the text
         this.width = (textWidth + margin*2 > this.width) ? textWidth + margin*2 : this.width;
@@ -348,9 +388,7 @@ class Square extends Tip implements Drawable {
     }
     
     public draw(snapCanvas: SnapCanvas, x: number, y: number): SnapElement {
-        if (this.textElement == undefined) {
-            this.measureWidth(snapCanvas);
-        }
+        this.measureWidth(snapCanvas);
         
         var filter = snapCanvas.paper.filter(Snap.filter.shadow(0, 0, 1));
         
@@ -364,6 +402,7 @@ class Square extends Tip implements Drawable {
         
         // group the elements to make text appear on top of the rectangle
         var group: SnapElement = snapCanvas.paper.group(rect, this.textElement);
+        //this.textElement = undefined; // redraw it next time
         
         this.addTip(group);
         return group;
@@ -377,7 +416,7 @@ class Arrow implements Drawable {
     private initialWidth: number;
     public textElement: SnapElement;
     
-    constructor(public width: number, public height: number, public text: string) {
+    constructor(public width: number, public height: number, public text: string, public headSize: number) {
         this.initialWidth = this.width;
     }
 
@@ -389,13 +428,15 @@ class Arrow implements Drawable {
         
         var margin: number = (this.height - Trace.FontSize) / 4;
 
-        this.textElement = snapCanvas.paper.text(0, 0, this.text); // x and y doesnt matter here, move it below
+        this.textElement = snapCanvas.paper.text(snapCanvas.canvasWidth/2, snapCanvas.canvasHeight/2, this.text); // x and y doesnt matter here, move it below
         SnapCanvas.setTextAttr(this.textElement);
         
         var textWidth: number = this.textElement.getBBox().width;
         
+        this.textElement.remove(); // cleanup, when you move its position, it will be redrawn by snap
+        
         // set width of the line to make room for the text
-        this.width = (textWidth + margin*2 > this.width) ? textWidth + margin*2 : this.width;
+        this.width = (textWidth + margin*2 + this.headSize > this.width) ? textWidth + margin*2 + this.headSize : this.width;
     }
     
     public draw(snapCanvas: SnapCanvas, x: number, y: number): SnapElement {
@@ -408,13 +449,11 @@ class Arrow implements Drawable {
 class SingleArrow extends Arrow {
     
     constructor(width: number, height: number, text: string) {
-        super(width, height, text);
+        super(width, height, text, 5);
     }
     
     public draw(snapCanvas: SnapCanvas, x: number, y: number): SnapElement {
-        if (this.textElement == undefined) {
-            this.measureWidth(snapCanvas);
-        }
+        this.measureWidth(snapCanvas);
         
         var line: SnapElement = snapCanvas.paper.path("M"+x+","+(y+(this.height / 2))+"H"+(x+this.width));
         
@@ -423,31 +462,33 @@ class SingleArrow extends Arrow {
         
         // center text right above the arrow
         var textPosition = (y + this.height/2) - Arrow.StrokeWidth - 2; // 2 units above the line
-        this.textElement.attr({"x": x+this.width/2, "y": textPosition});
+        this.textElement.attr({"x": x+(this.width-this.headSize)/2, "y": textPosition});
         
         // draw arrow head
-        var headSize = 5;
         var offset = -(Arrow.StrokeWidth/2);
-        var headX = x + this.width - headSize + offset;
-        var headStartY = y + this.height/2 - headSize;
-        var headEndY = y + this.height/2 + headSize;
+        var headX = x + this.width - this.headSize + offset;
+        var headStartY = y + this.height/2 - this.headSize;
+        var headEndY = y + this.height/2 + this.headSize;
         
         var head = snapCanvas.paper.path("M"+headX+","+headStartY+"L"+(x+this.width+offset)+","+(y+(this.height / 2))+"L"+headX+","+headEndY);
         head.attr({"stroke": "black", 
 	               "stroke-width": Arrow.StrokeWidth,
                    "fill-opacity":0});
         
-        return snapCanvas.paper.group(this.textElement, head, line);
+        var group: SnapElement = snapCanvas.paper.group(this.textElement, head, line);
+        //this.textElement = undefined; // redraw it next time
+        return group;
     }
 }
 
 class DoubleArrow extends Arrow {
     
     constructor(width: number, height: number, text: string) {
-        super(width, height, text);
+        super(width, height, text, 6);
     }
     
     public draw(snapCanvas: SnapCanvas, x: number, y: number): SnapElement {
+        this.measureWidth(snapCanvas);
         
         var arrowWidth = 4;
         var y1 = y + (this.height/2) - (arrowWidth/2);
@@ -466,20 +507,21 @@ class DoubleArrow extends Arrow {
         
         // center text right above the arrow
         var textPosition = y1 - Arrow.StrokeWidth - 2; // 2 units above the line
-        this.textElement.attr({"x": x+this.width/2, "y": textPosition});
+        this.textElement.attr({"x": x+(this.width-this.headSize)/2, "y": textPosition});
         
         // draw arrow head
-        var headSize = 6;
         var offset = -(Arrow.StrokeWidth/2);
-        var headX = x + this.width - headSize + offset;
-        var headStartY = y + this.height/2 - headSize;
-        var headEndY = y + this.height/2 + headSize;
+        var headX = x + this.width - this.headSize + offset;
+        var headStartY = y + this.height/2 - this.headSize;
+        var headEndY = y + this.height/2 + this.headSize;
         
         var head = snapCanvas.paper.path("M"+headX+","+headStartY+"L"+(x+this.width+offset)+","+(y+(this.height / 2))+"L"+headX+","+headEndY);
         head.attr({"stroke": "black", 
 	               "stroke-width": Arrow.StrokeWidth,
                    "fill-opacity":0});
         
-        return snapCanvas.paper.group(this.textElement, head, line1, line2);
+        var group: SnapElement = snapCanvas.paper.group(this.textElement, head, line1, line2);
+        //this.textElement = undefined; // redraw it next time
+        return group;
     }
 }
