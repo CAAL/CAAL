@@ -62,7 +62,20 @@ module Activity {
 
             // Run liuSmolka algorithm to check for bisimilarity and get a marked dependency graph.
             this.marking = dgMod.liuSmolkaLocal2(0, this.dependencyGraph);
-
+        }
+        
+        public resizeCanvas() {
+            if (this.snapCanvas == undefined)
+                return;
+            
+            var traceWidth = this.canvas.clientWidth;
+            var traceHeight = this.canvas.clientHeight;
+            this.snapCanvas.setSize(traceWidth, traceHeight);
+        }
+        
+        afterShow(): void {
+            this.resizeCanvas();
+            
             if (this.marking.getMarking(0) === this.marking.ONE) {
                 // The processes are NOT bisimilar. Take attacker role.
                 this.isBisimilar = false;
@@ -75,17 +88,6 @@ module Activity {
                 //this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(0));
                 
             }
-
-        }
-        
-        public resizeCanvas() {
-            var traceWidth = this.canvas.clientWidth;
-            var traceHeight = this.canvas.clientHeight;
-            this.snapCanvas.setSize(traceWidth, traceHeight);
-        }
-        
-        afterShow(): void {
-            this.resizeCanvas();
         }
 
         private setOnHoverListener(row) {

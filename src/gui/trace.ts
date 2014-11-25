@@ -51,7 +51,7 @@ class Tip {
 
     private static constructed: boolean = false;
     
-    constructor(private elementText) {
+    constructor(private elementText: string) {
         if (!Tip.constructed) {
             Tip.tip = $("#tip").hide();
             Tip.over = false;
@@ -77,7 +77,8 @@ class Tip {
     }
     
     public addTip(element: SnapElement): void {
-        element.hover( () => this.hoverIn(), () => this.hoverOut());
+        if (this.elementText.length > 0)
+            element.hover( () => this.hoverIn(), () => this.hoverOut());
     }
 }
 
