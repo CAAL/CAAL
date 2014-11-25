@@ -202,6 +202,8 @@ module Activity {
                         this.snapGame.playRight(action, destination, true);
                         this.snapCanvas.draw();
                     }
+
+                    this.printToLog("I have chosen: "+destination);
                     
                     this.lastMove = (data[0] == 1 ? "LEFT" : data[0] == 2 ? "RIGHT" : "");
                     this.updateTable(edge.slice(0)[0], data[1].toString());
@@ -273,6 +275,11 @@ module Activity {
 
             }
             
+        }
+
+        private printToLog(text: string) {
+            var list = $("#game-console > ul");
+            list.append("<li>"+text+"</li>");
         }
         
     }
