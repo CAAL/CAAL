@@ -196,7 +196,7 @@ module Traverse {
                 subStr = wrapIfInstanceOf(subStr, process.subProcess,
                     [ccs.SummationProcess, ccs.CompositionProcess, ccs.ActionPrefixProcess]);
                 labels = process.restrictedLabels.toArray();
-                result = this.cache[process.id] = subStr + " \\{" + labels.join(",") + "}";
+                result = this.cache[process.id] = subStr + " \\ {" + labels.join(", ") + "}";
             }
             return result;
         }
