@@ -135,3 +135,25 @@ canvas {
     /* set this to create word wrap */
     max-width: 500px;
 }
+
+#game-console{
+    cursor: pointer;
+    max-height: 100px;
+    overflow: hidden;
+}
+
+#game-console ul{
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    font: normal 14px "Inconsolata";            
+    
+}
+
+#game-console li{
+    margin-bottom: 7px;
+}
+
+#game-actions-table-container tbody > tr{
+    cursor: pointer;
+}

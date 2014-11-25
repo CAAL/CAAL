@@ -78,16 +78,35 @@ module Activity {
             
             if (this.marking.getMarking(0) === this.marking.ONE) {
                 // The processes are NOT bisimilar. Take attacker role.
+                this.printToLog("You are playing as <span style='color: "+SnapGame.DefenderColor+"'>DEFENDER</span>.");
                 this.isBisimilar = false;
                 this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(0));
                 
             } else if (this.marking.getMarking(0) === this.marking.ZERO) {
                 // The processes ARE bisimilar. Take defender role.
+                this.printToLog("You are playing as <span style='color: "+SnapGame.AttackerColor+"'>ATTACKER</span>.");
                 this.isBisimilar = true;
                 this.updateTable(0);
-                //this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(0));
                 
             }
+
+            $("#game-console").on("click", function() {
+                if( $(this).css("max-height") === "none" ) {
+                    $(this).css("max-height", "100px");
+                    $(this).scrollTop($(this)[0].scrollHeight);
+                } else {
+                    $(this).css("max-height", "none");
+                }
+            });
+
+            $("#game-console").hover(() => {
+                $("#game-console").css("background", "rgba(0, 0, 0, 0.07)");
+            }, 
+                                     () => {
+                                         // clear highlight
+                                         $("#game-console").css("background", "");
+                                     });
+            
         }
 
         private setOnHoverListener(row) {
@@ -123,6 +142,8 @@ module Activity {
                             this.snapCanvas.draw();
                         }
 
+                        this.printToLog("<span style='color: "+SnapGame.AttackerColor+"'>ATTACKER</span>: --- "+action+" --->   " + destination);
+
                         this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()), action);
                         
                         
@@ -139,6 +160,8 @@ module Activity {
                             this.snapGame.playRight(action, destination, false);
                             this.snapCanvas.draw();
                         }
+
+                        this.printToLog("<span style='color: "+SnapGame.DefenderColor+"'>DEFENDER</span>: --- "+action+" --->   " + destination);
 
                         this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()));
                         
@@ -167,6 +190,8 @@ module Activity {
                             this.snapGame.playLeft(action, destination, false);
                             this.snapCanvas.draw();
                         }
+
+                        this.printToLog("<span style='color: "+SnapGame.DefenderColor+"'>DEFENDER</span>: --- "+action+" --->   " + destination);
 
                         this.updateTable(edge.slice(0)[0]);
                         return;
@@ -205,7 +230,7 @@ module Activity {
                         this.snapCanvas.draw();
                     }
 
-                    this.printToLog("I have chosen: "+destination);
+                    this.printToLog("<span style='color: "+SnapGame.AttackerColor+"'>ATTACKER</span>: --- "+action+" --->   " + destination);
                     
                     this.lastMove = (data[0] == 1 ? "LEFT" : data[0] == 2 ? "RIGHT" : "");
                     this.updateTable(edge.slice(0)[0], data[1].toString());
@@ -250,8 +275,10 @@ module Activity {
 
                 for (var i = 0; i< hyperEdges.length; i++) {
                     var edge = hyperEdges[i];
-                    if(edge.length === 0)
+                    if(edge.length === 0) {
+                        this.printToLog("You have no more valid transitions. <span style='color: "+SnapGame.AttackerColor+"'>ATTACKER</span> wins.");
                         break;
+                    }
                     
                     var data = this.dependencyGraph.constructData[edge[0]];
 
@@ -282,6 +309,7 @@ module Activity {
         private printToLog(text: string) {
             var list = $("#game-console > ul");
             list.append("<li>"+text+"</li>");
+            $("#game-console").scrollTop($("#game-console")[0].scrollHeight);
         }
         
     }

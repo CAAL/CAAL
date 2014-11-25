@@ -96,9 +96,9 @@ class SnapGame implements Drawable {
     private leftLts: Trace;
     private rightLts: Trace;
     
-    static StartStateColor: string = "#222";
-    static AttackerColor: string = "#FF0000";
-    static DefenderColor: string = "#2600FF";
+    static StartStateColor: string = "#2c3e50";
+    static AttackerColor: string = "#e74c3c";
+    static DefenderColor: string = "#2980b9";
 
     constructor(private leftProcessName: string, private rightProcessName: string) {
         this.leftLts = new Trace([], false);
