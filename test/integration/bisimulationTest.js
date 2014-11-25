@@ -167,3 +167,17 @@ QUnit.test("Performance Test ABP vs. ABP", function ( assert) {
         spec = graph.processByName("ZProtocol").id;
     assert.ok(dgMod.isBisimilar(succGen, protocol, spec, graph), "ABP Protocol should be bisimilar with Spec");
 });
+
+QUnit.test("Bad CM and CS", function ( assert) {
+    var graph = CCSParser.parse(
+            "agent CS1 = 'pub.CS2;\n"+
+            "agent CS2 = 'coin.CS3;\n"+
+            "agent CS3 = coffee.CS1;\n"+
+            "agent CMbad = coin.'coffee.CMbad + coin.CMbad;\n"+
+            "agent System = (CMbad | CS1) \\ {coffee, coin};\n"+
+            "agent Spec = 'pub.Spec;", {ccs: ccs}),
+        succGen = getWeakSuccGenerator(graph),
+        protocol = graph.processByName("System").id,
+        spec = graph.processByName("Spec").id;
+    assert.ok(!dgMod.isBisimilar(succGen, protocol, spec, graph), "System and Spec should not be bisimilar");
+});
