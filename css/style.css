@@ -157,3 +157,24 @@ canvas {
 #game-actions-table-container tbody > tr{
     cursor: pointer;
 }
+
+#game-mode-dialog-succ-list > .btn-group {
+    width: 100%;    
+}
+
+#game-mode-dialog-succ-list > .btn-group > .btn {
+    border-radius: 6px;
+}
+
+.modal-footer > #game-btn-group {
+    width: 100%;
+}
+
+.modal-footer > #game-btn-group > #cancel-btn {
+    width: 20%;
+}
+
+.modal-footer > #game-btn-group > #start-btn {
+    width: 80%;
+}
+

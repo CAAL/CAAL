@@ -272,6 +272,42 @@
           </div>
         </div>
       </div>
+      <div class="modal fade" id="game-mode-dialog">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+              <h4 class="modal-title">Setup Game</h4>
+            </div>
+
+            <div class="modal-body" id="game-mode-dialog-body">
+              <label for="game-mode-dialog-depth">First Process</label>
+              <select class="form-control" id="game-mode-dialog-processa">
+              </select><br>
+              <label for="game-mode-dialog-depth">Second Process</label>
+              <select class="form-control" id="game-mode-dialog-processb">
+              </select><br>
+              <p>Select Bisimulation Type</p>
+              <div id="game-mode-dialog-succ-list">
+                <div class="btn-group" data-toggle="buttons">
+                  <label class="btn btn-default btn-lg btn-block active">
+                    <input type="radio" name="options" id="strong" autocomplete="off" checked> Strong Bisimulation
+                  </label>
+                  <label class="btn btn-default btn-lg btn-block">
+                    <input type="radio" name="options" id="weak" autocomplete="off"> Weak Bisimulation
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <div id="game-btn-group" class="btn-group" role="group">
+                <button type="button" id="start-btn" class="btn btn-success" data-dismiss="modal">Start</button>
+                <button type="button" id="cancel-btn" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="modal fade" id="explain-dialog">
         <div class="modal-dialog">
           <div class="modal-content">

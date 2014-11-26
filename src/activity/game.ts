@@ -35,8 +35,8 @@ module Activity {
         constructor(private canvas, private actionsTable) {
             super();
             
-            this.leftProcessName = "Protocol";
-            this.rightProcessName = "Spec";
+            this.leftProcessName;
+            this.rightProcessName;
             this.CCSNotation = new Traverse.CCSNotationVisitor();
         }
 
@@ -45,15 +45,18 @@ module Activity {
             traceWidth = this.canvas.clientWidth;
             traceHeight = this.canvas.clientHeight;
 
-            this.snapGame = new SnapGame("Protocol", "Spec");
+            this.leftProcessName = configuration.processNameA;
+            this.rightProcessName = configuration.processNameB;
+
+            this.snapGame = new SnapGame(this.leftProcessName, this.rightProcessName);
 
             /* Raphael canvas drawing */
             this.snapCanvas = new SnapCanvas("#"+this.canvas.id, traceWidth, traceHeight);
             this.snapCanvas.addDrawable(this.snapGame);
             
             
-            this.graph = Main.getGraph(); // use configuration instead
-            this.succGen = Main.getStrictSuccGenerator(this.graph); // use configuration instead
+            this.graph = configuration.graph; // use configuration instead
+            this.succGen = configuration.successorGenerator; // use configuration instead
             
             this.leftProcess = this.graph.processByName(this.leftProcessName);
             this.rightProcess = this.graph.processByName(this.rightProcessName);
@@ -62,6 +65,8 @@ module Activity {
 
             // Run liuSmolka algorithm to check for bisimilarity and get a marked dependency graph.
             this.marking = dgMod.liuSmolkaLocal2(0, this.dependencyGraph);
+
+            $("#game-console").find("ul").empty();
         }
         
         public resizeCanvas() {
