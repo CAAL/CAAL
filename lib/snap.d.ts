@@ -68,7 +68,8 @@ interface SnapStatic {
     ajax(url: string, postData: any, callback: Function, scope: any): any;
     ajax(url: string, callback: Function, scope: any): any;
     angle(x1: number, y1: number, x2: number, y2: number, x3?: number, y3?: number): number;
-    animate(attrs: any, duration: number, easing: Function, callback: Function);
+    animate(from: number, to: number, setter: Function, duration: number, easing?: Function, callback?: Function);
+    animate(from: number[], to: number[], setter: Function, duration: number, easing?: Function, callback?: Function);
     animation(params: any, ms: number, easing?: string, callback?: Function): any;
     color(clr: string): { r: number; g: number; b: number; hex: string; error: boolean; h: number; s: number; v: number; l: number; };
     deg(deg: number): number;
@@ -104,7 +105,7 @@ interface SnapElement {
     add(el: SnapSet): SnapElement;
     addClass(value: string): SnapElement;
     after(el: SnapElement): SnapElement;
-    animate(params: { [key: string]: any; }, ms: number, easing?: string, callback?: Function): SnapElement;
+    animate(attrs: any, duration: number, easing: Function, callback: Function): SnapElement;
     animate(animation: any): SnapElement;
     append(el : SnapElement): SnapElement;
     append(el : SnapSet): SnapElement;

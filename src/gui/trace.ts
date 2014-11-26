@@ -53,18 +53,26 @@ class Tip {
     
     constructor(private elementText: string) {
         if (!Tip.constructed) {
+            Tip.constructed = true;
+            
             Tip.tip = $("#tip").hide();
             Tip.over = false;
-
+            
+            var timer;
+            var lock: boolean = true;
             $(document).mousemove(function(e){
-                if(Tip.over) {
-                    Tip.tip.css("left", e.clientX).css("top", e.clientY); // dont add a value to clientX or clientY here, it's not relative to how the user has zoomed
-                    Tip.tip.text(Tip.tipText);
+                if (lock) {
+                    //lock = false;
+                    if(Tip.over) {
+                        Tip.tip.css("left", e.clientX).css("top", e.clientY); // dont add a value to clientX or clientY here, it's not relative to how the user has zoomed
+                        Tip.tip.text(Tip.tipText);
+                    }
+                    //setTimeout(() => lock = true, 35);
                 }
             });
         }
     }
-
+    
     private hoverIn() {
         Tip.tipText = this.elementText;
         Tip.tip.show();
@@ -382,7 +390,7 @@ class Square extends Tip implements Drawable {
     }
     
     private getText(): string {
-        if (this.text.length > Square.MaxTextLength - 3) // -3 for the dots "..."
+        if (this.text.length > Square.MaxTextLength)
             return this.text.substring(0, Square.MaxTextLength - 3) + "...";
         else
             return this.text;
