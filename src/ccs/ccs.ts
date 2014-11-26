@@ -22,6 +22,7 @@ module CCS {
     }
 
     export interface SuccessorGenerator {
+        getProcessById(processId : number) : Process;
         getSuccessors(processId) : TransitionSet;
     }
 
@@ -591,6 +592,10 @@ module CCS {
             //if overflow becomes an issue.
             var process = this.graph.processById(processId);
             return this.cache[process.id] = process.dispatchOn(this);
+        }
+
+        getProcessById(processId : number) : Process {
+            return this.graph.processById(processId);
         }
 
         dispatchNullProcess(process : NullProcess) {

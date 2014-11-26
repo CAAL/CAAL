@@ -179,5 +179,5 @@ QUnit.test("Bad CM and CS", function ( assert) {
         succGen = getWeakSuccGenerator(graph),
         protocol = graph.processByName("System").id,
         spec = graph.processByName("Spec").id;
-    assert.ok(!dgMod.isBisimilar(succGen, protocol, spec, graph), "System and Spec should not be bisimilar");
+    assert.ok(!dgMod.isBisimilar(succGen, protocol, spec, graph), "System and Spec is not be bisimilar");
 });

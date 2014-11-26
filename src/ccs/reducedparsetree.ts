@@ -96,6 +96,10 @@ module Traverse {
             this.cache = cache || {};
         }
 
+        getProcessById(processId) : ccs.Process { 
+            return this.strictSuccGenerator.getProcessById(processId);
+        }
+
         getSuccessors(processId) {
             if (this.cache[processId]) return this.cache[processId];
             var result = new ccs.TransitionSet(),
@@ -132,14 +136,22 @@ module Traverse {
                 if (!visited2[action][visitingId]) {
                     visited2[action][visitingId] = true;
                     successors = this.strictSuccGenerator.getSuccessors(visitingId);
-                    successors.forEach(transition => {
-                        var targetProcess = transition.targetProcess;
-                        if (transition.action.getLabel() === "tau") {
-                            toVisit2Processes.push(targetProcess.id);
-                            toVisit2Actions.push(action);
-                            result.add(new ccs.Transition(action, targetProcess));
-                        }
-                    });
+                    if(successors.count() > 0) {
+                        successors.forEach(transition => {
+                            var targetProcess = transition.targetProcess;
+                            if (transition.action.getLabel() === "tau") {
+                                toVisit2Processes.push(targetProcess.id);
+                                toVisit2Actions.push(action);
+                            }
+                            else { 
+                                result.add(new ccs.Transition(action, targetProcess));
+                            }
+                        });
+                    } 
+                    else {
+                        var test = this.strictSuccGenerator.getProcessById(visitingId);
+                        result.add(new ccs.Transition(action, test));
+                    }
                 }
             }
 
@@ -151,6 +163,10 @@ module Traverse {
     export class ReducingSuccessorGenerator implements ccs.SuccessorGenerator {
         
         constructor(public succGenerator : ccs.SuccessorGenerator, public reducer : ProcessTreeReducer) { }
+
+        getProcessById(processId) : ccs.Process {
+            return this.succGenerator.getProcessById(processId);
+        }
 
         getSuccessors(processId) : ccs.TransitionSet {
             var transitionSet = this.succGenerator.getSuccessors(processId);
