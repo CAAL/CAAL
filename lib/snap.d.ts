@@ -39,10 +39,10 @@ interface SnapPath {
     bezierBBox(bez: any[]): { min: { x: number; y: number; }; max: { x: number; y: number; }; };
     findDotsAtSegment(p1x: number, p1y: number, c1x: number, c1y: number, c2x: number, c2y: number, p2x: number, p2y: number, t: number): { x: number; y: number; m: { x: number; y: number; }; n: { x: number; y: number; }; start: { x: number; y: number; }; end: { x: number; y: number; }; alpha: number; };
     getBBox(path: string): BoundingBox;
-    getPointAtLength(path: string, length: number): {x: number, y: number, alpha: number};
+    getPointAtLength(path: string, length: number): {x: number; y: number; alpha: number; };
     getSubpath(path: string, from: number, to: number);
     getTotalLength(path: string): number;
-    intersection(path1: string path2: string): boolean;
+    intersection(path1: string, path2: string): boolean;
     isBBoxIntersect(bbox1: string, bbox2: string): boolean;
     isPointInside(path: string, x: number, y: number): boolean;
     isPointInsideBBox(bbox: string, x: string, y: string): boolean;
@@ -54,11 +54,12 @@ interface SnapPath {
 
 
 interface SnapStatic {
-    (width: number, height: number): SnapElement;
-    (width: string, height: string): SnapElement;
-    (DOM: any) : SnapElement;
-    (all: any[]): SnapElement;
-    (query: string): SnapElement;
+    (width: number, height: number): SnapPaper;
+    (width: string, height: string): SnapPaper;
+    (query: string): SnapPaper;
+    (DOM: any) : SnapPaper;
+    (all: any[]): SnapPaper;
+    () : SnapPaper;
 
     path: SnapPath;
     filter: SnapFilter;
@@ -67,7 +68,8 @@ interface SnapStatic {
     ajax(url: string, postData: any, callback: Function, scope: any): any;
     ajax(url: string, callback: Function, scope: any): any;
     angle(x1: number, y1: number, x2: number, y2: number, x3?: number, y3?: number): number;
-    animate(attrs: any, duration: number, easing: Function, callback: Function);
+    animate(from: number, to: number, setter: Function, duration: number, easing?: Function, callback?: Function);
+    animate(from: number[], to: number[], setter: Function, duration: number, easing?: Function, callback?: Function);
     animation(params: any, ms: number, easing?: string, callback?: Function): any;
     color(clr: string): { r: number; g: number; b: number; hex: string; error: boolean; h: number; s: number; v: number; l: number; };
     deg(deg: number): number;
@@ -82,7 +84,7 @@ interface SnapStatic {
     is(o: any, type: string): boolean;
     matrix(a: number, b: number, c: number, d: number, e: number, f: number): SnapMatrix;
     Matrix(a: number, b: number, c: number, d: number, e: number, f: number): SnapMatrix;
-    parse();
+    parse(): SnapFragment;
     parsePathString(pathString: string): string[];
     parsePathString(pathString: string[]): string[];
     parseTransformString(TString: string): string[];
@@ -103,7 +105,7 @@ interface SnapElement {
     add(el: SnapSet): SnapElement;
     addClass(value: string): SnapElement;
     after(el: SnapElement): SnapElement;
-    animate(params: { [key: string]: any; }, ms: number, easing?: string, callback?: Function): SnapElement;
+    animate(attrs: any, duration: number, easing: Function, callback: Function): SnapElement;
     animate(animation: any): SnapElement;
     append(el : SnapElement): SnapElement;
     append(el : SnapSet): SnapElement;
@@ -180,7 +182,8 @@ interface SnapPaper {
     filter(filstr: string): any;
     g(...varargs:any[]): any;
     gradient(gradient: string) : any;
-    group(): any;
+    group(): SnapElement;
+    group(...varargs: SnapElement[]): SnapElement;
     image(src: string, x: number, y: number, width: number, height: number): any;
     line(x1: number, y1: number, x2: number, y2:number): any;
     mask() : any;
@@ -246,7 +249,8 @@ interface SnapAnimationDescriptor {
 }
 
 interface SnapFragment {
-    // methods
+    select();
+    selectAll();
 }
 
 interface SnapSet {

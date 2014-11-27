@@ -14,12 +14,17 @@
 /// <reference path="activity/editor.ts" />
 /// <reference path="activity/explorer.ts" />
 /// <reference path="activity/verifier.ts" />
+/// <reference path="activity/game.ts" />
+/// <reference path="gui/trace.ts" />
 
 declare var CCSParser;
 import ccs = CCS;
 
 var editor;
 var isDialogOpen = false;
+var canvas;
+var traceWidth;
+var traceHeight;
 
 module Main {
 
@@ -33,6 +38,14 @@ module Main {
             editor
         );
 
+        var gameActivity: Activity.BisimulationGame = new Activity.BisimulationGame(document.getElementById("trace"), "#game-actions-table-container");
+        
+        var resizeTimer;
+        $(window).resize(function () {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => gameActivity.resizeCanvas(), 100);
+        });
+        
         var activityHandler = new Main.ActivityHandler();
 
         activityHandler.addActivity(
@@ -65,7 +78,12 @@ module Main {
                 (callback) => { callback({}); },
                 "verifier-container",
                 "verify-btn");
-
+        activityHandler.addActivity(
+                "game",
+                gameActivity,
+                setupGameActivityFn,
+                "game-container",
+                "game-btn");
         activityHandler.selectActivity("editor");
 
         new New('#new-btn', null, project, activityHandler);
@@ -232,6 +250,70 @@ function setupExplorerActivityFn(callback) : any {
     $dialog.modal("show");
 }
 
+function setupGameActivityFn(callback) : any {
+    var namedProcesses = Main.getGraph().getNamedProcesses(),
+        $succList = $("#game-mode-dialog-succ-list"),
+        $processAList = $("#game-mode-dialog-processa"),
+        $processBList = $("#game-mode-dialog-processb"),
+        $dialog = $("#game-mode-dialog");
+    //Important only one dialog at a time.
+    if (isShowingDialog()) return callback(null);
+    //First are they any named processes at all?
+    if (namedProcesses.length === 0) {
+        showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
+        return callback(null);
+    }
+
+    function makeConfiguration(processNameA, processNameB) {
+        var graph = Main.getGraph(),
+            succGenerator = getSuccGen(graph);
+        return {
+            graph: graph,
+            successorGenerator: succGenerator,
+            processNameA: processNameA,
+            processNameB: processNameB
+        };
+    }
+
+    $processAList.children().remove();
+    $processBList.children().remove();
+
+    namedProcesses.sort().forEach(processName => {
+        var $elementA = $(document.createElement("option"));
+        var $elementB = $(document.createElement("option"));
+        $elementA.text(processName);
+        $elementB.text(processName);
+        
+        $processAList.append($elementA);
+        $processBList.append($elementB);
+    });
+
+    function getSuccGen(graph) {
+        var succlist = $("#game-mode-dialog-succ-list");
+        var succGenName = succlist.find("input[type=radio]:checked").attr('id');
+
+        if(succGenName === "weak") {
+            return Main.getWeakSuccGenerator(graph);
+        } else if (succGenName === "strong") {
+            return Main.getStrictSuccGenerator(graph);
+        } else {
+            throw "Wrong successor generator name";
+        }
+        
+    }
+
+    var $startBtn = $("#start-btn");
+    $startBtn.on("click", () => {
+        $dialog.modal("hide");
+        callback(makeConfiguration(
+            $processAList.val(),
+            $processBList.val()
+        ));
+    });
+
+    $dialog.modal("show");
+}
+
 function showExplainDialog(title : string, message : string) : void {
     var $dialog = $("#explain-dialog"),
         $dialogTitle = $("#explain-dialog-title"),
@@ -243,7 +325,7 @@ function showExplainDialog(title : string, message : string) : void {
 }
 
 function isShowingDialog() : boolean {
-    var dialogIds = ["explain-dialog", "viz-mode-dialog"],
+    var dialogIds = ["explain-dialog", "viz-mode-dialog", "game-mode-dialog"],
         jQuerySelector, i;
     for (i=0; i < dialogIds.length; i++) {
         jQuerySelector = "#" + dialogIds[i];
