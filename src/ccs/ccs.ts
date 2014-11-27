@@ -22,6 +22,7 @@ module CCS {
     }
 
     export interface SuccessorGenerator {
+        getProcessById(processId : number) : Process;
         getSuccessors(processId) : TransitionSet;
     }
 
@@ -142,18 +143,16 @@ module CCS {
     export class Graph {
         nextId : number = 1;
         private nullProcess = new NullProcess(0);
-        private cache : any = {};
+        private structural = Object.create(null);
         private processes = {0: this.nullProcess};
-        private namedProcesses = {}
+        private namedProcesses = Object.create(null);
         private constructErrors = [];
-        private definedSets = {};
+        private definedSets = Object.create(null);
         //Uses index as uid.
         private allRestrictedSets = new GrowingIndexedArraySet<LabelSet>();
         private allRelabellings = new GrowingIndexedArraySet<RelabellingSet>()
 
         constructor() {
-            this.cache.structural = {}; //used structural sharing
-            this.cache.successors = {};
         }
 
         newNamedProcess(processName : string, process : Process) {
@@ -186,9 +185,9 @@ module CCS {
 
         newActionPrefixProcess(action : Action, nextProcess : Process) {
             var key = "." + action.toString() + "." + nextProcess.id;
-            var existing = this.cache.structural[key];
+            var existing = this.structural[key];
             if (!existing) {
-                existing = this.cache.structural[key] = new ActionPrefixProcess(this.nextId++, action, nextProcess);
+                existing = this.structural[key] = new ActionPrefixProcess(this.nextId++, action, nextProcess);
             }
             this.processes[existing.id] = existing;
             return existing;
@@ -203,9 +202,9 @@ module CCS {
                 right = temp;
             }
             key = "+" + left.id + "," + right.id;
-            existing = this.cache.structural[key];
+            existing = this.structural[key];
             if (!existing) {
-                existing = this.cache.structural[key] = new SummationProcess(this.nextId++, left, right);
+                existing = this.structural[key] = new SummationProcess(this.nextId++, left, right);
                 this.processes[existing.id] = existing;
             }
             return existing;
@@ -220,9 +219,9 @@ module CCS {
                 right = temp;
             }
             key = "|" + left.id + "," + right.id;
-            existing = this.cache.structural[key];
+            existing = this.structural[key];
             if (!existing) {
-                existing = this.cache.structural[key] = new CompositionProcess(this.nextId++, left, right);
+                existing = this.structural[key] = new CompositionProcess(this.nextId++, left, right);
                 this.processes[existing.id] = existing;
             }
             return existing;
@@ -233,9 +232,9 @@ module CCS {
             var key, existing;
             restrictedLabels = this.allRestrictedSets.getOrAdd(restrictedLabels);
             key = "\\" + process.id + "," + this.allRestrictedSets.indexOf(restrictedLabels);
-            existing = this.cache.structural[key];
+            existing = this.structural[key];
             if (!existing) {
-                existing = this.cache.structural[key] = new RestrictionProcess(this.nextId++, process, restrictedLabels);
+                existing = this.structural[key] = new RestrictionProcess(this.nextId++, process, restrictedLabels);
                 this.processes[existing.id] = existing;
             }
             return existing;
@@ -255,9 +254,9 @@ module CCS {
             var key, existing;
             relabellings = this.allRelabellings.getOrAdd(relabellings);
             key = "[" + process.id + "," + this.allRelabellings.indexOf(relabellings);
-            existing = this.cache.structural[key];
+            existing = this.structural[key];
             if (!existing) {
-                existing = this.cache.structural[key] = new RelabellingProcess(this.nextId++, process, relabellings);
+                existing = this.structural[key] = new RelabellingProcess(this.nextId++, process, relabellings);
                 this.processes[existing.id] = existing;
             }
             return existing;
@@ -484,16 +483,26 @@ module CCS {
             }
         }
 
-        add(transition : Transition) {
-            var allCurrent = this.transitions;
-            for (var i = 0, max = allCurrent.length; i < max; i++){
-                if (transition.equals(allCurrent[i])) return this;
+        add(transition : Transition) : void {
+            var index = this.indexOf(transition);
+            if (index === -1) {
+                this.transitions.push(transition);
             }
-            allCurrent.push(transition);
-            return this;
         }
 
-        addAll(transitions : Transition[]) {
+        contains(transition : Transition) : boolean {
+            return this.indexOf(transition) !== -1;
+        }
+
+        private indexOf(transition) : number {
+            var allCurrent = this.transitions;
+            for (var i = 0, max = allCurrent.length; i < max; i++){
+                if (transition.equals(allCurrent[i])) return i;
+            }
+            return -1;
+        }
+
+        addAll(transitions : Transition[]) : void {
             for (var i = 0, max = transitions.length; i < max; i++){
                 this.add(transitions[i]);
             }
@@ -529,13 +538,13 @@ module CCS {
 
         applyRelabelSet(relabels : RelabellingSet) : void {
             var allCurrent = this.transitions,
-                newLabel,
-                transition;
+                newLabel, oldAction, transition;
             for (var i = 0, max = allCurrent.length; i < max; i++) {
                 transition = allCurrent[i];
+                oldAction = transition.action;
                 if (relabels.hasRelabelForLabel(transition.action.label)) {
                     newLabel = relabels.toLabelForFromLabel(transition.action.label);
-                    transition.action = new Action(newLabel, transition.action.isComplement());
+                    allCurrent[i] = new Transition(new Action(newLabel, oldAction.isComplement()), transition.targetProcess);
                 }
             }
         }
@@ -583,6 +592,10 @@ module CCS {
             //if overflow becomes an issue.
             var process = this.graph.processById(processId);
             return this.cache[process.id] = process.dispatchOn(this);
+        }
+
+        getProcessById(processId : number) : Process {
+            return this.graph.processById(processId);
         }
 
         dispatchNullProcess(process : NullProcess) {

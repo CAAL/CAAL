@@ -47,15 +47,17 @@ module GUI {
             }
         }
 
+        private originalStatus = null;
         public setSelected(name: string) {
             if(!name) return;
             var newSelectedNode = this.sys.getNode(name);
 
             if(this.renderer.selectedNode && newSelectedNode) {
-                this.renderer.selectedNode.data.status = null; // clear the previous selected
+                this.renderer.selectedNode.data.status = this.originalStatus; // clear the previous selected
             }
 
             if(newSelectedNode) {
+                this.originalStatus = newSelectedNode.data.status;
                 this.renderer.selectedNode = newSelectedNode; // get the node
                 this.renderer.selectedNode.data.status = 'selected'; // set it as selected, and let the renderer handle the rest.
             }

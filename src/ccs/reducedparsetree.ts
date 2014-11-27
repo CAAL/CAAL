@@ -96,25 +96,65 @@ module Traverse {
             this.cache = cache || {};
         }
 
-        getSuccessors(processId) {
-            var result = new ccs.TransitionSet(),
-                visited = {}, toVisit = [processId];
-            if (this.cache[processId]) return this.cache[processId];
+        getProcessById(processId) : ccs.Process { 
+            return this.strictSuccGenerator.getProcessById(processId);
+        }
 
+        getSuccessors(processId) {
+            if (this.cache[processId]) return this.cache[processId];
+            var result = new ccs.TransitionSet(),
+                toVisit = [processId],
+                visited = {},
+                visited2 = Object.create(null),
+                toVisit2Processes = [],
+                toVisit2Actions = [],
+                visitingId, successors, action;
+
+            //Stage 1
             while (toVisit.length > 0) {
-                var visitingId = toVisit.pop();
+                visitingId = toVisit.pop();
                 if (!visited[visitingId]) {
                     visited[visitingId] = true;
-                    var successors = this.strictSuccGenerator.getSuccessors(visitingId);
+                    successors = this.strictSuccGenerator.getSuccessors(visitingId);
                     successors.forEach(transition => {
                         if (transition.action.getLabel() === "tau") {
                             toVisit.push(transition.targetProcess.id);
                         } else {
+                            toVisit2Processes.push(transition.targetProcess.id);
+                            toVisit2Actions.push(transition.action);
+                            visited2[transition.action] = {};
                             result.add(transition);
                         }
                     });
                 }
             }
+
+            //Stage 2
+            while (toVisit2Processes.length > 0) {
+                visitingId = toVisit2Processes.pop();
+                action = toVisit2Actions.pop();
+                if (!visited2[action][visitingId]) {
+                    visited2[action][visitingId] = true;
+                    successors = this.strictSuccGenerator.getSuccessors(visitingId);
+                    if(successors.count() > 0) {
+                        successors.forEach(transition => {
+                            var targetProcess = transition.targetProcess;
+                            if (transition.action.getLabel() === "tau") {
+                                toVisit2Processes.push(targetProcess.id);
+                                toVisit2Actions.push(action);
+                            }
+                            else { 
+                                result.add(new ccs.Transition(action, targetProcess));
+                            }
+                        });
+                    } 
+                    else {
+                        var test = this.strictSuccGenerator.getProcessById(visitingId);
+                        result.add(new ccs.Transition(action, test));
+                    }
+                }
+            }
+
             this.cache[processId] = result;
             return result;
         }
@@ -123,6 +163,10 @@ module Traverse {
     export class ReducingSuccessorGenerator implements ccs.SuccessorGenerator {
         
         constructor(public succGenerator : ccs.SuccessorGenerator, public reducer : ProcessTreeReducer) { }
+
+        getProcessById(processId) : ccs.Process {
+            return this.succGenerator.getProcessById(processId);
+        }
 
         getSuccessors(processId) : ccs.TransitionSet {
             var transitionSet = this.succGenerator.getSuccessors(processId);

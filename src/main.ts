@@ -34,24 +34,38 @@ module Main {
         );
 
         var activityHandler = new Main.ActivityHandler();
+
         activityHandler.addActivity(
                 "editor", 
                 new Activity.Editor(editor, "#editor", "#parse-btn", "#status-area", "#clear-btn", "#font-size-btn"),
                 (callback) => { callback({}); },
                 "editor-container",
                 "edit-btn");
+
         activityHandler.addActivity(
                 "explorer",
-                new Activity.Explorer($("#arbor-canvas")[0], $("#fullscreen-container")[0], "#status-table-container", $("#explorer-freeze-btn")[0], "#explorer-save-btn", $("#explorer-fullscreen-btn")[0], new Traverse.CCSNotationVisitor()),
-                setupExplorerActivityFn,
-                "explorer-container",
-                "explore-btn");
+                new Activity.Explorer(
+                    {
+                        canvas: $("#arbor-canvas")[0],
+                        fullscreenContainer: $("#fullscreen-container")[0],
+                        statusTableContainer: $("#status-table-container")[0],
+                        freezeBtn: $("#explorer-freeze-btn")[0],
+                        saveBtn: "#explorer-save-btn",
+                        fullscreenBtn: $("#explorer-fullscreen-btn")[0],
+                        sourceDefinition: $("#explorer-source-definition")[0]
+                    },
+                    new Traverse.CCSNotationVisitor()),
+                    setupExplorerActivityFn,
+                    "explorer-container",
+                    "explore-btn");
+
         activityHandler.addActivity(
                 "verifier",
                 new Activity.Verifier(project),
                 (callback) => { callback({}); },
                 "verifier-container",
                 "verify-btn");
+
         activityHandler.selectActivity("editor");
 
         new New('#new-btn', null, project, activityHandler);
@@ -137,8 +151,17 @@ module Main {
     }
 
     export function getGraph() {
-        var graph = new CCS.Graph();
+        var graph = new CCS.Graph(),
+            bad = false;
+        try {
             CCSParser.parse(editor.getValue(), {ccs: CCS, graph: graph});
+            bad = graph.getErrors().length > 0;
+        } catch (error) {
+            bad = true;
+        }
+        if (bad) {
+            graph = null;
+        }
         return graph;
     }
 
@@ -161,12 +184,20 @@ module Main {
 }
 
 function setupExplorerActivityFn(callback) : any {
-    var namedProcesses = Main.getGraph().getNamedProcesses(),
+    var graph = Main.getGraph(),
         $dialogList = $("#viz-mode-dialog-body-list"),
         $depthSelect = $("#viz-mode-dialog-depth"),
-        $dialog = $("#viz-mode-dialog");
+        $dialog = $("#viz-mode-dialog"),
+        namedProcesses;
     //Important only one dialog at a time.
     if (isShowingDialog()) return callback(null);
+
+    if (!graph) {
+        showExplainDialog("Invalid Graph", "The graph could not be constructed. Do you have syntax errors?");
+        return callback(null);
+    }
+
+    namedProcesses = graph.getNamedProcesses();
     //First are they any named processes at all?
     if (namedProcesses.length === 0) {
         showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
@@ -174,8 +205,7 @@ function setupExplorerActivityFn(callback) : any {
     }
 
     function makeConfiguration(processName, expandDepth) {
-        var graph = Main.getGraph(),
-            succGenerator = Main.getStrictSuccGenerator(graph);
+        var succGenerator = Main.getStrictSuccGenerator(graph);
         return {
             graph: graph,
             successorGenerator: succGenerator,
