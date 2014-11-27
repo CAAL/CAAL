@@ -145,43 +145,43 @@
                             <table id="property-table" class="table table-bordered table-hover">
                                 <thead>
                                     <tr>
-                                        <th class="col-md-1 text-center">Result</th>
-                                        <th class="col-md-10">Property</th>
-                                        <th class="col-md-1 text-center"><input id="toggle-select" type="checkbox" value=""></th>
+                                        <th class="col-md-1 text-center">Status</th>
+                                        <th class="col-md-9">Property</th>
+                                        <th class="col-md-1 text-center">Delete</th>
+                                        <th class="col-md-1 text-center">Verify</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                 </tbody>
                             </table>
-                            <div class="btn-group pull-right">
-                                <button id="delete-prop-btn" type="button" class="btn btn-default">Delete</button>
-                                <button id="verify-prop-btn" type="button" class="btn btn-default">Verify</button>
-                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                                Add Property
+                                <span class="caret"></span>
+                            </button>
+                            <ul id="add-property" class="dropdown-menu" role="menu">
+                                <li class="dropdown-header" role="presentation">Equivalence</li>
+                                <li id="strong"><a>Strong Bisimulation</a></li>
+                                <li id="weak"><a>Weak Bisimulation</a></li>
+                                <li id="trace" class="disabled"><a>Trace Equivalence</a></li>
+                                <li class="divider"></li>
+                                <li class="dropdown-header" role="presentation">Model Checking</li>
+                                <li id="hml" class="disabled"><a>HML</a></li>
+                            </ul>
+                        </div>
+                        <div class="btn-group pull-right">
+                            <button id="verify-all" type="button" class="btn btn-default">Verify All</button>
                         </div>
                     </div>
                     <div class="col-md-5">
                         <div class="row">
                             <div class="col-md-12">
-                                <div class="btn-group">
-                                    <button id="property-selector" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                                        Property
-                                        <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu" role="menu">
-                                        <li class="dropdown-header" role="presentation">Equivalence</li>
-                                        <li data-tab="0" id="strong-bisim"><a>Strong Bisimulation</a></li>
-                                        <li data-tab="1" id="weak-bisim"><a>Weak Bisimulation</a></li>
-                                        <li data-tab="2" id="trace-equiv"><a>Trace Equivalence</a></li>
-                                        <li class="divider"></li>
-                                        <li class="dropdown-header" role="presentation">Model Checking</li>
-                                        <li data-tab="3" id="hml"><a>HML</a></li>
-                                    </ul>
-                                </div>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-12">
-                                <div data-tab="0">
+                                <div id="equivalence">
                                     <div class="form-group">
                                         <label for="first-process" class="control-label">First Process</label>
                                         <select id="first-process" class="form-control"></select>
@@ -190,13 +190,7 @@
                                         <label for="second-process" class="control-label">Second Process</label>
                                         <select id="second-process" class="form-control"></select>
                                     </div>
-                                    <div class="form-group">
-                                        <button id="add-property" type="button" class="btn btn-default pull-right">
-                                            Add Property
-                                        </button>
-                                    </div>
                                 </div>
-                                <div data-tab="1"></div>
                                 <div data-tab="2"></div>
                                 <div data-tab="3"></div>
                             </div>

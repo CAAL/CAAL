@@ -5,83 +5,41 @@
 
 module Activity {
 
-    enum PropertyType {Strong, Weak, Trace, HML};
-
     export class Verifier extends Activity {
-        private currentProperty: PropertyType;
+        private selectedProperties: Property.Property[];
         private project: Project;
-        private propertySelector: JQuery;
+        private addPropertyList: JQuery;
         private propertyTable: JQuery;
-        private addPropertyButton: JQuery;
-        private verifyButton: JQuery;
-        private deleteButton: JQuery;
-        private toggleSelectButton: JQuery;
+        private verifyAllButton: JQuery;
 
         public constructor(project: Project) {
             super();
 
             this.project = project;
-            this.propertySelector = $("#property-selector");
+            this.addPropertyList = $("#add-property");
             this.propertyTable = $("#property-table");
-            this.addPropertyButton = $("#add-property");
-            this.verifyButton = $("#verify-prop-btn");
-            this.deleteButton = $("#delete-prop-btn");
-            this.toggleSelectButton = $("#toggle-select");
+            this.verifyAllButton = $("#verify-all");
 
-            this.addPropertyButton.on("click", () => this.addProperty());
-            this.verifyButton.on("click", () => this.verify());
-            this.toggleSelectButton.on("click", () => this.toggleSelect());
-
-            $("li[data-tab]").on("click", (e) => this.displayOptions(e));
+            this.addPropertyList.find("li").on("click", (e) => this.addProperty(e));
+            this.verifyAllButton.on("click", () => this.verifyAll());
         }
 
-        public displayOptions(e): void {
-            var id = $(e.currentTarget).attr("data-tab");
-            this.currentProperty = parseInt(id);
-            this.propertySelector.html($(e.currentTarget).text() + " <span class=\"caret\"></span>");
-
-            $("div[data-tab]").each(function() {
-                $(this).toggle($(this).attr("data-tab") === id);
-            })
-
-            switch(this.currentProperty) {
-                case PropertyType.Strong:
-                    var namedProcesses = Main.getGraph().getNamedProcesses();
-                    this.displayProcesses(namedProcesses);
-                    break;
-                case PropertyType.Weak:
-                    break;
-                case PropertyType.Trace:
-                    break;
-                case PropertyType.HML:
-                    break;
-            }
-        }
-
-        public displayProcesses(namedProcesses: string[]): void {
+        public displayProcesses(processes: string[], firstSelected?: string, secondSelected?: string): void {
             var firstProcess = $("#first-process").empty();
             var secondProcess = $("#second-process").empty();
 
-            for (var i = 0; i < namedProcesses.length; i++) {
-                firstProcess.append($("<option></option").append(namedProcesses[i]));
-                secondProcess.append($("<option></option").append(namedProcesses[i]));
-            }
-        }
+            for (var i = 0; i < processes.length; i++) {
+                if (processes[i] === firstSelected) {
+                    firstProcess.append($("<option selected></option").append(processes[i]));
+                } else {
+                    firstProcess.append($("<option></option").append(processes[i]));
+                }
 
-        public addProperty(): void {
-            switch(this.currentProperty) {
-                case PropertyType.Strong:
-                    var firstSelected = $("#first-process :selected").text();
-                    var secondSelected = $("#second-process :selected").text();
-                    this.project.addProperty(new Property.StrongBisimulation(firstSelected, secondSelected));
-                    this.displayProperties();
-                    break;
-                case PropertyType.Weak:
-                    break;
-                case PropertyType.Trace:
-                    break;
-                case PropertyType.HML:
-                    break;
+                if (processes[i] === secondSelected) {
+                    secondProcess.append($("<option selected></option").append(processes[i]));
+                } else {
+                    secondProcess.append($("<option></option").append(processes[i]));
+                }
             }
         }
 
@@ -91,11 +49,72 @@ module Activity {
             tableBody.empty();
 
             for (var i = 0; i < properties.length; i++) {
-                tableBody.append(properties[i].toHTML());
+                var row = $("<tr></tr>");
+                row.append($("<td class=\"text-center\"></td>").append(properties[i].getSatisfiable()));
+                row.append($("<td></td>").append(properties[i].getDescription()));
+
+                var del = $("<i class=\"fa fa-trash\"></i>");
+                var verify = $("<i class=\"fa fa-play\"></i>");
+                row.append($("<td class=\"text-center\"></td>").append(del));
+                row.append($("<td class=\"text-center\"></td>").append(verify));
+
+                tableBody.append(row);
+
+                row.on("click", {property: properties[i]}, (e) => this.editProperty(e));
+                del.on("click", {property: properties[i]}, (e) => this.deleteProperty(e));
+                verify.on("click", {property: properties[i]}, (e) => this.verify(e));
             }
         }
 
-        public verify(): void {
+        public addProperty(e): void {
+            var type = e.currentTarget.id;
+
+            switch(type) {
+                case "strong":
+                    var property = new Property.StrongBisimulation("", "");
+                    break;
+                case "weak":
+                    var property = new Property.WeakBisimulation("", "");
+                    break;
+            }
+
+            this.project.addProperty(property);
+            this.displayProperties();
+            this.editProperty({data: {property: property}});
+        }
+
+        public editProperty(e): void {
+            var property = e.data.property;
+
+            if (property instanceof Property.Equivalence) {
+                this.displayProcesses(Main.getGraph().getNamedProcesses(), property.getFirstProcess(), property.getSecondProcess());
+
+                $("#first-process").off("change");
+                $("#first-process").on("change", () => {
+                    property.setFirstProcess($("#first-process").val());
+                    this.displayProperties();
+                });
+
+                $("#second-process").on("change", () => {
+                    $("#second-process").off("change");
+                    property.setSecondProcess($("#second-process").val());
+                    this.displayProperties();
+                });
+            }
+        }
+
+        public deleteProperty(e): void {
+            e.stopPropagation();
+            this.project.deleteProperty(e.data.property);
+            this.displayProperties();
+        }
+
+        public verify(e): void {
+            e.data.property.verify();
+            this.displayProperties();
+        }
+
+        public verifyAll(): void {
             var properties = this.project.getProperties();
 
             for (var i = 0; i < properties.length; i++) {
@@ -103,10 +122,6 @@ module Activity {
             }
 
             this.displayProperties();
-        }
-
-        private toggleSelect(): void {
-            $(":checkbox").prop("checked", this.toggleSelectButton.prop("checked"));
         }
     }
 }

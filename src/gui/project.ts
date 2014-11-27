@@ -71,6 +71,17 @@ class Project {
         this.properties.push(property);
     }
 
+    public deleteProperty(property: Property.Property): void {
+        var id = property.getId();
+
+        for (var i = 0; i < this.properties.length; i++) {
+            if (this.properties[i].getId() === id) {
+                this.properties.splice(i, 1);
+                break;
+            }
+        }
+    }
+
     public toJSON(): any {
         return {
             id: this.getId(),
