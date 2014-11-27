@@ -96,31 +96,32 @@ module Traverse {
             this.cache = cache || {};
         }
 
-        getProcessById(processId) : ccs.Process { 
+        getProcessById(processId : number) : ccs.Process { 
             return this.strictSuccGenerator.getProcessById(processId);
         }
 
-        getSuccessors(processId) {
+        getSuccessors(processId : number) : ccs.TransitionSet {
             if (this.cache[processId]) return this.cache[processId];
             var result = new ccs.TransitionSet(),
-                toVisit = [processId],
+                process = this.strictSuccGenerator.getProcessById(processId),
+                toVisit = [process],
                 visited = {},
                 visited2 = Object.create(null),
                 toVisit2Processes = [],
                 toVisit2Actions = [],
-                visitingId, successors, action;
+                visitingNode : ccs.Process, successors, action;
 
             //Stage 1
             while (toVisit.length > 0) {
-                visitingId = toVisit.pop();
-                if (!visited[visitingId]) {
-                    visited[visitingId] = true;
-                    successors = this.strictSuccGenerator.getSuccessors(visitingId);
+                visitingNode = toVisit.pop();
+                if (!visited[visitingNode.id]) {
+                    visited[visitingNode.id] = true;
+                    successors = this.strictSuccGenerator.getSuccessors(visitingNode.id);
                     successors.forEach(transition => {
                         if (transition.action.getLabel() === "tau") {
-                            toVisit.push(transition.targetProcess.id);
+                            toVisit.push(transition.targetProcess);
                         } else {
-                            toVisit2Processes.push(transition.targetProcess.id);
+                            toVisit2Processes.push(transition.targetProcess);
                             toVisit2Actions.push(transition.action);
                             visited2[transition.action] = {};
                             result.add(transition);
@@ -131,16 +132,16 @@ module Traverse {
 
             //Stage 2
             while (toVisit2Processes.length > 0) {
-                visitingId = toVisit2Processes.pop();
+                visitingNode = toVisit2Processes.pop();
                 action = toVisit2Actions.pop();
-                if (!visited2[action][visitingId]) {
-                    visited2[action][visitingId] = true;
-                    successors = this.strictSuccGenerator.getSuccessors(visitingId);
+                if (!visited2[action][visitingNode.id]) {
+                    visited2[action][visitingNode.id] = true;
+                    successors = this.strictSuccGenerator.getSuccessors(visitingNode.id);
                     if(successors.count() > 0) {
                         successors.forEach(transition => {
                             var targetProcess = transition.targetProcess;
                             if (transition.action.getLabel() === "tau") {
-                                toVisit2Processes.push(targetProcess.id);
+                                toVisit2Processes.push(targetProcess);
                                 toVisit2Actions.push(action);
                             }
                             else { 
@@ -149,8 +150,7 @@ module Traverse {
                         });
                     } 
                     else {
-                        var test = this.strictSuccGenerator.getProcessById(visitingId);
-                        result.add(new ccs.Transition(action, test));
+                        result.add(new ccs.Transition(action, visitingNode));
                     }
                 }
             }
