@@ -38,7 +38,7 @@ module Main {
             editor
         );
 
-        var gameActivity: Activity.BisimulationGame = new Activity.BisimulationGame(document.getElementById("trace"), "#game-actions-table-container");
+        var gameActivity: Activity.BisimulationGame = new Activity.BisimulationGame(document.getElementById("tracesvg"), "#game-actions-table-container");
         
         var resizeTimer;
         $(window).resize(function () {
