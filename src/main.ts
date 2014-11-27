@@ -151,7 +151,7 @@ module Main {
     }
 
     export function getGraph() {
-        var graph = new CCS.Graph(),
+        var graph : ccs.Graph = new CCS.Graph(),
             bad = false;
         try {
             CCSParser.parse(editor.getValue(), {ccs: CCS, graph: graph});
@@ -165,14 +165,14 @@ module Main {
         return graph;
     }
 
-    export function getStrictSuccGenerator(graph) : ccs.SuccessorGenerator {
+    export function getStrictSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {
         var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
             treeReducer = new Traverse.ProcessTreeReducer(graph),
             reducingGenerator = new Traverse.ReducingSuccessorGenerator(strictGenerator, treeReducer);
         return reducingGenerator;
     }
 
-    export function getWeakSuccGenerator(graph) : ccs.SuccessorGenerator {
+    export function getWeakSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {
         //Wait do we build the, weak generator on top of the strict directly and then reduce?
         //or do we take take the strict one, reduce it, then apply the weak on top?  <-- this right now.
         var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
@@ -184,7 +184,7 @@ module Main {
 }
 
 function setupExplorerActivityFn(callback) : any {
-    var graph = Main.getGraph(),
+    var graph : ccs.Graph = Main.getGraph(),
         $dialogList = $("#viz-mode-dialog-body-list"),
         $depthSelect = $("#viz-mode-dialog-depth"),
         $dialog = $("#viz-mode-dialog"),
@@ -204,7 +204,7 @@ function setupExplorerActivityFn(callback) : any {
         return callback(null);
     }
 
-    function makeConfiguration(processName, expandDepth) {
+    function makeConfiguration(processName : string, expandDepth : number) {
         var succGenerator = Main.getStrictSuccGenerator(graph);
         return {
             graph: graph,
@@ -232,7 +232,7 @@ function setupExplorerActivityFn(callback) : any {
     $dialog.modal("show");
 }
 
-function showExplainDialog(title, message) {
+function showExplainDialog(title : string, message : string) : void {
     var $dialog = $("#explain-dialog"),
         $dialogTitle = $("#explain-dialog-title"),
         $dialogBodyPar = $("#explain-dialog-body-par");
