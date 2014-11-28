@@ -6,10 +6,10 @@
 module Activity {
 
     export class Verifier extends Activity {
-        private selectedProperties: Property.Property[];
         private project: Project;
+        private editor: any;
         private addPropertyList: JQuery;
-        private propertyTable: JQuery;
+        private propertyTableBody: JQuery;
         private verifyAllButton: JQuery;
 
         public constructor(project: Project) {
@@ -17,48 +17,56 @@ module Activity {
 
             this.project = project;
             this.addPropertyList = $("#add-property");
-            this.propertyTable = $("#property-table");
+            this.propertyTableBody = $("#property-table").find("tbody");
             this.verifyAllButton = $("#verify-all");
 
             this.addPropertyList.find("li").on("click", (e) => this.addProperty(e));
             this.verifyAllButton.on("click", () => this.verifyAll());
+
+            this.editor = ace.edit("hml-editor");
+            this.editor.setTheme("ace/theme/crisp");
+            this.editor.getSession().setMode("ace/mode/hml");
+            this.editor.getSession().setUseWrapMode(true);
+            this.editor.setOptions({
+                enableBasicAutocompletion: true,
+                maxLines: 3,
+                showPrintMargin: false,
+                fontSize: 14,
+                fontFamily: "Inconsolata",
+            });
         }
 
-        public displayProcesses(processes: string[], firstSelected?: string, secondSelected?: string): void {
-            var firstProcess = $("#first-process").empty();
-            var secondProcess = $("#second-process").empty();
+        public displayProcessList(processes: string[], list: JQuery, selected: string): void {
+            list.empty();
 
             for (var i = 0; i < processes.length; i++) {
-                if (processes[i] === firstSelected) {
-                    firstProcess.append($("<option selected></option").append(processes[i]));
+                if (processes[i] === selected) {
+                    list.append($("<option selected></option").append(processes[i]));
                 } else {
-                    firstProcess.append($("<option></option").append(processes[i]));
+                    list.append($("<option></option").append(processes[i]));
                 }
+            }
 
-                if (processes[i] === secondSelected) {
-                    secondProcess.append($("<option selected></option").append(processes[i]));
-                } else {
-                    secondProcess.append($("<option></option").append(processes[i]));
-                }
+            if (!selected) {
+                list.prop("selectedIndex", -1);
             }
         }
 
         public displayProperties(): void {
             var properties = this.project.getProperties();
-            var tableBody = this.propertyTable.find("tbody");
-            tableBody.empty();
+            this.propertyTableBody.empty();
 
             for (var i = 0; i < properties.length; i++) {
                 var row = $("<tr></tr>");
-                row.append($("<td class=\"text-center\"></td>").append(properties[i].getSatisfiable()));
-                row.append($("<td></td>").append(properties[i].getDescription()));
-
                 var del = $("<i class=\"fa fa-trash\"></i>");
                 var verify = $("<i class=\"fa fa-play\"></i>");
+
+                row.append($("<td class=\"text-center\"></td>").append(properties[i].getSatisfiable()));
+                row.append($("<td></td>").append(properties[i].getDescription()));
                 row.append($("<td class=\"text-center\"></td>").append(del));
                 row.append($("<td class=\"text-center\"></td>").append(verify));
 
-                tableBody.append(row);
+                this.propertyTableBody.append(row);
 
                 row.on("click", {property: properties[i]}, (e) => this.editProperty(e));
                 del.on("click", {property: properties[i]}, (e) => this.deleteProperty(e));
@@ -68,13 +76,17 @@ module Activity {
 
         public addProperty(e): void {
             var type = e.currentTarget.id;
+            var property = null;
 
             switch(type) {
                 case "strong":
-                    var property = new Property.StrongBisimulation("", "");
+                    property = new Property.StrongBisimulation("", "");
                     break;
                 case "weak":
-                    var property = new Property.WeakBisimulation("", "");
+                    property = new Property.WeakBisimulation("", "");
+                    break;
+                case "hml":
+                    property = new Property.HML("", "");
                     break;
             }
 
@@ -87,17 +99,45 @@ module Activity {
             var property = e.data.property;
 
             if (property instanceof Property.Equivalence) {
-                this.displayProcesses(Main.getGraph().getNamedProcesses(), property.getFirstProcess(), property.getSecondProcess());
+                $("#equivalence").show();
+                $("#model-checking").hide();
 
-                $("#first-process").off("change");
-                $("#first-process").on("change", () => {
-                    property.setFirstProcess($("#first-process").val());
+                var firstProcessList = $("#equivalence-first-process");
+                var secondProcessList = $("#equivalence-second-process");
+
+                var processes = Main.getGraph().getNamedProcesses();
+                this.displayProcessList(processes, firstProcessList, property.getFirstProcess());
+                this.displayProcessList(processes, secondProcessList, property.getSecondProcess());
+
+                firstProcessList.off("change");
+                firstProcessList.on("change", () => {
+                    property.setFirstProcess(firstProcessList.val());
                     this.displayProperties();
                 });
 
-                $("#second-process").on("change", () => {
-                    $("#second-process").off("change");
-                    property.setSecondProcess($("#second-process").val());
+                secondProcessList.off("change");
+                secondProcessList.on("change", () => {
+                    property.setSecondProcess(secondProcessList.val());
+                    this.displayProperties();
+                });
+            } else if (property instanceof Property.HML) {
+                $("#equivalence").hide();
+                $("#model-checking").show();
+
+                var processList = $("#hml-process");
+                this.displayProcessList(Main.getGraph().getNamedProcesses(), processList, property.getProcess());
+
+                processList.off("change");
+                processList.on("change", () => {
+                    property.setProcess(processList.val());
+                    this.displayProperties();
+                });
+
+                this.editor.removeAllListeners("change");
+                this.editor.setValue(property.getFormula(), 1);
+                this.editor.focus();
+                this.editor.on("change", () => {
+                    property.setFormula(this.editor.getValue());
                     this.displayProperties();
                 });
             }

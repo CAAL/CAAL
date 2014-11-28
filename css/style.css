@@ -84,7 +84,7 @@ canvas {
  * Editor activity styles
  */
 
-#editor-border {
+.editor-border {
     margin-bottom: 20px;
     padding: 5px;
     border: 1px solid #e7e7e7;
@@ -131,10 +131,14 @@ canvas {
  * Verifier activity styles
  */
 
-div[data-tab] {
+#property-table tbody {
+    font: normal 14px "Inconsolata";
+}
+
+#equivalence, #model-checking {
     display: none;
 }
 
-#property-selector {
-    margin-bottom: 20px;
+#model-checking .editor-border {
+    margin-top: 20px;
 }

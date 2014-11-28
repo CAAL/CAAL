@@ -89,5 +89,46 @@ module Property {
             this.satisfiable = DependencyGraph.isBisimilar(succGen, first.id, second.id);
         }
     }
+
+    export class HML extends Property {
+        private process: string;
+        private formula: string;
+
+        public constructor(process: string, formula: string) {
+            super();
+            this.process = process;
+            this.formula = formula;
+        }
+
+        public getProcess(): string {
+            return this.process;
+        }
+
+        public setProcess(process: string): void {
+            this.process = process;
+        }
+
+        public getFormula(): string {
+            return this.formula;
+        }
+
+        public setFormula(formula: string): void {
+            this.formula = formula;
+        }
+
+        public getDescription(): string {
+            var escaped = this.formula.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            return this.process + " |= " + escaped;
+        }
+
+        public verify(): void {
+            var graph = Main.getGraph();
+            var succGen = Main.getStrictSuccGenerator(graph);
+            var process = graph.processByName(this.process);
+            var formulaSet = HMLParser.parse(this.formula, {ccs: ccs, hml: hml});
+            var formula = formulaSet.getAllFormulas()[0];
+            this.satisfiable = DependencyGraph.solveMuCalculus(formulaSet, formula, succGen, process.id);
+        }
+    }
 }
   

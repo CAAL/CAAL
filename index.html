@@ -15,6 +15,7 @@
         <script src="lib/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
         <script src="lib/ace/src/ext-language_tools.js"></script>
         <script type="text/javascript" src="lib/ccs_grammar.js"></script>
+        <script src="lib/hml_grammar.js"></script>
         <script type="text/javascript" src="lib/arbor.js"></script>
         <script type="text/javascript" src="lib/graphics.js"></script>
         <script type="text/javascript" src="lib/main.js"></script>
@@ -103,7 +104,7 @@
                     </div>
                 </div>
                 <div class="clearfix"></div>
-                <div id="editor-border">
+                <div class="editor-border">
                     <div id="editor"></div>
                 </div>
                 <div id="status-area" class="alert alert-dismissible" role="alert">
@@ -170,7 +171,7 @@
                                 <li id="trace" class="disabled"><a>Trace Equivalence</a></li>
                                 <li class="divider"></li>
                                 <li class="dropdown-header" role="presentation">Model Checking</li>
-                                <li id="hml" class="disabled"><a>HML</a></li>
+                                <li id="hml"><a>HML</a></li>
                             </ul>
                         </div>
                         <div class="btn-group pull-right">
@@ -186,16 +187,21 @@
                             <div class="col-md-12">
                                 <div id="equivalence">
                                     <div class="form-group">
-                                        <label for="first-process" class="control-label">First Process</label>
-                                        <select id="first-process" class="form-control"></select>
+                                        <label for="equivalence-first-process" class="control-label">First Process</label>
+                                        <select id="equivalence-first-process" class="form-control"></select>
                                     </div>
                                     <div class="form-group">
-                                        <label for="second-process" class="control-label">Second Process</label>
-                                        <select id="second-process" class="form-control"></select>
+                                        <label for="equivalence-second-process" class="control-label">Second Process</label>
+                                        <select id="equivalence-second-process" class="form-control"></select>
                                     </div>
                                 </div>
-                                <div data-tab="2"></div>
-                                <div data-tab="3"></div>
+                                <div id="model-checking">
+                                    <div class="form-group">
+                                        <label for="hml-process" class="control-label">Process</label>
+                                        <select id="hml-process" class="form-control"></select>
+                                        <div class="editor-border"><div id="hml-editor"></div></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -16,7 +16,9 @@
 /// <reference path="activity/verifier.ts" />
 
 declare var CCSParser;
+declare var HMLParser;
 import ccs = CCS;
+import hml = HML;
 
 var editor;
 var isDialogOpen = false;
