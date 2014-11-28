@@ -15,6 +15,7 @@ module GUI {
 
         constructor(renderer) {
             //this.sys = arbor.ParticleSystem(500, 3000, 0.95);
+            /* Repulsion, stiffness, friction, gravity, fps, dt, precision. */
             this.sys = arbor.ParticleSystem(400, 800, 0.5);
             this.sys.parameters({gravity:true});
             this.renderer = renderer;
