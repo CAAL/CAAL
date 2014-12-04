@@ -296,7 +296,7 @@ module Activity {
                         this.CCSNotation.visit(
                             (this.lastMove == "LEFT" ? this.graph.processById(data[2]) :
                              this.lastMove == "RIGHT" ? this.graph.processById(data[3]):
-                             throw "Game error" )
+                             undefined )
                         ));
 
                     this.setOnHoverListener(row);
