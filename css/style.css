@@ -203,3 +203,13 @@ canvas {
 #model-checking .editor-border {
     margin-top: 20px;
 }
+
+
+/* Colors the verification status */
+#property-table .fa-check {
+    color: #0c0;
+}
+
+#property-table .fa-times {
+    color: #c00;
+}
