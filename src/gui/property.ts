@@ -23,6 +23,10 @@ module Property {
             else {return "<i class=\"fa fa-times\"></i>"}
         }
 
+        protected invalidateStatus() : void {
+            this.satisfiable = null;
+        }
+
         public getDescription(): string {throw "Not implemented"}
         public verify(): void {throw "Not implemented"}
     }
@@ -43,6 +47,7 @@ module Property {
 
         public setFirstProcess(firstProcess: string): void {
             this.firstProcess = firstProcess;
+            this.invalidateStatus();
         }
 
         public getSecondProcess(): string {
@@ -51,6 +56,7 @@ module Property {
 
         public setSecondProcess(secondProcess: string): void {
             this.secondProcess = secondProcess;
+            this.invalidateStatus();
         }
     }
 
@@ -106,6 +112,7 @@ module Property {
 
         public setProcess(process: string): void {
             this.process = process;
+            this.invalidateStatus();
         }
 
         public getFormula(): string {
@@ -114,6 +121,7 @@ module Property {
 
         public setFormula(formula: string): void {
             this.formula = formula;
+            this.invalidateStatus();
         }
 
         public getDescription(): string {

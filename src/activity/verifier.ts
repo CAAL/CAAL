@@ -61,16 +61,17 @@ module Activity {
                 var del = $("<i class=\"fa fa-trash\"></i>");
                 var verify = $("<i class=\"fa fa-play\"></i>");
 
-                row.append($("<td class=\"text-center\"></td>").append(properties[i].getSatisfiable()));
-                row.append($("<td></td>").append(properties[i].getDescription()));
-                row.append($("<td class=\"text-center\"></td>").append(del));
-                row.append($("<td class=\"text-center\"></td>").append(verify));
+                var tdStatus = $("<td class=\"text-center\"></td>").append(properties[i].getSatisfiable());
+                var tdDescription = $("<td></td>").append(properties[i].getDescription());
+                var tdDelete = $("<td class=\"text-center\"></td>").append(del);
+                var tdVerify = $("<td class=\"text-center\"></td>").append(verify);
+                row.append(tdStatus, tdDescription, tdDelete, tdVerify);
 
                 this.propertyTableBody.append(row);
 
                 row.on("click", {property: properties[i]}, (e) => this.editProperty(e));
-                del.on("click", {property: properties[i]}, (e) => this.deleteProperty(e));
-                verify.on("click", {property: properties[i]}, (e) => this.verify(e));
+                tdDelete.on("click", {property: properties[i]}, (e) => this.deleteProperty(e));
+                tdVerify.on("click", {property: properties[i]}, (e) => this.verify(e));
             }
         }
 
