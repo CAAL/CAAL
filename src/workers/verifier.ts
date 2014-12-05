@@ -1,13 +1,5 @@
-/// <reference path="../main.ts" />
-/// <reference path="../ccs/ccs.ts" />
-/// <reference path="../ccs/hml.ts" />
-/// <reference path="../ccs/depgraph.ts" />
+/// <reference path="../../lib/main.d.ts" />
 
-interface Worker {
-    close();
-}
-
-declare var self : Worker; //TypeScript complains about, this but accepts it.
 declare var CCSParser;
 declare var HMLParser;
 
@@ -49,8 +41,8 @@ messageHandlers.isWeaklyBisimilar = data => {
 messageHandlers.checkFormula = data => {
     var succGen = data.useStrict ? Main.getStrictSuccGenerator(graph) : Main.getWeakSuccGenerator(graph),
         formulaSet = HMLParser.parse(data.formula, {ccs: CCS, hml: HML}),
-        formula = formula.getAllFormulas()[0],
-        result = DependencyGraph.solveMuCalculus(formulaSet, formula, succGen, graph.processByName(data.processName));
+        formula = formulaSet.getAllFormulas()[0],
+        result = DependencyGraph.solveMuCalculus(formulaSet, formula, succGen, graph.processByName(data.processName).id);
     data.result = result;
     self.postMessage(data);
 };
@@ -58,8 +50,8 @@ messageHandlers.checkFormula = data => {
 messageHandlers.checkFormulaForVariable = data => {  
     var succGen = data.useStrict ? Main.getStrictSuccGenerator(graph) : Main.getWeakSuccGenerator(graph),
         formulaSet = HMLParser.parse(data.formula, {ccs: CCS, hml: HML}),
-        formula = formula.formulaByName(data.variable),
-        result = DependencyGraph.solveMuCalculus(formulaSet, formula, succGen, graph.processByName(data.processName));
+        formula = formulaSet.formulaByName(data.variable),
+        result = DependencyGraph.solveMuCalculus(formulaSet, formula, succGen, graph.processByName(data.processName).id);
     data.result = result;
     self.postMessage(data);
 };

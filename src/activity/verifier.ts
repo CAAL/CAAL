@@ -11,6 +11,9 @@ module Activity {
         private addPropertyList: JQuery;
         private propertyTableBody: JQuery;
         private verifyAllButton: JQuery;
+        private verifyStopButton: JQuery;
+        private currentVerifyingProperty = null;
+        private clockInterval;
 
         public constructor(project: Project) {
             super();
@@ -19,9 +22,20 @@ module Activity {
             this.addPropertyList = $("#add-property");
             this.propertyTableBody = $("#property-table").find("tbody");
             this.verifyAllButton = $("#verify-all");
+            this.verifyStopButton = $("#verify-stop");
 
             this.addPropertyList.find("li").on("click", (e) => this.addProperty(e));
             this.verifyAllButton.on("click", () => this.verifyAll());
+            this.verifyStopButton.on("click", () => {
+                if (this.currentVerifyingProperty) {
+                    try {
+                        this.currentVerifyingProperty.abortVerification();
+                    } catch (error) {
+                        console.log("Error stopping verification of property " + this.currentVerifyingProperty + ": " + error);
+                    }
+                    this.verifactionEnded();
+                }
+            });
 
             this.editor = ace.edit("hml-editor");
             this.editor.setTheme("ace/theme/crisp");
@@ -71,7 +85,7 @@ module Activity {
 
                 row.on("click", {property: properties[i]}, (e) => this.editProperty(e));
                 tdDelete.on("click", {property: properties[i]}, (e) => this.deleteProperty(e));
-                tdVerify.on("click", {property: properties[i]}, (e) => this.verify(e));
+                tdVerify.on("click", {idx: i}, (e) => this.verify(e.data.idx));
             }
         }
 
@@ -150,19 +164,37 @@ module Activity {
             this.displayProperties();
         }
 
-        public verify(e): void {
-            e.data.property.verify();
+        private verifactionEnded() {
+            clearInterval(this.clockInterval);
+            this.verifyStopButton.prop("disabled", true);
+            this.currentVerifyingProperty = null;
             this.displayProperties();
+        }
+
+        public verify(index): void {
+            var property = this.project.getProperties()[index];
+            this.verifyStopButton.prop("disabled", false);
+
+            var row = this.propertyTableBody.find("tr").eq(index);
+            var statusTd = row.find("td").eq(0);
+            var startTime = new Date().getTime();
+            
+            this.clockInterval = setInterval(updateTimer, 100);
+            this.currentVerifyingProperty = property;
+
+            function updateTimer() {
+                var elapsedTime = new Date().getTime() - startTime;
+                statusTd.text(elapsedTime + "ms");
+            }
+
+            property.verify(this.verifactionEnded.bind(this));
         }
 
         public verifyAll(): void {
             var properties = this.project.getProperties();
-
             for (var i = 0; i < properties.length; i++) {
-                properties[i].verify();
+                this.verify(i);
             }
-
-            this.displayProperties();
         }
     }
 }

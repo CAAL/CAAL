@@ -11,4 +11,6 @@ lib/ccs_grammar.js
 lib/hml_grammar.js
 lib/ace
 lib/main.js
+lib/main.d.ts
+lib/workers
 *.js.map

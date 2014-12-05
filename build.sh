@@ -40,9 +40,13 @@ mv ccs_grammar.js modules/ace/lib/ace/mode/ccs/
 echo "Building Ace"
 node modules/ace/Makefile.ccs.js --target lib/ace
 
+#build workers
+echo "Compiling Workers"
+tsc src/workers/*.ts --outDir lib/workers
+
 #build typescript files
 echo "Building $MAIN_DEST" 
-tsc --sourcemap --out "$MAIN_DEST" "$MAIN_SRC"
+tsc -d --sourcemap --out "$MAIN_DEST" "$MAIN_SRC"
 
 # If tsc gives errors we don't need bash to tell us something was wrong.
 true

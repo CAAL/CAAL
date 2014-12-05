@@ -170,6 +170,10 @@ module Main {
         }
     }
 
+    export function getProgram() : string {
+        return editor.getValue();
+    }
+
     export function getGraph() {
         var graph : ccs.Graph = new CCS.Graph(),
             bad = false;

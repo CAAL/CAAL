@@ -2,6 +2,16 @@
 /// <reference path="../ccs/depgraph.ts" />
 
 module Property {
+
+    function getWorker() : Worker {
+        var worker = new Worker("lib/workers/verifier.js");
+        worker.addEventListener("error", (error) => {
+            console.log("Verifier Worker Error at line " + error.lineno +
+                " in " + error.filename + ": " + error.message);
+        }, false);
+        return worker;
+    }
+
     export class Property {
         private static counter: number = 0;
         private id: number;
@@ -27,8 +37,10 @@ module Property {
             this.satisfiable = null;
         }
 
-        public getDescription(): string {throw "Not implemented"}
-        public verify(): void {throw "Not implemented"}
+        public getDescription(): string {throw "Not implemented by subclass"}
+        public verify(callback : () => any): void {throw "Not implemented by subclass"}
+
+        public abortVerification() : void {throw "Not implemented by subclass";}
     }
 
     export class Equivalence extends Property {
@@ -61,6 +73,8 @@ module Property {
     }
 
     export class StrongBisimulation extends Equivalence {
+        private worker;
+
         public constructor(firstProcess: string, secondProcess: string) {
             super(firstProcess, secondProcess);
         }
@@ -69,16 +83,34 @@ module Property {
             return this.firstProcess + " ~ " + this.secondProcess;
         }
 
-        public verify(): void {
-            var graph = Main.getGraph();
-            var succGen = Main.getStrictSuccGenerator(graph);
-            var first = graph.processByName(this.firstProcess);
-            var second = graph.processByName(this.secondProcess);
-            this.satisfiable = DependencyGraph.isBisimilar(succGen, first.id, second.id);
+        public verify(callback): void {
+            var program = Main.getProgram();
+            this.worker = getWorker();
+            this.worker.postMessage({
+                type: "program",
+                program: program
+            });
+            this.worker.postMessage({
+                type: "isStronglyBisimilar",
+                leftProcess: this.firstProcess,
+                rightProcess: this.secondProcess
+            });
+            this.worker.addEventListener("message", event => {
+                this.satisfiable = (typeof event.data.result === "boolean") ? event.data.result : null;
+                this.worker.terminate();
+                this.worker = null;
+                callback();
+            });
+        }
+
+        public abortVerification() : void {
+            this.worker.terminate();
         }
     }
 
     export class WeakBisimulation extends Equivalence {
+        private worker;
+
         public constructor(firstProcess: string, secondProcess: string) {
             super(firstProcess, secondProcess);
         }
@@ -87,18 +119,35 @@ module Property {
             return this.firstProcess + " ~~ " + this.secondProcess;
         }
 
-        public verify(): void {
-            var graph = Main.getGraph();
-            var succGen = Main.getWeakSuccGenerator(graph);
-            var first = graph.processByName(this.firstProcess);
-            var second = graph.processByName(this.secondProcess);
-            this.satisfiable = DependencyGraph.isBisimilar(succGen, first.id, second.id);
+        public verify(callback): void {
+            var program = Main.getProgram();
+            this.worker = getWorker();
+            this.worker.postMessage({
+                type: "program",
+                program: program
+            });
+            this.worker.postMessage({
+                type: "isWeaklyBisimilar",
+                leftProcess: this.firstProcess,
+                rightProcess: this.secondProcess
+            });
+            this.worker.addEventListener("message", event => {
+                this.satisfiable = (typeof event.data.result === "boolean") ? event.data.result : null;
+                this.worker.terminate();
+                this.worker = null;
+                callback();
+            });
+        }
+
+        public abortVerification() : void {
+            this.worker.terminate();
         }
     }
 
     export class HML extends Property {
         private process: string;
         private formula: string;
+        private worker;
 
         public constructor(process: string, formula: string) {
             super();
@@ -129,13 +178,29 @@ module Property {
             return this.process + " |= " + escaped;
         }
 
-        public verify(): void {
-            var graph = Main.getGraph();
-            var succGen = Main.getStrictSuccGenerator(graph);
-            var process = graph.processByName(this.process);
-            var formulaSet = HMLParser.parse(this.formula, {ccs: ccs, hml: hml});
-            var formula = formulaSet.getAllFormulas()[0];
-            this.satisfiable = DependencyGraph.solveMuCalculus(formulaSet, formula, succGen, process.id);
+        public verify(callback): void {
+            var program = Main.getProgram();
+            this.worker = getWorker();
+            this.worker.postMessage({
+                type: "program",
+                program: program
+            });
+            this.worker.postMessage({
+                type: "checkFormula",
+                processName: this.process,
+                useStrict: false,
+                formula: this.formula
+            });
+            this.worker.addEventListener("message", event => {
+                this.satisfiable = (typeof event.data.result === "boolean") ? event.data.result : null;
+                this.worker.terminate();
+                this.worker = null;
+                callback();
+            });
+        }
+
+        public abortVerification() : void {
+            this.worker.terminate();
         }
     }
 }
