@@ -14,6 +14,7 @@ module Activity {
         private verifyStopButton: JQuery;
         private currentVerifyingProperty = null;
         private clockInterval;
+        private propsToVerify = [];
 
         public constructor(project: Project) {
             super();
@@ -27,6 +28,7 @@ module Activity {
             this.addPropertyList.find("li").on("click", (e) => this.addProperty(e));
             this.verifyAllButton.on("click", () => this.verifyAll());
             this.verifyStopButton.on("click", () => {
+                this.propsToVerify = [];
                 if (this.currentVerifyingProperty) {
                     try {
                         this.currentVerifyingProperty.abortVerification();
@@ -169,6 +171,14 @@ module Activity {
             this.verifyStopButton.prop("disabled", true);
             this.currentVerifyingProperty = null;
             this.displayProperties();
+            this.doNextVerification();
+        }
+
+        private doNextVerification() {
+            if (!this.currentVerifyingProperty && this.propsToVerify.length > 0) {
+                var propIndex = this.propsToVerify.shift();
+                this.verify(propIndex);
+            }
         }
 
         public verify(index): void {
@@ -191,10 +201,9 @@ module Activity {
         }
 
         public verifyAll(): void {
-            var properties = this.project.getProperties();
-            for (var i = 0; i < properties.length; i++) {
-                this.verify(i);
-            }
+            var numProperties = this.project.getProperties();
+            numProperties.forEach( (p, i) => this.propsToVerify.push(i));
+            this.doNextVerification();
         }
     }
 }
