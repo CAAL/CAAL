@@ -116,7 +116,7 @@ module Property {
         }
 
         public getDescription(): string {
-            return this.firstProcess + " ~~ " + this.secondProcess;
+            return this.firstProcess + " ≈ " + this.secondProcess;
         }
 
         public verify(callback): void {
@@ -175,7 +175,7 @@ module Property {
 
         public getDescription(): string {
             var escaped = this.formula.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            return this.process + " |= " + escaped;
+            return this.process + " ⊧ " + escaped;
         }
 
         public verify(callback): void {
