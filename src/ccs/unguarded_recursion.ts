@@ -34,18 +34,18 @@ module Traverse {
 
         dispatchNamedProcess(process : ccs.NamedProcess) {
             var index = this.unknownResults.indexOf(process),
-                isUnguarded = false;
+                isUnguarded;
             if (index >= 0) {
                 //First time we see this process.
                 this.unknownResults.splice(index, 1);
                 this.visiting.push(process);
-                if (process.subProcess.dispatchOn(this)) {
+                isUnguarded = process.subProcess.dispatchOn(this);
+                if (isUnguarded) {
                     this.unguardedProcesses.push(process);
                 }
                 this.visiting.splice(this.visiting.indexOf(process), 1);
             } else if (this.visiting.indexOf(process) !== -1) {
-                //We are currently trying to determine unguarded recursion for this
-                //and we got here again. This means it is unguarded.
+                //Got back to this constant without performing action -- unguarded
                 isUnguarded = true;
             } else {
                 isUnguarded = this.unguardedProcesses.indexOf(process) !== -1;
