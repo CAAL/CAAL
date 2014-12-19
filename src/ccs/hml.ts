@@ -66,7 +66,7 @@ module HML {
     }
 
     export class ExistsFormula implements Formula {
-        constructor(public action : ccs.Action, public subFormula : Formula) {
+        constructor(public actionMatcher : ActionMatcher, public subFormula : Formula) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchExistsFormula(this);
@@ -77,7 +77,7 @@ module HML {
     }
 
     export class ForAllFormula implements Formula {
-        constructor(public action : ccs.Action, public subFormula : Formula) {
+        constructor(public actionMatcher : ActionMatcher, public subFormula : Formula) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchForAllFormula(this);
@@ -144,12 +144,12 @@ module HML {
             return new FalseFormula();
         }
 
-        newExists(action : ccs.Action, subFormula : Formula) {
-            return new ExistsFormula(action, subFormula);
+        newExists(actionMatcher : ActionMatcher, subFormula : Formula) {
+            return new ExistsFormula(actionMatcher, subFormula);
         }
 
-        newForAll(action : ccs.Action, subFormula : Formula) {
-            return new ForAllFormula(action, subFormula);
+        newForAll(actionMatcher : ActionMatcher, subFormula : Formula) {
+            return new ForAllFormula(actionMatcher, subFormula);
         }
 
         newMinFixedPoint(variable : string, subFormula : Formula) {
@@ -293,4 +293,57 @@ module HML {
             return this.formulaSet.formulaByName(formula.variable).dispatchOn(this);
         }
     }
+
+    export interface ActionMatcher {
+        matches(action : ccs.Action) : boolean;
+    }
+
+    export class SingleActionMatcher {
+        constructor(private sAction : ccs.Action) {
+        }
+
+        matches(action : ccs.Action) : boolean {
+            return this.sAction.equals(action);
+        }
+
+        add(action : ccs.Action) : ActionMatcher {
+            return new ArrayActionMatcher([this.sAction, action]);
+        }
+    }
+
+    export class ArrayActionMatcher {
+        private actions = [];
+        constructor(actions : ccs.Action[]) {
+            actions.forEach(action => {
+                if (!this.matches(action)) {
+                    this.actions.push(action);
+                }
+            });
+        }
+
+        matches(action : ccs.Action) : boolean {
+            for (var i=0; i < this.actions.length; i++) {
+                if (this.actions[i].equals(action)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        add(action : ccs.Action) : ActionMatcher {
+            var matcher = new ArrayActionMatcher([]);
+            matcher.actions = this.actions.slice(0);
+            if (!matcher.matches(action)) {
+                matcher.actions.push(action);
+            }
+            return matcher;
+        }
+    }
+
+    export class AllActionMatcher {
+        matches(action : ccs.Action) : boolean {
+            return true;
+        }
+    }
+
 }

@@ -27,8 +27,8 @@ Disjunction = P:Conjunction Whitespace _ "or" Whitespace _ Q:Disjunction { retur
 Conjunction = M:Modal Whitespace _ "and" Whitespace _ P:Conjunction { return formulas.newConj(M, P); }
 			/ M:Modal { return M; }
 
-Modal = _ "[" _ A:Action _ "]" _ F:Modal { return formulas.newForAll(A, F); }
-	  / _ "<" _ A:Action _ ">" _ F:Modal { return formulas.newExists(A, F); }
+Modal = _ "[" _ AM:ActionList _ "]" _ F:Modal { return formulas.newForAll(AM, F); }
+	  / _ "<" _ AM:ActionList _ ">" _ F:Modal { return formulas.newExists(AM, F); }
 	  / Unary
 
 Unary = ParenFormula
@@ -42,6 +42,10 @@ Variable = letter:[A-Z] rest:IdentifierRest { return strFirstAndRest(letter, res
 
 IdentifierRest
     = rest:[A-Za-z0-9?!_'\-#]*  { return rest; }
+
+ActionList = A:Action _ "," _ AM:ActionList { return AM.add(A); }
+		   / A:Action { return new hml.SingleActionMatcher(A); }
+		   / "-" { return new hml.AllActionMatcher(); }
 
 Action "action"
     = ['] label:Label { return new ccs.Action(label, true); }

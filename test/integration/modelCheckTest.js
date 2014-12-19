@@ -47,11 +47,24 @@ QUnit.test("Conjunction", function ( assert ) {
 QUnit.test("Exists", function ( assert ) {
     assert.ok(  checkFormula("P = a.b.x.P + a.b.y.P;", "P", "<a><b><y>tt"), "should be true");
     assert.ok(! checkFormula("P = a.b.x.P + a.w.y.P;", "P", "<a><b><y>tt"), "should be false");
+    assert.ok(  checkFormula("P = a.b.P;", "P", "<-><b>tt"), "should be true");
+    assert.ok(  checkFormula("P = a.b.P;", "P", "<a><->tt"), "should be true");
+    assert.ok(! checkFormula("P = a.b.P;", "P", "<b><->tt"), "should be false");
+    assert.ok(  checkFormula("P = a.b.P;", "P", "<a,b><b,a>tt"), "should be true");
+    assert.ok(! checkFormula("P = a.b.P;", "P", "<-><c,d>tt"), "should be false");
 });
 
 QUnit.test("ForAll", function ( assert ) {
     assert.ok(  checkFormula("P = a.x.P;", "P", "[a][y]ff"), "should be true");
     assert.ok(! checkFormula("P = a.y.P;", "P", "[a][y]ff"), "should be false");
+    assert.ok(  checkFormula("P = a.b.P;", "P", "[a][b]tt"), "should be true");
+    assert.ok(! checkFormula("P = a.b.P;", "P", "[-]ff"), "should be false");
+    assert.ok(! checkFormula("P = a.b.P;", "P", "[-][-]ff"), "should be false");
+    assert.ok(  checkFormula("P = a.b.P;", "P", "[-]<b>tt"), "should be false");
+    assert.ok(! checkFormula("P = a.b.P;", "P", "[-]<c>tt"), "should be false");
+    assert.ok(! checkFormula("P = a.b.P;", "P", "[a,b][b]ff"), "should be false");
+    assert.ok(! checkFormula("P = a.b.P;", "P", "[a][a,b]ff"), "should be false");
+    assert.ok(  checkFormula("P = a.b.P;", "P", "[a,b][c]ff"), "should be true");
 });
 
 QUnit.test("Others (simple)", function ( assert ) {
