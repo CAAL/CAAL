@@ -54,15 +54,23 @@ module Traverse {
         }
 
         dispatchSummationProcess(process : ccs.SummationProcess) {
-            var leftIsUnguarded = process.leftProcess.dispatchOn(this);
-            var rightIsUnguarded = process.rightProcess.dispatchOn(this);
-            return leftIsUnguarded || rightIsUnguarded;
+            var isUnguarded = false;
+            process.subProcesses.forEach(subProc => {
+                if (subProc.dispatchOn(this)) {
+                    isUnguarded = true;
+                }
+            });
+            return isUnguarded;
         }
 
         dispatchCompositionProcess(process : ccs.CompositionProcess) {
-            var leftIsUnguarded = process.leftProcess.dispatchOn(this);
-            var rightIsUnguarded = process.rightProcess.dispatchOn(this);
-            return leftIsUnguarded || rightIsUnguarded;   
+            var isUnguarded = false;
+            process.subProcesses.forEach(subProc => {
+                if (subProc.dispatchOn(this)) {
+                    isUnguarded = true;
+                }
+            });
+            return isUnguarded; 
         }
 
         dispatchActionPrefixProcess(process : ccs.ActionPrefixProcess) {

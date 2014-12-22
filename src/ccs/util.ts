@@ -40,15 +40,17 @@ module Traverse {
 
         dispatchSummationProcess(process : ccs.SummationProcess) {
             this.stringPieces.push("[Summation");
-            process.leftProcess.dispatchOn(this);
-            process.rightProcess.dispatchOn(this);
+            process.subProcesses.forEach(subProc => {
+                subProc.dispatchOn(this);
+            });
             this.stringPieces.push("]");
         }
 
         dispatchCompositionProcess(process : ccs.CompositionProcess) {
             this.stringPieces.push("[Composition");
-            process.leftProcess.dispatchOn(this);
-            process.rightProcess.dispatchOn(this);
+            process.subProcesses.forEach(subProc => {
+                subProc.dispatchOn(this);
+            });
             this.stringPieces.push("]");
         }
 
@@ -94,11 +96,19 @@ module Traverse {
         }
 
         dispatchSummationProcess(process : ccs.SummationProcess) {
-            return 1 + process.leftProcess.dispatchOn(this) + process.rightProcess.dispatchOn(this);
+            var sum = 1;
+            process.subProcesses.forEach(subProc => {
+                sum += subProc.dispatchOn(this);
+            });
+            return sum;
         }
 
         dispatchCompositionProcess(process : ccs.CompositionProcess) {
-            return 1 + process.leftProcess.dispatchOn(this) + process.rightProcess.dispatchOn(this);
+            var sum = 1;
+            process.subProcesses.forEach(subProc => {
+                sum += subProc.dispatchOn(this);
+            });
+            return sum;
         }
 
         dispatchActionPrefixProcess(process : ccs.ActionPrefixProcess) {
@@ -155,24 +165,23 @@ module Traverse {
 
         dispatchSummationProcess(process : ccs.SummationProcess) {
             var result = this.cache[process.id],
-                leftStr, rightStr;
+                subStr;
             if (!result) {
-                leftStr = process.leftProcess.dispatchOn(this);
-                rightStr = process.rightProcess.dispatchOn(this);
-                result = this.cache[process.id] = leftStr + " + " + rightStr;
+                subStr = process.subProcesses.map(subProc => subProc.dispatchOn(this));
+                result = this.cache[process.id] = subStr.join(" + ");
             }
             return result;
         }
 
         dispatchCompositionProcess(process : ccs.CompositionProcess) {
             var result = this.cache[process.id],
-                leftStr, rightStr;
+                subStr;
             if (!result) {
-                leftStr = process.leftProcess.dispatchOn(this);
-                rightStr = process.rightProcess.dispatchOn(this);
-                leftStr = wrapIfInstanceOf(leftStr, process.leftProcess, [ccs.SummationProcess]);
-                rightStr = wrapIfInstanceOf(rightStr, process.rightProcess, [ccs.SummationProcess]);
-                result = this.cache[process.id] = leftStr + " | " + rightStr;
+                subStr = process.subProcesses.map(subProc => {
+                    var unwrapped = subProc.dispatchOn(this);
+                    return wrapIfInstanceOf(unwrapped, subProc, [ccs.SummationProcess]);
+                });
+                result = this.cache[process.id] = subStr.join(" | ");
             }
             return result;
         }

@@ -49,7 +49,7 @@ module CCS {
     }
 
     export class SummationProcess implements Process {
-        constructor(public id : number, public leftProcess : Process, public rightProcess : Process) {
+        constructor(public id : number, public subProcesses : Process[]) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchSummationProcess(this);
@@ -60,7 +60,7 @@ module CCS {
     }
 
     export class CompositionProcess implements Process {
-        constructor(public id : number, public leftProcess : Process, public rightProcess : Process) {
+        constructor(public id : number, public subProcesses : Process[]) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchCompositionProcess(this);
@@ -193,35 +193,29 @@ module CCS {
             return existing;
         }
 
-        newSummationProcess(left : Process, right : Process) {
+        newSummationProcess(subProcesses : Process[]) {
             var temp, key, existing;
             //Ensure left.id <= right.id
-            if (left.id > right.id) {
-                temp = left;
-                left = right;
-                right = temp;
-            }
-            key = "+" + left.id + "," + right.id;
+            var newProcesses = subProcesses.slice(0);
+            newProcesses.sort((procA, procB) => procA.id - procB.id);
+            key = "+" + newProcesses.join(",");
             existing = this.structural[key];
             if (!existing) {
-                existing = this.structural[key] = new SummationProcess(this.nextId++, left, right);
+                existing = this.structural[key] = new SummationProcess(this.nextId++, newProcesses);
                 this.processes[existing.id] = existing;
             }
             return existing;
         }
 
-        newCompositionProcess(left : Process, right : Process) {
+        newCompositionProcess(subProcesses : Process[]) {
             var temp, key, existing;
             //Ensure left.id <= right.id
-            if (right.id > left.id) {
-                temp = left;
-                left = right;
-                right = temp;
-            }
-            key = "|" + left.id + "," + right.id;
+            var newProcesses = subProcesses.slice(0);
+            newProcesses.sort((procA, procB) => procA.id - procB.id);
+            key = "|" + newProcesses.join(",");
             existing = this.structural[key];
             if (!existing) {
-                existing = this.structural[key] = new CompositionProcess(this.nextId++, left, right);
+                existing = this.structural[key] = new CompositionProcess(this.nextId++, newProcesses);
                 this.processes[existing.id] = existing;
             }
             return existing;
@@ -620,12 +614,12 @@ module CCS {
         }
 
         dispatchSummationProcess(process : SummationProcess) {
-            var transitionSet = this.cache[process.id],
-                leftTransitions, rightTransitions;
+            var transitionSet = this.cache[process.id];
             if (!transitionSet) {
-                leftTransitions = process.leftProcess.dispatchOn(this);
-                rightTransitions = process.rightProcess.dispatchOn(this);
-                transitionSet = this.cache[process.id] = leftTransitions.clone().unionWith(rightTransitions);
+                transitionSet = this.cache[process.id] = new TransitionSet();
+                process.subProcesses.forEach(subProcess => {
+                    transitionSet.unionWith(subProcess.dispatchOn(this));
+                });
             }
             return transitionSet;
         }
@@ -635,28 +629,38 @@ module CCS {
                 leftSet, rightSet;
             if (!transitionSet) {
                 transitionSet = this.cache[process.id] = new TransitionSet();
-                leftSet = process.leftProcess.dispatchOn(this);
-                rightSet = process.rightProcess.dispatchOn(this);
-
-
-                leftSet.forEach(leftTransition => {
-                    //COM1
-                    transitionSet.add(new Transition(leftTransition.action.clone(),
-                        this.graph.newCompositionProcess(leftTransition.targetProcess, process.rightProcess)));
-
-                    //COM3
-                    rightSet.forEach(rightTransition => {
-                        if (leftTransition.action.label === rightTransition.action.label &&
-                            leftTransition.action.isComplement() !== rightTransition.action.isComplement()) {
-                            transitionSet.add(new Transition(new Action("tau", false),
-                                this.graph.newCompositionProcess(leftTransition.targetProcess, rightTransition.targetProcess)));
-                        }
+                var subTransitionSets = process.subProcesses.map(subProc => subProc.dispatchOn(this));
+                //COM3s
+                for (var i=0; i < subTransitionSets.length-1; i++) {
+                    for (var j=i+1; j < subTransitionSets.length; j++) {
+                        //For each pairs in  P1 | P2 | P3 | P4, find COM3 transitions.
+                        var left = subTransitionSets[i];
+                        var right = subTransitionSets[j];
+                        left.forEach(leftTransition => {
+                            right.forEach(rightTransition => {
+                                if (leftTransition.action.getLabel() !== "tau" && 
+                                    leftTransition.action.getLabel() === rightTransition.action.getLabel() &&
+                                    leftTransition.action.isComplement() !== rightTransition.action.isComplement()) {
+                                    //Need to construct entire set of new process.
+                                    var targetSubprocesses = process.subProcesses.slice(0);
+                                    targetSubprocesses[i] = leftTransition.targetProcess;
+                                    targetSubprocesses[j] = rightTransition.targetProcess;
+                                    transitionSet.add(new Transition(new Action("tau", false),
+                                        this.graph.newCompositionProcess(targetSubprocesses)));
+                                }
+                            });
+                        });
+                    }
+                }
+                //COM1/2s
+                subTransitionSets.forEach( (subTransitionSet, index) => {
+                    subTransitionSet.forEach(subTransition => {
+                        var targetSubprocesses = process.subProcesses.slice(0);
+                        //Only the index of the subprocess will have changed.
+                        targetSubprocesses[index] = subTransition.targetProcess;
+                        transitionSet.add(new Transition(subTransition.action.clone(),
+                            this.graph.newCompositionProcess(targetSubprocesses)));
                     });
-                });
-                //COM2
-                rightSet.forEach(rightTransition => {
-                    transitionSet.add(new Transition(rightTransition.action.clone(),
-                    this.graph.newCompositionProcess(process.leftProcess, rightTransition.targetProcess)));
                 });
             }
             return transitionSet;

@@ -29,11 +29,30 @@ module Traverse {
 
         dispatchSummationProcess(process : ccs.SummationProcess) {
             if (!this.cache[process.id]) {
-                process.leftProcess = process.leftProcess.dispatchOn(this);
-                process.rightProcess = process.rightProcess.dispatchOn(this);
-                if (process.leftProcess instanceof ccs.NullProcess) return process.rightProcess; // 0 + P => 0
-                if (process.rightProcess instanceof ccs.NullProcess) return process.leftProcess; // P + 0 => P
-                if (process.leftProcess.id === process.rightProcess.id) return process.leftProcess; // P + P => P
+                //Reduce subprocesses first
+                var subProcesses = process.subProcesses;
+                subProcesses.forEach( (subProc, i) => {
+                    subProcesses[i] = subProc.dispatchOn(this);
+                });
+                //Remove null processes
+                subProcesses = subProcesses.filter( subProc => !(subProc instanceof ccs.NullProcess));
+                //Resort the processes
+                subProcesses.sort( (procA, procB) => procA.id - procB.id);
+                //Remove duplicates - already sorted on id.
+                if (subProcesses.length > 1) {
+                    var uniques = [subProcesses[0]];
+                    for (var i=1; i < subProcesses.length; i++) {
+                        var subProcess = subProcesses[i];
+                        if (subProcess.id !== uniques[uniques.length - 1].id) {
+                            uniques.push(subProcess);
+                        }
+                    }
+                    subProcesses = uniques;
+                }
+                if (subProcesses.length === 0) {
+                    return this.graph.getNullProcess();
+                }
+                process.subProcesses = subProcesses;
                 this.cache[process.id] = true;
             }
             return process;
@@ -41,10 +60,19 @@ module Traverse {
 
         dispatchCompositionProcess(process : ccs.CompositionProcess) {
             if (!this.cache[process.id]) {
-                process.leftProcess = process.leftProcess.dispatchOn(this);
-                process.rightProcess = process.rightProcess.dispatchOn(this);
-                if (process.leftProcess instanceof ccs.NullProcess) return process.rightProcess; // 0 | P => P
-                if (process.rightProcess instanceof ccs.NullProcess) return process.leftProcess; // P | 0 => P
+                //Reduce subprocesses first
+                var subProcesses = process.subProcesses;
+                subProcesses.forEach( (subProc, i) => {
+                    subProcesses[i] = subProc.dispatchOn(this);
+                });
+                //Remove null processes
+                subProcesses = subProcesses.filter( subProc => !(subProc instanceof ccs.NullProcess));
+                //Resort the processes
+                subProcesses.sort( (procA, procB) => procA.id - procB.id);
+                if (subProcesses.length === 0) {
+                    return this.graph.getNullProcess();
+                }
+                process.subProcesses = subProcesses;
                 this.cache[process.id] = true;
             }
             return process;

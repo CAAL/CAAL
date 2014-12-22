@@ -42,11 +42,11 @@ Assignment
 Process = Summation
 
 Summation
-	= P:Composition _ "+" _ Q:Summation { return g.newSummationProcess(P, Q); }
+	= P:Composition _ "+" _ Q:Summation { return Q instanceof ccs.SummationProcess ? g.newSummationProcess([P].concat(Q.subProcesses)) : g.newSummationProcess([P, Q]); }
 	/ P:Composition { return P; }
 
 Composition
-	= P:ActionPrefix _ "|" _ Q:Composition { return g.newCompositionProcess(P, Q); }
+	= P:ActionPrefix _ "|" _ Q:Composition { return Q instanceof ccs.CompositionProcess ? g.newCompositionProcess([P].concat(Q.subProcesses)) : g.newCompositionProcess([P, Q]); }
 	/ P:ActionPrefix { return P; }
 
 ActionPrefix
