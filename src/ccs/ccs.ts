@@ -198,7 +198,7 @@ module CCS {
             //Ensure left.id <= right.id
             var newProcesses = subProcesses.slice(0);
             newProcesses.sort((procA, procB) => procA.id - procB.id);
-            key = "+" + newProcesses.join(",");
+            key = "+" + newProcesses.map(proc => proc.id).join(",");
             existing = this.structural[key];
             if (!existing) {
                 existing = this.structural[key] = new SummationProcess(this.nextId++, newProcesses);
@@ -212,7 +212,7 @@ module CCS {
             //Ensure left.id <= right.id
             var newProcesses = subProcesses.slice(0);
             newProcesses.sort((procA, procB) => procA.id - procB.id);
-            key = "|" + newProcesses.join(",");
+            key = "|" + newProcesses.map(proc => proc.id).join(",");
             existing = this.structural[key];
             if (!existing) {
                 existing = this.structural[key] = new CompositionProcess(this.nextId++, newProcesses);
@@ -638,8 +638,7 @@ module CCS {
                         var right = subTransitionSets[j];
                         left.forEach(leftTransition => {
                             right.forEach(rightTransition => {
-                                if (leftTransition.action.getLabel() !== "tau" && 
-                                    leftTransition.action.getLabel() === rightTransition.action.getLabel() &&
+                                if (leftTransition.action.getLabel() === rightTransition.action.getLabel() &&
                                     leftTransition.action.isComplement() !== rightTransition.action.isComplement()) {
                                     //Need to construct entire set of new process.
                                     var targetSubprocesses = process.subProcesses.slice(0);
@@ -705,83 +704,6 @@ module CCS {
             return transitionSet;
         }
     }
-
-    // export interface Set<T> {
-    //     // union(other : Set<T>) : Set<T>;
-    //     difference(other : Set<T>) : Set<T>;
-    //     toArray() : T[];
-    //     has(element : T) : boolean;
-    // }
-
-    // export interface MutableSet<T> extends Set<T> {
-    //     add(element : T);
-    //     remove(element : T);
-    // } 
-
-    // export interface Equitable<T> {
-    //     equals(other : T) : boolean;
-    // }
-
-    // class ArraySet<T> implements MutableSet<T> {
-    //     private elements : T[] = [];
-
-    //     constructor() {
-    //     }
-
-    //     add(element : T) {
-    //         if (!this.has(element)) {
-    //             this.elements.push(element);
-    //         }
-    //     }
-
-    //     union(other : Set<T>) : Set<T> {
-    //         var result = new ArraySet(),
-    //             otherElements = other.toArray();
-    //         result.elements = this.elements.slice(0);
-    //         for (var i=0; i < otherElements.length; i++) {
-    //             result.add(otherElements[i]);
-    //         }
-    //         return result;
-    //     }
-
-    //     difference(other : Set<T>) : Set<T> {
-    //         var result = new ArraySet(),
-    //             resultElements = [],
-    //             element;
-    //         for (var i=0; i < this.elements.length; i++) {
-    //             element = this.elements[i];
-    //             if (!other.has(element)) {
-    //                 resultElements.push(element);
-    //             }
-    //         }
-    //         result.elements = resultElements;
-    //         return result;
-    //     }
-
-    //     remove(element : T) {
-    //         var index = this.indexOf(element),
-    //             curLen = this.elements.length;
-    //         if (index !== -1) {
-    //             this.elements[index] = this.elements[curLen - 1];
-    //             this.elements.length = curLen - 1;
-    //         }
-    //     }
-
-    //     toArray() : T[] {
-    //         return this.elements.slice(0);
-    //     }
-
-    //     has(element : T) : boolean {
-    //         return this.indexOf(element) !== -1;
-    //     }
-
-    //     private indexOf(element) {
-    //        for (var i=0; i < this.elements.length; i++) {
-    //             if (this.elements[i].equals(element)) return i;
-    //         }
-    //         return -1; 
-    //     }
-    // }
 
     class GrowingIndexedArraySet<T> {
             
