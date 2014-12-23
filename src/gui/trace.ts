@@ -105,8 +105,8 @@ class SnapGame implements Drawable {
     private rightLts: Trace;
     
     static StartStateColor: string = "#2c3e50";
-    static AttackerColor: string = "#e74c3c";
-    static DefenderColor: string = "#2980b9";
+    static ComputerColor: string = "#e74c3c";
+    static PlayerColor: string = "#2980b9";
 
     constructor(private leftProcessName: string, private rightProcessName: string) {
         this.leftLts = new Trace([], false);
@@ -120,23 +120,23 @@ class SnapGame implements Drawable {
     public playLeft(action: string, destination: string, isAttacker: boolean, startState?: string) {
         if (startState) {
             this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, startState, 
-                (isAttacker ? SnapGame.AttackerColor : SnapGame.DefenderColor) ));
+                (isAttacker ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
         }
 
         this.leftLts.addDrawable(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
         this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, destination,
-            (isAttacker ? SnapGame.AttackerColor : SnapGame.DefenderColor) ));
+            (isAttacker ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
     }
     
     public playRight(action: string, destination: string, isAttacker: boolean, startState?: string) {
         if (startState) {
             this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, startState, 
-                (isAttacker ? SnapGame.AttackerColor : SnapGame.DefenderColor) ));
+                (isAttacker ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
         }
 
         this.rightLts.addDrawable(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
         this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, destination,
-            (isAttacker ? SnapGame.AttackerColor : SnapGame.DefenderColor) ));
+            (isAttacker ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
     }
     
     public measureWidth(snapCanvas: SnapCanvas) { /* empty */ }
@@ -159,25 +159,25 @@ class SnapGame implements Drawable {
         legendX += startLegend.width + Trace.DrawableWidth*2;
         
         /* Legend: attacker */
-        var attackerTextLegend = snapCanvas.paper.text(legendX, y, "Attacker:");
+        var attackerTextLegend = snapCanvas.paper.text(legendX, y, "Computer:");
         SnapCanvas.setTextAttr(attackerTextLegend).attr({"text-anchor":"start"});
         attackerTextLegend.attr({"y": y+attackerTextLegend.getBBox().height});
         
         legendX += attackerTextLegend.getBBox().width + 3;
         
-        var attackerLegend: Square = new Square(Trace.DrawableWidth, Trace.LineHeight, "", SnapGame.AttackerColor);
+        var attackerLegend: Square = new Square(Trace.DrawableWidth, Trace.LineHeight, "", SnapGame.ComputerColor);
         attackerLegend.draw(snapCanvas, legendX, y);
         
         legendX += attackerLegend.width + Trace.DrawableWidth*2;
         
         /* Legend: defender */
-        var defenderTextLegend = snapCanvas.paper.text(legendX, y, "Defender:");
+        var defenderTextLegend = snapCanvas.paper.text(legendX, y, "Player:");
         SnapCanvas.setTextAttr(defenderTextLegend).attr({"text-anchor":"start"});
         defenderTextLegend.attr({"y": y+defenderTextLegend.getBBox().height});
         
         legendX += attackerTextLegend.getBBox().width + 3;
         
-        var defenderLegend: Square = new Square(Trace.DrawableWidth, Trace.LineHeight, "", SnapGame.DefenderColor);
+        var defenderLegend: Square = new Square(Trace.DrawableWidth, Trace.LineHeight, "", SnapGame.PlayerColor);
         defenderLegend.draw(snapCanvas, legendX, y);
         
         y += Trace.LineHeight*3;

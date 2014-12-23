@@ -83,13 +83,13 @@ module Activity {
             
             if (this.marking.getMarking(0) === this.marking.ONE) {
                 // The processes are NOT bisimilar. Take attacker role.
-                this.printToLog("You are playing as <span style='color: "+SnapGame.DefenderColor+"'>DEFENDER</span>.");
+                this.printToLog("You are playing as <span style='color: "+SnapGame.PlayerColor+"'>DEFENDER</span>.");
                 this.isBisimilar = false;
                 this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(0));
                 
             } else if (this.marking.getMarking(0) === this.marking.ZERO) {
                 // The processes ARE bisimilar. Take defender role.
-                this.printToLog("You are playing as <span style='color: "+SnapGame.AttackerColor+"'>ATTACKER</span>.");
+                this.printToLog("You are playing as <span style='color: "+SnapGame.PlayerColor+"'>ATTACKER</span>.");
                 this.isBisimilar = true;
                 this.updateTable(0);
                 
@@ -137,17 +137,17 @@ module Activity {
                         if (this.lastMove === "LEFT") {
                             var destination =  row.find("#destination").html();
                             var action = row.find("#action").html();
-                            this.snapGame.playLeft(action, destination, true);
+                            this.snapGame.playLeft(action, destination, false);
                             this.snapCanvas.draw();
                             
                         } else if (this.lastMove === "RIGHT") {
                             var destination =  row.find("#destination").html();
                             var action = row.find("#action").html();
-                            this.snapGame.playRight(action, destination, true);
+                            this.snapGame.playRight(action, destination, false);
                             this.snapCanvas.draw();
                         }
 
-                        this.printToLog("<span style='color: "+SnapGame.AttackerColor+"'>ATTACKER</span>: --- "+action+" --->   " + destination);
+                        this.printToLog("<span style='color: "+SnapGame.PlayerColor+"'>ATTACKER</span>: --- "+action+" --->   " + destination);
 
                         this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()), action);
                         
@@ -166,7 +166,7 @@ module Activity {
                             this.snapCanvas.draw();
                         }
 
-                        this.printToLog("<span style='color: "+SnapGame.DefenderColor+"'>DEFENDER</span>: --- "+action+" --->   " + destination);
+                        this.printToLog("<span style='color: "+SnapGame.PlayerColor+"'>DEFENDER</span>: --- "+action+" --->   " + destination);
 
                         this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()));
                         
@@ -187,16 +187,16 @@ module Activity {
                         // Left
                         if(this.lastMove === "LEFT") {
                             var destination =  this.CCSNotation.visit(this.graph.processById(data[2]));
-                            this.snapGame.playRight(action, destination, false);
+                            this.snapGame.playRight(action, destination, true);
                             this.snapCanvas.draw();
                             // Right
                         } else if(this.lastMove === "RIGHT") {
                             var destination =  this.CCSNotation.visit(this.graph.processById(data[1]));
-                            this.snapGame.playLeft(action, destination, false);
+                            this.snapGame.playLeft(action, destination, true);
                             this.snapCanvas.draw();
                         }
 
-                        this.printToLog("<span style='color: "+SnapGame.DefenderColor+"'>DEFENDER</span>: --- "+action+" --->   " + destination);
+                        this.printToLog("<span style='color: "+SnapGame.ComputerColor+"'>DEFENDER</span>: --- "+action+" --->   " + destination);
 
                         this.updateTable(edge.slice(0)[0]);
                         return;
@@ -235,7 +235,7 @@ module Activity {
                         this.snapCanvas.draw();
                     }
 
-                    this.printToLog("<span style='color: "+SnapGame.AttackerColor+"'>ATTACKER</span>: --- "+action+" --->   " + destination);
+                    this.printToLog("<span style='color: "+SnapGame.ComputerColor+"'>ATTACKER</span>: --- "+action+" --->   " + destination);
                     
                     this.lastMove = (data[0] == 1 ? "LEFT" : data[0] == 2 ? "RIGHT" : "");
                     this.updateTable(edge.slice(0)[0], data[1].toString());
@@ -281,7 +281,7 @@ module Activity {
                 for (var i = 0; i< hyperEdges.length; i++) {
                     var edge = hyperEdges[i];
                     if(edge.length === 0) {
-                        this.printToLog("You have no more valid transitions. <span style='color: "+SnapGame.AttackerColor+"'>ATTACKER</span> wins.");
+                        this.printToLog("You have no more valid transitions. <span style='color: "+SnapGame.ComputerColor+"'>ATTACKER</span> wins.");
                         break;
                     }
                     
