@@ -117,26 +117,26 @@ class SnapGame implements Drawable {
         this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.rightProcessName, SnapGame.StartStateColor));
     }
 
-    public playLeft(action: string, destination: string, isAttacker: boolean, startState?: string) {
+    public playLeft(action: string, destination: string, isComputer: boolean, startState?: string) {
         if (startState) {
             this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, startState, 
-                (isAttacker ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
+                (isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
         }
 
         this.leftLts.addDrawable(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
         this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, destination,
-            (isAttacker ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
+            (isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
     }
     
-    public playRight(action: string, destination: string, isAttacker: boolean, startState?: string) {
+    public playRight(action: string, destination: string, isComputer: boolean, startState?: string) {
         if (startState) {
             this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, startState, 
-                (isAttacker ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
+                (isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
         }
 
         this.rightLts.addDrawable(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
         this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, destination,
-            (isAttacker ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
+            (isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor) ));
     }
     
     public measureWidth(snapCanvas: SnapCanvas) { /* empty */ }
