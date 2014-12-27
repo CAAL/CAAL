@@ -322,8 +322,8 @@ module CCS {
 
         constructor(relabellings : {from: string; to: string}[]) {
             relabellings.forEach( (relabel) => {
-                if (relabel.from === "tau" || relabel.to === "tau") {
-                    throw new Error("Cannot relabel from or to tau");
+                if (relabel.from === "tau") {
+                    throw new Error("Cannot relabel tau to something else");
                 }
                 this.froms.push(relabel.from);
                 this.tos.push(relabel.to);
@@ -342,11 +342,14 @@ module CCS {
             return this.froms.indexOf(label) !== -1;
         }
 
-        toLabelForFromLabel(label : string) : string {
-            var index = this.froms.indexOf(label),
-                result = null;
+        relabeledActionFor(action : Action) : Action {
+            var index = this.froms.indexOf(action.getLabel()),
+                result = null,
+                newLabel;
             if (index >= 0) {
-                result = this.tos[index];
+                newLabel = this.tos[index];
+                //Tau cannot be complemented.
+                result = newLabel === "tau" ? new Action(newLabel, false) : new Action(newLabel, action.isComplement());
             }
             return result;
         }
@@ -538,13 +541,13 @@ module CCS {
 
         applyRelabelSet(relabels : RelabellingSet) : void {
             var allCurrent = this.transitions,
-                newLabel, oldAction, transition;
+                newAction, oldAction, transition;
             for (var i = 0, max = allCurrent.length; i < max; i++) {
                 transition = allCurrent[i];
                 oldAction = transition.action;
                 if (relabels.hasRelabelForLabel(transition.action.label)) {
-                    newLabel = relabels.toLabelForFromLabel(transition.action.label);
-                    allCurrent[i] = new Transition(new Action(newLabel, oldAction.isComplement()), transition.targetProcess);
+                    newAction = relabels.relabeledActionFor(transition.action);
+                    allCurrent[i] = new Transition(newAction, transition.targetProcess);
                 }
             }
         }

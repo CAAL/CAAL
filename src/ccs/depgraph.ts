@@ -427,24 +427,26 @@ module DependencyGraph {
 
         dispatchExistsFormula(formula : hml.ExistsFormula) {
             var hyperedges = [],
-                transitionSet = this.succGen.getSuccessors(this.getForNodeId),
-                transitions = transitionSet.transitionsForAction(formula.action);
-            transitions.forEach(transition => {
-                var newIdx = this.nextIdx++;
-                this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
-                hyperedges.push([newIdx]);
+                transitionSet = this.succGen.getSuccessors(this.getForNodeId);
+            transitionSet.forEach(transition => {
+                if (formula.actionMatcher.matches(transition.action)) {
+                    var newIdx = this.nextIdx++;
+                    this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
+                    hyperedges.push([newIdx]);
+                }
             });
             return hyperedges;
         }
 
         dispatchForAllFormula(formula : hml.ForAllFormula) {
             var hyperedges = [],
-                transitionSet = this.succGen.getSuccessors(this.getForNodeId),
-                transitions = transitionSet.transitionsForAction(formula.action);
-            transitions.forEach(transition => {
-                var newIdx = this.nextIdx++;
-                this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
-                hyperedges.push(newIdx);
+                transitionSet = this.succGen.getSuccessors(this.getForNodeId);
+            transitionSet.forEach(transition => {
+                if (formula.actionMatcher.matches(transition.action)) {
+                    var newIdx = this.nextIdx++;
+                    this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
+                    hyperedges.push(newIdx);
+                }
             });
             return [hyperedges];
         }
@@ -529,24 +531,26 @@ module DependencyGraph {
 
         dispatchExistsFormula(formula : hml.ExistsFormula) {
             var hyperedges = [],
-                transitionSet = this.succGen.getSuccessors(this.getForNodeId),
-                transitions = transitionSet.transitionsForAction(formula.action);
-            transitions.forEach(transition => {
-                var newIdx = this.nextIdx++;
-                this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
-                hyperedges.push(newIdx);
+                transitionSet = this.succGen.getSuccessors(this.getForNodeId);
+            transitionSet.forEach(transition => {
+                if (formula.actionMatcher.matches(transition.action)) {
+                    var newIdx = this.nextIdx++;
+                    this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
+                    hyperedges.push(newIdx);
+                }
             });
             return [hyperedges];
         }
 
         dispatchForAllFormula(formula : hml.ForAllFormula) {
             var hyperedges = [],
-                transitionSet = this.succGen.getSuccessors(this.getForNodeId),
-                transitions = transitionSet.transitionsForAction(formula.action);
-            transitions.forEach(transition => {
-                var newIdx = this.nextIdx++;
-                this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
-                hyperedges.push([newIdx]);
+                transitionSet = this.succGen.getSuccessors(this.getForNodeId);
+            transitionSet.forEach(transition => {
+                if (formula.actionMatcher.matches(transition.action)) {
+                    var newIdx = this.nextIdx++;
+                    this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
+                    hyperedges.push([newIdx]);
+                }
             });
             return hyperedges;
         }
