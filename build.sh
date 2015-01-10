@@ -8,10 +8,10 @@ CCS_PARSE_DEST="./lib/ccs.js"
 
 # generate the parser
 echo "Building CCS Parser"
-pegjs --cache -e CCSParser src/ccs/ccs_grammar.pegjs lib/ccs_grammar.js
+./node_modules/.bin/pegjs --cache -e CCSParser src/ccs/ccs_grammar.pegjs lib/ccs_grammar.js
 
 echo "Building HML Parser"
-pegjs --cache -e HMLParser src/ccs/hml_grammar.pegjs lib/hml_grammar.js
+./node_modules/.bin/pegjs --cache -e HMLParser src/ccs/hml_grammar.pegjs lib/hml_grammar.js
 
 echo "Integrating Parser into Ace Module"
 mkdir -p modules/ace/lib/ace/mode/ccs
@@ -42,11 +42,11 @@ node modules/ace/Makefile.ccs.js --target lib/ace
 
 #build workers
 echo "Compiling Workers"
-tsc src/workers/*.ts --outDir lib/workers
+./node_modules/.bin/tsc src/workers/*.ts --outDir lib/workers
 
 #build typescript files
 echo "Building $MAIN_DEST" 
-tsc -d --sourcemap --out "$MAIN_DEST" "$MAIN_SRC"
+./node_modules/.bin/tsc -d --sourcemap --out "$MAIN_DEST" "$MAIN_SRC"
 
 # If tsc gives errors we don't need bash to tell us something was wrong.
 true
