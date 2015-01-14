@@ -1,11 +1,11 @@
 [![Stories in Ready](https://badge.waffle.io/figa12/CCS-tool.png?label=ready&title=Ready)](https://waffle.io/figa12/CCS-tool)
-CCS-tool
+CAAL
 ========
 A web-based tool for modelling and verification of concurrent systems. Concurrent systems are modelled using the CCS language. Supports verification of μ-calculus formulas and other properties such as bisimilarity and deadlock. 
 
 Try it!
 -----------
-A live demo of CCS-tool is available at [figz.dk/ccstool](http://figz.dk/ccstool)
+A live demo of CCS-tool is available at [figz.dk/ccstool](http://figz.dk/caal)
 
 Setup
 -----------
