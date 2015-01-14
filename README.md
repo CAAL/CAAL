@@ -5,7 +5,7 @@ A web-based tool for modelling and verification of concurrent systems. Concurren
 
 Try it!
 -----------
-A live demo of CCS-tool is available at [figz.dk/caal](http://figz.dk/caal)
+A live demo of CAAL is available at [figz.dk/caal](http://figz.dk/caal)
 
 Setup
 -----------
