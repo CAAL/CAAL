@@ -21,6 +21,10 @@ canvas {
  * Custom Bootstrap styles
  */
 
+.navbar-header .navbar-brand {
+	font-variant: small-caps;
+}
+ 
 /* Align rightmost menu element with body */
 .navbar-right li:last-child a {
     padding-right: 0;
