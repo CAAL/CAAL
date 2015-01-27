@@ -209,12 +209,8 @@ module Activity {
             this.uiGraph.showProcess(process.id, data);
         }
 
-        private labelFor(process : ccs.Process) : string{
-            var label = "S" + process.id;
-            if (process instanceof ccs.NamedProcess) {
-                label = (<ccs.NamedProcess>process).name;
-            }
-            return label;
+        private labelFor(process : ccs.Process) : string {
+            return (process instanceof ccs.NamedProcess) ? (<ccs.NamedProcess>process).name : "" + process.id;
         }
 
         private expand(process : ccs.Process, depth) : void {
