@@ -263,6 +263,20 @@
             <h4 class="modal-title">Select Initial Process</h4>
           </div>
           <div class="modal-body" id="viz-mode-dialog-body">
+            Select whether to use strong or weak successors:<br>
+            <div class="btn-group" data-toggle="buttons">
+              <label class="btn btn-primary active">
+                <input type="radio" name="viz-mode-succgen" value="strong" autocomplete="off" checked>Strong Successors
+              </label>
+              <label class="btn btn-primary">
+                <input type="radio" name="viz-mode-succgen" value="weak" autocomplete="off">Weak Successors
+              </label>
+            </div>
+            <br>
+            Select whether to simply processes:
+            <br>
+            <button type="button" id="viz-mode-reduce-btn" class="btn btn-primary active" data-toggle="button" aria-pressed="true" autocomplete="off">Reduce</button>
+            <br>
             <label for="viz-mode-dialog-depth">Select how deep to expand</label>
             <select class="form-control" id="viz-mode-dialog-depth">
               <option selected>1</option>

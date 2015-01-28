@@ -189,21 +189,28 @@ module Main {
         return graph;
     }
 
+    export function getSuccGenerator(graph, options) {
+        var settings = {succGen: "strong", reduce: true},
+            resultGenerator : ccs.SuccessorGenerator = new ccs.StrictSuccessorGenerator(graph);
+        $.extend(settings, options);
+        console.log("Building");
+        console.log(settings)
+        if (settings.reduce) {
+            var treeReducer = new Traverse.ProcessTreeReducer(graph);
+            resultGenerator = new Traverse.ReducingSuccessorGenerator(resultGenerator, treeReducer);
+        }
+        if (settings.succGen === "weak") {
+            resultGenerator = new Traverse.WeakSuccessorGenerator(resultGenerator);
+        }
+        return resultGenerator;
+    }
+
     export function getStrictSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {
-        var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
-            treeReducer = new Traverse.ProcessTreeReducer(graph),
-            reducingGenerator = new Traverse.ReducingSuccessorGenerator(strictGenerator, treeReducer);
-        return reducingGenerator;
+        return getSuccGenerator(graph, {succGen: "strong", reduce: true});
     }
 
     export function getWeakSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {
-        //Wait do we build the, weak generator on top of the strict directly and then reduce?
-        //or do we take take the strict one, reduce it, then apply the weak on top?  <-- this right now.
-        var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
-            treeReducer = new Traverse.ProcessTreeReducer(graph),
-            reducingGenerator = new Traverse.ReducingSuccessorGenerator(strictGenerator, treeReducer),
-            weakGenerator = new Traverse.WeakSuccessorGenerator(reducingGenerator);
-        return weakGenerator;
+        return getSuccGenerator(graph, {succGen: "weak", reduce: true});
     }
 }
 
@@ -228,8 +235,11 @@ function setupExplorerActivityFn(callback) : any {
         return callback(null);
     }
 
-    function makeConfiguration(processName : string, expandDepth : number) {
-        var succGenerator = Main.getStrictSuccGenerator(graph);
+    function makeConfiguration(processName : string, expandDepth : number, useStrong : boolean, shouldReduce : boolean) {
+        var succGenerator = Main.getSuccGenerator(graph, {
+            succGen: useStrong ? "strong" : "weak",
+            reduce: shouldReduce
+        });
         return {
             graph: graph,
             successorGenerator: succGenerator,
@@ -247,7 +257,9 @@ function setupExplorerActivityFn(callback) : any {
             $dialog.modal("hide");
             callback(makeConfiguration(
                 processName,
-                parseInt($depthSelect.val(), 10)
+                parseInt($depthSelect.val(), 10),
+                $("input[name=viz-mode-succgen]:checked").val() === "strong",
+                $("#viz-mode-reduce-btn").hasClass('active')
             ));
         });
         $dialogList.append($element);
