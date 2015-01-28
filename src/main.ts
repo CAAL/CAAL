@@ -193,8 +193,6 @@ module Main {
         var settings = {succGen: "strong", reduce: true},
             resultGenerator : ccs.SuccessorGenerator = new ccs.StrictSuccessorGenerator(graph);
         $.extend(settings, options);
-        console.log("Building");
-        console.log(settings)
         if (settings.reduce) {
             var treeReducer = new Traverse.ProcessTreeReducer(graph);
             resultGenerator = new Traverse.ReducingSuccessorGenerator(resultGenerator, treeReducer);
