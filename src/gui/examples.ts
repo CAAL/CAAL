@@ -1,37 +1,27 @@
 var examples = [
     {
-        title: "Alternating Bit Protocol",
-        ccs: "* Sender\n" +
-             "agent Send0 = acc.Sending0;\n" +
-             "agent Sending0 = 'left0.Sending0 + leftAck0.Send1 + leftAck1.Sending0;\n" +
-             "agent Send1 = acc.Sending1;\n" +
-             "agent Sending1 = 'left1.Sending1 + leftAck1.Send0 + leftAck0.Sending1;\n" +
+        title: "Peterson's Algorithm",
+        ccs: "* Peterson's algorithm for mutual exclusion.\n" +
+             "* See chapter 7 of \"Reactive Systems\" for a full description.\n" +
              "\n" +
-             "* Receiver\n" +
-             "agent Received0 = 'del.RecvAck1;\n" +
-             "agent Received1 = 'del.RecvAck0;\n" +
-             "agent RecvAck0 = right0.Received0 + right1.RecvAck0 + 'rightAck1.RecvAck0;\n" +
-             "agent RecvAck1 = right1.Received1 + right0.RecvAck1 + 'rightAck0.RecvAck1;\n" +
+             "B1f = 'b1rf.B1f + b1wf.B1f + b1wt.B1t;\n" +
+             "B1t = 'b1rt.B1t + b1wf.B1f + b1wt.B1t;\n" +
              "\n" +
-             "* Medium\n" +
-             "agent Med = MedTop | MedBot;\n" +
-             "agent MedBot = left0.MedBotRep0 + left1.MedBotRep1;\n" +
-             "agent MedBotRep0 = 'right0.MedBotRep0 + tau.MedBot;\n" +
-             "agent MedBotRep1 = 'right1.MedBotRep1 + tau.MedBot;\n" +
-             "agent MedTop = rightAck0.MedTopRep0 + rightAck1.MedTopRep1;\n" +
-             "agent MedTopRep0 = 'leftAck0.MedTopRep0 + tau.MedTop;\n" +
-             "agent MedTopRep1 = 'leftAck1.MedTopRep1 + tau.MedTop;\n" +
+             "B2f = 'b2rf.B2f + b2wf.B2f + b2wt.B2t;\n" +
+             "B2t = 'b2rt.B2t + b2wf.B2f + b2wt.B2t;\n" +
              "\n" +
-             "* Protocol and specification\n" +
-             "set InternalComActs = {left0, left1, right0, right1, leftAck0, leftAck1, rightAck0, rightAck1};\n" +
-             "agent Protocol = (Send0 | Med | RecvAck0) \\ InternalComActs;\n" +
-             "agent Spec = acc.'del.Spec;"
-    },
-    {
-        title: "Square Formation",
-        ccs: "S1 = right.S2 + down.S3;\n" +
-             "S2 = down.S4 + left.S1;\n" +
-             "S3 = up.S1 + right.S4;\n" +
-             "S4 = up.S2 + left.S3;"
+             "K1 = 'kr1.K1 + kw1.K1 + kw2.K2;\n" +
+             "K2 = 'kr2.K2 + kw1.K1 + kw2.K2;\n" +
+             "\n" +
+             "P1 = 'b1wt.'kw2.P11;\n" +
+             "P11 = b2rf.P12 + b2rt.(kr2.P11 + kr1.P12);\n" +
+             "P12 = enter1.exit1.'b1wf.P1;\n" +
+             "\n" +
+             "P2 = 'b2wt.'kw1.P21;\n" +
+             "P21 = b1rf.P22 + b1rt.(kr1.P21 + kr2.P22);\n" +
+             "P22 = enter2.exit2.'b2wf.P2;\n" +
+             "\n" +
+             "set L = {b1rf, b2rf, b1rt, b2rt, b1wf, b2wf, b1wt, b2wt, kr1, kr2, kw1, kw2, enter1, enter2, exit1, exit2};\n" +
+             "Peterson = (P1 | P2 | B1f | B2f | K1) \\ L;"
     }
 ]
