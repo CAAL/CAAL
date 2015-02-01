@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>CAAL Benchmarking</title>
+	<script src="lib/benchmark.js"></script>
+	<script src="../lib/ccs_grammar.js"></script>
+	<script src="../lib/hml_grammar.js"></script>
+	<script src="../lib/main.js"></script>
+	<script type="text/javascript">
+		function onBenchmarkResult(benchmark) {
+			var tr = document.createElement("tr");
+			var stats = [
+				benchmark.name,
+				(benchmark.stats.mean * 1000).toFixed(2) + "ms",
+				benchmark.stats.rme.toFixed(2) + "%",
+				benchmark.stats.sample.length,
+				benchmark.toString()
+			];
+			stats.forEach(function (text) {
+				var td = document.createElement("td");
+				td.textContent = text;
+				tr.appendChild(td);
+			});
+			document.getElementById("results").appendChild(tr);
+		}
+		function onBenchmarkSuiteComplete(suite) {
+			
+		}
+	</script>
+	<style type="text/css">
+		#results {
+			table-layout: fixed;
+			border-collapse: collapse;
+			border-spacing: 0px;
+			font-family: Helvetica, Arial, sans-serif;
+		}
+		#results th {
+			background: #DFDFDF;
+			font-weight: bold;
+		}
+		#results td {
+			background: #FAFAFA;
+			text-align: center;
+		}
+
+		#results td, #results th {
+			overflow: hidden;
+			text-align: left;
+			border: 1px solid transparent;
+			height: 30px;
+		}
+
+		#results th:nth-child(n+2):nth-child(-n+4),
+		#results td:nth-child(n+2):nth-child(-n+4) {
+			text-align: right;
+		}
+
+		#results th:last-child,
+		#results td:last-child {
+			padding-left: 30px;
+		}
+
+		#results tr:nth-child(even) td { background: #F1F1F1; }   
+		#results tr:nth-child(odd) td { background: #FEFEFE; }  
+
+		.center {
+			margin-left: auto;
+			margin-right: auto;
+		}
+	</style>
+</head>
+<body>
+	<div class="center">
+		<h1 style="text-align: center">Results</h1>
+		<table id="results" class="center">
+			<col width="300px">
+			<col width="100px">
+			<col width="100px">
+			<col width="120px">
+			<col width="600px">
+			<tr>
+				<th>Name</th>
+				<th>Mean</th>
+				<th>RME</th>
+				<th>Num Samples</th>
+				<th>Result Description</th>
+			</tr>
+		</table>
+	</div>
+	<script src="benchmarks/benchmark.js"></script>
+</body>
+</html>
