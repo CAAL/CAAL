@@ -1,3 +1,5 @@
 var connect = require('connect');
 var serveStatic = require('serve-static');
-connect().use(serveStatic(__dirname)).listen(8090);
+var port = 8090;
+connect().use(serveStatic(__dirname)).listen(port);
+console.log("http://localhost:"+port);

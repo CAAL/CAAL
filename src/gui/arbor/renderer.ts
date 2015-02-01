@@ -71,9 +71,7 @@ class Renderer {
             function strShorten(str) {
                 return str.length > 10 ? str.substring(0,8) + ".." : str;
             }
-
-            // var label = /*strShorten(*/edge.data.agLabels.join(",")/*)*/;
-            var label = edge.data.datas.map((data) => data.label).join(",");
+            var label = strShorten(edge.data.datas.map((data) => data.label).join(","));
 
             this.ctx.save();
             if (edge.data.highlight){
