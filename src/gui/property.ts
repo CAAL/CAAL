@@ -1,5 +1,5 @@
 /// <reference path="../main.ts" />
-/// <reference path="../ccs/depgraph.ts" />
+/// <reference path="../../lib/ccs.d.ts" />
 
 module Property {
 

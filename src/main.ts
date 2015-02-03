@@ -2,10 +2,7 @@
 /// <reference path="../lib/jquery.d.ts" />
 /// <reference path="../lib/bootstrap.d.ts" />
 /// <reference path="../lib/ace.d.ts" />
-/// <reference path="ccs/ccs.ts" />
-/// <reference path="ccs/reducedparsetree.ts" />
-/// <reference path="ccs/util.ts" />
-/// <reference path="ccs/depgraph.ts" />
+/// <reference path="../lib/ccs.d.ts" />
 /// <reference path="gui/project.ts" />
 /// <reference path="gui/menu.ts" />
 /// <reference path="gui/storage.ts" />
@@ -186,28 +183,12 @@ module Main {
         return graph;
     }
 
-    export function getSuccGenerator(graph, options) {
-        var settings = {succGen: "strong", reduce: true},
-            resultGenerator : ccs.SuccessorGenerator = new ccs.StrictSuccessorGenerator(graph);
-        for (var optionName in options) {
-            settings[optionName] = options[optionName];
-        }
-        if (settings.reduce) {
-            var treeReducer = new Traverse.ProcessTreeReducer(graph);
-            resultGenerator = new Traverse.ReducingSuccessorGenerator(resultGenerator, treeReducer);
-        }
-        if (settings.succGen === "weak") {
-            resultGenerator = new Traverse.WeakSuccessorGenerator(resultGenerator);
-        }
-        return resultGenerator;
-    }
-
     export function getStrictSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {
-        return getSuccGenerator(graph, {succGen: "strong", reduce: true});
+        return CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true});
     }
 
     export function getWeakSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {
-        return getSuccGenerator(graph, {succGen: "weak", reduce: true});
+        return CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true});
     }
 }
 
@@ -233,7 +214,7 @@ function setupExplorerActivityFn(callback) : any {
     }
 
     function makeConfiguration(processName : string, expandDepth : number, useStrong : boolean, shouldReduce : boolean) {
-        var succGenerator = Main.getSuccGenerator(graph, {
+        var succGenerator = CCS.getSuccGenerator(graph, {
             succGen: useStrong ? "strong" : "weak",
             reduce: shouldReduce
         });

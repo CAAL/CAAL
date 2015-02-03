@@ -1,9 +1,7 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="activity.ts" />
-/// <reference path="../ccs/ccs.ts" />
+/// <reference path="../../lib/ccs.d.ts" />
 /// <reference path="../gui/gui.ts" />
-/// <reference path="../ccs/util.ts" />
-/// <reference path="../ccs/depgraph.ts" />
 /// <reference path="../gui/trace.ts" />
 /// <reference path="../main.ts" />
 

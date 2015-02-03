@@ -2,7 +2,7 @@
 /// <reference path="activity.ts" />
 /// <reference path="../gui/project.ts" />
 /// <reference path="../main.ts" />
-/// <reference path="../ccs/ccs.ts" />
+/// <reference path="../../lib/ccs.d.ts" />
 
 module Activity {
 

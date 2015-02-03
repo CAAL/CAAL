@@ -1,7 +1,7 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="../../lib/ace.d.ts" />
 /// <reference path="../../lib/wolfy87-eventemitter.d.ts" />
-/// <reference path="../ccs/ccs.ts" />
+/// <reference path="../../lib/ccs.d.ts" />
 /// <reference path="property.ts" />
 
 class Project {

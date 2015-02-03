@@ -733,4 +733,20 @@ module CCS {
             return -1;
         }
     }
+
+    export function getSuccGenerator(graph, options) {
+        var settings = {succGen: "strong", reduce: true},
+            resultGenerator : SuccessorGenerator = new StrictSuccessorGenerator(graph);
+        for (var optionName in options) {
+            settings[optionName] = options[optionName];
+        }
+        if (settings.reduce) {
+            var treeReducer = new Traverse.ProcessTreeReducer(graph);
+            resultGenerator = new Traverse.ReducingSuccessorGenerator(resultGenerator, treeReducer);
+        }
+        if (settings.succGen === "weak") {
+            resultGenerator = new Traverse.WeakSuccessorGenerator(resultGenerator);
+        }
+        return resultGenerator;
+    }
 }

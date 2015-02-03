@@ -1,10 +1,9 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="activity.ts" />
-/// <reference path="../ccs/ccs.ts" />
+/// <reference path="../../lib/ccs.d.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="../gui/gui.ts" />
-/// <reference path="../ccs/util.ts" />
 /// <reference path="../../lib/suppressWarnings.d.ts" />
 
 module Activity {
