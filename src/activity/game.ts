@@ -11,6 +11,9 @@ module Activity {
     import dgMod = DependencyGraph;
 
     export class BisimulationGame extends Activity {
+        
+        static ComputerDealy: number = 500;
+        
         private snapCanvas: SnapCanvas;
         private graph: CCS.Graph;
         private dependencyGraph: dgMod.BisimulationDG;
@@ -19,6 +22,8 @@ module Activity {
         private succGen: ccs.SuccessorGenerator;
         private marking;
         private isBisimilar;
+
+        private delayedPlayTimeout;
 
         private leftProcessName: string;
         private rightProcessName: string;
@@ -65,6 +70,10 @@ module Activity {
             this.marking = dgMod.liuSmolkaLocal2(0, this.dependencyGraph);
 
             $("#game-console").find("ul").empty();
+        }
+        
+        beforeHide(): void {
+            clearTimeout(this.delayedPlayTimeout);
         }
         
         public resizeCanvas() {
@@ -146,7 +155,10 @@ module Activity {
                         this.snapCanvas.draw();
                         this.printPlayer("ATTACKER", action, destination);
                         
-                        this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()), action);
+                        this.emptyTable();
+                        
+                        this.delayedPlayTimeout = setTimeout(() => this.selectEdge(this.isBisimilar, row.find("#nodeid").html(), action), BisimulationGame.ComputerDealy);
+                        //this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()), action);
                         
                     } else if (!this.isBisimilar) {
                         if(this.lastMove == "RIGHT") {
@@ -158,13 +170,22 @@ module Activity {
                         this.snapCanvas.draw();
                         this.printPlayer("DEFENDER", action, destination);
 
-                        this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()));
+                        this.emptyTable();
+
+                        this.delayedPlayTimeout = setTimeout(() => this.selectEdge(this.isBisimilar, row.find("#nodeid").html()), BisimulationGame.ComputerDealy);
+                        //this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()));
                     }
                 });
             }
         }
-            
-
+        
+        private selectEdge(bisimilar: boolean, nodeidHtml, action?) {
+            if (bisimilar)
+                this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(nodeidHtml), action);
+            else
+                this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(nodeidHtml));
+        }
+        
         private selectEdgeMarkedZero(hyperEdges, action) {
             for (var i=0; i < hyperEdges.length; i++) {
                 var edge = hyperEdges[i];
@@ -226,9 +247,15 @@ module Activity {
             throw "All targets must have been marked ONE for at least one target set";
         }
         
-        private updateTable(node, transition?) {
+        // empties the table and returns it
+        private emptyTable() {
             var table = $(this.actionsTable).find("tbody");
             table.empty();
+            return table;
+        }
+        
+        private updateTable(node, transition?) {
+            var table = this.emptyTable();
 
             var hyperEdges = this.dependencyGraph.getHyperEdges(node);
 
