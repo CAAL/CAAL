@@ -39,7 +39,7 @@ module Activity {
         }
 
         beforeShow(configuration): void {
-            /* Trace / Raphael */
+            /* Trace / Snap */
             traceWidth = this.canvas.clientWidth;
             traceHeight = this.canvas.clientHeight;
 
@@ -48,13 +48,13 @@ module Activity {
 
             this.snapGame = new SnapGame(this.leftProcessName, this.rightProcessName);
 
-            /* Raphael canvas drawing */
+            /* Snap canvas drawing */
             this.snapCanvas = new SnapCanvas("#"+this.canvas.id, traceWidth, traceHeight);
             this.snapCanvas.addDrawable(this.snapGame);
             
             
-            this.graph = configuration.graph; // use configuration instead
-            this.succGen = configuration.successorGenerator; // use configuration instead
+            this.graph = configuration.graph;
+            this.succGen = configuration.successorGenerator;
             
             this.leftProcess = this.graph.processByName(this.leftProcessName);
             this.rightProcess = this.graph.processByName(this.rightProcessName);
@@ -109,7 +109,6 @@ module Activity {
                                          // clear highlight
                                          $("#game-console").css("background", "");
                                      });
-            
         }
 
         private setOnHoverListener(row) {
@@ -124,52 +123,43 @@ module Activity {
             }
         }
 
+
+        
         private setOnClickListener(row, data?) {
             if(row){
                 $(row).on('click', () => {
 
+                    var destination =  row.find("#destination").html();
+                    var action = row.find("#action").html();
+                    
                     if (this.isBisimilar) {
 
                         this.lastMove = (data[0] == 1 ? "LEFT" : data[0] == 2 ? "RIGHT" : "");
 
                         if (this.lastMove === "LEFT") {
-                            var destination =  row.find("#destination").html();
-                            var action = row.find("#action").html();
                             this.snapGame.playLeft(action, destination, false);
-                            this.snapCanvas.draw();
                             
                         } else if (this.lastMove === "RIGHT") {
-                            var destination =  row.find("#destination").html();
-                            var action = row.find("#action").html();
                             this.snapGame.playRight(action, destination, false);
-                            this.snapCanvas.draw();
                         }
 
-                        this.printToLog("<span style='color: "+SnapGame.PlayerColor+"'>ATTACKER</span>: --- "+action+" --->   " + destination);
-
-                        this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()), action);
+                        this.snapCanvas.draw();
+                        this.printPlayer("ATTACKER", action, destination);
                         
+                        this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()), action);
                         
                     } else if (!this.isBisimilar) {
                         if(this.lastMove == "RIGHT") {
-                            var destination =  row.find("#destination").html();
-                            var action = row.find("#action").html();
                             this.snapGame.playLeft(action, destination, false);
-                            this.snapCanvas.draw();
-                            // Right
                         } else if(this.lastMove == "LEFT") {
-                            var destination =  row.find("#destination").html();
-                            var action = row.find("#action").html();
                             this.snapGame.playRight(action, destination, false);
-                            this.snapCanvas.draw();
                         }
 
-                        this.printToLog("<span style='color: "+SnapGame.PlayerColor+"'>DEFENDER</span>: --- "+action+" --->   " + destination);
+                        this.snapCanvas.draw();
+                        this.printPlayer("DEFENDER", action, destination);
 
                         this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()));
-                        
                     }
-                    
                 });
             }
         }
@@ -182,26 +172,21 @@ module Activity {
                     if (this.marking.getMarking(edge[j]) === this.marking.ZERO) {
                         var data = this.dependencyGraph.constructData[edge[0]];
 
-                        // Left
                         if(this.lastMove === "LEFT") {
                             var destination =  this.CCSNotation.visit(this.graph.processById(data[2]));
                             this.snapGame.playRight(action, destination, true);
-                            this.snapCanvas.draw();
-                            // Right
                         } else if(this.lastMove === "RIGHT") {
                             var destination =  this.CCSNotation.visit(this.graph.processById(data[1]));
                             this.snapGame.playLeft(action, destination, true);
-                            this.snapCanvas.draw();
                         }
-
-                        this.printToLog("<span style='color: "+SnapGame.ComputerColor+"'>DEFENDER</span>: --- "+action+" --->   " + destination);
+                        
+                        this.snapCanvas.draw();
+                        this.printComputer("DEFENDER", action, destination);
 
                         this.updateTable(edge.slice(0)[0]);
                         return;
                     }
                 }
-
-                
             }
 
             throw "One of the targets must be marked ZERO";
@@ -221,19 +206,17 @@ module Activity {
                     var data = this.dependencyGraph.constructData[edge[0]];
                     var action = data[1].toString();
 
-                    // Left
-                    if(data[0] == 1) {
+                    if(data[0] == 1) { // Left
                         var destination =  this.CCSNotation.visit(this.graph.processById(data[2]));
                         this.snapGame.playLeft(action, destination, true);
-                        this.snapCanvas.draw();
-                        // Right
-                    } else if(data[0] == 2) {
+                        
+                    } else if(data[0] == 2) { // Right
                         var destination =  this.CCSNotation.visit(this.graph.processById(data[3]));
                         this.snapGame.playRight(action, destination, true);
-                        this.snapCanvas.draw();
                     }
-
-                    this.printToLog("<span style='color: "+SnapGame.ComputerColor+"'>ATTACKER</span>: --- "+action+" --->   " + destination);
+                    
+                    this.snapCanvas.draw();
+                    this.printComputer("ATTACKER", action, destination);
                     
                     this.lastMove = (data[0] == 1 ? "LEFT" : data[0] == 2 ? "RIGHT" : "");
                     this.updateTable(edge.slice(0)[0], data[1].toString());
@@ -249,66 +232,61 @@ module Activity {
 
             var hyperEdges = this.dependencyGraph.getHyperEdges(node);
 
-            if (this.isBisimilar) {
+            for (var i = 0; i < hyperEdges.length; i++) {
+                var edge = hyperEdges[i];
+                
+                if (edge.length === 0) {
+                    if (!this.isBisimilar)
+                        this.printToLog("You have no more valid transitions. <span style='color: "+SnapGame.ComputerColor+"'>ATTACKER</span> wins.");
+                    break;
+                }
+                
+                var data = this.dependencyGraph.constructData[edge[0]];
 
-                for (var i = 0; i < hyperEdges.length; i++) {
-                    var edge = hyperEdges[i];
-                    if (edge.length === 0)
-                        break;
-
-                    var data = this.dependencyGraph.constructData[edge[0]];
-
-                    var row = $("<tr></tr>");
-                    var nodeid = $("<td id='nodeid'></td>").append(edge[0]);
-                    nodeid.css({display: "none"});
-                    var LTS = $("<td id='LTS'></td>").append(data[0] == 2 ? this.rightProcessName : data[0] == 1 ? this.leftProcessName : "ERROR" );
-                    var action = $("<td id='action'></td>").append(data[1].toString());
-                    var destination = $("<td id='destination'></td>").append(
+                var row = $("<tr></tr>");
+                var nodeid = $("<td id='nodeid'></td>").append(edge[0]);
+                nodeid.css({display: "none"});
+                
+                var LTS, action, destination;
+                
+                if (this.isBisimilar) {
+                    
+                    LTS = $("<td id='LTS'></td>").append(data[0] == 2 ? this.rightProcessName : data[0] == 1 ? this.leftProcessName : "ERROR" );
+                    action = $("<td id='action'></td>").append(data[1].toString());
+                    destination = $("<td id='destination'></td>").append(
                         this.CCSNotation.visit(this.graph.processById(data[2])));
 
-                    this.setOnHoverListener(row);
                     this.setOnClickListener(row, data);
 
-                    row.append(LTS, action, destination, nodeid);
-                    table.append(row);
-
-                }
-
-            } else if (!this.isBisimilar) {
-
-                for (var i = 0; i< hyperEdges.length; i++) {
-                    var edge = hyperEdges[i];
-                    if(edge.length === 0) {
-                        this.printToLog("You have no more valid transitions. <span style='color: "+SnapGame.ComputerColor+"'>ATTACKER</span> wins.");
-                        break;
-                    }
+                } else if (!this.isBisimilar) {
                     
-                    var data = this.dependencyGraph.constructData[edge[0]];
-
-                    var row = $("<tr></tr>");
-                    var nodeid = $("<td id='nodeid'></td>").append(edge[0]);
-                    nodeid.css({display: "none"});
-                    var LTS = $("<td id='LTS'></td>").append(this.lastMove ? this.rightProcessName : this.lastMove ? this.leftProcessName : "ERROR" );
-                    var action = $("<td id='action'></td>").append(transition);
-                    var destination = $("<td id='destination'></td>").append(
+                    LTS = $("<td id='LTS'></td>").append(this.lastMove ? this.rightProcessName : this.lastMove ? this.leftProcessName : "ERROR" );
+                    action = $("<td id='action'></td>").append(transition);
+                    destination = $("<td id='destination'></td>").append(
                         this.CCSNotation.visit(
                             (this.lastMove == "LEFT" ? this.graph.processById(data[2]) :
                              this.lastMove == "RIGHT" ? this.graph.processById(data[3]):
                              undefined )
                         ));
 
-                    this.setOnHoverListener(row);
                     this.setOnClickListener(row);
-
-                    row.append(LTS, action, destination, nodeid);
-                    table.append(row);
-                    
                 }
-
+                
+                this.setOnHoverListener(row);
+                
+                row.append(LTS, action, destination, nodeid);
+                table.append(row);
             }
-            
         }
 
+        private printComputer(player: string, action: string, destination: string) {
+            this.printToLog("<span style='color: "+SnapGame.ComputerColor+"'>" + player + "</span>: " + "--- "+action+" --->   " + destination);
+        }
+        
+        private printPlayer(player: string, action: string, destination: string) {
+            this.printToLog("<span style='color: "+SnapGame.PlayerColor+"'>" + player + "</span>: " + "--- "+action+" --->   " + destination);
+        }
+        
         private printToLog(text: string) {
             var list = $("#game-console > ul");
             list.append("<li>"+text+"</li>");

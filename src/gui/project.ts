@@ -51,6 +51,10 @@ class Project {
     }
 
     private onTitleChanged(): void {
+        if ( $(this.titleId).text() == "") {
+            $(this.titleId).text(this.defaultTitle);
+        }
+        
         this.title = $(this.titleId).text();
     }
 
