@@ -3,8 +3,7 @@
 MAIN_SRC="./src/main.ts"
 MAIN_DEST="./lib/main.js"
 
-CCS_PARSE_SRC="./src/ccs/ccs.ts"
-CCS_PARSE_DEST="./lib/ccs.js"
+CCS_DEST="./lib/ccs.js"
 
 # generate the parser
 echo "Building CCS Parser"
@@ -17,13 +16,9 @@ echo "Integrating Parser into Ace Module"
 mkdir -p modules/ace/lib/ace/mode/ccs
 
 # manually create requirejs files for the ccs data structure and the ccs parser
-echo "Compiling CCS subset for Ace CCS linter"
-echo "Building $CCS_PARSE_DEST" 
-if [ ! -f "$CCS_PARSE_DEST" ] || [ "$CCS_PARSE_SRC" -nt "$CCS_PARSE_DEST" ] ; then
-	tsc --out "$CCS_PARSE_DEST" "$CCS_PARSE_SRC"
-else
-	echo "-- Compilation not necessary"
-fi
+echo "Compiling CCS subset"
+echo "For ace linter and verifier"
+tsc -d --out "$CCS_DEST" ./src/ccs/ccs.ts ./src/ccs/depgraph.ts ./src/ccs/hml.ts ./src/ccs/reducedparsetree.ts ./src/ccs/unguarded_recursion.ts ./src/ccs/util.ts
 
 cp lib/ccs.js .
 echo 'define(function(require, exports, module) {' | cat - ccs.js > temp && mv temp ccs.js
