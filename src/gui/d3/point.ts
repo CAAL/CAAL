@@ -36,10 +36,10 @@ class Point {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
-    public normalize(thickness){
+    public normalize(){
         var l = this.length();
-        this.x = this.x / l * thickness;
-        this.y = this.y / l * thickness;
+        this.x = this.x / l;
+        this.y = this.y / l;
     }
 
     public orbit(origin, arcWidth, arcHeight, degrees){
@@ -53,8 +53,16 @@ class Point {
         this.y += dy;
     }
 
-    public subtract(v){
+    public subtract(v : Point) : Point {
         return new Point(this.x - v.x, this.y - v.y);
+    }
+
+    public multiply(v : Point) : Point { 
+        return new Point(this.x * v.x, this.y * v.y);
+    }
+
+    public multiplyWithNumber(n : number) : Point { 
+        return new Point(this.x * n, this.y * n);
     }
 
     public toString(){

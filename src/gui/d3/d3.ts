@@ -14,8 +14,8 @@ module GUI {
             "selected": "rgb(245, 50, 50)"
         }; 
         private lastNodeId = 0;
-        private nodes = [{id:0, expanded:false}];
-        private edges = [];
+        private nodes = [{id:0, expanded:true}, {id:1, expanded:false}, {id:2, expanded:false}];
+        private edges = [{source: this.nodes[0], target: this.nodes[1], direction:'both'}];
         private svg;
         private force;
         public selected_node = null;
@@ -68,7 +68,19 @@ module GUI {
 
         private tick = () => {
             this.path.attr('d', (d) => {
+                var sourceP = new Point(d.source.x, d.source.y);
+                var targetP = new Point(d.target.x, d.target.y);
+                var norm = sourceP.subtract(targetP);
+                norm.normalize();
 
+                var sourcePadding = d.direction == 'pre' || d.direction == 'both' ? 17 : 12;
+                var targetPadding = d.direction == 'post' || d.direction == 'both' ? 17 : 12;
+                
+                var newSourceP = sourceP.subtract(norm.multiplyWithNumber(sourcePadding));
+                
+                var newTargetP = targetP.add(norm.multiplyWithNumber(targetPadding));
+
+                return 'M' + newSourceP.x + ',' + newSourceP.y + 'L' + newTargetP.x + ',' + newTargetP.y;
             });
 
             this.circle.attr('transform', (d) => {
@@ -77,7 +89,22 @@ module GUI {
         }
 
         private update() : void {
-            //path = path.data(edges);
+            this.path = this.path.data(this.edges);
+
+            // update existing links
+            this.path
+              .style('marker-start', function(d) { return d.direction == 'pre' || d.direction == 'both' ? 'url(#pre-arrow)' : ''; })
+              .style('marker-end', function(d) { return d.direction == 'post' || d.direction == 'both' ? 'url(#post-arrow)' : ''; });
+
+            // add new links
+            this.path.enter().append('svg:path')
+              .attr('class', 'link')
+              .style('marker-start', function(d) { return d.direction == 'pre' || d.direction == 'both' ? 'url(#pre-arrow)' : ''; })
+              .style('marker-end', function(d) { return d.direction == 'post' || d.direction == 'both' ? 'url(#post-arrow)' : ''; });
+
+            // remove old links
+            this.path.exit().remove();
+
             this.circle = this.circle.data(this.nodes, function(d) {return d.id;});
             // update existing nodes (reflexive & selected visual states)
             this.circle.selectAll('circle')
@@ -90,7 +117,7 @@ module GUI {
             
             g.append('svg:circle')
                 .attr('class', 'node')
-                .attr('r', 15)
+                .attr('r', 12)
                 .style('fill', this.nodeColorChange)
                 .style('stroke', "#000000")
                 .on('click', this.nodeClicked);
@@ -196,7 +223,7 @@ module GUI {
         public freeze() : void {
 
         }
-        
+
         public unfreeze() : void {
 
         }
