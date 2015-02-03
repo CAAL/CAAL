@@ -38,6 +38,7 @@ module Activity {
                     this.verifactionEnded();
                 }
             });
+            $(document).on("load", () => this.displayProperties());
 
             this.editor = ace.edit("hml-editor");
             this.editor.setTheme("ace/theme/crisp");
@@ -97,13 +98,13 @@ module Activity {
 
             switch(type) {
                 case "strong":
-                    property = new Property.StrongBisimulation("", "");
+                    property = new Property.StrongBisimulation({firstProcess: "", secondProcess: ""});
                     break;
                 case "weak":
-                    property = new Property.WeakBisimulation("", "");
+                    property = new Property.WeakBisimulation({firstProcess: "", secondProcess: ""});
                     break;
                 case "hml":
-                    property = new Property.HML("", "");
+                    property = new Property.HML({firstProcess: "", formula: ""});
                     break;
             }
 

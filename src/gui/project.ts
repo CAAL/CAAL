@@ -23,14 +23,15 @@ class Project {
         $(this.titleId).focusout(() => this.onTitleChanged());
     }
 
-    public update(id: number, title: string, ccs: string): void {
+    public update(id: number, title: string, ccs: string, properties: any[]): void {
         this.setId(id);
         this.setTitle(title);
         this.setCCS(ccs);
+        this.setProperties(properties);
     }
 
     public reset(): void {
-        this.update(null, this.defaultTitle, this.defaultCCS);
+        this.update(null, this.defaultTitle, this.defaultCCS, Array());
     }
 
     public getId(): number {
@@ -67,6 +68,12 @@ class Project {
         return this.properties;
     }
 
+    public setProperties(properties: any[]): void {
+        for (var i = 0; i < properties.length; i++) {
+            this.addProperty(new window["Property"][properties[i].type](properties[i].options));
+        }
+    }
+
     public addProperty(property: Property.Property): void {
         this.properties.push(property);
     }
@@ -83,10 +90,17 @@ class Project {
     }
 
     public toJSON(): any {
+        var properties = Array();
+
+        for (var i = 0; i < this.properties.length; i++) {
+            properties.push(this.properties[i].toJSON());
+        }
+
         return {
             id: this.getId(),
             title: this.getTitle(),
-            ccs: this.getCCS()
+            ccs: this.getCCS(),
+            properties: properties
         };
     }
 }

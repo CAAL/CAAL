@@ -16,6 +16,7 @@ module Property {
         private static counter: number = 0;
         private id: number;
         public satisfiable: boolean;
+        public worker;
 
         public constructor() {
             this.satisfiable = null;
@@ -33,24 +34,27 @@ module Property {
             else {return "<i class=\"fa fa-times\"></i>"}
         }
 
-        protected invalidateStatus() : void {
+        protected invalidateStatus(): void {
             this.satisfiable = null;
         }
 
-        public getDescription(): string {throw "Not implemented by subclass"}
-        public verify(callback : () => any): void {throw "Not implemented by subclass"}
+        public abortVerification(): void {
+            this.worker.terminate();
+        }
 
-        public abortVerification() : void {throw "Not implemented by subclass";}
+        public getDescription(): string {throw "Not implemented by subclass"}
+        public toJSON(): any {throw "Not implemented by subclass"}
+        public verify(callback: () => any): void {throw "Not implemented by subclass"}
     }
 
     export class Equivalence extends Property {
         public firstProcess: string;
         public secondProcess: string;
 
-        public constructor(firstProcess: string, secondProcess: string) {
+        public constructor(options: any) {
             super();
-            this.firstProcess = firstProcess;
-            this.secondProcess = secondProcess;
+            this.firstProcess = options.firstProcess;
+            this.secondProcess = options.secondProcess;
         }
 
         public getFirstProcess(): string {
@@ -73,14 +77,22 @@ module Property {
     }
 
     export class StrongBisimulation extends Equivalence {
-        private worker;
-
-        public constructor(firstProcess: string, secondProcess: string) {
-            super(firstProcess, secondProcess);
+        public constructor(options: any) {
+            super(options);
         }
 
         public getDescription(): string {
             return this.firstProcess + " ~ " + this.secondProcess;
+        }
+
+        public toJSON(): any {
+            return {
+                type: "StrongBisimulation",
+                options: {
+                    firstProcess: this.firstProcess,
+                    secondProcess: this.secondProcess
+                }
+            };
         }
 
         public verify(callback): void {
@@ -102,21 +114,25 @@ module Property {
                 callback();
             });
         }
-
-        public abortVerification() : void {
-            this.worker.terminate();
-        }
     }
 
     export class WeakBisimulation extends Equivalence {
-        private worker;
-
-        public constructor(firstProcess: string, secondProcess: string) {
-            super(firstProcess, secondProcess);
+        public constructor(options: any) {
+            super(options);
         }
 
         public getDescription(): string {
             return this.firstProcess + " ≈ " + this.secondProcess;
+        }
+
+        public toJSON(): any {
+            return {
+                type: "WeakBisimulation",
+                options: {
+                    firstProcess: this.firstProcess,
+                    secondProcess: this.secondProcess
+                }
+            };
         }
 
         public verify(callback): void {
@@ -138,21 +154,16 @@ module Property {
                 callback();
             });
         }
-
-        public abortVerification() : void {
-            this.worker.terminate();
-        }
     }
 
     export class HML extends Property {
         private process: string;
         private formula: string;
-        private worker;
 
-        public constructor(process: string, formula: string) {
+        public constructor(options: any) {
             super();
-            this.process = process;
-            this.formula = formula;
+            this.process = options.process;
+            this.formula = options.formula;
         }
 
         public getProcess(): string {
@@ -178,6 +189,16 @@ module Property {
             return this.process + " ⊧ " + escaped;
         }
 
+        public toJSON(): any {
+            return {
+                type: "HML",
+                options: {
+                    process: this.process,
+                    formula: this.formula
+                }
+            };
+        }
+
         public verify(callback): void {
             var program = Main.getProgram();
             this.worker = getWorker();
@@ -197,10 +218,6 @@ module Property {
                 this.worker = null;
                 callback();
             });
-        }
-
-        public abortVerification() : void {
-            this.worker.terminate();
         }
     }
 }

@@ -116,10 +116,12 @@ class Load extends MenuItem {
 
         reader.onload = () => {
             var project = JSON.parse(reader.result);
-            this.project.update(null, project.title, project.ccs);
+            this.project.update(null, project.title, project.ccs, project.properties);
             this.activityHandler.selectActivity("editor");
             $(this.elementIds.fileInputId).replaceWith($(this.elementIds.fileInputId).val('').clone(true)); // Clear input field.
         }
+
+        $(document).trigger('load');
     }
 
     private loadFromStorage(e): void {
@@ -128,11 +130,13 @@ class Load extends MenuItem {
 
         for (var i = 0; i < projects.length; i++) {
             if (projects[i].id === id) {
-                this.project.update(id, projects[i].title, projects[i].ccs);
+                this.project.update(id, projects[i].title, projects[i].ccs, projects[i].properties);
                 this.activityHandler.selectActivity("editor");
                 break;
             }
         }
+
+        $(document).trigger('load');
     }
 
     private loadExample(e): void {
@@ -140,11 +144,13 @@ class Load extends MenuItem {
 
         for (var i = 0; i < examples.length; i++) {
             if (examples[i].title === title) {
-                this.project.update(null, examples[i].title, examples[i].ccs);
+                this.project.update(null, examples[i].title, examples[i].ccs, examples[i].properties);
                 this.activityHandler.selectActivity("editor");
                 break;
             }
         }
+
+        $(document).trigger('load');
     }
 
     private showProjects(): void {
