@@ -24,11 +24,7 @@ var canvas;
 var traceWidth;
 var traceHeight;
 
-var project = new Project(
-    "Untitled Project",
-    null,
-    "#project-title"
-);
+var project = new Project();
 
 module Main {
 

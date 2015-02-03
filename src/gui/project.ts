@@ -5,22 +5,17 @@
 /// <reference path="property.ts" />
 
 class Project {
-    private defaultTitle: string;
-    private defaultCCS: string;
-    private titleId: string;
-    private id: number;
-    private title: string;
-    private currentCCS : string;
-    private properties: Property.Property[];
+    private id = null;
+    private defaultTitle = "Untitled Project";
+    private defaultCCS = "";
+    private properties = Array();
+    private projectTitle = $("#project-title");
+    private currentCCS: string;
     private eventEmitter = new EventEmitter();
 
-    public constructor(defaultTitle: string, defaultCCS: string, titleId: string) {
-        this.defaultTitle = defaultTitle;
-        this.defaultCCS = defaultCCS;
-        this.titleId = titleId;
-        this.properties = Array();
+    public constructor() {
         this.reset();
-        $(this.titleId).focusout(() => this.onTitleChanged());
+        this.projectTitle.focusout(() => this.onTitleChanged());
     }
 
     public update(id: number, title: string, ccs: string, properties: any[]): void {
@@ -43,20 +38,17 @@ class Project {
     }
 
     public getTitle(): string {
-        return this.title;
+        return this.projectTitle.text();
     }
 
     public setTitle(title: string): void {
-        this.title = title;
-        $(this.titleId).text(this.title);
+        this.projectTitle.text(title);
     }
 
     private onTitleChanged(): void {
-        if ( $(this.titleId).text() == "") {
-            $(this.titleId).text(this.defaultTitle);
+        if (this.projectTitle.text() === "") {
+            this.projectTitle.text(this.defaultTitle);
         }
-        
-        this.title = $(this.titleId).text();
     }
 
     public getCCS(): string {
@@ -68,11 +60,11 @@ class Project {
         this.eventEmitter.emit("ccs-change", {ccs: this.currentCCS});
     }
 
-    public onCCSChanged(ccs : string) {
+    public onCCSChanged(ccs: string): void {
         this.currentCCS = ccs;
     }
 
-    public getGraph() : CCS.Graph {
+    public getGraph(): CCS.Graph {
         var graph = new CCS.Graph();
             CCSParser.parse(this.currentCCS, {ccs: CCS, graph: graph});
         return graph;
@@ -103,11 +95,11 @@ class Project {
         }
     }
 
-    public on(event : string, listener : Function) {
+    public on(event: string, listener: Function): void {
         this.eventEmitter.on(event, listener);
     }
 
-    public off(event : string, listener : Function) {
+    public off(event: string, listener: Function): void {
         this.eventEmitter.off(event, listener);
     }
 

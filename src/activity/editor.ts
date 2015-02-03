@@ -63,7 +63,6 @@ module Activity {
             var selected = " <i class=\"fa fa-check\"></i>";
 
             this.$fontSizeButton.find("a").each(function() {
-                console.log("Hello");
                 $(this).children("i").remove();
                 if ($(this).text() === e.target.text) {$(this).append(selected)}
             });
