@@ -27,6 +27,4 @@ module GUI {
         freeze() : void;
         unfreeze() : void;
     }
-
-
 }
