@@ -14,7 +14,6 @@ module Activity {
                            editorId: string,
                            parseButtonId: string,
                            statusAreaId: string,
-                           clearButtonId: string,
                            fontSizeButtonId: string) 
         {
             super();
@@ -41,8 +40,6 @@ module Activity {
                 this.statusArea.hide();
             });
 
-            $(clearButtonId).on("click", () => this.clear());
-
             $(fontSizeButtonId).children("li").on("click", e => this.setFontSize(e));
         }
 
@@ -51,12 +48,6 @@ module Activity {
         }
 
         public afterShow(): void {
-            this.editor.focus();
-        }
-
-        private clear(): void {
-            this.editor.setValue("");
-            this.statusArea.hide();
             this.editor.focus();
         }
 

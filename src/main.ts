@@ -52,7 +52,7 @@ module Main {
 
         activityHandler.addActivity(
                 "editor", 
-                new Activity.Editor(editor, "#editor", "#parse-btn", "#status-area", "#clear-btn", "#font-size-btn"),
+                new Activity.Editor(editor, "#editor", "#parse-btn", "#status-area", "#font-size-btn"),
                 (callback) => { callback({}); },
                 "editor-container",
                 "edit-btn");
