@@ -108,7 +108,6 @@ module Activity {
         }
         
         beforeShow(configuration) {
-            console.log(configuration);
             this.clear();
             this.graph = configuration.graph;
             this.succGenerator = configuration.successorGenerator;

@@ -22,23 +22,20 @@ declare var HMLParser;
 import ccs = CCS;
 import hml = HML;
 
-var editor;
 var isDialogOpen = false;
 var canvas;
 var traceWidth;
 var traceHeight;
 
+var project = new Project(
+    "Untitled Project",
+    null,
+    "#project-title"
+);
+
 module Main {
 
     export function setup() {
-        editor = ace.edit("editor");
-
-        var project = new Project(
-            "Untitled Project",
-            null,
-            "#project-title",
-            editor
-        );
 
         var gameActivity: Activity.BisimulationGame = new Activity.BisimulationGame(document.getElementById("tracesvg"), "#game-actions-table-container");
         
@@ -52,7 +49,7 @@ module Main {
 
         activityHandler.addActivity(
                 "editor", 
-                new Activity.Editor(editor, "#editor", "#parse-btn", "#status-area", "#font-size-btn"),
+                new Activity.Editor(project, $("#editor-container")),
                 (callback) => { callback({}); },
                 "editor-container",
                 "edit-btn");
@@ -171,14 +168,14 @@ module Main {
     }
 
     export function getProgram() : string {
-        return editor.getValue();
+        return project.getCCS();
     }
 
     export function getGraph() {
         var graph : ccs.Graph = new CCS.Graph(),
             bad = false;
         try {
-            CCSParser.parse(editor.getValue(), {ccs: CCS, graph: graph});
+            CCSParser.parse(project.getCCS(), {ccs: CCS, graph: graph});
             bad = graph.getErrors().length > 0;
         } catch (error) {
             bad = true;
