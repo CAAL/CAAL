@@ -107,7 +107,7 @@ module Activity {
                     property = new Property.WeakBisimulation(null, {firstProcess: "", secondProcess: ""});
                     break;
                 case "hml":
-                    property = new Property.HML(null, {firstProcess: "", formula: ""});
+                    property = new Property.HML(null, {process: "", formula: ""});
                     break;
             }
 

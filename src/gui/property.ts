@@ -86,7 +86,7 @@ module Property {
         }
 
         public getDescription(): string {
-            return this.firstProcess + " ~ " + this.secondProcess;
+            return this.firstProcess + " &#8764; " + this.secondProcess;
         }
 
         public toJSON(): any {
@@ -127,7 +127,7 @@ module Property {
         }
 
         public getDescription(): string {
-            return this.firstProcess + " ≈ " + this.secondProcess;
+            return this.firstProcess + " &#8776; " + this.secondProcess;
         }
 
         public toJSON(): any {
@@ -192,7 +192,7 @@ module Property {
 
         public getDescription(): string {
             var escaped = this.formula.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            return this.process + " ⊧ " + escaped;
+            return this.process + " &#8872; " + escaped;
         }
 
         public toJSON(): any {
