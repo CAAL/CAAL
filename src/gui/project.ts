@@ -15,7 +15,7 @@ class Project {
 
     public constructor() {
         this.reset();
-        this.projectTitle.keypress(function(e) { return e.which != 13; });
+        this.projectTitle.keypress(function(e) { return e.which != 13; }); // Disable line breaks. Can still be copy/pasted.
         this.projectTitle.focusout(() => this.onTitleChanged());
     }
 
