@@ -135,6 +135,14 @@ module Main {
             activity.afterShow();
         }
 
+        public openActivityWithConfiguration(activityName : string, configuration) {
+            if (this.currentActivityName) {
+                this.closeActivity(this.currentActivityName);
+            }
+            this.currentActivityName = activityName;
+            this.openActivity(activityName, configuration); 
+        }
+
         public selectActivity(newActivityName : string): void {
             var newActivityData, callback;
             newActivityData = this.activities[newActivityName];
@@ -142,11 +150,7 @@ module Main {
             callback = (configuration) => {
                 //Did it want to open?
                 if (!configuration) return;
-                if (this.currentActivityName) {
-                    this.closeActivity(this.currentActivityName);
-                }
-                this.currentActivityName = newActivityName;
-                this.openActivity(newActivityName, configuration);             
+                this.openActivityWithConfiguration(newActivityName, configuration);            
             };
             newActivityData.setupFn(callback);
         }
