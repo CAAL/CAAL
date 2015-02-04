@@ -61,8 +61,7 @@ module Activity {
             this.fullscreenBtn = $container.find("#explorer-fullscreen-btn")[0];
             this.sourceDefinition = $container.find("#explorer-source-definition")[0];
 
-            this.bindedFns.fullscreen = this.toggleFullscreen.bind(this);
-            $(this.fullscreenBtn).on("click", this.bindedFns.fullscreen);
+            $(this.fullscreenBtn).on("click", this.toggleFullscreen.bind(this));
             $(this.saveBtn).on("click", () => this.saveCanvas());
 
             $(document).on("fullscreenchange", () => this.fullscreenChanged());
@@ -74,6 +73,8 @@ module Activity {
             $(document).on("webkitfullscreenerror", () => this.fullscreenError());
             $(document).on("mozfullscreenerror", () => this.fullscreenError());
             $(document).on("MSFullscreenError", () => this.fullscreenError());
+
+            $(this.statusTableContainer).find("tbody").on("click", this.onTransitionTableClick.bind(this));
         }
 
         private isFullscreen(): boolean {
@@ -190,10 +191,11 @@ module Activity {
             }
         }
 
+
         private setOnClickListener(row : JQuery) : void {
             if(row){
                 $(row).on('click', () => {
-                    var processId = row.data('targetId');
+                    var processId = row.attr('data-target-id');
                     this.expand(this.graph.processById(processId), this.expandDepth);
 
                     /*clear previous hover*/
@@ -253,7 +255,10 @@ module Activity {
                 });
             }
 
-            this.resetFreezeBtn(isExpanded);
+            //Reset freeze button
+            if (!isExpanded) {
+                $(this.freezeBtn).text("Freeze");
+            }
             this.uiGraph.setSelected(process.id.toString());
         }
 
@@ -274,7 +279,7 @@ module Activity {
             return result;
         }
 
-        private forceExpandDefinition(process) : string {
+        private getDefinitionForProcess(process) : string {
             if (process instanceof ccs.NamedProcess) {
                 return this.notationVisitor.visit((<ccs.NamedProcess>process).subProcess);
             }
@@ -286,31 +291,37 @@ module Activity {
             var $sourceDefinition = $(this.sourceDefinition);
             body.empty();
 
-            $sourceDefinition.text(this.labelFor(fromProcess) + " = " + this.forceExpandDefinition(fromProcess));
+            $sourceDefinition.text(this.labelFor(fromProcess) + " = " + this.getDefinitionForProcess(fromProcess));
             transitions.forEach(t => {
                 var row = $("<tr></tr>");
                 var action = $("<td></td>").append(t.action.toString());
                 var name = $("<td></td>").append(this.labelFor(t.targetProcess));
                 var target = $("<td></td>").append(this.notationVisitor.visit(t.targetProcess));
                 row.append(action, name, target);
-                row.data("targetId", t.targetProcess.id);
+                row.attr("data-target-id", t.targetProcess.id);
                 body.append(row);
                 this.setOnHoverListener(row);
-                this.setOnClickListener(row);
             });          
+        }
+
+        private onTransitionTableClick(event) {
+            var targetId = undefined,
+                eventTarget = event.target || event.srcElement;
+            while (eventTarget.tagName !== "TR" && eventTarget.tagName !== "TBODY") {
+                eventTarget = eventTarget.parentNode;
+            }
+            //Check if row pressed
+            if (eventTarget && eventTarget.tagName === "TR") {
+                targetId = eventTarget.dataset.targetId;
+            }
+            if (targetId) {
+                this.expand(this.graph.processById(targetId), this.expandDepth);
+                this.uiGraph.clearHover();
+            }
         }
 
         private showProcessAsExplored(process : ccs.Process) : void {
             this.uiGraph.getProcessDataObject(process.id).status = "expanded";
-        }
-
-        private resetFreezeBtn(isExpanded? : boolean) : void {
-            if(isExpanded) { 
-                return;
-            }
-            else{
-                 $(this.freezeBtn).text("Freeze"); // and reset the freezeBtn.
-            }
         }
 
         private resize(): void {
