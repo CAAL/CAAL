@@ -257,11 +257,16 @@ function setupGameActivityFn(callback) : any {
     }
 
     function makeConfiguration(processNameA, processNameB) {
-        var graph = Main.getGraph(),
-            succGenerator = getSuccGen(graph);
+        var graph = Main.getGraph();
+        var succlist = $("#game-mode-dialog-succ-list");
+        var succGenName = succlist.find("input[type=radio]:checked").attr('id');
+        var succGenerator = getSuccGen(succGenName, graph);
+        var isWeakSuccGen = succlist.find("input[type=radio]:checked").attr('id') === "weak";
+        
         return {
             graph: graph,
             successorGenerator: succGenerator,
+            isWeakSuccessorGenerator: isWeakSuccGen,
             processNameA: processNameA,
             processNameB: processNameB
         };
@@ -280,10 +285,7 @@ function setupGameActivityFn(callback) : any {
         $processBList.append($elementB);
     });
 
-    function getSuccGen(graph) {
-        var succlist = $("#game-mode-dialog-succ-list");
-        var succGenName = succlist.find("input[type=radio]:checked").attr('id');
-
+    function getSuccGen(succGenName, graph) {
         if(succGenName === "weak") {
             return Main.getWeakSuccGenerator(graph);
         } else if (succGenName === "strong") {

@@ -51,15 +51,18 @@ module Activity {
             this.leftProcessName = configuration.processNameA;
             this.rightProcessName = configuration.processNameB;
 
-            this.snapGame = new SnapGame(this.leftProcessName, this.rightProcessName);
+            this.succGen = configuration.successorGenerator;
+
+            if (configuration.isWeakSuccessorGenerator)
+                this.snapGame = new SnapGame(this.leftProcessName, this.rightProcessName, TraceType.Double);
+            else
+                this.snapGame = new SnapGame(this.leftProcessName, this.rightProcessName, TraceType.Single);
 
             /* Snap canvas drawing */
             this.snapCanvas = new SnapCanvas("#"+this.canvas.id, traceWidth, traceHeight);
             this.snapCanvas.addDrawable(this.snapGame);
             
-            
             this.graph = configuration.graph;
-            this.succGen = configuration.successorGenerator;
             
             this.leftProcess = this.graph.processByName(this.leftProcessName);
             this.rightProcess = this.graph.processByName(this.rightProcessName);
