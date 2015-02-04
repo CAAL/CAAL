@@ -11,16 +11,22 @@ module GUI {
         private nodeColors = {
             "unexpanded": "rgb(160,160,160)",
             "expanded": "rgb(51, 65, 185)",
-            "selected": "rgb(245, 50, 50)"
+            "selected": "rgb(245, 50, 50)",
+            "stroke" : "rgb(0, 0, 0)"
         }; 
-        private lastNodeId = 0;
+        private lastNodeId = 2;
+        private lastLinkId = 1;
         private nodes = [{id:0, expanded:true}, {id:1, expanded:false}, {id:2, expanded:false}];
-        private edges = [{source: this.nodes[0], target: this.nodes[1], direction:'both'}];
+        private edges = [
+            {id: 0, source: this.nodes[0], target: this.nodes[1], direction:'both', label:"OMG"},
+            {id: 1, source: this.nodes[1], target: this.nodes[2], direction:'both', label:"TEST"}
+        ];
         private svg;
         private force;
         public selected_node = null;
-        private path;
+        private links;
         private circle;
+        private linkText;
 
         constructor() {      
             this.init();
@@ -61,13 +67,14 @@ module GUI {
                 .attr('d', 'M10,-5L0,0L10,5')
                 .attr('fill', '#000');
 
-            this.path = this.svg.append('svg:g').selectAll('path'),
-            this.circle = this.svg.append('svg:g').selectAll('g');
+            this.links = this.svg.append('g').selectAll('link');
+            this.circle = this.svg.append('g').selectAll('g');
             this.update();
         }
 
         private tick = () => {
-            this.path.attr('d', (d) => {
+            // link
+            this.links.selectAll('path').attr('d', (d) => {
                 var sourceP = new Point(d.source.x, d.source.y);
                 var targetP = new Point(d.target.x, d.target.y);
                 var norm = sourceP.subtract(targetP);
@@ -83,43 +90,35 @@ module GUI {
                 return 'M' + newSourceP.x + ',' + newSourceP.y + 'L' + newTargetP.x + ',' + newTargetP.y;
             });
 
+            //link label
+            this.links.selectAll('text').attr("transform", (d) => {
+                return "translate(" + (d.source.x + d.target.x) / 2 + "," 
+                + (d.source.y + d.target.y) / 2 + ")"; 
+            });
+
+            // node positions
             this.circle.attr('transform', (d) => {
               return 'translate(' + d.x + ',' + d.y + ')';
             });
         }
 
         private update() : void {
-            this.path = this.path.data(this.edges);
-
-            // update existing links
-            this.path
-              .style('marker-start', function(d) { return d.direction == 'pre' || d.direction == 'both' ? 'url(#pre-arrow)' : ''; })
-              .style('marker-end', function(d) { return d.direction == 'post' || d.direction == 'both' ? 'url(#post-arrow)' : ''; });
-
-            // add new links
-            this.path.enter().append('svg:path')
-              .attr('class', 'link')
-              .style('marker-start', function(d) { return d.direction == 'pre' || d.direction == 'both' ? 'url(#pre-arrow)' : ''; })
-              .style('marker-end', function(d) { return d.direction == 'post' || d.direction == 'both' ? 'url(#post-arrow)' : ''; });
-
-            // remove old links
-            this.path.exit().remove();
-
-            this.circle = this.circle.data(this.nodes, function(d) {return d.id;});
+            this.circle = this.circle.data(this.nodes, (d) => {return d.id;});
             // update existing nodes (reflexive & selected visual states)
             this.circle.selectAll('circle')
-                .style('fill', this.nodeColorChange)
-                .style('stroke', "#000000");
+               .style('fill', this.nodeColorChange)
+               .style('stroke', this.nodeColors['stroke']);
 
+            // add new nodes    
             var g = this.circle.enter().append('svg:g');
-
+            
             g.call(this.force.drag);
             
             g.append('svg:circle')
                 .attr('class', 'node')
                 .attr('r', 12)
                 .style('fill', this.nodeColorChange)
-                .style('stroke', "#000000")
+                .style('stroke', this.nodeColors['stroke'])
                 .on('click', this.nodeClicked);
 
             // show node IDs
@@ -132,6 +131,36 @@ module GUI {
             //remove old nodes
             this.circle.exit().remove();
 
+            this.links = this.links.data(this.edges, (d) => {return d.id;});
+
+            //update links
+            this.links.selectAll('path')
+                .style('marker-start', (d) => { return d.direction == 'pre' || d.direction == 'both' ? 'url(#pre-arrow)' : ''; })
+                .style('marker-end', (d) => { return d.direction == 'post' || d.direction == 'both' ? 'url(#post-arrow)' : ''; });
+
+
+            //insert new links
+            var glink = this.links.enter().append('svg:g')
+                .attr("id", (d,i) => { return "linkId_" + i; })
+
+            glink.append('svg:path')
+                .attr("fill", "none")
+                .attr("class", "link")
+                .attr("stroke", "ff8888")
+                .attr("stroke-width", "1px")
+                .style('marker-start', (d) => { return d.direction == 'pre' || d.direction == 'both' ? 'url(#pre-arrow)' : ''; })
+                .style('marker-end', (d) => { return d.direction == 'post' || d.direction == 'both' ? 'url(#post-arrow)' : ''; });
+
+            glink.append('svg:text')
+                .style("font-size", "12px")
+                .style("opacity",1)
+                .attr("dy", "1.2em")
+                .attr("text-anchor", "middle")
+                .text((d) => {
+                    return d.label;
+                });
+
+            this.links.exit().remove();
             //start the physics
             this.force.start();
         }
