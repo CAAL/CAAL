@@ -3,6 +3,11 @@
 /// <reference path="storage" />
 /// <reference path="examples"/>
 
+function helpDialogFunction()
+{
+	$('#help-dialog').modal('show');
+}
+
 class MenuItem {
     public buttonId: string;
     public elementIds: any;

@@ -205,6 +205,24 @@ canvas {
 .modal-footer > #game-btn-group > #start-btn {
     width: 80%;
 }
+.modal-dialog .modal-header  > #help-dialog-title{
+	font-variant: small-caps;
+}
+
+
+.modal-dialog .modal-header > #help-dialog-body-par table, td, th {
+  border: 1px solid #999;
+  padding: 0.5rem;
+  text-align: left; 
+}
+
+td.td1{
+  border: 1px solid #999;
+  padding: 0.5rem;
+  text-align: left;
+  font: normal 14px "Inconsolata";   
+
+}
 
 /*
  * Verifier activity styles
