@@ -18,8 +18,10 @@ module GUI {
         private lastLinkId = 1;
         private nodes = [{id:0, expanded:true}, {id:1, expanded:false}, {id:2, expanded:false}];
         private edges = [
-            {id: 0, source: this.nodes[0], target: this.nodes[1], direction:'both', label:"OMG"},
-            {id: 1, source: this.nodes[1], target: this.nodes[2], direction:'both', label:"TEST"}
+            {id: 0, source: this.nodes[0], target: this.nodes[1], direction:'pre', label:"Test1"},
+            {id: 1, source: this.nodes[1], target: this.nodes[2], direction:'post', label:"Test2"},
+            {id: 2, source: this.nodes[0], target: this.nodes[2], direction:'post', label:"Test3"},
+            {id: 3, source: this.nodes[2], target: this.nodes[2], direction:'post', label:"Test4"}
         ];
         private svg;
         private force;
@@ -80,14 +82,25 @@ module GUI {
                 var norm = sourceP.subtract(targetP);
                 norm.normalize();
 
-                var sourcePadding = d.direction == 'pre' || d.direction == 'both' ? 17 : 12;
-                var targetPadding = d.direction == 'post' || d.direction == 'both' ? 17 : 12;
+                var sourcePadding = d.direction == 'pre' || d.direction == 'both' ? 20 : 12;
+                var targetPadding = d.direction == 'post' || d.direction == 'both' ? 20 : 15;
                 
                 var newSourceP = sourceP.subtract(norm.multiplyWithNumber(sourcePadding));
                 
                 var newTargetP = targetP.add(norm.multiplyWithNumber(targetPadding));
-
-                return 'M' + newSourceP.x + ',' + newSourceP.y + 'L' + newTargetP.x + ',' + newTargetP.y;
+                if(d.source == d.target){
+                    //self loop
+                    var drx = 30,
+                        dry = 20,
+                        largeArc = 1,
+                        xRotation = -45,
+                        sweep = 1;
+                    return "M" + sourceP.x + "," + sourceP.y + "A" + drx + "," + dry + " " + xRotation + "," + largeArc + "," + sweep + " " + targetP.x + "," + targetP.y;
+                }
+                else{
+                    // normal edge
+                    return 'M' + newSourceP.x + ',' + newSourceP.y + 'L' + newTargetP.x + ',' + newTargetP.y;
+                }
             });
 
             //link label
@@ -116,7 +129,7 @@ module GUI {
             
             g.append('svg:circle')
                 .attr('class', 'node')
-                .attr('r', 12)
+                .attr('r', 15)
                 .style('fill', this.nodeColorChange)
                 .style('stroke', this.nodeColors['stroke'])
                 .on('click', this.nodeClicked);
@@ -135,9 +148,8 @@ module GUI {
 
             //update links
             this.links.selectAll('path')
-                .style('marker-start', (d) => { return d.direction == 'pre' || d.direction == 'both' ? 'url(#pre-arrow)' : ''; })
-                .style('marker-end', (d) => { return d.direction == 'post' || d.direction == 'both' ? 'url(#post-arrow)' : ''; });
-
+                .style('marker-start', (d) => { return d.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
+                .style('marker-end', (d) => { return d.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
 
             //insert new links
             var glink = this.links.enter().append('svg:g')
@@ -148,8 +160,8 @@ module GUI {
                 .attr("class", "link")
                 .attr("stroke", "ff8888")
                 .attr("stroke-width", "1px")
-                .style('marker-start', (d) => { return d.direction == 'pre' || d.direction == 'both' ? 'url(#pre-arrow)' : ''; })
-                .style('marker-end', (d) => { return d.direction == 'post' || d.direction == 'both' ? 'url(#post-arrow)' : ''; });
+                .style('marker-start', (d) => { return d.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
+                .style('marker-end', (d) => { return d.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
 
             glink.append('svg:text')
                 .style("font-size", "12px")
