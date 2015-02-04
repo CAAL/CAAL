@@ -24,6 +24,7 @@ module GUI {
             {id: 3, source: this.nodes[2], target: this.nodes[2], direction:'post', label:"Test4"}
         ];
         private svg;
+        private vis;
         private force;
         public selected_node = null;
         private links;
@@ -37,7 +38,18 @@ module GUI {
         private init() : void {
             this.svg = d3.select('svg')
                     .attr('width', this.width)
-                    .attr('height', this.height);
+                    .attr('height', this.height)
+                    .attr("pointer-events", "all");
+
+            this.vis = this.svg
+                .append('svg:g')
+                //.call(d3.behavior.zoom().on("zoom", this.rescale))
+                //.on("dblclick.zoom", null)
+            
+            this.vis.append('svg:rect')
+                .attr('width', this.width)
+                .attr('height', this.height)
+                .attr('fill', 'white');
 
             this.force = d3.layout.force()
                     .nodes(this.nodes)
@@ -90,12 +102,14 @@ module GUI {
                 var newTargetP = targetP.add(norm.multiplyWithNumber(targetPadding));
                 if(d.source == d.target){
                     //self loop
-                    var drx = 30,
-                        dry = 20,
-                        largeArc = 1,
-                        xRotation = -45,
-                        sweep = 1;
-                    return "M" + sourceP.x + "," + sourceP.y + "A" + drx + "," + dry + " " + xRotation + "," + largeArc + "," + sweep + " " + targetP.x + "," + targetP.y;
+                    var cpH = 90;
+                    var cpV = 60;
+
+                    var cp1 = new Point(sourceP.x - (cpH/2), sourceP.y - cpV);
+                    var cp2 = new Point(sourceP.x + (cpH/2), sourceP.y - cpV);
+
+                    console.log("M" + sourceP.x + "," + sourceP.y+"C" + cp1.x + " " + cp1.y+" " + cp2.x+ " " + cp2.y+" " +sourceP.x +" "+ sourceP.y);
+                    return "M" + sourceP.x + "," + sourceP.y+"C" + cp1.x + " " + cp1.y+" " + cp2.x+ " " + cp2.y+" " +sourceP.x +" "+ sourceP.y;
                 }
                 else{
                     // normal edge
@@ -105,8 +119,17 @@ module GUI {
 
             //link label
             this.links.selectAll('text').attr("transform", (d) => {
-                return "translate(" + (d.source.x + d.target.x) / 2 + "," 
+                if(d.source == d.target) {
+                    // self loop
+                    var cpV = 65;
+                    return "translate(" + (d.source.x + d.target.x) / 2 + "," 
+                + (((d.source.y + d.target.y) / 2) - cpV) + ")"; 
+                }
+                else {
+                    // normal edge
+                    return "translate(" + (d.source.x + d.target.x) / 2 + "," 
                 + (d.source.y + d.target.y) / 2 + ")"; 
+                }
             });
 
             // node positions
@@ -115,6 +138,7 @@ module GUI {
             });
         }
 
+        // This methods updates, inserts and removes links and circles(nodes) 
         private update() : void {
             this.circle = this.circle.data(this.nodes, (d) => {return d.id;});
             // update existing nodes (reflexive & selected visual states)
@@ -125,8 +149,10 @@ module GUI {
             // add new nodes    
             var g = this.circle.enter().append('svg:g');
             
+            // Add drag listener
             g.call(this.force.drag);
             
+            // Append circle to group
             g.append('svg:circle')
                 .attr('class', 'node')
                 .attr('r', 15)
@@ -134,7 +160,7 @@ module GUI {
                 .style('stroke', this.nodeColors['stroke'])
                 .on('click', this.nodeClicked);
 
-            // show node IDs
+            // Append text to circle
             g.append('svg:text')
                 .attr('x', 0)
                 .attr('y', 4)
@@ -151,10 +177,11 @@ module GUI {
                 .style('marker-start', (d) => { return d.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
                 .style('marker-end', (d) => { return d.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
 
-            //insert new links
+            //Group links and text label
             var glink = this.links.enter().append('svg:g')
                 .attr("id", (d,i) => { return "linkId_" + i; })
 
+            //Append link
             glink.append('svg:path')
                 .attr("fill", "none")
                 .attr("class", "link")
@@ -163,6 +190,7 @@ module GUI {
                 .style('marker-start', (d) => { return d.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
                 .style('marker-end', (d) => { return d.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
 
+            //Append text to links
             glink.append('svg:text')
                 .style("font-size", "12px")
                 .style("opacity",1)
@@ -172,10 +200,22 @@ module GUI {
                     return d.label;
                 });
 
+            //remove links
             this.links.exit().remove();
+            
             //start the physics
             this.force.start();
         }
+
+        // rescale g
+        private rescale = () => {
+          var trans=d3.event.translate;
+          var scale=d3.event.scale;
+
+          this.svg.attr("transform",
+              "translate(" + trans + ")"
+              + " scale(" + scale + ")");
+        };
 
         private nodeColorChange = (d) => {
             if(d === this.selected_node) {
