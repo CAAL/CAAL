@@ -1,3 +1,4 @@
+/// <reference path="lib.webworker.d.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
 
 declare var CCSParser;
@@ -9,7 +10,7 @@ var messageHandlers : any = {};
 var graph;
 var stop = false;
 
-self.addEventListener("message", event => {
+self.addEventListener("message", (event : MessageEvent) => {
     messageHandlers[event.data.type](event.data);
 }, false);
 
