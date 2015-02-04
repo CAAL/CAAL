@@ -81,9 +81,9 @@ class Project {
         {
             for (var i = 0; i < properties.length; i++) {
                 try {
-                    this.addProperty(new window["Property"][properties[i].type](properties[i].options));
+                    this.addProperty(new window["Property"][properties[i].type](properties[i].status, properties[i].options));
                 } catch (e) {
-                    console.log("Unknown Property type");
+                    console.log("Unknown property type");
                 }
             }
         }

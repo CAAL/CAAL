@@ -26,6 +26,7 @@ var examples = [
         properties: [
             {
                 type: "HML",
+                status: true,
                 options: {
                     process: "Peterson",
                     formula: "X max= ([exit1]ff or [exit2]ff) and [-]X;"

@@ -74,7 +74,6 @@ module Activity {
 
         public displayProperties(): void {
             var properties = this.project.getProperties();
-            console.log(properties);
             this.propertyTableBody.empty();
 
             for (var i = 0; i < properties.length; i++) {
@@ -82,7 +81,7 @@ module Activity {
                 var del = $("<i class=\"fa fa-trash\"></i>");
                 var verify = $("<i class=\"fa fa-play\"></i>");
 
-                var tdStatus = $("<td class=\"text-center\"></td>").append(properties[i].getSatisfiable());
+                var tdStatus = $("<td class=\"text-center\"></td>").append(properties[i].getStatusIcon());
                 var tdDescription = $("<td></td>").append(properties[i].getDescription());
                 var tdDelete = $("<td class=\"text-center\"></td>").append(del);
                 var tdVerify = $("<td class=\"text-center\"></td>").append(verify);
@@ -102,13 +101,13 @@ module Activity {
 
             switch(type) {
                 case "strong":
-                    property = new Property.StrongBisimulation({firstProcess: "", secondProcess: ""});
+                    property = new Property.StrongBisimulation(null, {firstProcess: "", secondProcess: ""});
                     break;
                 case "weak":
-                    property = new Property.WeakBisimulation({firstProcess: "", secondProcess: ""});
+                    property = new Property.WeakBisimulation(null, {firstProcess: "", secondProcess: ""});
                     break;
                 case "hml":
-                    property = new Property.HML({firstProcess: "", formula: ""});
+                    property = new Property.HML(null, {firstProcess: "", formula: ""});
                     break;
             }
 

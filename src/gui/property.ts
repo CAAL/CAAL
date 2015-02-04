@@ -15,11 +15,11 @@ module Property {
     export class Property {
         private static counter: number = 0;
         private id: number;
-        public satisfiable: boolean;
+        public status: boolean;
         public worker;
 
-        public constructor() {
-            this.satisfiable = null;
+        public constructor(status: boolean) {
+            this.status = status;
             this.id = Property.counter;
             Property.counter++;
         }
@@ -28,14 +28,18 @@ module Property {
             return this.id;
         }
 
-        public getSatisfiable(): string {
-            if (this.satisfiable === null) {return "<i class=\"fa fa-question\"></i>"}
-            else if (this.satisfiable) {return "<i class=\"fa fa-check\"></i>"}
+        public getStatus(): boolean {
+            return this.status;
+        }
+
+        public getStatusIcon(): string {
+            if (this.status === null) {return "<i class=\"fa fa-question\"></i>"}
+            else if (this.status) {return "<i class=\"fa fa-check\"></i>"}
             else {return "<i class=\"fa fa-times\"></i>"}
         }
 
         protected invalidateStatus(): void {
-            this.satisfiable = null;
+            this.status = null;
         }
 
         public abortVerification(): void {
@@ -51,8 +55,8 @@ module Property {
         public firstProcess: string;
         public secondProcess: string;
 
-        public constructor(options: any) {
-            super();
+        public constructor(status: boolean, options: any) {
+            super(status);
             this.firstProcess = options.firstProcess;
             this.secondProcess = options.secondProcess;
         }
@@ -77,8 +81,8 @@ module Property {
     }
 
     export class StrongBisimulation extends Equivalence {
-        public constructor(options: any) {
-            super(options);
+        public constructor(status: boolean, options: any) {
+            super(status, options);
         }
 
         public getDescription(): string {
@@ -88,6 +92,7 @@ module Property {
         public toJSON(): any {
             return {
                 type: "StrongBisimulation",
+                status: this.status,
                 options: {
                     firstProcess: this.firstProcess,
                     secondProcess: this.secondProcess
@@ -108,7 +113,7 @@ module Property {
                 rightProcess: this.secondProcess
             });
             this.worker.addEventListener("message", event => {
-                this.satisfiable = (typeof event.data.result === "boolean") ? event.data.result : null;
+                this.status = (typeof event.data.result === "boolean") ? event.data.result : null;
                 this.worker.terminate();
                 this.worker = null;
                 callback();
@@ -117,8 +122,8 @@ module Property {
     }
 
     export class WeakBisimulation extends Equivalence {
-        public constructor(options: any) {
-            super(options);
+        public constructor(status: boolean, options: any) {
+            super(status, options);
         }
 
         public getDescription(): string {
@@ -128,6 +133,7 @@ module Property {
         public toJSON(): any {
             return {
                 type: "WeakBisimulation",
+                status: this.status,
                 options: {
                     firstProcess: this.firstProcess,
                     secondProcess: this.secondProcess
@@ -148,7 +154,7 @@ module Property {
                 rightProcess: this.secondProcess
             });
             this.worker.addEventListener("message", event => {
-                this.satisfiable = (typeof event.data.result === "boolean") ? event.data.result : null;
+                this.status = (typeof event.data.result === "boolean") ? event.data.result : null;
                 this.worker.terminate();
                 this.worker = null;
                 callback();
@@ -160,8 +166,8 @@ module Property {
         private process: string;
         private formula: string;
 
-        public constructor(options: any) {
-            super();
+        public constructor(status: boolean, options: any) {
+            super(status);
             this.process = options.process;
             this.formula = options.formula;
         }
@@ -192,6 +198,7 @@ module Property {
         public toJSON(): any {
             return {
                 type: "HML",
+                status: this.status,
                 options: {
                     process: this.process,
                     formula: this.formula
@@ -213,7 +220,7 @@ module Property {
                 formula: this.formula
             });
             this.worker.addEventListener("message", event => {
-                this.satisfiable = (typeof event.data.result === "boolean") ? event.data.result : null;
+                this.status = (typeof event.data.result === "boolean") ? event.data.result : null;
                 this.worker.terminate();
                 this.worker = null;
                 callback();
