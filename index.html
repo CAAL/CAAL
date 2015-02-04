@@ -60,14 +60,14 @@
             <li id="game-btn"><a>Game</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li><a>About</a></li>
-            <li><a>Help</a></li>
+            <!--<li><a>About</a></li>-->
+            <li button onclick="helpDialogFunction()"><a>Help</a></button li>
             <li><a href="https://github.com/CAAL/CAAL"><i class="fa fa-github fa-lg"></i></a></li>
           </ul>
         </div>
       </div>
     </nav>
-
+	
     <div class="container">
       <!-- Editor -->
       <div id="editor-container">
@@ -328,6 +328,135 @@
           </div>
           <div class="modal-body">
             <p id="explain-dialog-body-par"></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+          </div>
+        </div>
+      </div>
+    </div>
+	
+    <div class="modal fade" id="help-dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="help-dialog-title">Caal</h4>
+          </div>
+          <div class="modal-body">
+            <p id="help-dialog-body-par">
+				The table listed contains the allowed CCS expressions along with the syntax
+				
+				<table style="width:100%" class="td-1">
+					<thead>
+						<tr>
+							<th>Expression</th>
+							<th>Syntax</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Comment</td>
+							<td class ="td1"><font color ="green">* This is a comment</font></td>
+						</tr>
+					<tr>
+						<td>Process Definition</td>
+						<td class ="td1"> <b>A</b> <font color="blue">=</font> a<font color="blue">.</font><b>B</b>;</td>
+					</tr>		
+					<tr>
+						<td>Parallel Composition</td>
+						<td class ="td1">P <font color="blue">|</font> Q;</td>
+					</tr>			
+					<tr>
+						<td>Choice</td>
+						<td class ="td1">P <font color="blue">+</font> Q;</td>
+					</tr>			
+					<tr>
+						<td>Restriction</td>
+						<td class ="td1"><b>A</b> <font color="blue">\</font> {a,b};</td>
+					</tr>
+					<tr>
+						<td>Renaming</td>
+						<td class ="td1"><b>A</b>[b/a];</td>
+					</tr>
+					<tr>
+						<td>Set</td>
+						<td class ="td1">set <b>A</b> <font color="blue">=</font> {a,b,c};</td>
+					</tr>
+					<tr>
+						<td>Empty Process</td>
+						<td class ="td1">0;</td>
+					</tr>
+					</tbody>
+				</table>
+				<div>
+				</p>
+				
+		    <div class="modal-body">
+            <p id="help-dialog-body-par1">
+				The table listed contains the allowed HML formulas along with the syntax
+				
+				<table style="width:100%" class="td-1">
+					<thead>
+						<tr>
+							<th>Formula</th>
+							<th>Syntax</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>True</td>
+							<td class ="td1">tt</td>
+						</tr>
+					<tr>
+						<td>False</td>
+						<td class ="td1">ff</td>
+					</tr>		
+					<tr>
+						<td>Conjunction</td>
+						<td class ="td1">F and G;</td>
+					</tr>			
+					<tr>
+						<td>Disjunction</td>
+						<td class ="td1">F or G;</td>
+					</tr>			
+					<tr>
+						<td>Strong Exist</td>
+						<td class ="td1">&lta,b&gtF;</td>
+					</tr>
+					<tr>
+						<td>Weak Exist</td>
+						<td class ="td1">&lt&lta,b&gt&gtF;</td>
+					</tr>
+					<tr>
+						<td>Strong Forall</td>
+						<td class ="td1">[a,b]F;</td>
+					</tr>
+					<tr>
+						<td>Weak Forall</td>
+						<td class ="td1">[[a,b]]F;</td>
+					</tr>
+					<tr>
+						<td>All Actions</td>
+						<td class ="td1">- delimits all actions, e.g &lt-&gtF;</td>
+					</tr>
+					<tr>
+						<td>Minimum fix-point</td>
+						<td class ="td1">X min= [-]X;</td>
+					</tr>
+					<tr>
+						<td>Maximum fix-point</td>
+						<td class ="td1">X max= [-]X;</td>
+					</tr>
+					<tr>
+						<td>Recursive Variable</td>
+						<td class ="td1">X min= &lt-&gtY; <br/> 
+										 Y min= [-]tt;</td>
+					</tr>
+					</tbody>
+				</table>
+				
+			</p>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
