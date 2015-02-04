@@ -178,35 +178,6 @@ module Activity {
             this.succGenerator = null;
         }
 
-        private setOnHoverListener(row : JQuery) : void {
-            if(row){
-                $(row).hover(() => {
-                    var processId = row.data('targetId');
-                    this.uiGraph.setHover(processId.toString());
-
-                    $(row).css("background", "rgba(0, 0, 0, 0.07)");
-                }, 
-                () => {
-                    /*clear highlight and hover*/
-                    this.uiGraph.clearHover();
-                    $(row).css("background", "");
-                });
-            }
-        }
-
-
-        private setOnClickListener(row : JQuery) : void {
-            if(row){
-                $(row).on('click', () => {
-                    var processId = row.attr('data-target-id');
-                    this.expand(this.graph.processById(processId), this.expandDepth);
-
-                    /*clear previous hover*/
-                    this.uiGraph.clearHover();
-                });
-            }
-        }
-
         private clear() : void {
             this.uiGraph.clearAll();
         }
