@@ -42,7 +42,7 @@ module Main {
 
         activityHandler.addActivity(
                 "editor", 
-                new Activity.Editor(project, $("#editor-container")),
+                new Activity.Editor(project, $("#editor-container")[0]),
                 (callback) => { callback({}); },
                 "editor-container",
                 "edit-btn");
@@ -50,15 +50,7 @@ module Main {
         activityHandler.addActivity(
                 "explorer",
                 new Activity.Explorer(
-                    {
-                        canvas: $("#arbor-canvas")[0],
-                        fullscreenContainer: $("#fullscreen-container")[0],
-                        statusTableContainer: $("#status-table-container")[0],
-                        freezeBtn: $("#explorer-freeze-btn")[0],
-                        saveBtn: "#explorer-save-btn",
-                        fullscreenBtn: $("#explorer-fullscreen-btn")[0],
-                        sourceDefinition: $("#explorer-source-definition")[0]
-                    },
+                    $("#explorer-container")[0],
                     new Traverse.CCSNotationVisitor()),
                     setupExplorerActivityFn,
                     "explorer-container",

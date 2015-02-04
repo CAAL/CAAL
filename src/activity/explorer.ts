@@ -37,17 +37,33 @@ module Activity {
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
         private preExpandDept : number = 1;
+        private fullScreenContainer;
+        private statusTableContainer;
+        private freezeBtn;
+        private saveBtn;
+        private fullscreenBtn;
+        private sourceDefinition;
 
-        constructor(private elements, notationVisitor : CCSNotationVisitor) {
+        constructor(private container, notationVisitor : CCSNotationVisitor) {
             super();
-            this.canvas = elements.canvas;
+            
+            var $container = $(container);
+
+            this.canvas = $container.find("#arbor-canvas")[0];
             this.notationVisitor = notationVisitor;
             this.renderer = new Renderer(this.canvas);
             this.uiGraph = new ArborGraph(this.renderer);
 
+            this.fullScreenContainer = $container.find("#fullscreen-container")[0];
+            this.statusTableContainer = $container.find("#status-table-container")[0];
+            this.freezeBtn = $container.find("#explorer-freeze-btn")[0];
+            this.saveBtn = $container.find("#explorer-save-btn")[0];
+            this.fullscreenBtn = $container.find("#explorer-fullscreen-btn")[0];
+            this.sourceDefinition = $container.find("#explorer-source-definition")[0];
+
             this.bindedFns.fullscreen = this.toggleFullscreen.bind(this);
-            $(this.elements.fullscreenBtn).on("click", this.bindedFns.fullscreen);
-            $(this.elements.saveBtn).on("click", () => this.saveCanvas());
+            $(this.fullscreenBtn).on("click", this.bindedFns.fullscreen);
+            $(this.saveBtn).on("click", () => this.saveCanvas());
 
             $(document).on("fullscreenchange", () => this.fullscreenChanged());
             $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
@@ -65,7 +81,7 @@ module Activity {
         }
         
         private toggleFullscreen() {
-            var fullScreenContainer = this.elements.fullscreenContainer;
+            var fullScreenContainer = this.fullScreenContainer;
             if (!this.isFullscreen()) {
                 if (fullScreenContainer.requestFullscreen) {
                     fullScreenContainer.requestFullscreen();
@@ -90,12 +106,12 @@ module Activity {
         }
 
         private saveCanvas() {
-            $(this.elements.saveBtn).attr("href", this.canvas.toDataURL("image/png"));
-            $(this.elements.saveBtn).attr("download", this.initialProcessName + ".png");
+            $(this.saveBtn).attr("href", this.canvas.toDataURL("image/png"));
+            $(this.saveBtn).attr("download", this.initialProcessName + ".png");
         }
 
         private fullscreenChanged() {
-            $(this.elements.fullscreenBtn).text(this.isFullscreen() ? "Exit" : "Fullscreen");
+            $(this.fullscreenBtn).text(this.isFullscreen() ? "Exit" : "Fullscreen");
             this.resize();
         }
         
@@ -135,10 +151,10 @@ module Activity {
             });
 
             this.uiGraph.unfreeze(); // unfreeze the graph 
-            $(this.elements.freezeBtn).text("Freeze"); // and reset the freezeBtn.
+            $(this.freezeBtn).text("Freeze"); // and reset the freezeBtn.
 
             this.bindedFns.freeze = this.toggleFreeze.bind(this);
-            $(this.elements.freezeBtn).on("click", this.bindedFns.freeze);
+            $(this.freezeBtn).on("click", this.bindedFns.freeze);
             
             this.resize();
         }
@@ -148,9 +164,9 @@ module Activity {
             this.bindedFns.resize = null;
             
             this.uiGraph.unfreeze(); // unfreeze the graph 
-            $(this.elements.freezeBtn).text("Freeze"); // and reset the freezeBtn.
+            $(this.freezeBtn).text("Freeze"); // and reset the freezeBtn.
             
-            $(this.elements.freezeBtn).unbind("click", this.bindedFns.freeze);
+            $(this.freezeBtn).unbind("click", this.bindedFns.freeze);
             this.uiGraph.clearOnSelectListener();
             this.uiGraph.clearHoverOnListener();
             this.uiGraph.clearHoverOutListener();
@@ -191,7 +207,7 @@ module Activity {
         }
 
         private toggleFreeze() : void {
-            var $freezeBtn = $(this.elements.freezeBtn),
+            var $freezeBtn = $(this.freezeBtn),
                 isFreezing = $freezeBtn.text() === "Unfreeze",
                 newValueText = isFreezing ? "Freeze" : "Unfreeze",
                 doFreeze = !isFreezing;
@@ -266,8 +282,8 @@ module Activity {
         }
 
         private updateStatusAreaTransitions(fromProcess, transitions : ccs.Transition[]) {
-            var body = $(this.elements.statusTableContainer).find("tbody");
-            var $sourceDefinition = $(this.elements.sourceDefinition);
+            var body = $(this.statusTableContainer).find("tbody");
+            var $sourceDefinition = $(this.sourceDefinition);
             body.empty();
 
             $sourceDefinition.text(this.labelFor(fromProcess) + " = " + this.forceExpandDefinition(fromProcess));
@@ -293,7 +309,7 @@ module Activity {
                 return;
             }
             else{
-                 $(this.elements.freezeBtn).text("Freeze"); // and reset the freezeBtn.
+                 $(this.freezeBtn).text("Freeze"); // and reset the freezeBtn.
             }
         }
 
@@ -302,7 +318,7 @@ module Activity {
             var height;
             if (!this.isFullscreen()) {
                 var offsetTop = $(this.canvas).offset().top;
-                var offsetBottom = $(this.elements.statusTableContainer).height() + 20; // Parent container margin = 20.
+                var offsetBottom = $(this.statusTableContainer).height() + 20; // Parent container margin = 20.
                 height = Math.max(350, window.innerHeight - offsetTop - offsetBottom);
             } else {
                 height = this.canvas.parentNode.clientHeight;
