@@ -38,7 +38,6 @@ module Activity {
                     this.verifactionEnded();
                 }
             });
-            $(document).on("load", () => this.displayProperties());
 
             this.editor = ace.edit("hml-editor");
             this.editor.setTheme("ace/theme/crisp");
@@ -51,6 +50,10 @@ module Activity {
                 fontSize: 14,
                 fontFamily: "Inconsolata",
             });
+        }
+
+        public beforeShow(): void {
+            this.displayProperties();
         }
 
         public displayProcessList(processes: string[], list: JQuery, selected: string): void {
@@ -71,6 +74,7 @@ module Activity {
 
         public displayProperties(): void {
             var properties = this.project.getProperties();
+            console.log(properties);
             this.propertyTableBody.empty();
 
             for (var i = 0; i < properties.length; i++) {

@@ -120,8 +120,6 @@ class Load extends MenuItem {
             this.activityHandler.selectActivity("editor");
             $(this.elementIds.fileInputId).replaceWith($(this.elementIds.fileInputId).val('').clone(true)); // Clear input field.
         }
-
-        $(document).trigger('load');
     }
 
     private loadFromStorage(e): void {
@@ -135,8 +133,6 @@ class Load extends MenuItem {
                 break;
             }
         }
-
-        $(document).trigger('load');
     }
 
     private loadExample(e): void {
@@ -149,8 +145,6 @@ class Load extends MenuItem {
                 break;
             }
         }
-
-        $(document).trigger('load');
     }
 
     private showProjects(): void {

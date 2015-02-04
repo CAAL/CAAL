@@ -8,7 +8,7 @@ class Project {
     private id = null;
     private defaultTitle = "Untitled Project";
     private defaultCCS = "";
-    private properties = Array();
+    private properties: Property.Property[]
     private projectTitle = $("#project-title");
     private currentCCS: string;
     private eventEmitter = new EventEmitter();
@@ -26,7 +26,7 @@ class Project {
     }
 
     public reset(): void {
-        this.update(null, this.defaultTitle, this.defaultCCS, Array());
+        this.update(null, this.defaultTitle, this.defaultCCS, null);
     }
 
     public getId(): number {
@@ -75,8 +75,17 @@ class Project {
     }
 
     public setProperties(properties: any[]): void {
-        for (var i = 0; i < properties.length; i++) {
-            this.addProperty(new window["Property"][properties[i].type](properties[i].options));
+        this.properties = Array();
+
+        if (properties !== null) 
+        {
+            for (var i = 0; i < properties.length; i++) {
+                try {
+                    this.addProperty(new window["Property"][properties[i].type](properties[i].options));
+                } catch (e) {
+                    console.log("Unknown Property type");
+                }
+            }
         }
     }
 
