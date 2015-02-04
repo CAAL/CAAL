@@ -74,7 +74,10 @@ module Activity {
             $(document).on("mozfullscreenerror", () => this.fullscreenError());
             $(document).on("MSFullscreenError", () => this.fullscreenError());
 
-            $(this.statusTableContainer).find("tbody").on("click", this.onTransitionTableClick.bind(this));
+            $(this.statusTableContainer).find("tbody")
+                .on("click", "tr", this.onTransitionTableRowClick.bind(this))
+                .on("mouseenter", "tr", this.onTransitionTableRowHover.bind(this, true))
+                .on("mouseleave", "tr", this.onTransitionTableRowHover.bind(this, false));
         }
 
         private isFullscreen(): boolean {
@@ -300,20 +303,22 @@ module Activity {
                 row.append(action, name, target);
                 row.attr("data-target-id", t.targetProcess.id);
                 body.append(row);
-                this.setOnHoverListener(row);
             });          
         }
 
-        private onTransitionTableClick(event) {
-            var targetId = undefined,
-                eventTarget = event.target || event.srcElement;
-            while (eventTarget.tagName !== "TR" && eventTarget.tagName !== "TBODY") {
-                eventTarget = eventTarget.parentNode;
+        private onTransitionTableRowHover(entering : boolean, event) {
+            if (entering) {
+                var targetId = $(event.currentTarget).data("targetId");
+                this.uiGraph.setHover(targetId);
+                $(event.currentTarget).css("background", "rgba(0, 0, 0, 0.07)");
+            } else {
+                this.uiGraph.clearHover();
+                $(event.currentTarget).css("background", "");
             }
-            //Check if row pressed
-            if (eventTarget && eventTarget.tagName === "TR") {
-                targetId = eventTarget.dataset.targetId;
-            }
+        }
+
+        private onTransitionTableRowClick(event) {
+            var targetId = $(event.currentTarget).data("targetId");
             if (targetId) {
                 this.expand(this.graph.processById(targetId), this.expandDepth);
                 this.uiGraph.clearHover();
