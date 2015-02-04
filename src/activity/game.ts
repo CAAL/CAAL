@@ -83,8 +83,8 @@ module Activity {
             if (this.snapCanvas == undefined)
                 return;
             
-            var traceWidth = this.canvas.clientWidth;
-            var traceHeight = this.canvas.clientHeight;
+            var traceWidth = this.canvas.clientWidth || this.canvas.parentNode.clientWidth;
+            var traceHeight = this.canvas.clientHeight || this.canvas.parentNode.clientHeight;
             this.snapCanvas.setSize(traceWidth, traceHeight);
         }
         
@@ -139,7 +139,7 @@ module Activity {
         
         private setOnClickListener(row, data?) {
             if(row){
-                $(row).on('click', () => {
+                $(row).on('click', (event) => {
 
                     var destination =  row.find("#destination").html();
                     var action = row.find("#action").html();
@@ -178,6 +178,7 @@ module Activity {
                         this.delayedPlayTimeout = setTimeout(() => this.selectEdge(this.isBisimilar, row.find("#nodeid").html()), BisimulationGame.ComputerDealy);
                         //this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()));
                     }
+                    event.preventDefault();
                 });
             }
         }
