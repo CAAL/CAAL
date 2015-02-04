@@ -15,6 +15,7 @@ class Project {
 
     public constructor() {
         this.reset();
+        this.projectTitle.keypress(function(e) { return e.which != 13; });
         this.projectTitle.focusout(() => this.onTitleChanged());
     }
 
@@ -46,8 +47,12 @@ class Project {
     }
 
     private onTitleChanged(): void {
-        if (this.projectTitle.text() === "") {
-            this.projectTitle.text(this.defaultTitle);
+        var title = this.projectTitle.text();
+
+        if (title === "") {
+            this.setTitle(this.defaultTitle);
+        } else {
+            this.setTitle(title); // Removes line breaks since $.text() trims line breaks.
         }
     }
 
