@@ -106,6 +106,7 @@ interface SnapElement {
     addClass(value: string): SnapElement;
     after(el: SnapElement): SnapElement;
     animate(attrs: any, duration: number, easing: Function, callback: Function): SnapElement;
+    animate(attrs: any, duration: number): SnapElement;
     animate(animation: any): SnapElement;
     append(el : SnapElement): SnapElement;
     append(el : SnapSet): SnapElement;
