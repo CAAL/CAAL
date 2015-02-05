@@ -1,36 +1,33 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="../../lib/ace.d.ts" />
+/// <reference path="../../lib/wolfy87-eventemitter.d.ts" />
+/// <reference path="../../lib/ccs.d.ts" />
 /// <reference path="property.ts" />
 
 class Project {
-    private defaultTitle: string;
-    private defaultCCS: string;
-    private titleId: string;
-    private editor: any;
-    private id: number;
-    private title: string;
-    private properties: Property.Property[];
+    private id = null;
+    private defaultTitle = "Untitled Project";
+    private defaultCCS = "";
+    private properties: Property.Property[]
+    private projectTitle = $("#project-title");
+    private currentCCS: string;
+    private eventEmitter = new EventEmitter();
 
-    public constructor(defaultTitle: string, defaultCCS: string, titleId: string, editor: any) {
-        this.defaultTitle = defaultTitle;
-        this.defaultCCS = defaultCCS;
-        this.titleId = titleId;
-        this.editor = editor;
-        this.properties = Array();
-
+    public constructor() {
         this.reset();
-
-        $(this.titleId).focusout(() => this.onTitleChanged());
+        this.projectTitle.keypress(function(e) { return e.which != 13; }); // Disable line breaks. Can still be copy/pasted.
+        this.projectTitle.focusout(() => this.onTitleChanged());
     }
 
-    public update(id: number, title: string, ccs: string): void {
+    public update(id: number, title: string, ccs: string, properties: any[]): void {
         this.setId(id);
         this.setTitle(title);
         this.setCCS(ccs);
+        this.setProperties(properties);
     }
 
     public reset(): void {
-        this.update(null, this.defaultTitle, this.defaultCCS);
+        this.update(null, this.defaultTitle, this.defaultCCS, null);
     }
 
     public getId(): number {
@@ -42,29 +39,59 @@ class Project {
     }
 
     public getTitle(): string {
-        return this.title;
+        return this.projectTitle.text();
     }
 
     public setTitle(title: string): void {
-        this.title = title;
-        $(this.titleId).text(this.title);
+        this.projectTitle.text(title);
     }
 
     private onTitleChanged(): void {
-        this.title = $(this.titleId).text();
+        var title = this.projectTitle.text();
+
+        if (title === "") {
+            this.setTitle(this.defaultTitle);
+        } else {
+            this.setTitle(title); // Removes line breaks since $.text() trims line breaks.
+        }
     }
 
     public getCCS(): string {
-        return this.editor.getSession().getValue();
+        return this.currentCCS;
     }
 
     public setCCS(ccs: string): void {
-        this.editor.setValue(ccs, 1);
-        this.editor.clearSelection();
+        this.currentCCS = ccs;
+        this.eventEmitter.emit("ccs-change", {ccs: this.currentCCS});
+    }
+
+    public onCCSChanged(ccs: string): void {
+        this.currentCCS = ccs;
+    }
+
+    public getGraph(): CCS.Graph {
+        var graph = new CCS.Graph();
+            CCSParser.parse(this.currentCCS, {ccs: CCS, graph: graph});
+        return graph;
     }
 
     public getProperties(): Property.Property[] {
         return this.properties;
+    }
+
+    public setProperties(properties: any[]): void {
+        this.properties = Array();
+
+        if (properties !== null) 
+        {
+            for (var i = 0; i < properties.length; i++) {
+                try {
+                    this.addProperty(new window["Property"][properties[i].type](properties[i].status, properties[i].options));
+                } catch (e) {
+                    console.log("Unknown property type");
+                }
+            }
+        }
     }
 
     public addProperty(property: Property.Property): void {
@@ -82,11 +109,26 @@ class Project {
         }
     }
 
+    public on(event: string, listener: Function): void {
+        this.eventEmitter.on(event, listener);
+    }
+
+    public off(event: string, listener: Function): void {
+        this.eventEmitter.off(event, listener);
+    }
+
     public toJSON(): any {
+        var properties = Array();
+
+        for (var i = 0; i < this.properties.length; i++) {
+            properties.push(this.properties[i].toJSON());
+        }
+
         return {
             id: this.getId(),
             title: this.getTitle(),
-            ccs: this.getCCS()
+            ccs: this.getCCS(),
+            properties: properties
         };
     }
 }

@@ -4,24 +4,12 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <title>CAAL</title>
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:600' rel='stylesheet' type='text/css'>
-    <link href='http://fonts.googleapis.com/css?family=Inconsolata:400,700' rel='stylesheet' type='text/css'>
-    <link href="lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href='css/fonts.css' rel='stylesheet' type='text/css'>
+    <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="lib/fontawesome/css/font-awesome.min.css" rel="stylesheet">
+    <link href="lib/smartmenus/jquery.smartmenus.bootstrap.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-    <script src="lib/jquery-1.11.1.min.js"></script>
-    <script src="lib/snap.svg-min.js"></script>
-    <script src="lib/bootstrap/dist/js/bootstrap.min.js"></script>
-    <script src="lib/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
-    <script src="lib/ace/src/ext-language_tools.js"></script>
-    <script type="text/javascript" src="lib/ccs_grammar.js"></script>
-    <script src="lib/hml_grammar.js"></script>
-    <script src="lib/arbor.js"></script>
-    <script src="lib/graphics.js"></script>
-    <script src="lib/main.js"></script>
-    <script>$(document).ready(Main.setup);</script>
   </head>
   <body>
     <!-- Top navigation -->
@@ -39,29 +27,30 @@
         <div class="collapse navbar-collapse" id="navbar-collapse">
           <ul class="nav navbar-nav">
             <li class="divider-vertical"></li>
-            <li id="new-btn"><a>New Project</a></li>
-            <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown">Save <span class="caret"></span></a>
-              <ul class="dropdown-menu" role="menu">
-                <li id="save-projects-btn"><a>To My Projects</a></li>
-                <li><a id="save-file-btn">To File</a></li>
-              </ul>
-            </li>
-            <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown">Load <span class="caret"></span></a>
-              <ul class="dropdown-menu" role="menu">
-                <li id="load-file-btn"><a>From File</a></li>
-                <input type="file" id="file-input" class="hidden" accept=".ccs-project" />
-                <li class="divider"></li>
-                <li id="projects-list" class="dropdown-header" role="presentation">My Projects</li>
-                <li class="divider"></li>
-                <li id="examples-list" class="dropdown-header" role="presentation">Examples</li>
-              </ul>
-            </li>
-            <li class="dropdown">
-              <a class="dropdown-toggle" data-toggle="dropdown">Delete <span class="caret"></span></a>
-              <ul class="dropdown-menu" role="menu">
-                <li id="delete-list" class="dropdown-header" role="presentation">My Projects</li>
+            <li><a>Project</a>
+              <ul class="dropdown-menu">
+                <li id="new-btn"><a>New Project</a></li>
+                <li><a>Save</a>
+                  <ul class="dropdown-menu">
+                    <li><a id="save-file-btn">To File</a></li>
+                    <li id="save-projects-btn"><a>To My Projects</a></li>
+                  </ul>
+                </li>
+                <li><a>Load</a>
+                  <ul class="dropdown-menu">
+                    <li id="load-file-btn"><a>From File</a></li>
+                    <input type="file" id="file-input" class="hidden" accept=".ccs-project" />
+                    <li class="divider"></li>
+                    <li id="projects-list" class="dropdown-header" role="presentation">My Projects</li>
+                    <li class="divider"></li>
+                    <li id="examples-list" class="dropdown-header" role="presentation">Examples</li>
+                  </ul>
+                </li>
+                <li><a>Delete</a>
+                  <ul class="dropdown-menu">
+                    <li id="delete-list" class="dropdown-header" role="presentation">My Projects</li>
+                  </ul>
+                </li>
               </ul>
             </li>
             <li class="divider-vertical"></li>
@@ -71,21 +60,21 @@
             <li id="game-btn"><a>Game</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li><a>About</a></li>
-            <li><a>Help</a></li>
+            <!--<li><a>About</a></li>-->
+            <li button onclick="helpDialogFunction()"><a>Help</a></button li>
             <li><a href="https://github.com/CAAL/CAAL"><i class="fa fa-github fa-lg"></i></a></li>
           </ul>
         </div>
       </div>
     </nav>
-
+	
     <div class="container">
       <!-- Editor -->
       <div id="editor-container">
-        <h4 id="project-title" class="pull-left" contenteditable="true">Alternating Bit Protocol</h4>
+        <h4 id="project-title" class="pull-left" contenteditable="true"></h4>
+        <i id="title-edit-icon" class="fa fa-pencil-square-o"></i>
         <div class="btn-group pull-right">
           <button id="parse-btn" type="button" class="btn btn-default">Parse</button>
-          <button id="clear-btn" type="button" class="btn btn-default">Clear</button>
           <div class="btn-group">
             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
               Font Size
@@ -170,7 +159,6 @@
                 <li class="dropdown-header" role="presentation">Equivalence</li>
                 <li id="strong"><a>Strong Bisimulation</a></li>
                 <li id="weak"><a>Weak Bisimulation</a></li>
-                <li id="trace" class="disabled"><a>Trace Equivalence</a></li>
                 <li class="divider"></li>
                 <li class="dropdown-header" role="presentation">Model Checking</li>
                 <li id="hml"><a>HML</a></li>
@@ -347,6 +335,150 @@
         </div>
       </div>
     </div>
+	
+    <div class="modal fade" id="help-dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="help-dialog-title">Caal</h4>
+          </div>
+          <div class="modal-body">
+            <p id="help-dialog-body-par">
+				The table listed contains the allowed CCS expressions along with the syntax
+				
+				<table style="width:100%" class="td-1">
+					<thead>
+						<tr>
+							<th>Expression</th>
+							<th>Syntax</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Comment</td>
+							<td class ="td1"><font color ="green">* This is a comment</font></td>
+						</tr>
+					<tr>
+						<td>Process Definition</td>
+						<td class ="td1"> <b>A</b> <font color="blue">=</font> a<font color="blue">.</font><b>B</b>;</td>
+					</tr>		
+					<tr>
+						<td>Parallel Composition</td>
+						<td class ="td1">P <font color="blue">|</font> Q;</td>
+					</tr>			
+					<tr>
+						<td>Choice</td>
+						<td class ="td1">P <font color="blue">+</font> Q;</td>
+					</tr>			
+					<tr>
+						<td>Restriction</td>
+						<td class ="td1"><b>A</b> <font color="blue">\</font> {a,b};</td>
+					</tr>
+					<tr>
+						<td>Renaming</td>
+						<td class ="td1"><b>A</b>[b/a];</td>
+					</tr>
+					<tr>
+						<td>Set</td>
+						<td class ="td1">set <b>A</b> <font color="blue">=</font> {a,b,c};</td>
+					</tr>
+					<tr>
+						<td>Empty Process</td>
+						<td class ="td1">0;</td>
+					</tr>
+					</tbody>
+				</table>
+				<div>
+				</p>
+				
+		    <div class="modal-body">
+            <p id="help-dialog-body-par1">
+				The table listed contains the allowed HML formulas along with the syntax
+				
+				<table style="width:100%" class="td-1">
+					<thead>
+						<tr>
+							<th>Formula</th>
+							<th>Syntax</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>True</td>
+							<td class ="td1">tt</td>
+						</tr>
+					<tr>
+						<td>False</td>
+						<td class ="td1">ff</td>
+					</tr>		
+					<tr>
+						<td>Conjunction</td>
+						<td class ="td1">F and G;</td>
+					</tr>			
+					<tr>
+						<td>Disjunction</td>
+						<td class ="td1">F or G;</td>
+					</tr>			
+					<tr>
+						<td>Strong Exist</td>
+						<td class ="td1">&lta,b&gtF;</td>
+					</tr>
+					<tr>
+						<td>Weak Exist</td>
+						<td class ="td1">&lt&lta,b&gt&gtF;</td>
+					</tr>
+					<tr>
+						<td>Strong Forall</td>
+						<td class ="td1">[a,b]F;</td>
+					</tr>
+					<tr>
+						<td>Weak Forall</td>
+						<td class ="td1">[[a,b]]F;</td>
+					</tr>
+					<tr>
+						<td>All Actions</td>
+						<td class ="td1">- delimits all actions, e.g &lt-&gtF;</td>
+					</tr>
+					<tr>
+						<td>Minimum fix-point</td>
+						<td class ="td1">X min= [-]X;</td>
+					</tr>
+					<tr>
+						<td>Maximum fix-point</td>
+						<td class ="td1">X max= [-]X;</td>
+					</tr>
+					<tr>
+						<td>Recursive Variable</td>
+						<td class ="td1">X min= &lt-&gtY; <br/> 
+										 Y min= [-]tt;</td>
+					</tr>
+					</tbody>
+				</table>
+				
+			</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="tip"></div>
+    <script src="lib/jquery-1.11.1.min.js"></script>
+    <script src="lib/snap.svg-min.js"></script>
+    <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+    <script src="lib/smartmenus/jquery.smartmenus.min.js"></script>
+    <script src="lib/smartmenus/jquery.smartmenus.bootstrap.min.js"></script>
+    <script src="lib/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="lib/ace/src/ext-language_tools.js"></script>
+    <script src="lib/EventEmitter.min.js"></script>
+    <script type="text/javascript" src="lib/ccs_grammar.js"></script>
+    <script src="lib/hml_grammar.js"></script>
+    <script src="lib/arbor.js"></script>
+    <script src="lib/graphics.js"></script>
+    <script src="lib/ccs.js"></script>
+    <script src="lib/main.js"></script>
+    <script>$(document).ready(Main.setup);</script>
   </body>
 </html>

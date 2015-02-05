@@ -100,6 +100,20 @@ canvas {
     min-height: 300px;
 }
 
+#title-edit-icon {
+    padding-left: 5px;
+    opacity: 0.0;
+    -webkit-transition: all 500ms ease-in-out;
+    -moz-transition: all 500ms ease-in-out;
+    -ms-transition: all 500ms ease-in-out;
+    -o-transition: all 500ms ease-in-out;
+    transition: all 500ms ease-in-out;
+}
+
+#project-title:hover + #title-edit-icon {
+    opacity: 1.0;
+}
+
 
 /*
  * Explorer activity styles
@@ -190,6 +204,24 @@ canvas {
 
 .modal-footer > #game-btn-group > #start-btn {
     width: 80%;
+}
+.modal-dialog .modal-header  > #help-dialog-title{
+	font-variant: small-caps;
+}
+
+
+.modal-dialog .modal-header > #help-dialog-body-par table, td, th {
+  border: 1px solid #999;
+  padding: 0.5rem;
+  text-align: left; 
+}
+
+td.td1{
+  border: 1px solid #999;
+  padding: 0.5rem;
+  text-align: left;
+  font: normal 14px "Inconsolata";   
+
 }
 
 /*

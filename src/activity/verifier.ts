@@ -52,6 +52,10 @@ module Activity {
             });
         }
 
+        public beforeShow(): void {
+            this.displayProperties();
+        }
+
         public displayProcessList(processes: string[], list: JQuery, selected: string): void {
             list.empty();
 
@@ -77,7 +81,7 @@ module Activity {
                 var del = $("<i class=\"fa fa-trash\"></i>");
                 var verify = $("<i class=\"fa fa-play\"></i>");
 
-                var tdStatus = $("<td class=\"text-center\"></td>").append(properties[i].getSatisfiable());
+                var tdStatus = $("<td class=\"text-center\"></td>").append(properties[i].getStatusIcon());
                 var tdDescription = $("<td></td>").append(properties[i].getDescription());
                 var tdDelete = $("<td class=\"text-center\"></td>").append(del);
                 var tdVerify = $("<td class=\"text-center\"></td>").append(verify);
@@ -97,13 +101,13 @@ module Activity {
 
             switch(type) {
                 case "strong":
-                    property = new Property.StrongBisimulation("", "");
+                    property = new Property.StrongBisimulation(null, {firstProcess: "", secondProcess: ""});
                     break;
                 case "weak":
-                    property = new Property.WeakBisimulation("", "");
+                    property = new Property.WeakBisimulation(null, {firstProcess: "", secondProcess: ""});
                     break;
                 case "hml":
-                    property = new Property.HML("", "");
+                    property = new Property.HML(null, {process: "", formula: ""});
                     break;
             }
 

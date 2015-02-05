@@ -1,10 +1,9 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="activity.ts" />
-/// <reference path="../ccs/ccs.ts" />
+/// <reference path="../../lib/ccs.d.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="../gui/gui.ts" />
-/// <reference path="../ccs/util.ts" />
 /// <reference path="../../lib/suppressWarnings.d.ts" />
 
 module Activity {
@@ -38,17 +37,32 @@ module Activity {
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
         private preExpandDept : number = 1;
+        private fullScreenContainer;
+        private statusTableContainer;
+        private freezeBtn;
+        private saveBtn;
+        private fullscreenBtn;
+        private sourceDefinition;
 
-        constructor(private elements, notationVisitor : CCSNotationVisitor) {
+        constructor(private container, notationVisitor : CCSNotationVisitor) {
             super();
-            this.canvas = elements.canvas;
+            
+            var $container = $(container);
+
+            this.canvas = $container.find("#arbor-canvas")[0];
             this.notationVisitor = notationVisitor;
             this.renderer = new Renderer(this.canvas);
             this.uiGraph = new ArborGraph(this.renderer);
 
-            this.bindedFns.fullscreen = this.toggleFullscreen.bind(this);
-            $(this.elements.fullscreenBtn).on("click", this.bindedFns.fullscreen);
-            $(this.elements.saveBtn).on("click", () => this.saveCanvas());
+            this.fullScreenContainer = $container.find("#fullscreen-container")[0];
+            this.statusTableContainer = $container.find("#status-table-container")[0];
+            this.freezeBtn = $container.find("#explorer-freeze-btn")[0];
+            this.saveBtn = $container.find("#explorer-save-btn")[0];
+            this.fullscreenBtn = $container.find("#explorer-fullscreen-btn")[0];
+            this.sourceDefinition = $container.find("#explorer-source-definition")[0];
+
+            $(this.fullscreenBtn).on("click", this.toggleFullscreen.bind(this));
+            $(this.saveBtn).on("click", () => this.saveCanvas());
 
             $(document).on("fullscreenchange", () => this.fullscreenChanged());
             $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
@@ -59,6 +73,11 @@ module Activity {
             $(document).on("webkitfullscreenerror", () => this.fullscreenError());
             $(document).on("mozfullscreenerror", () => this.fullscreenError());
             $(document).on("MSFullscreenError", () => this.fullscreenError());
+
+            $(this.statusTableContainer).find("tbody")
+                .on("click", "tr", this.onTransitionTableRowClick.bind(this))
+                .on("mouseenter", "tr", this.onTransitionTableRowHover.bind(this, true))
+                .on("mouseleave", "tr", this.onTransitionTableRowHover.bind(this, false));
         }
 
         private isFullscreen(): boolean {
@@ -66,7 +85,7 @@ module Activity {
         }
         
         private toggleFullscreen() {
-            var fullScreenContainer = this.elements.fullscreenContainer;
+            var fullScreenContainer = this.fullScreenContainer;
             if (!this.isFullscreen()) {
                 if (fullScreenContainer.requestFullscreen) {
                     fullScreenContainer.requestFullscreen();
@@ -91,12 +110,12 @@ module Activity {
         }
 
         private saveCanvas() {
-            $(this.elements.saveBtn).attr("href", this.canvas.toDataURL("image/png"));
-            $(this.elements.saveBtn).attr("download", this.initialProcessName + ".png");
+            $(this.saveBtn).attr("href", this.canvas.toDataURL("image/png"));
+            $(this.saveBtn).attr("download", this.initialProcessName + ".png");
         }
 
         private fullscreenChanged() {
-            $(this.elements.fullscreenBtn).text(this.isFullscreen() ? "Exit" : "Fullscreen");
+            $(this.fullscreenBtn).text(this.isFullscreen() ? "Exit" : "Fullscreen");
             this.resize();
         }
         
@@ -108,7 +127,6 @@ module Activity {
         }
         
         beforeShow(configuration) {
-            console.log(configuration);
             this.clear();
             this.graph = configuration.graph;
             this.succGenerator = configuration.successorGenerator;
@@ -137,10 +155,10 @@ module Activity {
             });
 
             this.uiGraph.unfreeze(); // unfreeze the graph 
-            $(this.elements.freezeBtn).text("Freeze"); // and reset the freezeBtn.
+            $(this.freezeBtn).text("Freeze"); // and reset the freezeBtn.
 
             this.bindedFns.freeze = this.toggleFreeze.bind(this);
-            $(this.elements.freezeBtn).on("click", this.bindedFns.freeze);
+            $(this.freezeBtn).on("click", this.bindedFns.freeze);
             
             this.resize();
         }
@@ -150,9 +168,9 @@ module Activity {
             this.bindedFns.resize = null;
             
             this.uiGraph.unfreeze(); // unfreeze the graph 
-            $(this.elements.freezeBtn).text("Freeze"); // and reset the freezeBtn.
+            $(this.freezeBtn).text("Freeze"); // and reset the freezeBtn.
             
-            $(this.elements.freezeBtn).unbind("click", this.bindedFns.freeze);
+            $(this.freezeBtn).unbind("click", this.bindedFns.freeze);
             this.uiGraph.clearOnSelectListener();
             this.uiGraph.clearHoverOnListener();
             this.uiGraph.clearHoverOutListener();
@@ -160,40 +178,12 @@ module Activity {
             this.succGenerator = null;
         }
 
-        private setOnHoverListener(row : JQuery) : void {
-            if(row){
-                $(row).hover(() => {
-                    var processId = row.data('targetId');
-                    this.uiGraph.setHover(processId.toString());
-
-                    $(row).css("background", "rgba(0, 0, 0, 0.07)");
-                }, 
-                () => {
-                    /*clear highlight and hover*/
-                    this.uiGraph.clearHover();
-                    $(row).css("background", "");
-                });
-            }
-        }
-
-        private setOnClickListener(row : JQuery) : void {
-            if(row){
-                $(row).on('click', () => {
-                    var processId = row.data('targetId');
-                    this.expand(this.graph.processById(processId), this.expandDepth);
-
-                    /*clear previous hover*/
-                    this.uiGraph.clearHover();
-                });
-            }
-        }
-
         private clear() : void {
             this.uiGraph.clearAll();
         }
 
         private toggleFreeze() : void {
-            var $freezeBtn = $(this.elements.freezeBtn),
+            var $freezeBtn = $(this.freezeBtn),
                 isFreezing = $freezeBtn.text() === "Unfreeze",
                 newValueText = isFreezing ? "Freeze" : "Unfreeze",
                 doFreeze = !isFreezing;
@@ -239,7 +229,10 @@ module Activity {
                 });
             }
 
-            this.resetFreezeBtn(isExpanded);
+            //Reset freeze button
+            if (!isExpanded) {
+                $(this.freezeBtn).text("Freeze");
+            }
             this.uiGraph.setSelected(process.id.toString());
         }
 
@@ -260,7 +253,7 @@ module Activity {
             return result;
         }
 
-        private forceExpandDefinition(process) : string {
+        private getDefinitionForProcess(process) : string {
             if (process instanceof ccs.NamedProcess) {
                 return this.notationVisitor.visit((<ccs.NamedProcess>process).subProcess);
             }
@@ -268,35 +261,43 @@ module Activity {
         }
 
         private updateStatusAreaTransitions(fromProcess, transitions : ccs.Transition[]) {
-            var body = $(this.elements.statusTableContainer).find("tbody");
-            var $sourceDefinition = $(this.elements.sourceDefinition);
+            var body = $(this.statusTableContainer).find("tbody");
+            var $sourceDefinition = $(this.sourceDefinition);
             body.empty();
 
-            $sourceDefinition.text(this.labelFor(fromProcess) + " = " + this.forceExpandDefinition(fromProcess));
+            $sourceDefinition.text(this.labelFor(fromProcess) + " = " + this.getDefinitionForProcess(fromProcess));
             transitions.forEach(t => {
                 var row = $("<tr></tr>");
                 var action = $("<td></td>").append(t.action.toString());
                 var name = $("<td></td>").append(this.labelFor(t.targetProcess));
                 var target = $("<td></td>").append(this.notationVisitor.visit(t.targetProcess));
                 row.append(action, name, target);
-                row.data("targetId", t.targetProcess.id);
+                row.attr("data-target-id", t.targetProcess.id);
                 body.append(row);
-                this.setOnHoverListener(row);
-                this.setOnClickListener(row);
             });          
+        }
+
+        private onTransitionTableRowHover(entering : boolean, event) {
+            if (entering) {
+                var targetId = $(event.currentTarget).data("targetId");
+                this.uiGraph.setHover(targetId);
+                $(event.currentTarget).css("background", "rgba(0, 0, 0, 0.07)");
+            } else {
+                this.uiGraph.clearHover();
+                $(event.currentTarget).css("background", "");
+            }
+        }
+
+        private onTransitionTableRowClick(event) {
+            var targetId = $(event.currentTarget).data("targetId");
+            if (targetId) {
+                this.expand(this.graph.processById(targetId), this.expandDepth);
+                this.uiGraph.clearHover();
+            }
         }
 
         private showProcessAsExplored(process : ccs.Process) : void {
             this.uiGraph.getProcessDataObject(process.id).status = "expanded";
-        }
-
-        private resetFreezeBtn(isExpanded? : boolean) : void {
-            if(isExpanded) { 
-                return;
-            }
-            else{
-                 $(this.elements.freezeBtn).text("Freeze"); // and reset the freezeBtn.
-            }
         }
 
         private resize(): void {
@@ -304,7 +305,7 @@ module Activity {
             var height;
             if (!this.isFullscreen()) {
                 var offsetTop = $(this.canvas).offset().top;
-                var offsetBottom = $(this.elements.statusTableContainer).height() + 20; // Parent container margin = 20.
+                var offsetBottom = $(this.statusTableContainer).height() + 20; // Parent container margin = 20.
                 height = Math.max(350, window.innerHeight - offsetTop - offsetBottom);
             } else {
                 height = this.canvas.parentNode.clientHeight;

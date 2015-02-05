@@ -22,6 +22,16 @@ var examples = [
              "P22 = enter2.exit2.'b2wf.P2;\n" +
              "\n" +
              "set L = {b1rf, b2rf, b1rt, b2rt, b1wf, b2wf, b1wt, b2wt, kr1, kr2, kw1, kw2, enter1, enter2, exit1, exit2};\n" +
-             "Peterson = (P1 | P2 | B1f | B2f | K1) \\ L;"
+             "Peterson = (P1 | P2 | B1f | B2f | K1) \\ L;",
+        properties: [
+            {
+                type: "HML",
+                status: true,
+                options: {
+                    process: "Peterson",
+                    formula: "X max= ([exit1]ff or [exit2]ff) and [-]X;"
+                }
+            }
+        ]
     }
 ]
