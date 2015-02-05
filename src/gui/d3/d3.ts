@@ -9,12 +9,12 @@ module GUI {
         public height : number = 500;
         private onClick : Function = null;
         private nodeColors = {
-            "unexpanded": "rgb(160,160,160)",
-            "expanded": "rgb(51, 65, 185)",
-            "selected": "rgb(245, 50, 50)",
-            "stroke" : "rgb(0, 0, 0)"
+            "unexpanded" : "rgb(160,160,160)",
+            "expanded"   : "rgb(51, 65, 185)",
+            "selected"   : "rgb(245, 50, 50)",
+            "stroke"     : "rgb(0, 0, 0)"
         }; 
-        private lastNodeId = 2;
+        private lastNodeId = 2; // in production this should not be used
         private lastLinkId = 1;
         private nodes = [{id:0, expanded:true}, {id:1, expanded:false}, {id:2, expanded:false}];
         private edges = [
@@ -29,6 +29,7 @@ module GUI {
         public selected_node = null;
         private links;
         private circle;
+        private circleRadius = 15;
         private linkText;
 
         constructor() {      
@@ -63,8 +64,8 @@ module GUI {
                 .attr('id', 'post-arrow')
                 .attr('viewBox', '0 -5 10 10')
                 .attr('refX', 6)
-                .attr('markerWidth', 3)
-                .attr('markerHeight', 3)
+                .attr('markerWidth', 3.5)
+                .attr('markerHeight', 3.5)
                 .attr('orient', 'auto')
               .append('svg:path')
                 .attr('d', 'M0,-5L10,0L0,5')
@@ -74,8 +75,8 @@ module GUI {
                 .attr('id', 'pre-arrow')
                 .attr('viewBox', '0 -5 10 10')
                 .attr('refX', 4)
-                .attr('markerWidth', 3)
-                .attr('markerHeight', 3)
+                .attr('markerWidth', 3.5)
+                .attr('markerHeight', 3.5)
                 .attr('orient', 'auto')
               .append('svg:path')
                 .attr('d', 'M10,-5L0,0L10,5')
@@ -91,16 +92,11 @@ module GUI {
             this.links.selectAll('path').attr('d', (d) => {
                 var sourceP = new Point(d.source.x, d.source.y);
                 var targetP = new Point(d.target.x, d.target.y);
-                var norm = sourceP.subtract(targetP);
-                norm.normalize();
 
-                var sourcePadding = d.direction == 'pre' || d.direction == 'both' ? 20 : 12;
-                var targetPadding = d.direction == 'post' || d.direction == 'both' ? 20 : 15;
-                
-                var newSourceP = sourceP.subtract(norm.multiplyWithNumber(sourcePadding));
-                
-                var newTargetP = targetP.add(norm.multiplyWithNumber(targetPadding));
-                if(d.source == d.target){
+                var sourcePadding = d.direction != 'post' ? this.circleRadius+5 : this.circleRadius;
+                var targetPadding = d.direction != 'pre' ? this.circleRadius+5 : this.circleRadius;
+
+                if (d.source == d.target) {
                     //self loop
                     var cpH = 90;
                     var cpV = 60;
@@ -108,11 +104,24 @@ module GUI {
                     var cp1 = new Point(sourceP.x - (cpH/2), sourceP.y - cpV);
                     var cp2 = new Point(sourceP.x + (cpH/2), sourceP.y - cpV);
 
-                    console.log("M" + sourceP.x + "," + sourceP.y+"C" + cp1.x + " " + cp1.y+" " + cp2.x+ " " + cp2.y+" " +sourceP.x +" "+ sourceP.y);
-                    return "M" + sourceP.x + "," + sourceP.y+"C" + cp1.x + " " + cp1.y+" " + cp2.x+ " " + cp2.y+" " +sourceP.x +" "+ sourceP.y;
+                    var normSource = sourceP.subtract(cp1);
+                    var normTarget = targetP.subtract(cp2);
+                    normSource.normalize();
+                    normTarget.normalize();
+
+                    var newSourceP = sourceP.subtract(normSource.multiplyWithNumber(sourcePadding)); 
+                    var newTargetP = targetP.subtract(normTarget.multiplyWithNumber(targetPadding));
+
+                    return "M" + newSourceP.x + "," + newSourceP.y+"C" + cp1.x + " " + cp1.y+" " + cp2.x+ " " + cp2.y+" " + newTargetP.x +" "+ newTargetP.y;
                 }
-                else{
+                else {
                     // normal edge
+                    var norm = sourceP.subtract(targetP);
+                    norm.normalize();
+
+                    var newSourceP = sourceP.subtract(norm.multiplyWithNumber(sourcePadding));
+                    
+                    var newTargetP = targetP.add(norm.multiplyWithNumber(targetPadding));
                     return 'M' + newSourceP.x + ',' + newSourceP.y + 'L' + newTargetP.x + ',' + newTargetP.y;
                 }
             });
@@ -140,7 +149,9 @@ module GUI {
 
         // This methods updates, inserts and removes links and circles(nodes) 
         private update() : void {
+            //Bind the data
             this.circle = this.circle.data(this.nodes, (d) => {return d.id;});
+            
             // update existing nodes (reflexive & selected visual states)
             this.circle.selectAll('circle')
                .style('fill', this.nodeColorChange)
@@ -155,7 +166,7 @@ module GUI {
             // Append circle to group
             g.append('svg:circle')
                 .attr('class', 'node')
-                .attr('r', 15)
+                .attr('r', this.circleRadius)
                 .style('fill', this.nodeColorChange)
                 .style('stroke', this.nodeColors['stroke'])
                 .on('click', this.nodeClicked);
@@ -170,6 +181,7 @@ module GUI {
             //remove old nodes
             this.circle.exit().remove();
 
+            //Bind the data
             this.links = this.links.data(this.edges, (d) => {return d.id;});
 
             //update links
@@ -186,7 +198,6 @@ module GUI {
                 .attr("fill", "none")
                 .attr("class", "link")
                 .attr("stroke", "ff8888")
-                .attr("stroke-width", "1px")
                 .style('marker-start', (d) => { return d.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
                 .style('marker-end', (d) => { return d.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
 
@@ -251,6 +262,8 @@ module GUI {
             // var point = d3.mouse(this),
             //     node = {id: ++lastNodeId, expanded: false};
             // nodes.push(node);
+            // 
+            // So this is what should happend, when node is cliked it should fire the onClick method given from the holder of the graph.(who ever created the object)
         }
 
         public getProcessDataObject(identifier) : any {
@@ -274,11 +287,11 @@ module GUI {
         }
 
         public setHoverOnListener(f : (identifier) => void ) : void {
-
+            
         }
 
         public clearHoverOnListener() : void {
-
+             
         }
 
         public setHoverOutListener(f : (identifier) => void ) : void {
@@ -290,23 +303,23 @@ module GUI {
         }
 
         public setSelected(name : string) : void {
-
+            // Set selected node
         }
 
         public setHover(name: string) : void {
-
+            // Mark a node as hover
         }
 
         public clearHover() : void {
-
+            // Clear the node marked as hover
         }
 
         public freeze() : void {
-
+            // Stop the force
         }
 
         public unfreeze() : void {
-
+            // Start the force
         }
     }
 }
