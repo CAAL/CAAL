@@ -108,6 +108,9 @@ class SnapGame implements Drawable {
     static ComputerColor: string = "#e74c3c";
     static PlayerColor: string = "#2980b9";
 
+    private animateColorLeft: string = undefined;
+    private animateColorRight: string = undefined;
+        
     constructor(private leftProcessName: string, private rightProcessName: string, private traceType: TraceType) {
         this.leftLts = new Trace([], false);
         this.rightLts = new Trace([], false);
@@ -120,22 +123,26 @@ class SnapGame implements Drawable {
     public playLeft(action: string, destination: string, isComputer: boolean) {
         this.leftLts.setPreviousColor(isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor);
         
-        if (this.traceType == TraceType.Single)
+        if (this.traceType == TraceType.Single /*|| isAttacker */)
             this.leftLts.addDrawable(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
         else
             this.leftLts.addDrawable(new DoubleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
-            
+        
         this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, destination, SnapGame.StartStateColor));
+        
+        this.animateColorLeft = isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor;
     }
     
     public playRight(action: string, destination: string, isComputer: boolean) {
         this.rightLts.setPreviousColor(isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor);
         
-        if (this.traceType == TraceType.Single)
+        if (this.traceType == TraceType.Single /*|| isAttacker */)
             this.rightLts.addDrawable(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
         else
             this.rightLts.addDrawable(new DoubleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
         this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, destination, SnapGame.StartStateColor));
+        
+        this.animateColorRight = isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor;
     }
     
     public measureWidth(snapCanvas: SnapCanvas) { /* empty */ }
@@ -181,30 +188,50 @@ class SnapGame implements Drawable {
         
         y += Trace.LineHeight*3;
         
-        /* Attacker */
+        /* Left LTS */
         var attackerText = snapCanvas.paper.text(x, y, this.leftProcessName + " trace"); // x and y doesnt matter here, move it below
         attackerText.attr({"font-family": "monospace", "font-weight": "bold", "font-size": Trace.FontSize + 6, "text-anchor":"start", "fill": "#000"});
-        group.add(attackerText);
-        
-        //y += attackerText.getBBox().height;
         
         attackerText.attr({/*"x": x, */"y": y});
 
         y += attackerText.getBBox().height;
 
         group.add(this.leftLts.draw(snapCanvas, x, y));
-
+        
+        if (this.animateColorLeft != undefined) {
+            /* flash color of trace to indicate change */
+            var flashSquare: Square = new Square(snapCanvas.canvasWidth, Trace.LineHeight, "", this.animateColorLeft);
+            var squareGroup = flashSquare.draw(snapCanvas, 0, y);
+            group.before(squareGroup);
+            
+            var snapSquare: SnapElement = squareGroup[0]; // first element is square
+            Square.AnimateSquareToColor(snapSquare, "#FFF"); // to white
+            
+            this.animateColorLeft = undefined;
+        }
+        
         y += this.leftLts.height;
         
-        /* Defender */
+        /* Right LTS */
         var defenderText = snapCanvas.paper.text(x, y, this.rightProcessName + " trace"); // x and y doesnt matter here, move it below
         defenderText.attr({"font-family": "monospace", "font-weight": "bold", "font-size": Trace.FontSize + 6, "text-anchor":"start", "fill": "#000"});
-        group.add(defenderText);
 
         y += defenderText.getBBox().height;
 
         group.add(this.rightLts.draw(snapCanvas, x, y));
-
+        
+        if (this.animateColorRight != undefined) {
+            /* flash color of trace to indicate change */
+            var flashSquare: Square = new Square(snapCanvas.canvasWidth, Trace.LineHeight, "", this.animateColorRight);
+            var squareGroup = flashSquare.draw(snapCanvas, 0, y);
+            group.before(squareGroup);
+            
+            var snapSquare: SnapElement = squareGroup[0]; // first element is square
+            Square.AnimateSquareToColor(snapSquare, "#FFF"); // to white
+            
+            this.animateColorRight = undefined;
+        }
+        
         this.height = attackerText.getBBox().height + defenderText.getBBox().height + this.leftLts.height + this.rightLts.height;
         this.width = Math.max(attackerText.getBBox().width, defenderText.getBBox().width, this.leftLts.width, this.rightLts.width);
         
@@ -304,7 +331,7 @@ class Trace implements Drawable {
             
         } else {
             
-            x = snapCanvas.canvasWidth - Trace.LineBorder;
+            x = (snapCanvas.canvasWidth - Trace.LineBorder)/2;
 
             for (var i = this.drawables.length - 1; i >= 0; i--) {
                 var item = this.drawables[i];
@@ -427,6 +454,10 @@ class Square extends Tip implements Drawable {
         
         this.addTip(group);
         return group;
+    }
+    
+    static AnimateSquareToColor(square: SnapElement, toColor: string) {
+        square.animate({"fill": toColor}, 250);
     }
 }
 
