@@ -22,13 +22,18 @@ tsc -d --out "$CCS_DEST" ./src/ccs/ccs.ts ./src/ccs/depgraph.ts ./src/ccs/hml.ts
 
 cp lib/ccs.js .
 echo 'define(function(require, exports, module) {' | cat - ccs.js > temp && mv temp ccs.js
-echo 'module.exports.CCS = CCS; });' >> ccs.js
+echo 'module.exports.CCS = CCS; module.exports.HML = HML; });' >> ccs.js
 mv ccs.js modules/ace/lib/ace/mode/ccs/
 
 cp lib/ccs_grammar.js .
 echo 'define(function(require, exports, module) {' | cat - ccs_grammar.js > temp && mv temp ccs_grammar.js
 echo 'module.exports.CCSParser = CCSParser; });' >> ccs_grammar.js
 mv ccs_grammar.js modules/ace/lib/ace/mode/ccs/
+
+cp lib/hml_grammar.js .
+echo 'define(function(require, exports, module) {' | cat - hml_grammar.js > temp && mv temp hml_grammar.js
+echo 'module.exports.HMLParser = HMLParser; });' >> hml_grammar.js
+mv hml_grammar.js modules/ace/lib/ace/mode/ccs/
 
 # Build the ACE editor.
 #echo 'ACE EDITOR OUTPUT:'
