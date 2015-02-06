@@ -89,6 +89,7 @@ module Activity {
 
                 this.propertyTableBody.append(row);
 
+                tdStatus.on("click", {property: properties[i]}, (e) => this.onStatusClick(e));
                 row.on("click", {property: properties[i]}, (e) => this.editProperty(e));
                 tdDelete.on("click", {property: properties[i]}, (e) => this.deleteProperty(e));
                 tdVerify.on("click", {idx: i}, (e) => this.verify(e.data.idx));
@@ -114,6 +115,25 @@ module Activity {
             this.project.addProperty(property);
             this.displayProperties();
             this.editProperty({data: {property: property}});
+        }
+
+        private onStatusClick(e) {
+            var property = e.data.property;
+            if (property instanceof Property.Equivalence) {
+                var equivalence = <Property.Equivalence>property,
+                    isWeak = equivalence instanceof Property.WeakBisimulation,
+                    graph = Main.getGraph(),
+                    configuration = {
+                        graph: graph,
+                        successorGenerator: (isWeak ? Main.getWeakSuccGenerator(graph) : Main.getStrictSuccGenerator(graph)),
+                        isWeakSuccessorGenerator: isWeak,
+                        processNameA: equivalence.firstProcess,
+                        processNameB: equivalence.secondProcess
+                    };
+                Main.activityHandler.openActivityWithConfiguration("game", configuration);
+                //Don't process click event further
+                return false;
+            }
         }
 
         public editProperty(e): void {

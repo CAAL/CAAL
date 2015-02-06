@@ -28,6 +28,8 @@ var project = new Project();
 
 module Main {
 
+    export var activityHandler;
+
     export function setup() {
 
         var gameActivity: Activity.BisimulationGame = new Activity.BisimulationGame(document.getElementById("tracesvg"), "#game-actions-table-container");
@@ -38,7 +40,9 @@ module Main {
             resizeTimer = setTimeout(() => gameActivity.resizeCanvas(), 100);
         });
         
-        var activityHandler = new Main.ActivityHandler();
+        activityHandler = new ActivityHandler();
+
+        // export var oops = 10;
 
         activityHandler.addActivity(
                 "editor", 
