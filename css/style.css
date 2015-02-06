@@ -209,12 +209,12 @@ canvas {
 	font-variant: small-caps;
 }
 
-
-.modal-dialog .modal-header > #help-dialog-body-par table, td, th {
+/* FIX: Simon */
+/*.modal-dialog .modal-header > #help-dialog-body-par table, td, th {
   border: 1px solid #999;
   padding: 0.5rem;
   text-align: left; 
-}
+}*/
 
 td.td1{
   border: 1px solid #999;
