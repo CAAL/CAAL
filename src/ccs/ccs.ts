@@ -405,8 +405,10 @@ module CCS {
         }
 
         forEach(f : (label : string) => void, thisObject?) {
-            for (var i = 0, max = this.labels.length; i < max; i++){
-                f(this.labels[i]);
+            if (thisObject) {
+                this.labels.forEach(label => f.call(this, label));
+            } else {
+                this.labels.forEach(label => f(label))
             }
         }
 
@@ -442,14 +444,6 @@ module CCS {
 
         toString() {
             return "LabelSet";
-        }
-    }
-
-    /*
-        Represents the order of an in-order traversal.
-    */
-    export class InorderStruct {
-        constructor(public before : Process[], public process : Process, public after : Process[]) {
         }
     }
 
