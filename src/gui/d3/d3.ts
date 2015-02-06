@@ -1,6 +1,8 @@
 /// <reference path="../../../lib/jquery.d.ts" />
-/// <reference path="../../../lib/d3.d.ts" />
+/// <reference path="../../../lib/d3/d3.d.ts" />
 /// <reference path="point.ts" />
+/// <reference path="vertex.ts" />
+/// <reference path="edge.ts" />
 /// <reference path="../gui.ts" />
 
 module GUI {
@@ -14,19 +16,16 @@ module GUI {
             "selected"   : "rgb(245, 50, 50)",
             "stroke"     : "rgb(0, 0, 0)"
         }; 
-        private lastNodeId = 2; // in production this should not be used
-        private lastLinkId = 1;
-        private nodes = [{id:0, expanded:true}, {id:1, expanded:false}, {id:2, expanded:false}];
-        private edges = [
-            {id: 0, source: this.nodes[0], target: this.nodes[1], direction:'pre', label:"Test1"},
-            {id: 1, source: this.nodes[1], target: this.nodes[2], direction:'post', label:"Test2"},
-            {id: 2, source: this.nodes[0], target: this.nodes[2], direction:'post', label:"Test3"},
-            {id: 3, source: this.nodes[2], target: this.nodes[2], direction:'post', label:"Test4"}
-        ];
+        private lastLinkId = 0;
+        private vertices = [];
+        private verticeIds = {}
+        private edgesIds = {};
+        private edges = []; // Remember it is not ID but index in the array
         private svg;
         private vis;
         private force;
         public selected_node = null;
+        public hover_node = null;
         private links;
         private circle;
         private circleRadius = 15;
@@ -53,11 +52,12 @@ module GUI {
                 .attr('fill', 'white');
 
             this.force = d3.layout.force()
-                    .nodes(this.nodes)
+                    .nodes(this.vertices)
                     .links(this.edges)
                     .size([this.width, this.height])
                     .linkDistance(150)
                     .charge(-500)
+                    .gravity(0.06)
                     .on('tick', this.tick);
             // define arrow markers for graph links
             this.svg.append('svg:defs').append('svg:marker')
@@ -85,16 +85,24 @@ module GUI {
             this.links = this.svg.append('g').selectAll('link');
             this.circle = this.svg.append('g').selectAll('g');
             this.update();
+            console.log("nodes: ",this.force.nodes())
         }
 
         private tick = () => {
+            this.circle.attr('transform', (d) => {
+                var p = this.boundingBox(new Point(d.x, d.y));
+                return 'translate(' + p.x + ',' + p.y + ')';
+            });
+
             // link
             this.links.selectAll('path').attr('d', (d) => {
                 var sourceP = new Point(d.source.x, d.source.y);
                 var targetP = new Point(d.target.x, d.target.y);
+                sourceP = this.boundingBox(sourceP);
+                targetP = this.boundingBox(targetP);
 
-                var sourcePadding = d.direction != 'post' ? this.circleRadius+5 : this.circleRadius;
-                var targetPadding = d.direction != 'pre' ? this.circleRadius+5 : this.circleRadius;
+                var sourcePadding = d.data.direction != 'post' ? this.circleRadius+5 : this.circleRadius;
+                var targetPadding = d.data.direction != 'pre' ? this.circleRadius+5 : this.circleRadius;
 
                 if (d.source == d.target) {
                     //self loop
@@ -130,32 +138,32 @@ module GUI {
             this.links.selectAll('text').attr("transform", (d) => {
                 if(d.source == d.target) {
                     // self loop
-                    var cpV = 65;
-                    return "translate(" + (d.source.x + d.target.x) / 2 + "," 
-                + (((d.source.y + d.target.y) / 2) - cpV) + ")"; 
+                    var cpV = 70;
+                    var p = this.boundingBox(new Point(
+                        (d.source.x + d.target.x) / 2, 
+                        (((d.source.y + d.target.y) / 2) - cpV)));
+                    return "translate(" + p.x + "," + p.y + ")"; 
                 }
                 else {
                     // normal edge
-                    return "translate(" + (d.source.x + d.target.x) / 2 + "," 
-                + (d.source.y + d.target.y) / 2 + ")"; 
+                    var p = this.boundingBox(new Point(
+                        (d.source.x + d.target.x) / 2, 
+                        (d.source.y + d.target.y) / 2))
+                    return "translate(" + p.x + "," + p.y + ")"; 
                 }
-            });
-
-            // node positions
-            this.circle.attr('transform', (d) => {
-              return 'translate(' + d.x + ',' + d.y + ')';
             });
         }
 
         // This methods updates, inserts and removes links and circles(nodes) 
         private update() : void {
             //Bind the data
-            this.circle = this.circle.data(this.nodes, (d) => {return d.id;});
+            this.circle = this.circle.data(this.vertices, (d) => {return d.id;});
             
             // update existing nodes (reflexive & selected visual states)
-            this.circle.selectAll('circle')
+            this.svg.selectAll('circle')
                .style('fill', this.nodeColorChange)
                .style('stroke', this.nodeColors['stroke']);
+               
 
             // add new nodes    
             var g = this.circle.enter().append('svg:g');
@@ -186,8 +194,8 @@ module GUI {
 
             //update links
             this.links.selectAll('path')
-                .style('marker-start', (d) => { return d.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
-                .style('marker-end', (d) => { return d.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
+                .style('marker-start', (d) => { return d.data.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
+                .style('marker-end', (d) => { return d.data.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
 
             //Group links and text label
             var glink = this.links.enter().append('svg:g')
@@ -198,8 +206,8 @@ module GUI {
                 .attr("fill", "none")
                 .attr("class", "link")
                 .attr("stroke", "ff8888")
-                .style('marker-start', (d) => { return d.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
-                .style('marker-end', (d) => { return d.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
+                .style('marker-start', (d) => { return d.data.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
+                .style('marker-end', (d) => { return d.data.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
 
             //Append text to links
             glink.append('svg:text')
@@ -208,7 +216,7 @@ module GUI {
                 .attr("dy", "1.2em")
                 .attr("text-anchor", "middle")
                 .text((d) => {
-                    return d.label;
+                    return d.data.label;
                 });
 
             //remove links
@@ -230,15 +238,15 @@ module GUI {
 
         private nodeColorChange = (d) => {
             if(d === this.selected_node) {
-                console.log('selected', d.id)
+                console.log('selected: ', d.id)
                 return this.nodeColors['selected'];
             }
-            else if(d.expanded) { 
-                console.log('expanded', d.id);
+            else if(d.data.expanded) { 
+                console.log('expanded: ', d.id);
                 return this.nodeColors['expanded'];
             }
             else {
-                console.log('unexpanded', d.id);
+                console.log('unexpanded: ', d.id);
                 return this.nodeColors['unexpanded'];
             }
         };
@@ -247,30 +255,99 @@ module GUI {
             if (d3.event.defaultPrevented) return; // ignore drag
 
             this.selected_node = d;
-            this.selected_node.expanded = true;
-            console.log('Clicked', d.id);
-            
+            this.selected_node.data.expanded = true;
             this.update();
         };
 
-        public clearAll() : void {
-
+        private boundingBox(p : Point) {
+            p.x = Math.max(this.circleRadius, Math.min(this.width - this.circleRadius, p.x)); 
+            p.y = Math.max(this.circleRadius, Math.min(this.height - this.circleRadius, p.y));
+            return p;   
         }
 
-        public showProcess(identifier, data : any) : void {
-            // d.expanded = true; 
-            // var point = d3.mouse(this),
-            //     node = {id: ++lastNodeId, expanded: false};
-            // nodes.push(node);
-            // 
+        public clearAll() : void {
+            this.vertices = [];
+            this.edges = [];
+            this.verticeIds = {};
+            this.edgesIds = {};
+            this.update();
+        }
+
+        public showProcess(identifier : number, data = {}) : Vertex { 
             // So this is what should happend, when node is cliked it should fire the onClick method given from the holder of the graph.(who ever created the object)
+            var doesVertexExists = this.verticeIds[identifier]; 
+            var v : Vertex;
+            if(doesVertexExists) {
+                //override vertex
+                v = this.getVertexById(identifier)
+                v.data = data
+                console.log('Override vertex: ', v);
+            }
+            else {
+                v = new Vertex(identifier, data);
+                this.vertices.push(v);
+                this.verticeIds[v.id] = true;
+                console.log('Insert vertex: ', v);
+            }            
+            this.update();
+            return v;
+        }
+
+        private getVertexById(identifier : number) : Vertex {
+            for (var i = 0; i < this.vertices.length; i++){
+                if(this.vertices[i].id === identifier){
+                    return this.vertices[i];
+                }
+            }
+
+            return null;
+        }
+
+        private removeVertex(v : Vertex) : void {
+            this.verticeIds[v.id] = false;
+            this.vertices.splice(v.index, 1);
+        }
+
+        private removeVertexbyId(identifier : number) : void {
+            var v = this.getVertexById(identifier);
+            this.removeVertex(v);
         }
 
         public getProcessDataObject(identifier) : any {
 
         }
 
-        public showTransitions(fromId, toId, datas : any[]) {
+        public showTransitions(sourceId : number, targetId : number, data = {}) {
+            
+            // swap the variables so sourceId < targetId 
+            if(sourceId > targetId) {
+                var tmp = sourceId;
+                sourceId = targetId;
+                targetId = tmp;
+            }
+
+            // Has the edge been defined
+            var doesEdgeExists = this.edgesIds[sourceId + "," +targetId]
+            
+            if (doesEdgeExists) {
+                // If defined then override the edge with new data.
+                console.log('Override: ')
+            } else {
+                // Else define it
+                var linkId = ++this.lastLinkId;
+                var edge = new Edge(linkId, this.showProcess(sourceId), this.showProcess(targetId), data);
+                this.edges.push(edge);
+                this.edgesIds[sourceId + ',' + targetId] = linkId;
+                console.log("Inserted: ", edge);
+            }
+            this.update();
+        }
+
+        private removeTransitionById(identifier : number) { 
+            var e = this.getTransitionById(identifier);
+        }
+
+        private getTransitionById(identifier : number){
 
         }
 
@@ -316,14 +393,21 @@ module GUI {
 
         public freeze() : void {
             // Stop the force
+            this.force.stop();
         }
 
         public unfreeze() : void {
-            // Start the force
+            // Start the force (may the force be with you)
+            this.force.resume();
         }
     }
 }
 
 var d3test = new GUI.d3Graph();
+d3test.showProcess(1, {expanded: false});
+d3test.showProcess(2, {expanded: false});
+d3test.showProcess(3, {expanded: false});
+d3test.showTransitions(1,2,{label: 'test'});
+
 
 
