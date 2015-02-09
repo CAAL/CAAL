@@ -209,12 +209,12 @@ canvas {
 	font-variant: small-caps;
 }
 
-/* FIX: Simon */
-/*.modal-dialog .modal-header > #help-dialog-body-par table, td, th {
+table.table1 td {
   border: 1px solid #999;
   padding: 0.5rem;
   text-align: left; 
-}*/
+}
+
 
 td.td1{
   border: 1px solid #999;
