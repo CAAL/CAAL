@@ -104,7 +104,10 @@ module GUI {
                 var sourcePadding = d.data.direction != 'post' ? this.circleRadius+5 : this.circleRadius;
                 var targetPadding = d.data.direction != 'pre' ? this.circleRadius+5 : this.circleRadius;
 
+                var oppositeEdgeExists = this.edgesIds[d.target.id + ',' + d.source.id];
+
                 if (d.source == d.target) {
+                    console.log('Drawing self-loop: ', d)
                     //self loop
                     var cpH = 90;
                     var cpV = 60;
@@ -112,15 +115,37 @@ module GUI {
                     var cp1 = new Point(sourceP.x - (cpH/2), sourceP.y - cpV);
                     var cp2 = new Point(sourceP.x + (cpH/2), sourceP.y - cpV);
 
-                    var normSource = sourceP.subtract(cp1);
-                    var normTarget = targetP.subtract(cp2);
-                    normSource.normalize();
-                    normTarget.normalize();
+                    var normSource = sourceP.subtract(cp1).normalize();
+                    var normTarget = targetP.subtract(cp2).normalize();
 
                     var newSourceP = sourceP.subtract(normSource.multiplyWithNumber(sourcePadding)); 
                     var newTargetP = targetP.subtract(normTarget.multiplyWithNumber(targetPadding));
 
                     return "M" + newSourceP.x + "," + newSourceP.y+"C" + cp1.x + " " + cp1.y+" " + cp2.x+ " " + cp2.y+" " + newTargetP.x +" "+ newTargetP.y;
+                }
+                else if (oppositeEdgeExists) { 
+                    console.log('Drawing bending edges: ', d);
+                    // draw the two opposite edges
+                    var midPoint = sourceP.add(targetP).multiplyWithNumber(0.5);
+                    var angle = Math.atan2(-(targetP.y - sourceP.y), targetP.x - sourceP.x) - Math.PI/2;
+
+                    if(angle < 0) {
+                        angle += Math.PI*2;
+                    }
+
+                    var cpOffset = new Point(Math.cos(angle), -Math.sin(angle)).multiplyWithNumber(45);
+                    var cp = midPoint.add(cpOffset);
+
+                    var normSourceP = sourceP.subtract(cp).normalize(); 
+                    var normTargetP = targetP.subtract(cp).normalize();
+
+                    var newSourceP = sourceP.subtract(normSourceP.multiplyWithNumber(sourcePadding)); 
+                    var newTargetP = targetP.subtract(normTargetP.multiplyWithNumber(targetPadding));
+
+                    console.log("M" + newSourceP.x + "," + newSourceP.y + "Q" + cp.x + " " + cp.y + " " + newTargetP.x + " " + newTargetP.y);
+                    return "M" + newSourceP.x + "," + newSourceP.y + "Q" + cp.x + " " + cp.y + " " + newTargetP.x + " " + newTargetP.y;
+
+
                 }
                 else {
                     // normal edge
@@ -136,20 +161,52 @@ module GUI {
 
             //link label
             this.links.selectAll('text').attr("transform", (d) => {
-                if(d.source == d.target) {
+                var oppositeEdgeExists = this.edgesIds[d.target.id + ',' + d.source.id];
+
+                var sourceP = new Point(d.source.x, d.source.y);
+                var targetP = new Point(d.target.x, d.target.y);
+                sourceP = this.boundingBox(sourceP);
+                targetP = this.boundingBox(targetP);
+
+                var midPoint = sourceP.add(targetP).multiplyWithNumber(0.5);
+
+                if (d.source == d.target) {
                     // self loop
-                    var cpV = 70;
-                    var p = this.boundingBox(new Point(
-                        (d.source.x + d.target.x) / 2, 
-                        (((d.source.y + d.target.y) / 2) - cpV)));
-                    return "translate(" + p.x + "," + p.y + ")"; 
-                }
+                    var cpV = 60;
+                    return "translate(" + midPoint.x + "," + (midPoint.y - cpV) + ")"; 
+                } 
+                else if(oppositeEdgeExists){
+                    // bending edge
+                    var angle = Math.atan2(-(targetP.y - sourceP.y), targetP.x - sourceP.x) - Math.PI/2;
+
+                    if(angle < 0) {
+                        angle += Math.PI*2;
+                    }
+
+                    var cpOffset = new Point(Math.cos(angle), -Math.sin(angle)).multiplyWithNumber(45);
+
+                    midPoint = midPoint.add(cpOffset.multiplyWithNumber(0.9));
+
+                    return "translate(" + midPoint.x + "," + midPoint.y + ")"; 
+                } 
                 else {
                     // normal edge
-                    var p = this.boundingBox(new Point(
-                        (d.source.x + d.target.x) / 2, 
-                        (d.source.y + d.target.y) / 2))
-                    return "translate(" + p.x + "," + p.y + ")"; 
+                    var offsetAngle = Math.atan2(-(targetP.y - sourceP.y), targetP.x - sourceP.x) + Math.PI*0.5;
+
+                    if (offsetAngle < 0) {
+                        offsetAngle += Math.PI * 2;
+                    } 
+                    else if(offsetAngle >= Math.PI * 2) {
+                        offsetAngle -= Math.PI * 2;
+                    }
+
+                    var offset = new Point(Math.cos(offsetAngle), -Math.sin(offsetAngle)).multiplyWithNumber(15);
+                    
+                    if(offsetAngle < Math.PI * 0.25 || offsetAngle > Math.PI * 1.25){
+                        offset = offset.multiplyWithNumber(-1);
+                    }
+
+                    return "translate(" + (midPoint.x + offset.x) + "," + (midPoint.y + offset.y) + ")"; 
                 }
             });
         }
@@ -213,7 +270,7 @@ module GUI {
             glink.append('svg:text')
                 .style("font-size", "12px")
                 .style("opacity",1)
-                .attr("dy", "1.2em")
+                //.attr("dy", "1.2em")
                 .attr("text-anchor", "middle")
                 .text((d) => {
                     return d.data.label;
@@ -273,7 +330,7 @@ module GUI {
             this.update();
         }
 
-        public showProcess(identifier : number, data = {}) : Vertex { 
+        public showProcess(identifier : number, data : VertexData = {label:''}) : Vertex {
             // So this is what should happend, when node is cliked it should fire the onClick method given from the holder of the graph.(who ever created the object)
             var doesVertexExists = this.verticeIds[identifier]; 
             var v : Vertex;
@@ -288,7 +345,8 @@ module GUI {
                 this.vertices.push(v);
                 this.verticeIds[v.id] = true;
                 console.log('Insert vertex: ', v);
-            }            
+            }  
+
             this.update();
             return v;
         }
@@ -317,18 +375,11 @@ module GUI {
 
         }
 
-        public showTransitions(sourceId : number, targetId : number, data = {}) {
+        public showTransitions(sourceId : number, targetId : number, data : EdgeData = {}) : Edge {
             
-            // swap the variables so sourceId < targetId 
-            if(sourceId > targetId) {
-                var tmp = sourceId;
-                sourceId = targetId;
-                targetId = tmp;
-            }
-
             // Has the edge been defined
-            var doesEdgeExists = this.edgesIds[sourceId + "," +targetId]
-            
+            var doesEdgeExists = this.edgesIds[sourceId + "," +targetId];
+
             if (doesEdgeExists) {
                 // If defined then override the edge with new data.
                 console.log('Override: ')
@@ -340,7 +391,9 @@ module GUI {
                 this.edgesIds[sourceId + ',' + targetId] = linkId;
                 console.log("Inserted: ", edge);
             }
+
             this.update();
+            return edge;
         }
 
         private removeTransitionById(identifier : number) { 
@@ -404,10 +457,13 @@ module GUI {
 }
 
 var d3test = new GUI.d3Graph();
-d3test.showProcess(1, {expanded: false});
+d3test.showProcess(1);
 d3test.showProcess(2, {expanded: false});
 d3test.showProcess(3, {expanded: false});
-d3test.showTransitions(1,2,{label: 'test'});
+d3test.showTransitions(1,2, {label: 'test'});
+d3test.showTransitions(2,3, {label: 'edge 2->3'});
+d3test.showTransitions(3,2, {label: 'edge 3->2'});
+d3test.showTransitions(3,3, {label : 'this is awesome'});
 
 
 

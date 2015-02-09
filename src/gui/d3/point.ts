@@ -32,14 +32,15 @@ class Point {
         return new Point((this.x + v.x) * f, (this.y + v.y) * f);
     }
 
-    public length(){
+    public length() : number {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
-    public normalize(){
+    public normalize() : Point {
         var l = this.length();
         this.x = this.x / l;
         this.y = this.y / l;
+        return this
     }
 
     public orbit(origin, arcWidth, arcHeight, degrees){
