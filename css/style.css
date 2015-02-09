@@ -219,14 +219,7 @@ td.tableColumn{
   border: 1px solid #999;
   padding: 0.5rem;
   text-align: left;
-  font: normal 14px "Inconsolata";  
-
-   -webkit-touch-callout: default;
-   -webkit-user-select: text;
-   -khtml-user-select: text;
-   -moz-user-select: text;
-   -ms-user-select: element;
-   user-select: text;  
+  font: normal 14px "Inconsolata";   
 }
 
 tr {
@@ -236,6 +229,15 @@ tr {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+tr.tableRow{
+   -webkit-touch-callout: default;
+   -webkit-user-select: text;
+   -khtml-user-select: text;
+   -moz-user-select: text;
+   -ms-user-select: element;
+   user-select: text; 
 }
 
 /*
