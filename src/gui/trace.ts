@@ -35,6 +35,9 @@ class SnapCanvas {
             item.draw(this, this.currentX, this.currentY);
             this.currentY += item.height; // should be equal to one or more LineHeight
         });
+        
+        /* draw a centered line for debugging */
+        //this.paper.rect(this.canvasWidth/2, 0, 1, this.canvasHeight);
     }
     
     static setTextAttr(textElement: SnapElement) {
@@ -107,10 +110,9 @@ class SnapGame implements Drawable {
     static StartStateColor: string = "#2c3e50";
     static ComputerColor: string = "#e74c3c";
     static PlayerColor: string = "#2980b9";
-
-    private animateColorLeft: string = undefined;
-    private animateColorRight: string = undefined;
-        
+    
+    static StepCounter: number = 0;
+    
     constructor(private leftProcessName: string, private rightProcessName: string, private traceType: TraceType) {
         this.leftLts = new Trace([], false);
         this.rightLts = new Trace([], false);
@@ -118,6 +120,8 @@ class SnapGame implements Drawable {
         // start states
         this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.leftProcessName, SnapGame.StartStateColor));
         this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, this.rightProcessName, SnapGame.StartStateColor));
+        
+        SnapGame.StepCounter = 0;
     }
 
     public playLeft(action: string, destination: string, isComputer: boolean) {
@@ -130,7 +134,9 @@ class SnapGame implements Drawable {
         
         this.leftLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, destination, SnapGame.StartStateColor));
         
-        this.animateColorLeft = isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor;
+        this.leftLts.setFlashColor(isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor);
+        
+        SnapGame.StepCounter++;
     }
     
     public playRight(action: string, destination: string, isComputer: boolean) {
@@ -140,9 +146,16 @@ class SnapGame implements Drawable {
             this.rightLts.addDrawable(new SingleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
         else
             this.rightLts.addDrawable(new DoubleArrow(Trace.DrawableWidth, Trace.LineHeight, action));
+            
         this.rightLts.addDrawable(new Square(Trace.DrawableWidth, Trace.LineHeight, destination, SnapGame.StartStateColor));
         
-        this.animateColorRight = isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor;
+        this.rightLts.setFlashColor(isComputer ? SnapGame.ComputerColor : SnapGame.PlayerColor);
+        
+        SnapGame.StepCounter++;
+    }
+    
+    static IsRoundEnd(): boolean {
+        return SnapGame.StepCounter%2 == 0;
     }
     
     public measureWidth(snapCanvas: SnapCanvas) { /* empty */ }
@@ -153,7 +166,7 @@ class SnapGame implements Drawable {
         /* Legend: start */
         var legendX = x;
         
-        var startTextLegend = snapCanvas.paper.text(legendX, y, "Start state:");
+        var startTextLegend = snapCanvas.paper.text(legendX, y, "Current:");
         SnapCanvas.setTextAttr(startTextLegend).attr({"text-anchor":"start"});
         startTextLegend.attr({"y": y+startTextLegend.getBBox().height});
         
@@ -197,18 +210,7 @@ class SnapGame implements Drawable {
         y += attackerText.getBBox().height;
 
         group.add(this.leftLts.draw(snapCanvas, x, y));
-        
-        if (this.animateColorLeft != undefined) {
-            /* flash color of trace to indicate change */
-            var flashSquare: Square = new Square(snapCanvas.canvasWidth, Trace.LineHeight, "", this.animateColorLeft);
-            var squareGroup = flashSquare.draw(snapCanvas, 0, y);
-            group.before(squareGroup);
-            
-            var snapSquare: SnapElement = squareGroup[0]; // first element is square
-            Square.AnimateSquareToColor(snapSquare, "#FFF"); // to white
-            
-            this.animateColorLeft = undefined;
-        }
+        this.leftLts.flashLastElement(snapCanvas, group);
         
         y += this.leftLts.height;
         
@@ -219,18 +221,7 @@ class SnapGame implements Drawable {
         y += defenderText.getBBox().height;
 
         group.add(this.rightLts.draw(snapCanvas, x, y));
-        
-        if (this.animateColorRight != undefined) {
-            /* flash color of trace to indicate change */
-            var flashSquare: Square = new Square(snapCanvas.canvasWidth, Trace.LineHeight, "", this.animateColorRight);
-            var squareGroup = flashSquare.draw(snapCanvas, 0, y);
-            group.before(squareGroup);
-            
-            var snapSquare: SnapElement = squareGroup[0]; // first element is square
-            Square.AnimateSquareToColor(snapSquare, "#FFF"); // to white
-            
-            this.animateColorRight = undefined;
-        }
+        this.rightLts.flashLastElement(snapCanvas, group);
         
         this.height = attackerText.getBBox().height + defenderText.getBBox().height + this.leftLts.height + this.rightLts.height;
         this.width = Math.max(attackerText.getBBox().width, defenderText.getBBox().width, this.leftLts.width, this.rightLts.width);
@@ -252,7 +243,15 @@ class Trace implements Drawable {
     
     private lastSquare: Square;
     
+    private flashColor: string = undefined;
+    private animatedElements: number = 0;
+    
     constructor(private drawables: Drawable[], private breakLines: boolean) { }
+    
+    public setFlashColor(color: string) {
+        // set color for which o flash the last element
+        this.flashColor = color;
+    }
     
     public addDrawable(drawable: Drawable) {
         if (drawable instanceof Square) {
@@ -331,41 +330,70 @@ class Trace implements Drawable {
             
         } else {
             
-            x = (snapCanvas.canvasWidth - Trace.LineBorder)/2;
+            x = snapCanvas.canvasWidth - Trace.LineBorder;
 
+            var maxTraceLength = (snapCanvas.canvasWidth - Trace.LineBorder*2)/2;
+            var currentLength = 0;
+            var firstElementLength: number = 0;
+            
+            var roomNeeded: number;
+            
             for (var i = this.drawables.length - 1; i >= 0; i--) {
                 var item = this.drawables[i];
                 item.measureWidth(snapCanvas);
                 
-                var roomNeeded: number = Trace.DrawableWidth + item.width; // DrawableWidth for drawing 3 dots (...), and room for the item
-                if (item instanceof Arrow) {
-                    // if it's an arrow, there should always be room for a square before it
-                    this.drawables[i-1].measureWidth(snapCanvas);
-                    roomNeeded += this.drawables[i-1].width;
+                // save the length of the right-most square and arrow combined
+                if (i >= (this.drawables.length-1)-1) {
+                    firstElementLength += item.width;
                 }
                 
-                if (x - roomNeeded > Trace.LineBorder) {
-                    x -= item.width;
-                    group.add(item.draw(snapCanvas, x, y));
-                } else {
-                    var text = snapCanvas.paper.text(x - Trace.DrawableWidth / 2, y + Trace.LineHeight / 2, "...");
-                    SnapCanvas.setTextAttr(text);
-                    x -= Trace.DrawableWidth;
-                    group.add(text);
-                    
-                    group.transform("t"+(-x+Trace.LineBorder)+","+0);
-                    
-                    // save height and return
-                    this.height += Trace.LineSpacing * 2;
-                    return group;
+                x -= item.width;
+                group.add(item.draw(snapCanvas, x, y));
+                currentLength += item.width;
+            }
+            
+            var transformation: number = 0;
+            
+            // move the trace
+            if (currentLength - firstElementLength <= maxTraceLength && this.animatedElements == 0) {
+                // left adjust
+                transformation = -x + Trace.LineBorder;
+                group.transform("t" + transformation + ",0");
+            } else if(this.animatedElements == this.drawables.length) {
+                // if the number of elements hasnt changed since last animation, make the illusion that it doenst move again
+                transformation = -maxTraceLength;
+                group.transform("t" + transformation + ",0");
+            } else {
+                transformation = -maxTraceLength + firstElementLength;
+                group.transform("t" + transformation + ",0");
+            }
+            
+            if (this.flashColor != undefined) {
+                this.tempFlashParameters = {x: x + transformation + currentLength - firstElementLength, y: y, firstElementLength: firstElementLength}; // hax :/
+            }
+            
+            if (SnapGame.IsRoundEnd()) {
+                if (currentLength >= maxTraceLength) {
+                    group.animate({transform: "t" + (-maxTraceLength) + ",0"}, 1000, mina.easeinout);
+                    this.animatedElements = this.drawables.length;
                 }
             }
-
-            group.transform("t"+(-x+Trace.LineBorder)+","+0);
         }
         
         this.height += Trace.LineSpacing * 2;
+        
         return group;
+    }
+    
+    private tempFlashParameters;
+    
+    public flashLastElement(snapCanvas: SnapCanvas, group: SnapElement) {
+        if (this.flashColor != undefined && this.tempFlashParameters != undefined) {
+            Square.FlashSquare(snapCanvas, group, this.flashColor, this.tempFlashParameters.x, this.tempFlashParameters.y, this.tempFlashParameters.firstElementLength);
+            
+            this.flashColor = undefined;
+            this.tempFlashParameters = undefined;
+        }
     }
 }
 
@@ -459,6 +487,19 @@ class Square extends Tip implements Drawable {
     static AnimateSquareToColor(square: SnapElement, toColor: string) {
         square.animate({"fill": toColor}, 250);
     }
+    
+    static FlashSquare(snapCanvas: SnapCanvas, group: SnapElement, color: string, x: number, y:number , length: number): SnapElement {
+        // add some extra flashing pixels
+        var flashSquare: Square = new Square(length+1, Trace.LineHeight+2, "", color);
+        var squareGroup = flashSquare.draw(snapCanvas, x, y-1);
+        
+        group.before(squareGroup);
+        
+        var snapSquare: SnapElement = squareGroup[0]; // first element in group is square
+        Square.AnimateSquareToColor(snapSquare, "#FFFFFF"); // to white
+        
+        return squareGroup;
+    }
 }
 
 class Arrow implements Drawable {
@@ -510,7 +551,7 @@ class SingleArrow extends Arrow {
         var line: SnapElement = snapCanvas.paper.path("M"+x+","+(y+(this.height / 2))+"H"+(x+this.width));
         
         line.attr({"stroke": "black", 
-	               "stroke-width": Arrow.StrokeWidth});
+                   "stroke-width": Arrow.StrokeWidth});
         
         // center text right above the arrow
         var textPosition = (y + this.height/2) - Arrow.StrokeWidth - 2; // 2 units above the line
@@ -524,7 +565,7 @@ class SingleArrow extends Arrow {
         
         var head = snapCanvas.paper.path("M"+headX+","+headStartY+"L"+(x+this.width+offset)+","+(y+(this.height / 2))+"L"+headX+","+headEndY);
         head.attr({"stroke": "black", 
-	               "stroke-width": Arrow.StrokeWidth,
+                   "stroke-width": Arrow.StrokeWidth,
                    "fill-opacity":0});
         
         var group: SnapElement = snapCanvas.paper.group(this.textElement, head, line);
@@ -553,9 +594,9 @@ class DoubleArrow extends Arrow {
         var line2: SnapElement = snapCanvas.paper.path("M"+x+","+y2+"H"+(x+this.width+lineEndOffset));
         
         line1.attr({"stroke": "black", 
-	               "stroke-width": Arrow.StrokeWidth});
+                   "stroke-width": Arrow.StrokeWidth});
         line2.attr({"stroke": "black", 
-	               "stroke-width": Arrow.StrokeWidth});
+                   "stroke-width": Arrow.StrokeWidth});
         
         // center text right above the arrow
         var textPosition = y1 - Arrow.StrokeWidth - 2; // 2 units above the line
@@ -569,7 +610,7 @@ class DoubleArrow extends Arrow {
         
         var head = snapCanvas.paper.path("M"+headX+","+headStartY+"L"+(x+this.width+offset)+","+(y+(this.height / 2))+"L"+headX+","+headEndY);
         head.attr({"stroke": "black", 
-	               "stroke-width": Arrow.StrokeWidth,
+                   "stroke-width": Arrow.StrokeWidth,
                    "fill-opacity":0});
         
         var group: SnapElement = snapCanvas.paper.group(this.textElement, head, line1, line2);

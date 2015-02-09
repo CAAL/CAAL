@@ -106,6 +106,7 @@ interface SnapElement {
     addClass(value: string): SnapElement;
     after(el: SnapElement): SnapElement;
     animate(attrs: any, duration: number, easing: Function, callback: Function): SnapElement;
+    animate(attrs: any, duration: number, easing: Function): SnapElement;
     animate(attrs: any, duration: number): SnapElement;
     animate(animation: any): SnapElement;
     append(el : SnapElement): SnapElement;
@@ -216,13 +217,14 @@ interface SnapMatrix{
     y(x: number, y: number): number;
 }
 
-interface SnapMina{
+interface SnapMina {
     (a: number, A: number, b: number, B: number, get: Function, set: Function, easing?: Function) : SnapAnimationDescriptor;
     backin(n: number): number;
     backout(n: number): number;
     bounce(n: number): number;
     easein(n: number): number;
     easeout(n: number): number;
+    easeinout(n: number): number;
     elastic(n: number): number;
     getbyid(id: string): any;
     linear(n: number): number;
@@ -258,4 +260,5 @@ interface SnapSet {
 
 }
 
-declare var Snap: SnapStatic
+declare var Snap: SnapStatic;
+declare var mina: SnapMina;
