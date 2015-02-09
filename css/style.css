@@ -209,19 +209,33 @@ canvas {
 	font-variant: small-caps;
 }
 
-/* FIX: Simon */
-/*.modal-dialog .modal-header > #help-dialog-body-par table, td, th {
-  border: 1px solid #999;
-  padding: 0.5rem;
-  text-align: left; 
-}*/
-
-td.td1{
+table.helpTable td {
   border: 1px solid #999;
   padding: 0.5rem;
   text-align: left;
-  font: normal 14px "Inconsolata";   
+}
 
+td.tableColumn{
+  border: 1px solid #999;
+  padding: 0.5rem;
+  text-align: left;
+  font: normal 14px "Inconsolata";  
+
+   -webkit-touch-callout: default;
+   -webkit-user-select: text;
+   -khtml-user-select: text;
+   -moz-user-select: text;
+   -ms-user-select: element;
+   user-select: text;  
+}
+
+tr {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 /*

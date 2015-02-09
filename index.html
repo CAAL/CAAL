@@ -120,7 +120,7 @@
           <h4>Target Processes</h4>
           <table id="status-table" class="table table-responsive table-striped table-condensed" >
             <thead>
-              <tr>
+              <tr class="tableRow">
                 <th>Action</th>
                 <th>Target</th>
                 <th>Target Definition</th>
@@ -225,7 +225,7 @@
     </div>
 
     <!-- Modals -->
-    <div id="delete-modal" class="modal fade">
+    <div id="delete-modal" class="modal fade" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -242,14 +242,14 @@
         </div>
       </div>
     </div>
-    <div class="modal fade" id="viz-mode-dialog">
+    <div class="modal fade" id="viz-mode-dialog" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
             <h4 class="modal-title">Select Initial Process</h4>
           </div>
-          <div class="modal-body" id="viz-mode-dialog-body">
+          <div class="modal-body" id="viz-mode-dialog-body" tabindex="-1">
             Select whether to use strong or weak successors:<br>
             <div class="btn-group" data-toggle="buttons">
               <label class="btn btn-primary active">
@@ -283,7 +283,7 @@
         </div>
       </div>
     </div>
-    <div class="modal fade" id="game-mode-dialog">
+    <div class="modal fade" id="game-mode-dialog" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -319,7 +319,7 @@
         </div>
       </div>
     </div>    
-    <div class="modal fade" id="explain-dialog">
+    <div class="modal fade" id="explain-dialog" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -336,7 +336,7 @@
       </div>
     </div>
 	
-    <div class="modal fade" id="help-dialog">
+    <div class="modal fade" id="help-dialog" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -347,7 +347,7 @@
             <p id="help-dialog-body-par">
 				The table listed contains the allowed CCS expressions along with the syntax
 				
-				<table style="width:100%" class="table1">
+				<table style="width:100%" class="helpTable">
 					<thead>
 						<tr>
 							<th>Expression</th>
@@ -357,105 +357,104 @@
 					<tbody>
 						<tr>
 							<td>Comment</td>
-							<td class ="td1"><font color ="#6BB15F">* This is a comment</font></td>
+							<td class="tableColumn"><font color ="#6BB15F">* This is a comment</font></td>
 						</tr>
-					<tr>
-						<td>Process Definition</td>
-						<td class ="td1"> <b>A</b> <font color="#0000b6">=</font> a<font color="#0000b6">.</font><b>B</b>;</td>
-					</tr>		
-					<tr>
-						<td>Parallel Composition</td>
-						<td class ="td1">P <font color="#0000b6">|</font> Q;</td>
-					</tr>			
-					<tr>
-						<td>Choice</td>
-						<td class ="td1">P <font color="#0000b6">+</font> Q;</td>
-					</tr>			
-					<tr>
-						<td>Restriction</td>
-						<td class ="td1"><b>A</b> <font color="#0000b6">\</font> {a,b};</td>
-					</tr>
-					<tr>
-						<td>Renaming</td>
-						<td class ="td1"><b>A</b>[b/a];</td>
-					</tr>
-					<tr>
-						<td>Set</td>
-						<td class ="td1">set <b>A</b> <font color="#0000b6">=</font> {a,b,c};</td>
-					</tr>
-					<tr>
-						<td>Empty Process</td>
-						<td class ="td1">0;</td>
-					</tr>
+						<tr>
+							<td>Process Definition</td>
+							<td class ="tableColumn"> <b>A</b> <font color="#0000b6">=</font> a<font color="#0000b6">.</font><b>B</b>;</td>
+						</tr>		
+						<tr class="tableRow">
+							<td>Parallel Composition</td>
+							<td class ="tableColumn">P <font color="#0000b6">|</font> Q;</td>
+						</tr>			
+						<tr class="tableRow">
+							<td>Choice</td>
+							<td class ="tableColumn">P <font color="#0000b6">+</font> Q;</td>
+						</tr>			
+						<tr class="tableRow">
+							<td>Restriction</td>
+							<td class ="tableColumn"><b>A</b> <font color="#0000b6">\</font> {a,b};</td>
+						</tr>
+						<tr class="tableRow">
+							<td>Renaming</td>
+							<td class ="tableColumn"><b>A</b>[b/a];</td>
+						</tr>
+						<tr class="tableRow">
+							<td>Set</td>
+							<td class ="tableColumn">set <b>A</b> <font color="#0000b6">=</font> {a,b,c};</td>
+						</tr>
+						<tr class="tableRow">
+							<td>Empty Process</td>
+							<td class ="tableColumn">0;</td>
+						</tr>
 					</tbody>
 				</table>
-				<div>
-				</p>
-				
-		    <div class="modal-body">
+			</p>	
+		</div>
+		
+		<div class="modal-body">
             <p id="help-dialog-body-par1">
 				The table listed contains the allowed HML formulas along with the syntax
 				
-				<table style="width:100%" class="table1">
+				<table style="width:100%" class="helpTable">
 					<thead>
-						<tr>
+						<tr class="tableRow">
 							<th>Formula</th>
 							<th>Syntax</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr>
+						<tr class="tableRow">
 							<td>True</td>
-							<td class ="td1">tt</td>
+							<td class ="tableColumn">tt</td>
 						</tr>
-					<tr>
-						<td>False</td>
-						<td class ="td1">ff</td>
-					</tr>		
-					<tr>
-						<td>Conjunction</td>
-						<td class ="td1">F and G;</td>
-					</tr>			
-					<tr>
-						<td>Disjunction</td>
-						<td class ="td1">F or G;</td>
-					</tr>			
-					<tr>
-						<td>Strong Exist</td>
-						<td class ="td1">&lta,b&gtF;</td>
-					</tr>
-					<tr>
-						<td>Weak Exist</td>
-						<td class ="td1">&lt&lta,b&gt&gtF;</td>
-					</tr>
-					<tr>
-						<td>Strong Forall</td>
-						<td class ="td1">[a,b]F;</td>
-					</tr>
-					<tr>
-						<td>Weak Forall</td>
-						<td class ="td1">[[a,b]]F;</td>
-					</tr>
-					<tr>
-						<td>All Actions</td>
-						<td class ="td1">- delimits all actions, e.g &lt-&gtF;</td>
-					</tr>
-					<tr>
-						<td>Minimum fix-point</td>
-						<td class ="td1">X min= [-]X;</td>
-					</tr>
-					<tr>
-						<td>Maximum fix-point</td>
-						<td class ="td1">X max= [-]X;</td>
-					</tr>
-					<tr>
-						<td>Recursive Variable</td>
-						<td class ="td1">X min= &lt-&gtY; <br/> 
-										 Y min= [-]tt;</td>
-					</tr>
+						<tr class="tableRow">
+							<td>False</td>
+							<td class ="tableColumn">ff</td>
+						</tr>		
+						<tr class="tableRow">
+							<td>Conjunction</td>
+							<td class ="tableColumn">F and G;</td>
+						</tr>			
+						<tr class="tableRow">
+							<td>Disjunction</td>
+							<td class ="tableColumn">F or G;</td>
+						</tr>			
+						<tr class="tableRow">
+							<td>Strong Exist</td>
+							<td class ="tableColumn">&lta,b&gtF;</td>
+						</tr>
+						<tr class="tableRow">
+							<td>Weak Exist</td>
+							<td class ="tableColumn">&lt&lta,b&gt&gtF;</td>
+						</tr>
+						<tr class="tableRow">
+							<td>Strong Forall</td>
+							<td class ="tableColumn">[a,b]F;</td>
+						</tr>
+						<tr class="tableRow">
+							<td>Weak Forall</td>
+							<td class ="tableColumn">[[a,b]]F;</td>
+						</tr>
+						<tr class="tableRow">
+							<td>All Actions</td>
+							<td class ="tableColumn">- delimits all actions, e.g &lt-&gtF;</td>
+						</tr>
+						<tr class="tableRow">
+							<td>Minimum fix-point</td>
+							<td class ="tableColumn">X min= [-]X;</td>
+						</tr>
+						<tr class="tableRow">
+							<td>Maximum fix-point</td>
+							<td class ="tableColumn">X max= [-]X;</td>
+						</tr>
+						<tr class="tableRow">
+							<td>Recursive Variable</td>
+							<td class ="tableColumn">X min= &lt-&gtY; <br/> 
+											 Y min= [-]tt;</td>
+						</tr>
 					</tbody>
-				</table>
-				
+				</table>	
 			</p>
           </div>
           <div class="modal-footer">
