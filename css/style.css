@@ -215,20 +215,8 @@ table.helpTable td {
   text-align: left;
 }
 
-td.tableColumn{
-  border: 1px solid #999;
-  padding: 0.5rem;
-  text-align: left;
+td.inconsolata{
   font: normal 14px "Inconsolata";   
-}
-
-tr.tableRow{
-   -webkit-touch-callout: default;
-   -webkit-user-select: text;
-   -khtml-user-select: text;
-   -moz-user-select: text;
-   -ms-user-select: element;
-   user-select: text; 
 }
 
 .noHighlight {
