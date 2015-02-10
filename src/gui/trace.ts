@@ -333,6 +333,8 @@ class Trace implements Drawable {
             x = snapCanvas.canvasWidth - Trace.LineBorder;
 
             var maxTraceLength = (snapCanvas.canvasWidth - Trace.LineBorder*2)/2;
+            //maxTraceLength = maxTraceLength*2 <= 470 ? maxTraceLength*2 : maxTraceLength*2 < 470*2 ? 470 : maxTraceLength; // attempt to be smart about the maxTraceLength relative to the canvasWidth:
+            
             var currentLength = 0;
             var firstElementLength: number = 0;
             

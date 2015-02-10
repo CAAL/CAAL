@@ -10,6 +10,8 @@ module Activity {
     import ccs = CCS;
     import dgMod = DependencyGraph;
 
+    enum PlayType {Attacker, Defender};
+    
     export class BisimulationGame extends Activity {
         
         static ComputerDealy: number = 500;
@@ -100,13 +102,13 @@ module Activity {
             
             if (this.marking.getMarking(0) === this.marking.ONE) {
                 // The processes are NOT bisimilar. Take attacker role.
-                this.printToLog("You are playing as <span style='color: "+SnapGame.PlayerColor+"'>DEFENDER</span>.");
+                this.printToLog("You are playing as <span style='color: "+SnapGame.PlayerColor+"'>DEFENDER</span> and you will lose.");
                 this.isBisimilar = false;
                 this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(0));
                 
             } else if (this.marking.getMarking(0) === this.marking.ZERO) {
                 // The processes ARE bisimilar. Take defender role.
-                this.printToLog("You are playing as <span style='color: "+SnapGame.PlayerColor+"'>ATTACKER</span>.");
+                this.printToLog("You are playing as <span style='color: "+SnapGame.PlayerColor+"'>ATTACKER</span> and you will lose.");
                 this.isBisimilar = true;
                 this.updateTable(0);
             }
@@ -170,7 +172,7 @@ module Activity {
                         }
 
                         this.snapCanvas.draw();
-                        this.printPlayer("ATTACKER", action, destination);
+                        this.printPlayer(PlayType.Attacker, action, destination);
                         
                         this.emptyTable();
                         
@@ -185,7 +187,7 @@ module Activity {
                         }
 
                         this.snapCanvas.draw();
-                        this.printPlayer("DEFENDER", action, destination);
+                        this.printPlayer(PlayType.Defender, action, destination);
 
                         this.emptyTable();
 
@@ -220,7 +222,7 @@ module Activity {
                         }
                         
                         this.snapCanvas.draw();
-                        this.printComputer("DEFENDER", action, destination);
+                        this.printComputer(PlayType.Defender, action, destination);
 
                         this.updateTable(edge.slice(0)[0]);
                         return;
@@ -255,7 +257,7 @@ module Activity {
                     }
                     
                     this.snapCanvas.draw();
-                    this.printComputer("ATTACKER", action, destination);
+                    this.printComputer(PlayType.Attacker, action, destination);
                     
                     this.lastMove = (data[0] == 1 ? "LEFT" : data[0] == 2 ? "RIGHT" : "");
                     this.updateTable(edge.slice(0)[0], data[1].toString());
@@ -324,20 +326,33 @@ module Activity {
             }
         }
 
-        private printComputer(player: string, action: string, destination: string) {
-            this.printToLog("<span style='color: "+SnapGame.ComputerColor+"'>" + player + "</span>: " + "--- "+action+" --->   " + destination);
+        private printComputer(playType: PlayType, action: string, destination: string) {
+            if (playType == PlayType.Attacker)
+                this.printRound(SnapGame.StepCounter / 2 + 1);
+            
+            this.printToLog("<span style='color: "+SnapGame.ComputerColor+"'>" + this.playTypeStr(playType) + "</span>: " + "--- "+action+" --->   " + destination, 20);
         }
         
-        private printPlayer(player: string, action: string, destination: string) {
-            this.printToLog("<span style='color: "+SnapGame.PlayerColor+"'>" + player + "</span>: " + "--- "+action+" --->   " + destination);
+        private printPlayer(playType: PlayType, action: string, destination: string) {
+            if (playType == PlayType.Attacker)
+                this.printRound(SnapGame.StepCounter / 2 + 1);
+                
+            this.printToLog("<span style='color: "+SnapGame.PlayerColor+"'>" + this.playTypeStr(playType) + "</span>: " + "--- "+action+" --->   " + destination, 20);
         }
         
-        private printToLog(text: string) {
+        private printRound(round: number) {
+            this.printToLog("Round " + Math.floor(round) + ":");
+        }
+        
+        private printToLog(text: string, margin: number = 0) {
             var list = $("#game-console > ul");
-            list.append("<li>"+text+"</li>");
+            list.append("<li style='margin-left: " + margin + "px'>"+text+"</li>");
             this.gameConsole.scrollTop(this.gameConsole[0].scrollHeight);
         }
         
+        private playTypeStr(playType: PlayType): string {
+            return playType == PlayType.Attacker ? "ATTACKER" : playType == PlayType.Defender ? "DEFENDER" : "UNKNOWN";
+        }
     }
     
 }
