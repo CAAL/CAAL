@@ -2,7 +2,7 @@
 /// <reference path="../../../lib/d3/d3.d.ts" />
 /// <reference path="point.ts" />
 /// <reference path="vertex.ts" />
-/// <reference path="edge.ts" />
+/// <reference path="transition.ts" />
 /// <reference path="../gui.ts" />
 
 module GUI {
@@ -16,7 +16,6 @@ module GUI {
             "selected"   : "rgb(245, 50, 50)",
             "stroke"     : "rgb(0, 0, 0)"
         }; 
-        private lastLinkId = 0;
         private vertices = [];
         private verticeIds = {};
         private transitionIds = {};
@@ -28,8 +27,7 @@ module GUI {
         public hover_node = null;
         private links;
         private circle;
-        private circleRadius = 15;
-        private linkText;
+        private circleRadius = 20;
 
         constructor() {      
             this.init();
@@ -88,12 +86,13 @@ module GUI {
         }
 
         private tick = () => {
+            // vertex
             this.circle.attr('transform', (d) => {
                 var p = this.boundingBox(new Point(d.x, d.y));
                 return 'translate(' + p.x + ',' + p.y + ')';
             });
 
-            // link
+            // transition
             this.links.selectAll('path').attr('d', (d) => {
                 var sourceP = new Point(d.source.x, d.source.y);
                 var targetP = new Point(d.target.x, d.target.y);
@@ -144,9 +143,8 @@ module GUI {
 
                 }
                 else {
-                    // normal edge
-                    var norm = sourceP.subtract(targetP);
-                    norm.normalize();
+                    // normal transition
+                    var norm = sourceP.subtract(targetP).normalize();
 
                     var newSourceP = sourceP.subtract(norm.multiplyWithNumber(sourcePadding));
                     
@@ -207,18 +205,18 @@ module GUI {
             });
         }
 
-        // This methods updates, inserts and removes links and circles(nodes) 
+        // This methods updates, inserts and removes links and circles(Vertex) 
         private update() : void {
             //Bind the data
-            this.circle = this.circle.data(this.vertices, (d) => {return d.id;});
+            this.circle = this.circle.data(this.vertices, (d : Vertex) => {return d.id;});
             
-            // update existing nodes (reflexive & selected visual states)
+            // update existing vertices (reflexive & selected visual states)
             this.svg.selectAll('circle')
                .style('fill', this.nodeColorChange)
                .style('stroke', this.nodeColors['stroke']);
                
 
-            // add new nodes    
+            // add new vertices    
             var g = this.circle.enter().append('svg:g');
             
             // Add drag listener
@@ -237,15 +235,22 @@ module GUI {
                 .attr('x', 0)
                 .attr('y', 4)
                 .attr('class', 'id')
-                .text(function(d) { return d.id; });
+                .style('font-family','sans-serif') 
+                .style('font-size', (d) => {
+                    console.log(Math.round(this.circleRadius/2) + 'px')
+                    return Math.round(this.circleRadius/2) + 'px';
+                })
+                .text((d) => { 
+                    return d.data.label.substring(0, (this.circleRadius/3)); 
+                });
 
-            //remove old nodes
+            //remove old vertices
             this.circle.exit().remove();
 
             //Bind the data
-            this.links = this.links.data(this.transitions, (d) => {return d.id;});
+            this.links = this.links.data(this.transitions, (d : Transition) => {return d.id;});
 
-            //update links
+            //update transitions
             this.links.selectAll('path')
                 .style('marker-start', (d) => { return d.data.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
                 .style('marker-end', (d) => { return d.data.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
@@ -254,7 +259,7 @@ module GUI {
             var glink = this.links.enter().append('svg:g')
                 .attr("id", (d,i) => { return "linkId_" + i; })
 
-            //Append link
+            //Append transition
             glink.append('svg:path')
                 .attr("fill", "none")
                 .attr("class", "link")
@@ -262,17 +267,17 @@ module GUI {
                 .style('marker-start', (d) => { return d.data.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
                 .style('marker-end', (d) => { return d.data.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
 
-            //Append text to links
+            //Append text to transitions
             glink.append('svg:text')
                 .style("font-size", "12px")
-                .style("opacity",1)
+                .style('font-family','sans-serif')
                 //.attr("dy", "1.2em")
                 .attr("text-anchor", "middle")
                 .text((d) => {
                     return d.data.label;
                 });
 
-            //remove links
+            //remove transitions
             this.links.exit().remove();
             
             //start the physics
@@ -461,19 +466,52 @@ module GUI {
             // Start the force (may the force be with you)
             this.force.resume();
         }
+
+        private intersect_line_line(p1 : Point, p2 : Point, p3 : Point, p4 : Point) : Point {
+            var denom = ((p4.y - p3.y)*(p2.x - p1.x) - (p4.x - p3.x)*(p2.y - p1.y));
+            if (denom === 0){
+                return null; // lines are parallel
+            }
+
+            var ua = ((p4.x - p3.x)*(p1.y - p3.y) - (p4.y - p3.y)*(p1.x - p3.x)) / denom;
+            var ub = ((p2.x - p1.x)*(p1.y - p3.y) - (p2.y - p1.y)*(p1.x - p3.x)) / denom;
+
+            if (ua < 0 || ua > 1 || ub < 0 || ub > 1) {
+                return null;
+            }
+
+            return new Point(p1.x + ua * (p2.x - p1.x), p1.y + ua * (p2.y - p1.y));
+        }
+
+        private intersect_line_box(p1 : Point, p2 : Point, boxTuple : any) : Point {
+            var p3 = new Point(boxTuple[0], boxTuple[1]);
+            var w = boxTuple[2];
+            var h = boxTuple[3];
+
+            var tl = new Point(p3.x, p3.y);
+            var tr = new Point(p3.x + w, p3.y);
+            var bl = new Point(p3.x, p3.y + h);
+            var br = new Point(p3.x + w, p3.y + h);
+
+            return this.intersect_line_line(p1, p2, tl, tr) ||
+                 this.intersect_line_line(p1, p2, tr, br) ||
+                 this.intersect_line_line(p1, p2, br, bl) ||
+                 this.intersect_line_line(p1, p2, bl, tl) ||
+                 new Point(p2.x, p2.y);
+        }
     }
 }
 
 var d3test = new GUI.d3Graph();
-d3test.showProcess("1", {expanded: true});
-d3test.showProcess("2", {expanded: false});
-d3test.showProcess("3", {expanded: false});
-d3test.showProcess("4", {expanded: false});
-d3test.showProcess("5", {expanded: false});
-d3test.showProcess("6", {expanded: false});
-d3test.showProcess("7", {expanded: false});
-d3test.showProcess("8", {expanded: false});
-d3test.showProcess("9", {expanded: false});
+d3test.showProcess("1", {label:"1234567890"});
+d3test.showProcess("2", {label:"1234567890"});
+d3test.showProcess("3", {label:"1234567890"});
+d3test.showProcess("4", {label:"1234567890"});
+d3test.showProcess("5", {label:"1234567890"});
+d3test.showProcess("6", {label:"1234567890"});
+d3test.showProcess("7", {label:"1234567890"});
+d3test.showProcess("8", {label:"1234567890"});
+d3test.showProcess("9", {label:"1234567890"});
 d3test.showTransitions("1","2", {label : 'test'});
 d3test.showTransitions("2","3", {label : 'edge 2->3'});
 d3test.showTransitions("3","2", {label : 'edge 3->2'});
@@ -483,8 +521,6 @@ d3test.showTransitions("5","6", {label : 'this is awesome'});
 d3test.showTransitions("6","7", {label : 'this is awesome'});
 d3test.showTransitions("7","8", {label : 'this is awesome'});
 d3test.showTransitions("8","9", {label : 'this is awesome'});
-d3test.freeze();
-d3test.unfreeze();
 
 
 
