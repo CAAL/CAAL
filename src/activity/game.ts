@@ -35,6 +35,9 @@ module Activity {
 
         private snapGame: SnapGame;
         
+        private boundClick;
+        private gameConsole;
+        
         constructor(private canvas, private actionsTable) {
             super();
             
@@ -71,8 +74,12 @@ module Activity {
 
             // Run liuSmolka algorithm to check for bisimilarity and get a marked dependency graph.
             this.marking = dgMod.liuSmolkaLocal2(0, this.dependencyGraph);
-
-            $("#game-console").find("ul").empty();
+            
+            this.gameConsole = $("#game-console");
+            
+            this.gameConsole.find("ul").empty();
+            this.gameConsole.css("max-height", "100px");
+            this.gameConsole.scrollTop($("#game-console")[0].scrollHeight);
         }
         
         beforeHide(): void {
@@ -102,27 +109,34 @@ module Activity {
                 this.printToLog("You are playing as <span style='color: "+SnapGame.PlayerColor+"'>ATTACKER</span>.");
                 this.isBisimilar = true;
                 this.updateTable(0);
-                
             }
+            
+            this.boundClick = this.clickConsole.bind(this);
+            this.gameConsole.on("click", this.boundClick);
 
-            $("#game-console").on("click", function() {
-                if( $(this).css("max-height") === "none" ) {
-                    $(this).css("max-height", "100px");
-                    $(this).scrollTop($(this)[0].scrollHeight);
-                } else {
-                    $(this).css("max-height", "none");
-                }
-            });
-
-            $("#game-console").hover(() => {
+            this.gameConsole.hover( () => {
                 $("#game-console").css("background", "rgba(0, 0, 0, 0.07)");
             }, 
-                                     () => {
-                                         // clear highlight
-                                         $("#game-console").css("background", "");
-                                     });
+            () => {
+                // clear highlight
+                $("#game-console").css("background", "");
+            });
         }
-
+        
+        afterHide() {
+            this.gameConsole.unbind("click", this.boundClick);
+            this.boundClick = null;
+        }
+        
+        private clickConsole() {
+            if( this.gameConsole.css("max-height") === "none" ) {
+                this.gameConsole.css("max-height", "100px");
+                this.gameConsole.scrollTop($(this)[0].scrollHeight);
+            } else {
+                this.gameConsole.css("max-height", "none");
+            }
+        }
+        
         private setOnHoverListener(row) {
             if(row){
                 $(row).hover(() => {
@@ -321,7 +335,7 @@ module Activity {
         private printToLog(text: string) {
             var list = $("#game-console > ul");
             list.append("<li>"+text+"</li>");
-            $("#game-console").scrollTop($("#game-console")[0].scrollHeight);
+            this.gameConsole.scrollTop(this.gameConsole[0].scrollHeight);
         }
         
     }

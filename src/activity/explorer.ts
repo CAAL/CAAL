@@ -11,6 +11,7 @@ module Activity {
     import ccs = CCS;
     import ProcessGraphUI = GUI.ProcessGraphUI;
     import ArborGraph = GUI.ArborGraph;
+    import TooltipHtmlCCSNotationVisitor = Traverse.TooltipHtmlCCSNotationVisitor;
     import CCSNotationVisitor = Traverse.CCSNotationVisitor;
 
     function groupBy<T>(arr : T[], keyFn : (T) => any) : any {
@@ -34,7 +35,8 @@ module Activity {
         private graph : ccs.Graph;
         private succGenerator : ccs.SuccessorGenerator;
         private initialProcessName : string;
-        private notationVisitor : CCSNotationVisitor;
+        private htmlNotationVisitor : TooltipHtmlCCSNotationVisitor;
+        private ccsNotationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
         private preExpandDept : number = 1;
         private fullScreenContainer;
@@ -44,13 +46,14 @@ module Activity {
         private fullscreenBtn;
         private sourceDefinition;
 
-        constructor(private container, notationVisitor : CCSNotationVisitor) {
+        constructor(private container) {
             super();
             
             var $container = $(container);
 
             this.canvas = $container.find("#arbor-canvas")[0];
-            this.notationVisitor = notationVisitor;
+            this.htmlNotationVisitor = new TooltipHtmlCCSNotationVisitor();
+            this.ccsNotationVisitor = new CCSNotationVisitor();
             this.renderer = new Renderer(this.canvas);
             this.uiGraph = new ArborGraph(this.renderer);
 
@@ -78,6 +81,23 @@ module Activity {
                 .on("click", "tr", this.onTransitionTableRowClick.bind(this))
                 .on("mouseenter", "tr", this.onTransitionTableRowHover.bind(this, true))
                 .on("mouseleave", "tr", this.onTransitionTableRowHover.bind(this, false));
+
+            var getCCSNotation = this.ccsNotationForProcessId.bind(this);
+            $(this.statusTableContainer).tooltip({
+                title: function() {
+                    return getCCSNotation($(this).text());
+                },
+                selector: "span.ccs-tooltip-constant"
+            });
+        }
+
+        private ccsNotationForProcessId(id : string) {
+            var process = this.graph.processByName(id) || this.graph.processById(id),
+                text = "Unknown definition";
+            if (process) {
+                text = this.getDefinitionForProcess(process, this.ccsNotationVisitor);
+            }
+            return text;
         }
 
         private isFullscreen(): boolean {
@@ -133,7 +153,8 @@ module Activity {
             this.initialProcessName = configuration.initialProcessName;
             this.preExpandDept = configuration.expandDepth;
             this.expandDepth = 1;
-            this.notationVisitor.clearCache();
+            this.htmlNotationVisitor.clearCache();
+            this.ccsNotationVisitor.clearCache();
             this.clear();
             this.expand(this.graph.processByName(this.initialProcessName), this.preExpandDept);
         }
@@ -253,11 +274,11 @@ module Activity {
             return result;
         }
 
-        private getDefinitionForProcess(process) : string {
+        private getDefinitionForProcess(process, visitor) : string {
             if (process instanceof ccs.NamedProcess) {
-                return this.notationVisitor.visit((<ccs.NamedProcess>process).subProcess);
+                return visitor.visit((<ccs.NamedProcess>process).subProcess);
             }
-            return this.notationVisitor.visit(process);
+            return visitor.visit(process);
         }
 
         private updateStatusAreaTransitions(fromProcess, transitions : ccs.Transition[]) {
@@ -265,12 +286,12 @@ module Activity {
             var $sourceDefinition = $(this.sourceDefinition);
             body.empty();
 
-            $sourceDefinition.text(this.labelFor(fromProcess) + " = " + this.getDefinitionForProcess(fromProcess));
+            $sourceDefinition.html(this.labelFor(fromProcess) + " = " + this.getDefinitionForProcess(fromProcess, this.htmlNotationVisitor));
             transitions.forEach(t => {
                 var row = $("<tr></tr>");
                 var action = $("<td></td>").append(t.action.toString());
                 var name = $("<td></td>").append(this.labelFor(t.targetProcess));
-                var target = $("<td></td>").append(this.notationVisitor.visit(t.targetProcess));
+                var target = $("<td></td>").append(this.getDefinitionForProcess(t.targetProcess, this.htmlNotationVisitor));
                 row.append(action, name, target);
                 row.attr("data-target-id", t.targetProcess.id);
                 body.append(row);

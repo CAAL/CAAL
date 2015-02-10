@@ -53,12 +53,10 @@ module Main {
 
         activityHandler.addActivity(
                 "explorer",
-                new Activity.Explorer(
-                    $("#explorer-container")[0],
-                    new Traverse.CCSNotationVisitor()),
-                    setupExplorerActivityFn,
-                    "explorer-container",
-                    "explore-btn");
+                new Activity.Explorer($("#explorer-container")[0]),
+                setupExplorerActivityFn,
+                "explorer-container",
+                "explore-btn");
 
         activityHandler.addActivity(
                 "verifier",
