@@ -222,15 +222,6 @@ td.tableColumn{
   font: normal 14px "Inconsolata";   
 }
 
-tr {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-
 tr.tableRow{
    -webkit-touch-callout: default;
    -webkit-user-select: text;
@@ -239,6 +230,16 @@ tr.tableRow{
    -ms-user-select: element;
    user-select: text; 
 }
+
+.noHighlight {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 
 /*
  * Verifier activity styles
