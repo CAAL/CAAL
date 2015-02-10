@@ -151,19 +151,6 @@ canvas {
     margin-top: 15px;
 }
 
-#tip{
-    display: none;
-    position : absolute;
-    border : 1px solid gray;
-    background-color : #efefef;
-    padding : 3px;
-    z-index: 1000;
-    margin-left: 6px;
-    margin-top: 6px;
-    /* set this to create word wrap */
-    max-width: 500px;
-}
-
 #game-console{
     cursor: pointer;
     max-height: 100px;
@@ -262,7 +249,7 @@ td.inconsolata{
     background-color: #eeeeee;
     border: 1px solid #bbbbbb;
     border-radius: 5px;
-    padding: 0 2px;
+    padding: 0px 2px 0px 2px;
 }
 #status-table-container .tooltip-inner {
     background-color: #eeeeee;
@@ -276,4 +263,21 @@ td.inconsolata{
 #status-table-container .tooltip.in {
     filter: alpha(opacity=100);
     opacity: 1.0;
+}
+
+/*
+    Tooltips in Game
+*/
+#tip{
+    display: none;
+    position : absolute;
+    border : 1px solid #bbbbbb;
+    background-color : #eeeeee;
+    border-radius: 5px;
+    padding : 3px;
+    z-index: 1000;
+    margin-left: 6px;
+    margin-top: 6px;
+    /* set this to create word wrap */
+    max-width: 500px;
 }
