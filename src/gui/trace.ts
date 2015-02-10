@@ -350,6 +350,10 @@ class Trace implements Drawable {
                 x -= item.width;
                 group.add(item.draw(snapCanvas, x, y));
                 currentLength += item.width;
+                
+                // drawing optimization
+                if (x - maxTraceLength + firstElementLength + item.width < 0)
+                    break;
             }
             
             var transformation: number = 0;
