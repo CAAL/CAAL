@@ -18,9 +18,9 @@ module GUI {
         }; 
         private lastLinkId = 0;
         private vertices = [];
-        private verticeIds = {}
-        private edgesIds = {};
-        private edges = []; // Remember it is not ID but index in the array
+        private verticeIds = {};
+        private transitionIds = {};
+        private transitions = []; // Remember it is not ID but index in the array
         private svg;
         private vis;
         private force;
@@ -53,7 +53,7 @@ module GUI {
 
             this.force = d3.layout.force()
                     .nodes(this.vertices)
-                    .links(this.edges)
+                    .links(this.transitions)
                     .size([this.width, this.height])
                     .linkDistance(150)
                     .charge(-500)
@@ -85,7 +85,6 @@ module GUI {
             this.links = this.svg.append('g').selectAll('link');
             this.circle = this.svg.append('g').selectAll('g');
             this.update();
-            console.log("nodes: ",this.force.nodes())
         }
 
         private tick = () => {
@@ -104,10 +103,9 @@ module GUI {
                 var sourcePadding = d.data.direction != 'post' ? this.circleRadius+5 : this.circleRadius;
                 var targetPadding = d.data.direction != 'pre' ? this.circleRadius+5 : this.circleRadius;
 
-                var oppositeEdgeExists = this.edgesIds[d.target.id + ',' + d.source.id];
+                var oppositeTransitionExists = this.transitionIds[d.target.id + ',' + d.source.id];
 
                 if (d.source == d.target) {
-                    console.log('Drawing self-loop: ', d)
                     //self loop
                     var cpH = 90;
                     var cpV = 60;
@@ -123,9 +121,8 @@ module GUI {
 
                     return "M" + newSourceP.x + "," + newSourceP.y+"C" + cp1.x + " " + cp1.y+" " + cp2.x+ " " + cp2.y+" " + newTargetP.x +" "+ newTargetP.y;
                 }
-                else if (oppositeEdgeExists) { 
-                    console.log('Drawing bending edges: ', d);
-                    // draw the two opposite edges
+                else if (oppositeTransitionExists) { 
+                    // draw the two opposite transitions
                     var midPoint = sourceP.add(targetP).multiplyWithNumber(0.5);
                     var angle = Math.atan2(-(targetP.y - sourceP.y), targetP.x - sourceP.x) - Math.PI/2;
 
@@ -142,7 +139,6 @@ module GUI {
                     var newSourceP = sourceP.subtract(normSourceP.multiplyWithNumber(sourcePadding)); 
                     var newTargetP = targetP.subtract(normTargetP.multiplyWithNumber(targetPadding));
 
-                    console.log("M" + newSourceP.x + "," + newSourceP.y + "Q" + cp.x + " " + cp.y + " " + newTargetP.x + " " + newTargetP.y);
                     return "M" + newSourceP.x + "," + newSourceP.y + "Q" + cp.x + " " + cp.y + " " + newTargetP.x + " " + newTargetP.y;
 
 
@@ -161,7 +157,7 @@ module GUI {
 
             //link label
             this.links.selectAll('text').attr("transform", (d) => {
-                var oppositeEdgeExists = this.edgesIds[d.target.id + ',' + d.source.id];
+                var oppositeTransitionExists = this.transitionIds[d.target.id + ',' + d.source.id];
 
                 var sourceP = new Point(d.source.x, d.source.y);
                 var targetP = new Point(d.target.x, d.target.y);
@@ -175,7 +171,7 @@ module GUI {
                     var cpV = 60;
                     return "translate(" + midPoint.x + "," + (midPoint.y - cpV) + ")"; 
                 } 
-                else if(oppositeEdgeExists){
+                else if(oppositeTransitionExists){
                     // bending edge
                     var angle = Math.atan2(-(targetP.y - sourceP.y), targetP.x - sourceP.x) - Math.PI/2;
 
@@ -247,7 +243,7 @@ module GUI {
             this.circle.exit().remove();
 
             //Bind the data
-            this.links = this.links.data(this.edges, (d) => {return d.id;});
+            this.links = this.links.data(this.transitions, (d) => {return d.id;});
 
             //update links
             this.links.selectAll('path')
@@ -295,15 +291,15 @@ module GUI {
 
         private nodeColorChange = (d) => {
             if(d === this.selected_node) {
-                console.log('selected: ', d.id)
+                // console.log('selected: ', d.id)
                 return this.nodeColors['selected'];
             }
             else if(d.data.expanded) { 
-                console.log('expanded: ', d.id);
+                // console.log('expanded: ', d.id);
                 return this.nodeColors['expanded'];
             }
             else {
-                console.log('unexpanded: ', d.id);
+                // console.log('unexpanded: ', d.id);
                 return this.nodeColors['unexpanded'];
             }
         };
@@ -324,13 +320,13 @@ module GUI {
 
         public clearAll() : void {
             this.vertices = [];
-            this.edges = [];
+            this.transitions = [];
             this.verticeIds = {};
-            this.edgesIds = {};
+            this.transitionIds = {};
             this.update();
         }
 
-        public showProcess(identifier : number, data : VertexData = {label:''}) : Vertex {
+        public showProcess(identifier : string, data : VertexData = {}) : Vertex {
             // So this is what should happend, when node is cliked it should fire the onClick method given from the holder of the graph.(who ever created the object)
             var doesVertexExists = this.verticeIds[identifier]; 
             var v : Vertex;
@@ -338,20 +334,20 @@ module GUI {
                 //override vertex
                 v = this.getVertexById(identifier)
                 v.data = data
-                console.log('Override vertex: ', v);
+                // console.log('Override vertex: ', v);
             }
             else {
                 v = new Vertex(identifier, data);
                 this.vertices.push(v);
                 this.verticeIds[v.id] = true;
-                console.log('Insert vertex: ', v);
+                // console.log('Insert vertex: ', v);
             }  
 
             this.update();
             return v;
         }
 
-        private getVertexById(identifier : number) : Vertex {
+        private getVertexById(identifier : string) : Vertex {
             for (var i = 0; i < this.vertices.length; i++){
                 if(this.vertices[i].id === identifier){
                     return this.vertices[i];
@@ -366,29 +362,28 @@ module GUI {
             this.vertices.splice(v.index, 1);
         }
 
-        private removeVertexbyId(identifier : number) : void {
+        private removeVertexbyId(identifier : string) : void {
             var v = this.getVertexById(identifier);
             this.removeVertex(v);
         }
 
-        public getProcessDataObject(identifier) : any {
-
+        public getProcessDataObject(identifier : string) : VertexData {
+            return this.getVertexById(identifier).data
         }
 
-        public showTransitions(sourceId : number, targetId : number, data : EdgeData = {}) : Edge {
+        public showTransitions(sourceId : string, targetId : string, data : TransitionData = {}) : Transition {
             
             // Has the edge been defined
-            var doesEdgeExists = this.edgesIds[sourceId + "," +targetId];
+            var doesTransitionExists = this.transitionIds[sourceId + "," +targetId];
 
-            if (doesEdgeExists) {
+            if (doesTransitionExists) {
                 // If defined then override the edge with new data.
-                console.log('Override: ')
+                // console.log('Override: ')
             } else {
                 // Else define it
-                var linkId = ++this.lastLinkId;
-                var edge = new Edge(linkId, this.showProcess(sourceId), this.showProcess(targetId), data);
-                this.edges.push(edge);
-                this.edgesIds[sourceId + ',' + targetId] = linkId;
+                var edge = new Transition(this.showProcess(sourceId), this.showProcess(targetId), data);
+                this.transitions.push(edge);
+                this.transitionIds[sourceId + ',' + targetId] = true;
                 console.log("Inserted: ", edge);
             }
 
@@ -396,16 +391,29 @@ module GUI {
             return edge;
         }
 
-        private removeTransitionById(identifier : number) { 
+        private getTransitionById(identifier : string) : Transition {
+            for (var i = 0; i < this.transitions.length; i++){
+                if(this.transitions[i].id === identifier){
+                    this.transitions[i].index = i;
+                    return this.transitions[i];
+                }
+            }
+
+            return null
+        }
+
+        private removeTransitionById(identifier : string) : void { 
             var e = this.getTransitionById(identifier);
+            this.removeTransition(e)
         }
 
-        private getTransitionById(identifier : number){
-
+        private removeTransition(e : Transition) : void {
+            this.transitionIds[e.source + ',' + e.target] = false;
+            this.transitions.splice(this.transitions.indexOf(e), 1);
         }
 
-        public getTransitionDataObjects(fromId, toId) : any {
-
+        public getTransitionDataObjects(identifier : string) : any {
+            return this.getTransitionById(identifier);
         }
 
         public setOnSelectListener(f : (identifier) => void) : void {
@@ -457,13 +465,27 @@ module GUI {
 }
 
 var d3test = new GUI.d3Graph();
-d3test.showProcess(1);
-d3test.showProcess(2, {expanded: false});
-d3test.showProcess(3, {expanded: false});
-d3test.showTransitions(1,2, {label: 'test'});
-d3test.showTransitions(2,3, {label: 'edge 2->3'});
-d3test.showTransitions(3,2, {label: 'edge 3->2'});
-d3test.showTransitions(3,3, {label : 'this is awesome'});
+d3test.showProcess("1", {expanded: true});
+d3test.showProcess("2", {expanded: false});
+d3test.showProcess("3", {expanded: false});
+d3test.showProcess("4", {expanded: false});
+d3test.showProcess("5", {expanded: false});
+d3test.showProcess("6", {expanded: false});
+d3test.showProcess("7", {expanded: false});
+d3test.showProcess("8", {expanded: false});
+d3test.showProcess("9", {expanded: false});
+d3test.showTransitions("1","2", {label : 'test'});
+d3test.showTransitions("2","3", {label : 'edge 2->3'});
+d3test.showTransitions("3","2", {label : 'edge 3->2'});
+d3test.showTransitions("3","4", {label : 'this is awesome'});
+d3test.showTransitions("4","5", {label : 'this is awesome'});
+d3test.showTransitions("5","6", {label : 'this is awesome'});
+d3test.showTransitions("6","7", {label : 'this is awesome'});
+d3test.showTransitions("7","8", {label : 'this is awesome'});
+d3test.showTransitions("8","9", {label : 'this is awesome'});
+d3test.freeze();
+d3test.unfreeze();
+
 
 
 
