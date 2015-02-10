@@ -254,3 +254,26 @@ td.inconsolata{
 #property-table .fa-times {
     color: #c00;
 }
+
+/*
+    Tooltip for process constants
+*/
+#status-table-container span.ccs-tooltip-constant {
+    background-color: #eeeeee;
+    border: 1px solid #bbbbbb;
+    border-radius: 5px;
+    padding: 0 2px;
+}
+#status-table-container .tooltip-inner {
+    background-color: #eeeeee;
+    border: 1px solid #bbbbbb;
+    color: black;
+    max-width: 600px;
+}
+#status-table-container .tooltip.top .tooltip-arrow {
+    border-top-color: #bbbbbb;
+}
+#status-table-container .tooltip.in {
+    filter: alpha(opacity=100);
+    opacity: 1.0;
+}
