@@ -53,15 +53,16 @@ var examples = [
 				options: {
 					firstProcess:"Orchard",
 					secondProcess:"Spec"
-			}
+				}
 			},
 			{	
 				type: "WeakBisimulation",
 				status: null,
 				options: {
 					firstProcess:"Orchard",
-					secondProcess:"Spec"}
+					secondProcess:"Spec"
 				}
+			}
 		]
 	}
 ]
