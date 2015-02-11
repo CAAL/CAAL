@@ -1,4 +1,4 @@
-var examples = [
+var examples : any[] = [
     {
         title: "Peterson's Algorithm",
         ccs: "* Peterson's algorithm for mutual exclusion.\n" +
