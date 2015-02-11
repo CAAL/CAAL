@@ -245,22 +245,22 @@ td.inconsolata{
 /*
     Tooltip for process constants
 */
-#status-table-container span.ccs-tooltip-constant {
+#status-table-container span.ccs-tooltip-constant, #game-container span.ccs-tooltip-constant {
     background-color: #eeeeee;
     border: 1px solid #bbbbbb;
     border-radius: 5px;
     padding: 0px 2px 0px 2px;
 }
-#status-table-container .tooltip-inner {
+#status-table-container .tooltip-inner, #game-container .tooltip-inner {
     background-color: #eeeeee;
     border: 1px solid #bbbbbb;
     color: black;
     max-width: 600px;
 }
-#status-table-container .tooltip.top .tooltip-arrow {
+#status-table-container .tooltip.top .tooltip-arrow, #game-container .tooltip.top .tooltip-arrow {
     border-top-color: #bbbbbb;
 }
-#status-table-container .tooltip.in {
+#status-table-container .tooltip.in, #game-container .tooltip.in {
     filter: alpha(opacity=100);
     opacity: 1.0;
 }
