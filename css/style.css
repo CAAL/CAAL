@@ -132,18 +132,6 @@ textarea {
     overflow-y: auto;
 }
 
-#source-label {
-    width: 15%;
-}
-
-#source-label p {
-    margin-top: 5px;    
-}
-
-#status-table {
-    width: 85%;
-}
-
 #explorer-container table {
     margin: 0;
 }
