@@ -27,8 +27,10 @@ Disjunction = P:Conjunction Whitespace _ "or" Whitespace _ Q:Disjunction { retur
 Conjunction = M:Modal Whitespace _ "and" Whitespace _ P:Conjunction { return formulas.newConj(M, P); }
 			/ M:Modal { return M; }
 
-Modal = _ "[" _ AM:ActionList _ "]" _ F:Modal { return formulas.newForAll(AM, F); }
-	  / _ "<" _ AM:ActionList _ ">" _ F:Modal { return formulas.newExists(AM, F); }
+Modal = _ "[" _ "[" _ AM:ActionList _ "]" _ "]" _ F:Modal { return formulas.newWeakForAll(AM, F); }
+	  / _ "<" _ "<" _ AM:ActionList _ ">" _ ">" _ F:Modal { return formulas.newWeakExists(AM, F); }
+      / _ "[" _ AM:ActionList _ "]" _ F:Modal { return formulas.newStrongForAll(AM, F); }
+	  / _ "<" _ AM:ActionList _ ">" _ F:Modal { return formulas.newStrongExists(AM, F); }
 	  / Unary
 
 //Order important!
