@@ -40,19 +40,21 @@ messageHandlers.isWeaklyBisimilar = data => {
 };
 
 messageHandlers.checkFormula = data => {
-    var succGen = data.useStrict ? CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}) : CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
+    var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
         formulaSet = HMLParser.parse(data.formula, {ccs: CCS, hml: HML}),
         formula = formulaSet.getAllFormulas()[0],
-        result = DependencyGraph.solveMuCalculus(formulaSet, formula, succGen, graph.processByName(data.processName).id);
+        result = DependencyGraph.solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, graph.processByName(data.processName).id);
     data.result = result;
     self.postMessage(data);
 };
 
 messageHandlers.checkFormulaForVariable = data => {  
-    var succGen = data.useStrict ? CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}) : CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
+    var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
         formulaSet = HMLParser.parse(data.formula, {ccs: CCS, hml: HML}),
         formula = formulaSet.formulaByName(data.variable),
-        result = DependencyGraph.solveMuCalculus(formulaSet, formula, succGen, graph.processByName(data.processName).id);
+        result = DependencyGraph.solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, graph.processByName(data.processName).id);
     data.result = result;
     self.postMessage(data);
 };

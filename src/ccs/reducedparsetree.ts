@@ -147,7 +147,7 @@ module Traverse {
                 if (!visited[visitingNode.id]) {
                     visited[visitingNode.id] = true;
                     successors = this.strictSuccGenerator.getSuccessors(visitingNode.id);
-                    if(successors.count() > 0){
+                    if (successors.count() > 0) {
                         successors.forEach(transition => {
                             if (transition.action.getLabel() === "tau") {
                                 toVisitProcesses.push(transition.targetProcess);

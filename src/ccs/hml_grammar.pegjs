@@ -27,21 +27,29 @@ Disjunction = P:Conjunction Whitespace _ "or" Whitespace _ Q:Disjunction { retur
 Conjunction = M:Modal Whitespace _ "and" Whitespace _ P:Conjunction { return formulas.newConj(M, P); }
 			/ M:Modal { return M; }
 
-Modal = _ "[" _ AM:ActionList _ "]" _ F:Modal { return formulas.newForAll(AM, F); }
-	  / _ "<" _ AM:ActionList _ ">" _ F:Modal { return formulas.newExists(AM, F); }
+Modal = _ "[" _ "[" _ AM:ActionList _ "]" _ "]" _ F:Modal { return formulas.newWeakForAll(AM, F); }
+	  / _ "<" _ "<" _ AM:ActionList _ ">" _ ">" _ F:Modal { return formulas.newWeakExists(AM, F); }
+      / _ "[" _ AM:ActionList _ "]" _ F:Modal { return formulas.newStrongForAll(AM, F); }
+	  / _ "<" _ AM:ActionList _ ">" _ F:Modal { return formulas.newStrongExists(AM, F); }
 	  / Unary
 
-Unary = ParenFormula
+//Order important!
+Unary "term"
+      = ParenFormula
 	  / _ "tt" { return formulas.newTrue(); }
 	  / _ "ff" { return formulas.newFalse(); }
 	  / _ V:Variable { return formulas.referVariable(V); }
+	  / _ "T" { return formulas.newTrue(); }
+	  / _ "F" { return formulas.newFalse(); }
 
 ParenFormula = _ "(" _ F:Disjunction _ ")" { return F; }
 
-Variable = letter:[A-Z] rest:IdentifierRest { return strFirstAndRest(letter, rest); }
+Variable "variable"
+	= letter:[A-EG-SU-Z] rest:IdentifierRestSym* { return strFirstAndRest(letter, rest); }
+	/ letter:[FT] rest:IdentifierRestSym+ { return strFirstAndRest(letter, rest); }
 
-IdentifierRest
-    = rest:[A-Za-z0-9?!_'\-#]*  { return rest; }
+IdentifierRestSym
+	= [A-Za-z0-9?!_'\-#]
 
 ActionList = A:Action _ "," _ AM:ActionList { return AM.add(A); }
 		   / A:Action { return new hml.SingleActionMatcher(A); }
@@ -53,7 +61,7 @@ Action "action"
 
 //Valid name for actions
 Label "label"
-    = first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
+    = first:[a-z] rest:IdentifierRestSym* { return strFirstAndRest(first, rest); }
 
 Whitespace "whitespace"
     = [ \t]
