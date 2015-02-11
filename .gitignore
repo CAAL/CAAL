@@ -4,6 +4,9 @@ src/ccs/*.js
 src/gui/*.js
 src/activity/*.js
 src/gui/arbor/*.js
+src/gui/d3/*.js
+src/gui/d3/*.d.ts
+src/gui/*.d.ts
 test/*.js
 npm-debug.log
 lib/ccs.js
