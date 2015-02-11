@@ -34,13 +34,24 @@ module Activity {
         private CCSNotation;
 
         private snapGame: SnapGame;
+        private canvas = document.getElementById("tracesvg")[0];
+        private actionsTable = "#game-actions-table-container";
         
-        constructor(private canvas, private actionsTable) {
-            super();
+        constructor(container: string, button: string) {
+            super(container, button);
             
             this.leftProcessName;
             this.rightProcessName;
             this.CCSNotation = new Traverse.CCSNotationVisitor();
+        }
+
+        public onShow(configuration?: any): void {
+            this.beforeShow(configuration);
+            this.afterShow();
+        }
+
+        public onHide(): void {
+            this.beforeHide();
         }
 
         beforeShow(configuration): void {

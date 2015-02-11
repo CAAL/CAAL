@@ -16,6 +16,10 @@ canvas {
     display: block;
 }
 
+textarea {
+    resize: none;
+}
+
 
 /*
  * Custom Bootstrap styles
@@ -61,27 +65,19 @@ canvas {
     display: none;
 }
 
-/* you cannot use a list of vendor prefixed selectors */
-#fullscreen-container:-webkit-full-screen        { width: 100%; height: 100%; background-color: #FFF }
-#fullscreen-container:-moz-full-screen           { width: 100%; height: 100%; background-color: #FFF }
-#fullscreen-container:-ms-fullscreen             { width: 100%; height: 100%; background-color: #FFF }
-#fullscreen-container:-o-full-screen             { width: 100%; height: 100%; background-color: #FFF }
-#fullscreen-container:full-screen                { width: 100%; height: 100%; background-color: #FFF }
-#fullscreen-container:fullscreen                 { width: 100%; height: 100%; background-color: #FFF }
+#fullscreen-container:-webkit-full-screen {width: 100%; height: 100%; background-color: #fff; padding: 10px;}
+#fullscreen-container:-moz-full-screen    {width: 100%; height: 100%; background-color: #fff; padding: 10px;}
+#fullscreen-container:-ms-fullscreen      {width: 100%; height: 100%; background-color: #fff; padding: 10px;}
+#fullscreen-container:-o-full-screen      {width: 100%; height: 100%; background-color: #fff; padding: 10px;}
+#fullscreen-container:full-screen         {width: 100%; height: 100%; background-color: #fff; padding: 10px;}
+#fullscreen-container:fullscreen          {width: 100%; height: 100%; background-color: #fff; padding: 10px;}
 
-#fullscreen-container:-webkit-full-screen canvas { width: 100%; height: 100%; }
-#fullscreen-container:-moz-full-screen canvas    { width: 100%; height: 100%; }
-#fullscreen-container:-ms-fullscreen canvas      { width: 100%; height: 100%; }
-#fullscreen-container:-o-full-screen canvas      { width: 100%; height: 100%; }
-#fullscreen-container:full-screen canvas         { width: 100%; height: 100%; }
-#fullscreen-container:fullscreen canvas          { width: 100%; height: 100%; }
-
-#fullscreen-container:-webkit-full-screen div    { position: absolute; top: 10px; right: 10px; }
-#fullscreen-container:-moz-full-screen div       { position: absolute; top: 10px; right: 10px; }
-#fullscreen-container:-ms-fullscreen div         { position: absolute; top: 10px; right: 10px; }
-#fullscreen-container:-full-screen div           { position: absolute; top: 10px; right: 10px; }
-#fullscreen-container:full-screen div            { position: absolute; top: 10px; right: 10px; }
-#fullscreen-container:fullscreen div             { position: absolute; top: 10px; right: 10px; }
+#fullscreen-container:-webkit-full-screen canvas {width: 100%; height: 100%;}
+#fullscreen-container:-moz-full-screen canvas    {width: 100%; height: 100%;}
+#fullscreen-container:-ms-fullscreen canvas      {width: 100%; height: 100%;}
+#fullscreen-container:-o-full-screen canvas      {width: 100%; height: 100%;}
+#fullscreen-container:full-screen canvas         {width: 100%; height: 100%;}
+#fullscreen-container:fullscreen canvas          {width: 100%; height: 100%;}
 
 
 /*
@@ -118,6 +114,18 @@ canvas {
 /*
  * Explorer activity styles
  */
+
+.controls {
+    min-height: 0;
+    background-color: #fff;
+    border-color: #fff;
+    margin: 0;
+}
+
+#explorer-process-list {
+    padding-left: 0;
+}
+
 #status-table-container {
     height: 230px;
     max-height: 230px;
@@ -128,7 +136,7 @@ canvas {
     width: 15%;
 }
 
-#source-label p{
+#source-label p {
     margin-top: 5px;    
 }
 

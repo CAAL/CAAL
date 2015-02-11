@@ -5,6 +5,7 @@
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="../gui/gui.ts" />
 /// <reference path="../../lib/suppressWarnings.d.ts" />
+/// <reference path="../gui/project.ts" />
 
 module Activity {
 
@@ -27,16 +28,17 @@ module Activity {
     }
 
     export class Explorer extends Activity {
+        private project: Project;
         private canvas;
         private renderer: Renderer;
         private uiGraph: ProcessGraphUI;
         private bindedFns : any = {};
         private graph : ccs.Graph;
+        private namedProcesses: string[];
         private succGenerator : ccs.SuccessorGenerator;
         private initialProcessName : string;
         private notationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
-        private preExpandDept : number = 1;
         private fullScreenContainer;
         private statusTableContainer;
         private freezeBtn;
@@ -44,25 +46,25 @@ module Activity {
         private fullscreenBtn;
         private sourceDefinition;
 
-        constructor(private container, notationVisitor : CCSNotationVisitor) {
-            super();
-            
-            var $container = $(container);
+        constructor(container: string, button: string) {
+            super(container, button);
 
-            this.canvas = $container.find("#arbor-canvas")[0];
-            this.notationVisitor = notationVisitor;
+            this.project = Project.getInstance();
+            this.canvas = this.$container.find("#arbor-canvas")[0];
+            this.notationVisitor = new Traverse.CCSNotationVisitor();
             this.renderer = new Renderer(this.canvas);
             this.uiGraph = new ArborGraph(this.renderer);
 
-            this.fullScreenContainer = $container.find("#fullscreen-container")[0];
-            this.statusTableContainer = $container.find("#status-table-container")[0];
-            this.freezeBtn = $container.find("#explorer-freeze-btn")[0];
-            this.saveBtn = $container.find("#explorer-save-btn")[0];
-            this.fullscreenBtn = $container.find("#explorer-fullscreen-btn")[0];
-            this.sourceDefinition = $container.find("#explorer-source-definition")[0];
+            this.fullScreenContainer = this.$container.find("#fullscreen-container")[0];
+            this.statusTableContainer = this.$container.find("#status-table-container")[0];
+            this.freezeBtn = this.$container.find("#explorer-freeze-btn")[0];
+            this.saveBtn = this.$container.find("#explorer-save-btn")[0];
+            this.fullscreenBtn = this.$container.find("#explorer-fullscreen-btn")[0];
+            this.sourceDefinition = this.$container.find("#explorer-source-definition")[0];
 
-            $(this.fullscreenBtn).on("click", this.toggleFullscreen.bind(this));
+            $(this.freezeBtn).on("click", () => this.toggleFreeze());
             $(this.saveBtn).on("click", () => this.saveCanvas());
+            $(this.fullscreenBtn).on("click", this.toggleFullscreen.bind(this));
 
             $(document).on("fullscreenchange", () => this.fullscreenChanged());
             $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
@@ -78,10 +80,88 @@ module Activity {
                 .on("click", "tr", this.onTransitionTableRowClick.bind(this))
                 .on("mouseenter", "tr", this.onTransitionTableRowHover.bind(this, true))
                 .on("mouseleave", "tr", this.onTransitionTableRowHover.bind(this, false));
+
+            // Prevent options menu from closing when pressing form elements.
+            $(document).on('click', '.yamm .dropdown-menu', e => e.stopPropagation());
+
+            $("#explorer-process-list, #option-strong, #option-weak, #option-collapse, #option-simplify").on("change", () => this.draw());
+            $("#option-depth").on("change", () => this.expandDepth = $("#option-depth").val());
+        }
+
+        public checkPreconditions(): boolean {
+            this.graph = Main.getGraph();
+
+            if (!this.graph) {
+                showExplainDialog("Syntax Error", "Your program contains syntax errors.");
+                return false;
+            }
+
+            if (this.graph.getNamedProcesses().length === 0) {
+                showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
+                return false;
+            }
+
+            return true;
+        }
+
+        public onShow(configuration?: any): void {
+            $(window).on("resize", () => this.resize());
+            this.resize();
+
+            this.uiGraph.setOnSelectListener((processId) => {
+                this.expand(this.graph.processById(processId), this.expandDepth);
+            });
+
+            this.uiGraph.setHoverOnListener((processId) => {
+                this.uiGraph.setHover(processId);
+            });
+
+            this.uiGraph.setHoverOutListener(() => {
+                this.uiGraph.clearHover();
+            });
+
+            if (this.project.getChanged()) {
+                this.namedProcesses = this.graph.getNamedProcesses().reverse();
+                var list = $("#explorer-process-list > select").empty();
+                for (var i = 0; i < this.namedProcesses.length; i++) {
+                    list.append($("<option></option>").append(this.namedProcesses[i]));
+                }
+
+                this.draw();
+            }
+        }
+
+        public onHide(): void {
+            $(window).off("resize");
+
+            this.uiGraph.clearOnSelectListener();
+            this.uiGraph.clearHoverOnListener();
+            this.uiGraph.clearHoverOutListener();
+        }
+
+        private getOptions(): any {
+            var process = $("#explorer-process-list :selected").text();
+            var successor = $('input[name=successor]:checked').val();
+            var collapse = $("#option-collapse").prop("checked");
+            var simplify = $("#option-simplify").prop("checked");
+
+            return {process: process, successor: successor, collapse: collapse, simplify: simplify};
+        }
+
+        public draw(): void {
+            this.clear();
+            var options = this.getOptions();
+            this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.successor, reduce: options.simplify});
+            this.initialProcessName = options.process;
+            this.notationVisitor.clearCache();
+            this.expand(this.graph.processByName(this.initialProcessName), 1);
         }
 
         private isFullscreen(): boolean {
-            return !!document.fullscreenElement || !!document.mozFullScreenElement || !!document.webkitFullscreenElement || !!document.msFullscreenElement;
+            return !!document.fullscreenElement ||
+                   !!document.mozFullScreenElement ||
+                   !!document.webkitFullscreenElement ||
+                   !!document.msFullscreenElement;
         }
         
         private toggleFullscreen() {
@@ -124,58 +204,6 @@ module Activity {
             
             // user might have entered fullscreen and gone out of it, treat as fullscreen changed
             this.fullscreenChanged();
-        }
-        
-        beforeShow(configuration) {
-            this.clear();
-            this.graph = configuration.graph;
-            this.succGenerator = configuration.successorGenerator;
-            this.initialProcessName = configuration.initialProcessName;
-            this.preExpandDept = configuration.expandDepth;
-            this.expandDepth = 1;
-            this.notationVisitor.clearCache();
-            this.clear();
-            this.expand(this.graph.processByName(this.initialProcessName), this.preExpandDept);
-        }
-
-        public afterShow(): void {
-            this.bindedFns.resize = this.resize.bind(this);
-            $(window).on("resize", this.bindedFns.resize);
-            
-            this.uiGraph.setOnSelectListener((processId) => {
-                this.expand(this.graph.processById(processId), this.expandDepth);
-            });
-
-            this.uiGraph.setHoverOnListener((processId) => {
-                this.uiGraph.setHover(processId);
-            });
-
-            this.uiGraph.setHoverOutListener(() => {
-                this.uiGraph.clearHover();
-            });
-
-            this.uiGraph.unfreeze(); // unfreeze the graph 
-            $(this.freezeBtn).text("Freeze"); // and reset the freezeBtn.
-
-            this.bindedFns.freeze = this.toggleFreeze.bind(this);
-            $(this.freezeBtn).on("click", this.bindedFns.freeze);
-            
-            this.resize();
-        }
-
-        public afterHide() {
-            $(window).unbind("resize", this.bindedFns.resize)
-            this.bindedFns.resize = null;
-            
-            this.uiGraph.unfreeze(); // unfreeze the graph 
-            $(this.freezeBtn).text("Freeze"); // and reset the freezeBtn.
-            
-            $(this.freezeBtn).unbind("click", this.bindedFns.freeze);
-            this.uiGraph.clearOnSelectListener();
-            this.uiGraph.clearHoverOnListener();
-            this.uiGraph.clearHoverOutListener();
-            this.graph = null;
-            this.succGenerator = null;
         }
 
         private clear() : void {
@@ -306,7 +334,7 @@ module Activity {
             if (!this.isFullscreen()) {
                 var offsetTop = $(this.canvas).offset().top;
                 var offsetBottom = $(this.statusTableContainer).height() + 20; // Parent container margin = 20.
-                height = Math.max(350, window.innerHeight - offsetTop - offsetBottom);
+                height = Math.max(275, window.innerHeight - offsetTop - offsetBottom);
             } else {
                 height = this.canvas.parentNode.clientHeight;
             }

@@ -1,25 +1,25 @@
 /// <reference path="../../lib/jquery.d.ts" />
-/// <reference path="activity.ts" />
+/// <reference path="../../lib/ccs.d.ts" />
 /// <reference path="../gui/project.ts" />
 /// <reference path="../main.ts" />
-/// <reference path="../../lib/ccs.d.ts" />
+/// <reference path="activity.ts" />
 
 module Activity {
 
     export class Editor extends Activity {
         private editor: any;
-        private project : Project;
-        private statusArea: any;
+        private project: Project;
+        private initialCCS: string;
+        private $statusArea: JQuery;
         private $fontSizeButton: JQuery;
 
-        public constructor(project: Project, container) 
-        {
-            var $container = $(container);
-            super();
-            this.project = project;
+        constructor(container: string, button: string) {
+            super(container, button);
+
+            this.project = Project.getInstance();
             this.editor = ace.edit("editor");
-            this.statusArea = $container.find("#status-area");
-            this.$fontSizeButton = $container.find("#font-size-btn");
+            this.$statusArea = this.$container.find("#status-area");
+            this.$fontSizeButton = this.$container.find("#font-size-btn");
 
             this.editor.setTheme("ace/theme/crisp");
             this.editor.getSession().setMode("ace/mode/ccs");
@@ -33,30 +33,27 @@ module Activity {
             });
 
             // Focus editor whenever its parent element is clicked.
-            $container.find("#editor").on("click", () => {this.editor.focus()});
-
-            $container.find("#parse-btn").on("click", () => {this.parse()});
-            this.statusArea.children("button").on("click", () => {
-                this.statusArea.hide();
-            });
-
-            this.$fontSizeButton.children("li").on("click", e => {this.setFontSize(e)});
-            project.on("ccs-set", (event) => this.setText(event.ccs));
-            this.editor.on("change", (event) => this.project.onCCSChanged(this.editor.getValue()));
+            this.$container.find("#editor").on("click", () => {this.editor.focus()});
+            this.$container.find("#parse-btn").on("click", () => {this.parse()});
+            this.$statusArea.children("button").on("click", () => {this.$statusArea.hide()});
+            this.$fontSizeButton.children("li").on("click", (e) => {this.setFontSize(e)});
+            this.editor.on("change", () => {this.project.setCCS(this.editor.getValue())});
         }
 
-        private setText(text) : void {
+        public onShow(configuration?: any): void {
+            this.$statusArea.hide();
+            this.initialCCS = this.editor.getValue()
+            this.setText(this.project.getCCS());
+            this.editor.focus();
+        }
+
+        public onHide(): void {
+            this.project.setChanged(this.initialCCS !== this.project.getCCS());
+        }
+
+        private setText(text: string): void {
             this.editor.setValue(text);
             this.editor.clearSelection();
-        }
-
-        public beforeShow(): void {
-            this.statusArea.hide();
-            this.setText(this.project.getCCS());
-        }
-
-        public afterShow(): void {
-            this.editor.focus();
         }
 
         private setFontSize(e): void {
@@ -90,14 +87,14 @@ module Activity {
         }
 
         private updateStatusArea(errorString: string, errorClass: string): void {
-            this.statusArea.removeClass("alert-success");
-            this.statusArea.removeClass("alert-danger");
-            this.statusArea.addClass(errorClass);
+            this.$statusArea.removeClass("alert-success");
+            this.$statusArea.removeClass("alert-danger");
+            this.$statusArea.addClass(errorClass);
 
-            var textArea = this.statusArea.children("p");
+            var textArea = this.$statusArea.children("p");
             textArea.empty();
             textArea.append(errorString);
-            this.statusArea.show();
+            this.$statusArea.show();
         }
     }
 }

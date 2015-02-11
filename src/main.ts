@@ -8,6 +8,7 @@
 /// <reference path="gui/storage.ts" />
 /// <reference path="gui/examples.ts" />
 /// <reference path="activity/activity.ts" />
+/// <reference path="activity/activityhandler.ts" />
 /// <reference path="activity/editor.ts" />
 /// <reference path="activity/explorer.ts" />
 /// <reference path="activity/verifier.ts" />
@@ -31,47 +32,18 @@ module Main {
     export var activityHandler;
 
     export function setup() {
-
-        var gameActivity: Activity.BisimulationGame = new Activity.BisimulationGame(document.getElementById("tracesvg"), "#game-actions-table-container");
         
-        var resizeTimer;
+        /*var resizeTimer;
         $(window).resize(function () {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(() => gameActivity.resizeCanvas(), 100);
-        });
+        });*/
         
-        activityHandler = new ActivityHandler();
-
-        // export var oops = 10;
-
-        activityHandler.addActivity(
-                "editor", 
-                new Activity.Editor(project, $("#editor-container")[0]),
-                (callback) => { callback({}); },
-                "editor-container",
-                "edit-btn");
-
-        activityHandler.addActivity(
-                "explorer",
-                new Activity.Explorer(
-                    $("#explorer-container")[0],
-                    new Traverse.CCSNotationVisitor()),
-                    setupExplorerActivityFn,
-                    "explorer-container",
-                    "explore-btn");
-
-        activityHandler.addActivity(
-                "verifier",
-                new Activity.Verifier(project),
-                (callback) => { callback({}); },
-                "verifier-container",
-                "verify-btn");
-        activityHandler.addActivity(
-                "game",
-                gameActivity,
-                setupGameActivityFn,
-                "game-container",
-                "game-btn");
+        activityHandler = new Activity.ActivityHandler();
+        activityHandler.addActivity("editor", new Activity.Editor("#editor-container", "#edit-btn"));
+        activityHandler.addActivity("explorer", new Activity.Explorer("#explorer-container", "#explore-btn"));
+        activityHandler.addActivity("verifier" , new Activity.Verifier("#verifier-container", "#verify-btn"));
+        activityHandler.addActivity("game", new Activity.BisimulationGame("#game-container", "#game-btn"));
         activityHandler.selectActivity("editor");
 
         new New('#new-btn', null, project, activityHandler);
@@ -96,13 +68,13 @@ module Main {
         new Delete(null, deleteIds, project, activityHandler);
     }
 
-    export class ActivityHandler {
-        private currentActivityName : string = "";
+    /*export class ActivityHandler {
+        private currentActivityName = "";
         private activities = {};
 
         public constructor() {}
 
-        public addActivity(name : string, activity : Activity.Activity, setupFn : (callback) => void, containerId : string, buttonId : string) {
+        public addActivity(name: string, activity: Activity.Activity, setupFn: (callback) => void, containerId: string, buttonId: string) {
             if (this.activities[name]) throw new Error("Activity with the name '" + name + "' already exists");
             this.activities[name] = {
                 activity: activity,
@@ -158,7 +130,7 @@ module Main {
             };
             newActivityData.setupFn(callback);
         }
-    }
+    }*/
 
     export function getProgram() : string {
         return project.getCCS();
@@ -188,58 +160,20 @@ module Main {
     }
 }
 
-function setupExplorerActivityFn(callback) : any {
-    var graph : ccs.Graph = Main.getGraph(),
-        $dialogList = $("#viz-mode-dialog-body-list"),
-        $depthSelect = $("#viz-mode-dialog-depth"),
-        $dialog = $("#viz-mode-dialog"),
-        namedProcesses;
-    //Important only one dialog at a time.
-    if (isShowingDialog()) return callback(null);
+/*function setupExplorerActivityFn(callback): any {
+    var graph = Main.getGraph();
 
     if (!graph) {
-        showExplainDialog("Invalid Graph", "The graph could not be constructed. Do you have syntax errors?");
+        showExplainDialog("Invalid Program", "Invalid CCS program. Do you have syntax errors?");
         return callback(null);
     }
 
-    namedProcesses = graph.getNamedProcesses();
-    //First are they any named processes at all?
-    if (namedProcesses.length === 0) {
+    if (graph.getNamedProcesses().length === 0) {
         showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
         return callback(null);
     }
 
-    function makeConfiguration(processName : string, expandDepth : number, useStrong : boolean, shouldReduce : boolean) {
-        var succGenerator = CCS.getSuccGenerator(graph, {
-            succGen: useStrong ? "strong" : "weak",
-            reduce: shouldReduce
-        });
-        return {
-            graph: graph,
-            successorGenerator: succGenerator,
-            initialProcessName: processName,
-            expandDepth: expandDepth
-        };
-    }
-
-    $dialogList.children().remove();
-    namedProcesses.sort().forEach(processName => {
-        var $element = $(document.createElement("button"));
-        $element.addClass("btn btn-default btn-lg btn-block");
-        $element.text(processName);
-        $element.on("click", () => {
-            $dialog.modal("hide");
-            callback(makeConfiguration(
-                processName,
-                parseInt($depthSelect.val(), 10),
-                $("input[name=viz-mode-succgen]:checked").val() === "strong",
-                $("#viz-mode-reduce-btn").hasClass('active')
-            ));
-        });
-        $dialogList.append($element);
-    });
-
-    $dialog.modal("show");
+    console.log("test");
 }
 
 function setupGameActivityFn(callback) : any {
@@ -306,27 +240,13 @@ function setupGameActivityFn(callback) : any {
     });
 
     $dialog.modal("show");
-}
+}*/
 
-function showExplainDialog(title : string, message : string) : void {
+function showExplainDialog(title: string, message: string): void {
     var $dialog = $("#explain-dialog"),
         $dialogTitle = $("#explain-dialog-title"),
         $dialogBodyPar = $("#explain-dialog-body-par");
-    if (isShowingDialog()) return;
     $dialogTitle.text(title);
     $dialogBodyPar.text(message);
     $dialog.modal("show");
-}
-
-function isShowingDialog() : boolean {
-    var dialogIds = ["explain-dialog", "viz-mode-dialog", "game-mode-dialog"],
-        jQuerySelector, i;
-    for (i=0; i < dialogIds.length; i++) {
-        jQuerySelector = "#" + dialogIds[i];
-        if ($(jQuerySelector).data('bs.modal') &&
-                $(jQuerySelector).data('bs.modal').isShown) {
-            return true;
-        }
-    };
-    return false;
 }

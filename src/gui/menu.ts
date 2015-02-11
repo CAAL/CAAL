@@ -1,7 +1,8 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="project" />
 /// <reference path="storage" />
-/// <reference path="examples"/>
+/// <reference path="examples" />
+/// <reference path="../activity/activityhandler.ts" />
 
 function helpDialogFunction()
 {
@@ -12,11 +13,11 @@ class MenuItem {
     public buttonId: string;
     public elementIds: any;
     public project: Project;
-    public activityHandler: Main.ActivityHandler;
+    public activityHandler: Activity.ActivityHandler;
     public storage: WebStorage;
     public session: WebStorage;
 
-    public constructor(buttonId: string, elementIds: any, project: Project, activityHandler: Main.ActivityHandler) {
+    public constructor(buttonId: string, elementIds: any, project: Project, activityHandler: Activity.ActivityHandler) {
         this.buttonId = buttonId;
         this.elementIds = elementIds;
         this.project = project;
@@ -38,7 +39,7 @@ class New extends MenuItem {
 }
 
 class Save extends MenuItem {
-    public constructor(buttonId: string, elementIds: any, project: Project, activityHandler: Main.ActivityHandler) {
+    public constructor(buttonId: string, elementIds: any, project: Project, activityHandler: Activity.ActivityHandler) {
         super(buttonId, elementIds, project, activityHandler);
         $(elementIds.saveFileId).on('click', () => this.saveToFile());
         $(elementIds.saveProjectsId).on('click', () => this.saveToStorage());
@@ -99,7 +100,7 @@ class Save extends MenuItem {
 }
 
 class Load extends MenuItem {
-    public constructor(buttonId: string, elementIds: any, project: Project, activityHandler: Main.ActivityHandler) {
+    public constructor(buttonId: string, elementIds: any, project: Project, activityHandler: Activity.ActivityHandler) {
         super(buttonId, elementIds, project, activityHandler);
 
         this.showProjects();
@@ -181,7 +182,7 @@ class Load extends MenuItem {
 }
 
 class Delete extends MenuItem {
-    public constructor(buttonId: string, elementIds: any, project: Project, activityHandler: Main.ActivityHandler) {
+    public constructor(buttonId: string, elementIds: any, project: Project, activityHandler: Activity.ActivityHandler) {
         super(buttonId, elementIds, project, activityHandler);
 
         this.showProjects();

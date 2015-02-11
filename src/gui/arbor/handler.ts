@@ -53,16 +53,18 @@ class Handler {
         var newHoverNode = h.renderer.particleSystem.nearest(s);
 
         // On hover event
-        if (h.hoverNode == null && newHoverNode.distance <= h.hoverDistance) {
-            if (h.hoverOn) {
-                h.hoverNode = newHoverNode;
-                h.hoverOn(h.hoverNode.node.name);
-            }
-        } 
-        else if (h.hoverNode !== null && newHoverNode.distance > h.hoverDistance) {
-            if (h.hoverOut){   
-                h.hoverOut(h.hoverNode.node.name);
-                h.hoverNode = null;      
+        if (newHoverNode !== null) {
+            if (h.hoverNode == null && newHoverNode.distance <= h.hoverDistance) {
+                if (h.hoverOn) {
+                    h.hoverNode = newHoverNode;
+                    h.hoverOn(h.hoverNode.node.name);
+                }
+            } 
+            else if (h.hoverNode !== null && newHoverNode.distance > h.hoverDistance) {
+                if (h.hoverOut){   
+                    h.hoverOut(h.hoverNode.node.name);
+                    h.hoverNode = null;      
+                }
             }
         }
 

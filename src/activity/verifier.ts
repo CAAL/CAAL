@@ -1,5 +1,6 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="../main.ts" />
+/// <reference path="../gui/project.ts" />
 /// <reference path="../gui/property.ts" />
 /// <reference path="activity.ts" />
 
@@ -16,10 +17,10 @@ module Activity {
         private clockInterval;
         private propsToVerify = [];
 
-        public constructor(project: Project) {
-            super();
+        constructor(container: string, button: string) {
+            super(container, button);
 
-            this.project = project;
+            this.project = Project.getInstance();
             this.addPropertyList = $("#add-property");
             this.propertyTableBody = $("#property-table").find("tbody");
             this.verifyAllButton = $("#verify-all");
@@ -50,6 +51,10 @@ module Activity {
                 fontSize: 14,
                 fontFamily: "Inconsolata",
             });
+        }
+
+        public onShow(configuration?: any): void {
+            this.beforeShow();
         }
 
         public beforeShow(): void {

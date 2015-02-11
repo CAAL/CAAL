@@ -9,6 +9,7 @@
     <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="lib/fontawesome/css/font-awesome.min.css" rel="stylesheet">
     <link href="lib/smartmenus/jquery.smartmenus.bootstrap.css" rel="stylesheet">
+    <link href="css/yamm.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
   </head>
   <body>
@@ -105,15 +106,72 @@
       <!-- Explorer -->
       <div id="explorer-container">
         <div id="fullscreen-container">
-          <div class="btn-group pull-right">
-            <button id="explorer-freeze-btn" type="button" class="btn btn-default">Freeze</button>
-            <a id="explorer-save-btn" class="btn btn-default">Save Image</a>
-            <button id="explorer-fullscreen-btn" type="button" class="btn btn-default">Fullscreen</button>
-          </div>
+          <nav class="navbar yamm navbar-default controls" role="navigation">
+            <div id="explorer-process-list" class="col-md-2">
+              <select class="form-control">
+              </select>
+            </div>
+            <ul class="nav navbar-nav">
+              <li class="dropdown">
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                  Options <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li>
+                    <div class="yamm-content">
+                      <div class="radio">
+                        <label>
+                          <input type="radio" id="option-strong" name="successor" value="strong" checked>
+                          Strong Successors
+                        </label>
+                      </div>
+                      <div class="radio">
+                        <label>
+                          <input type="radio" id="option-weak" name="successor" value="weak">
+                          Weak Successors
+                        </label>
+                      </div>
+                      <div class="divider"></div>
+                      <div class="form-inline">
+                        <label>Expand Depth: </label>
+                        <select id="option-depth" class="form-control">
+                          <option selected>1</option>
+                          <option>2</option>
+                          <option>3</option>
+                          <option>5</option>
+                          <option>10</option>
+                          <option>100</option>
+                          <option>500</option>
+                        </select>
+                      </div>
+                      <div class="divider"></div>
+                      <div class="checkbox disabled">
+                        <label>
+                          <input id="option-collapse" type="checkbox" disabled>
+                          Bisimulation Collapse
+                        </label>
+                      </div>
+                      <div class="divider"></div>
+                      <div class="checkbox">
+                        <label>
+                          <input id="option-simplify" type="checkbox" checked>
+                          Simplify
+                        </label>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+            <div class="btn-group pull-right">
+              <button id="explorer-freeze-btn" type="button" class="btn btn-default">Freeze</button>
+              <a id="explorer-save-btn" class="btn btn-default">Save Image</a>
+              <button id="explorer-fullscreen-btn" type="button" class="btn btn-default">Fullscreen</button>
+            </div>
+          </nav>
           <div class="clearfix"></div>
           <canvas id="arbor-canvas"></canvas>
         </div>
-        <hr>
         <div id="status-table-container">
           <h4>Source Definition</h4>
           <p id="explorer-source-definition" style="margin-left: 2em"></p>

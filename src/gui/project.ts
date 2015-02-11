@@ -1,22 +1,40 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="../../lib/ace.d.ts" />
-/// <reference path="../../lib/wolfy87-eventemitter.d.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
 /// <reference path="property.ts" />
 
 class Project {
-    private id = null;
-    private defaultTitle = "Untitled Project";
-    private defaultCCS = "";
-    private properties: Property.Property[]
-    private projectTitle = $("#project-title");
-    private currentCCS: string;
-    private eventEmitter = new EventEmitter();
+    private static instance: Project = null;
+    private defaultTitle: string = "Untitled Project";
+    private defaultCCS: string = "";
+    private id: number = null;
+    private $projectTitle: JQuery = $("#project-title");
+    private ccs: string;
+    private properties: Property.Property[];
+    private changed: boolean = false;
 
     public constructor() {
+        if (Project.instance) {
+            throw new Error("Cannot instantiate singleton. Use getInstance() instead.");
+        } else {
+            Project.instance = this;
+        }
+
         this.reset();
-        this.projectTitle.keypress(function(e) { return e.which != 13; }); // Disable line breaks. Can still be copy/pasted.
-        this.projectTitle.focusout(() => this.onTitleChanged());
+        this.$projectTitle.keypress(function(e) {return e.which != 13}); // Disable line breaks. Can still be copy/pasted.
+        this.$projectTitle.focusout(() => this.onTitleChanged());
+    }
+
+    public static getInstance(): Project {
+        if (Project.instance === null) {
+            Project.instance = new Project();
+        }
+
+        return Project.instance;
+    }
+
+    public reset(): void {
+        this.update(null, this.defaultTitle, this.defaultCCS, null);
     }
 
     public update(id: number, title: string, ccs: string, properties: any[]): void {
@@ -24,10 +42,6 @@ class Project {
         this.setTitle(title);
         this.setCCS(ccs);
         this.setProperties(properties);
-    }
-
-    public reset(): void {
-        this.update(null, this.defaultTitle, this.defaultCCS, null);
     }
 
     public getId(): number {
@@ -39,15 +53,15 @@ class Project {
     }
 
     public getTitle(): string {
-        return this.projectTitle.text();
+        return this.$projectTitle.text();
     }
 
     public setTitle(title: string): void {
-        this.projectTitle.text(title);
+        this.$projectTitle.text(title);
     }
 
     private onTitleChanged(): void {
-        var title = this.projectTitle.text();
+        var title = this.$projectTitle.text();
 
         if (title === "") {
             this.setTitle(this.defaultTitle);
@@ -57,22 +71,11 @@ class Project {
     }
 
     public getCCS(): string {
-        return this.currentCCS;
+        return this.ccs;
     }
 
     public setCCS(ccs: string): void {
-        this.currentCCS = ccs;
-        this.eventEmitter.emit("ccs-change", {ccs: this.currentCCS});
-    }
-
-    public onCCSChanged(ccs: string): void {
-        this.currentCCS = ccs;
-    }
-
-    public getGraph(): CCS.Graph {
-        var graph = new CCS.Graph();
-            CCSParser.parse(this.currentCCS, {ccs: CCS, graph: graph});
-        return graph;
+        this.ccs = ccs;
     }
 
     public getProperties(): Property.Property[] {
@@ -82,8 +85,7 @@ class Project {
     public setProperties(properties: any[]): void {
         this.properties = Array();
 
-        if (properties !== null) 
-        {
+        if (properties !== null) {
             for (var i = 0; i < properties.length; i++) {
                 try {
                     this.addProperty(new window["Property"][properties[i].type](properties[i].status, properties[i].options));
@@ -109,12 +111,18 @@ class Project {
         }
     }
 
-    public on(event: string, listener: Function): void {
-        this.eventEmitter.on(event, listener);
+    public getChanged(): boolean {
+        return this.changed;
     }
 
-    public off(event: string, listener: Function): void {
-        this.eventEmitter.off(event, listener);
+    public setChanged(changed: boolean): void {
+        this.changed = changed;
+    }
+
+    public getGraph(): CCS.Graph {
+        var graph = new CCS.Graph();
+            CCSParser.parse(this.ccs, {ccs: CCS, graph: graph});
+        return graph;
     }
 
     public toJSON(): any {
