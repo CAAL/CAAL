@@ -228,6 +228,10 @@ td.inconsolata{
     margin-top: 20px;
 }
 
+#hml-editor {
+    min-height: 75px;
+}
+
 
 /* Colors the verification status */
 #property-table .fa-check {

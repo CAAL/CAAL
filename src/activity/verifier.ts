@@ -46,11 +46,27 @@ module Activity {
             this.editor.getSession().setUseWrapMode(true);
             this.editor.setOptions({
                 enableBasicAutocompletion: true,
-                maxLines: 3,
+                maxLines: Infinity,
                 showPrintMargin: false,
                 fontSize: 14,
                 fontFamily: "Inconsolata",
             });
+        }
+
+        public checkPreconditions(): boolean {
+            var graph = Main.getGraph();
+
+            if (!graph) {
+                showExplainDialog("Syntax Error", "Your program contains syntax errors.");
+                return false;
+            }
+
+            if (graph.getNamedProcesses().length === 0) {
+                showExplainDialog("No Named Processes", "There must be at least one named process in the program to verify.");
+                return false;
+            }
+
+            return true;
         }
 
         public onShow(configuration?: any): void {
