@@ -14,8 +14,10 @@ module HML {
         dispatchConjFormula(formula : ConjFormula, ... args) : T
         dispatchTrueFormula(formula : TrueFormula, ... args) : T
         dispatchFalseFormula(formula : FalseFormula, ... args) : T
-        dispatchExistsFormula(formula : ExistsFormula, ... args) : T
-        dispatchForAllFormula(formula : ForAllFormula, ... args) : T
+        dispatchStrongExistsFormula(formula : StrongExistsFormula, ... args) : T
+        dispatchStrongForAllFormula(formula : StrongForAllFormula, ... args) : T
+        dispatchWeakExistsFormula(formula : WeakExistsFormula, ... args) : T
+        dispatchWeakForAllFormula(formula : WeakForAllFormula, ... args) : T
         dispatchMinFixedPointFormula(formula : MinFixedPointFormula, ... args) : T
         dispatchMaxFixedPointFormula(formula : MaxFixedPointFormula, ... args) : T
         dispatchVariableFormula(formula : VariableFormula, ... args) : T
@@ -65,25 +67,47 @@ module HML {
         }
     }
 
-    export class ExistsFormula implements Formula {
+    export class StrongExistsFormula implements Formula {
         constructor(public actionMatcher : ActionMatcher, public subFormula : Formula) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
-            return dispatcher.dispatchExistsFormula(this);
+            return dispatcher.dispatchStrongExistsFormula(this);
         }
         toString() {
-            return "ExistsFormula";
+            return "StrongExistsFormula";
         }
     }
 
-    export class ForAllFormula implements Formula {
+    export class StrongForAllFormula implements Formula {
         constructor(public actionMatcher : ActionMatcher, public subFormula : Formula) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
-            return dispatcher.dispatchForAllFormula(this);
+            return dispatcher.dispatchStrongForAllFormula(this);
         }
         toString() {
-            return "ForAllFormula";
+            return "StrongForAllFormula";
+        }
+    }
+
+    export class WeakExistsFormula implements Formula {
+        constructor(public actionMatcher : ActionMatcher, public subFormula : Formula) {
+        }
+        dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
+            return dispatcher.dispatchWeakExistsFormula(this);
+        }
+        toString() {
+            return "WeakExistsFormula";
+        }
+    }
+
+    export class WeakForAllFormula implements Formula {
+        constructor(public actionMatcher : ActionMatcher, public subFormula : Formula) {
+        }
+        dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
+            return dispatcher.dispatchWeakForAllFormula(this);
+        }
+        toString() {
+            return "WeakForAllFormula";
         }
     }
 
@@ -144,12 +168,20 @@ module HML {
             return new FalseFormula();
         }
 
-        newExists(actionMatcher : ActionMatcher, subFormula : Formula) {
-            return new ExistsFormula(actionMatcher, subFormula);
+        newStrongExists(actionMatcher : ActionMatcher, subFormula : Formula) {
+            return new StrongExistsFormula(actionMatcher, subFormula);
         }
 
-        newForAll(actionMatcher : ActionMatcher, subFormula : Formula) {
-            return new ForAllFormula(actionMatcher, subFormula);
+        newStrongForAll(actionMatcher : ActionMatcher, subFormula : Formula) {
+            return new StrongForAllFormula(actionMatcher, subFormula);
+        }
+
+        newWeakExists(actionMatcher : ActionMatcher, subFormula : Formula) {
+            return new WeakExistsFormula(actionMatcher, subFormula);
+        }
+
+        newWeakForAll(actionMatcher : ActionMatcher, subFormula : Formula) {
+            return new WeakForAllFormula(actionMatcher, subFormula);
         }
 
         newMinFixedPoint(variable : string, subFormula : Formula) {
@@ -263,13 +295,21 @@ module HML {
             return false;
         }
 
-        dispatchExistsFormula(formula : ExistsFormula) : boolean {
+        dispatchStrongExistsFormula(formula : StrongExistsFormula) : boolean {
             return formula.subFormula.dispatchOn(this);
         }
 
-        dispatchForAllFormula(formula : ForAllFormula) : boolean {
+        dispatchStrongForAllFormula(formula : StrongForAllFormula) : boolean {
             return formula.subFormula.dispatchOn(this);
         }
+
+        dispatchWeakExistsFormula(formula : WeakExistsFormula) : boolean {
+            return formula.subFormula.dispatchOn(this);
+        }
+
+        dispatchWeakForAllFormula(formula : WeakForAllFormula) : boolean {
+            return formula.subFormula.dispatchOn(this);
+        }        
 
         dispatchMinFixedPointFormula(formula : MinFixedPointFormula) : boolean {
             if (this.hasSeenButNotIn(formula.variable)) return true;

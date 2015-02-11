@@ -79,7 +79,7 @@ Identifier "identifier"
 	= first:[A-Z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
 
 IdentifierRest
-	= rest:[A-Za-z0-9?!_'\-#]*  { return rest; }
+	= rest:[A-Za-z0-9?!_'\-#^]*  { return rest; }
 
 Action "action"
 	= ['] label:Label { return new ccs.Action(label, true); }

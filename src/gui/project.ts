@@ -85,12 +85,14 @@ class Project {
     public setProperties(properties: any[]): void {
         this.properties = Array();
 
-        if (properties !== null) {
-            for (var i = 0; i < properties.length; i++) {
-                try {
-                    this.addProperty(new window["Property"][properties[i].type](properties[i].status, properties[i].options));
-                } catch (e) {
-                    console.log("Unknown property type");
+        if (properties) {
+            if (properties.length !== 0) {
+                for (var i = 0; i < properties.length; i++) {
+                    try {
+                        this.addProperty(new window["Property"][properties[i].type](properties[i].status, properties[i].options));
+                    } catch (e) {
+                        console.log("Unknown property type");
+                    }
                 }
             }
         }

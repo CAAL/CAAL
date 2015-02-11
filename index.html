@@ -52,6 +52,11 @@
                     <li id="delete-list" class="dropdown-header" role="presentation">My Projects</li>
                   </ul>
                 </li>
+                <li><a>Export</a>
+                  <ul class="dropdown-menu">
+                    <li id="export-pdf-btn"><a>To PDF</a></li>
+                  </ul>
+                </li>
               </ul>
             </li>
             <li class="divider-vertical"></li>
@@ -178,7 +183,7 @@
           <h4>Target Processes</h4>
           <table id="status-table" class="table table-responsive table-striped table-condensed noHighlight" >
             <thead>
-              <tr class="tableRow">
+              <tr>
                 <th>Action</th>
                 <th>Target</th>
                 <th>Target Definition</th>
@@ -269,7 +274,7 @@
         <div id="game-actions-table-container">
           <table id="actions-table" class="table table-responsive table-striped table-condensed noHighlight" >
             <thead>
-              <tr class="tableRow">
+              <tr>
                 <th>LTS</th>
                 <th>Action</th>
                 <th>Destination</th>
@@ -404,47 +409,60 @@
           <div class="modal-body">
             <p id="help-dialog-body-par">
 		      The table listed contains the allowed CCS expressions along with the syntax
-				
-			  <table style="width:100%" class="helpTable noHighlight">
+			  <table style="width:100%" class="helpTable ace-crisp">
 			    <col style="width:50%" span="2"/>
 			    <thead>
-		          <tr class="tableRow">
+		          <tr>
 					<th>Expression</th>
 					<th>Syntax</th>
 				  </tr>
 				</thead>
 				  <tbody>
-					<tr class="tableRow">
+					<tr>
 					  <td>Comment</td>
-						<td class="tableColumn"><font color ="#6BB15F">* This is a comment</font></td>
+						<td class="inconsolata"><span class="ace_comment">* This is a comment</span></td>
 					</tr>
-					<tr class="tableRow">
+					<tr>
 					  <td>Process Definition</td>
-					  <td class ="tableColumn"> <b>A</b> <font color="#0000b6">=</font> a<font color="#0000b6">.</font><b>B</b>;</td>
+					  <td class ="inconsolata"><span class="ace_constant">A</span>
+											   <span class="ace_keyword ace_operator">=</span> 
+											   a<span class="ace_keyword ace_operator">.</span><span class="ace_constant">B</span>;
+					  </td>
 					</tr>		
-					<tr class="tableRow">
+					<tr>
 					  <td>Parallel Composition</td>
-					  <td class ="tableColumn">P <font color="#0000b6">|</font> Q;</td>
+					  <td class ="inconsolata"><span class="ace_constant">P</span>
+											   <span class="ace_keyword ace_operator">|</span>
+						  					   <span class="ace_constant">Q</span>;
+					  </td>
 					</tr>			
-					<tr class="tableRow">
+					<tr>
 					  <td>Choice</td>
-					  <td class ="tableColumn">P <font color="#0000b6">+</font> Q;</td>
+					  <td class ="inconsolata"><span class="ace_constant">P</span>
+											   <span class="ace_keyword ace_operator">+</span> 
+											   <span class="ace_constant">Q</span>;
+					  </td>
 					</tr>			
-					<tr class="tableRow">
+					<tr>
 					  <td>Restriction</td>
-					  <td class ="tableColumn"><b>A</b> <font color="#0000b6">\</font> {a,b};</td>
+					  <td class ="inconsolata"><span class="ace_constant">A</span> 
+											   <span class="ace_keyword ace_operator">\</span> {a,b};
+					  </td>
 					</tr>
-					<tr class="tableRow">
+					<tr>
 					  <td>Renaming</td>
-					  <td class ="tableColumn"><b>A</b>[b/a];</td>
+					  <td class ="inconsolata"><span class="ace_constant">A</span>[b/a];</td>
 					</tr>
-					<tr class="tableRow">
+					<tr>
 					  <td>Set</td>
-					  <td class ="tableColumn">set <b>A</b> <font color="#0000b6">=</font> {a,b,c};</td>
+					  <td class ="inconsolata">set 
+											   <span class="ace_constant">L</span> 
+											   <span class="ace_keyword ace_operator">=</span> {a,b,c};
+					  </td>
 					</tr>
-					<tr class="tableRow">
+					<tr>
 					  <td>Empty Process</td>
-					  <td class ="tableColumn">0;</td>
+					  <td class ="inconsolata">0;</td>
 					</tr>
 				  </tbody>
 				</table>
@@ -454,63 +472,87 @@
 			  <br/>
 				The table listed contains the allowed HML formulas along with the syntax
 				
-				<table style="width:100%" class="helpTable noHighlight">
+				<table style="width:100%" class="helpTable ace-crisp">
 				  <col style="width:50%" span="2"/>
 				  <thead>
-			    	<tr class="tableRow">
+			    	<tr>
 				      <th>Formula</th>
 					  <th>Syntax</th>
 					</tr>
 				  </thead>
 				  <tbody>
-				    <tr class="tableRow">
+				    <tr>
 					  <td>True</td>
-					  <td class ="tableColumn"><b>tt</b></td>
+					  <td class ="inconsolata"><span class="ace_constant">tt</span> or <span class="ace_constant">T</span></td>
 					</tr>
-					<tr class="tableRow">
+					<tr>
 					  <td>False</td>
-					  <td class ="tableColumn"><b>ff</b></td>
+					  <td class ="inconsolata"><span class="ace_constant">ff</span> or <span class="ace_constant">F</span></td>
 					</tr>		
-					<tr class="tableRow">
+					<tr>
 					  <td>Conjunction</td>
-					  <td class ="tableColumn"><b>F</b> <font color="#0000b6">and</font> <b>G</b>;</td>
+					  <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">and</span> <span class="ace_constant">G </span>;</td>
 					</tr>			
-					<tr class="tableRow">
+					<tr>
 					  <td>Disjunction</td>
-					  <td class ="tableColumn"><b>F</b> <font color="#0000b6">or</font> <b>G</b>;</td>
+					  <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">or</span> <span class="ace_constant">G</span>;</td>
 					</tr>			
-					<tr class="tableRow">
-					  <td>Strong Exist</td>
-					  <td class ="tableColumn"><font color="#0000b6">&lt</font>a,b<font color="#0000b6">&gt</font><b>F</b>;</td>
+					<tr>
+					  <td>Strong Existential Modality</td>
+					  <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt</span>a,b<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span></td>
 					</tr>
-					<tr class="tableRow">
-					  <td>Weak Exist</td>
-					  <td class ="tableColumn"><font color="#0000b6">&lt&lt</font>a,b<font color="#0000b6">&gt&gt</font><b>F</b>;</td>
+					<tr>
+					  <td>Weak Existential Modality</td>
+					  <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt&lt</span>a,b<span class="ace_keyword ace_operator">&gt&gt</span><span class="ace_constant">H</span>;</td>
 					</tr>
-					<tr class="tableRow">
-					  <td>Strong Forall</td>
-				      <td class ="tableColumn"><font color="#0000b6">[</font>a,b<font color="#0000b6">]</font><b>F</b>;</td>
+					<tr>
+					  <td>Strong Forall Modality</td>
+				      <td class ="inconsolata"><span class="ace_keyword ace_operator">[</span>a,b<span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span>;</td>
 					</tr>
-					<tr class="tableRow">
-					<td>Weak Forall</td>
-					  <td class ="tableColumn"><font color="#0000b6">[[</font>a,b<font color="#0000b6">]]</font><b>F</b>;</td>
+					<tr>
+					<td>Weak Forall Modality</td>
+					  <td class ="inconsolata"><span class="ace_keyword ace_operator">[[</span>a,b<span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span>;</td>
 					</tr>
-					<tr class="tableRow">
+					<tr>
 					  <td>All Actions</td>
-					  <td class ="tableColumn">-, e.g <font color="#0000b6">&lt</font>-<font color="#0000b6">&gt</font><b>F</b>;</td>
+					  <td class ="inconsolata">-, e.g <span class="ace_keyword ace_operator">&lt</span>-<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span>;
+					  </td>
 					</tr>
-					<tr class="tableRow">
+					<tr>
 					  <td>Minimum fix-point</td>
-					  <td class ="tableColumn"><b>X</b> <font color="#0000b6">min= [</font>-<font color="#0000b6">]</font><b>X</b>;</td>
+					  <td class ="inconsolata"><span class="ace_constant">X</span> 
+											   <span class="ace_keyword ace_operator">min=</span>
+											   <span class="ace_keyword ace_operator">&lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
+                                               <span class="ace_keyword ace_operator">or</span> 
+											   <span class="ace_keyword ace_operator">[</span>-<span class="ace_keyword ace_operator">]</span>
+											   <span class="ace_constant">X</span>;
+					  </td>
 					</tr>
-					<tr class="tableRow">
+					<tr>
 					  <td>Maximum fix-point</td>
-					  <td class ="tableColumn"><b>X</b> <font color="#0000b6">max= [</font>-<font color="#0000b6">]</font><b>X</b>;</td>
+					  <td class ="inconsolata"><span class="ace_constant">X</span>
+											   <span class="ace_keyword ace_operator">max=</span>
+											   <span class="ace_keyword ace_operator">&lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
+											   <span class="ace_keyword ace_operator">and</span> 
+											   <span class="ace_constant">X</span>;
+					  </td>
 				    </tr>
-					<tr class="tableRow">
+					<tr>
 					  <td>Recursive Variable</td>
-				      <td class ="tableColumn"><b>X</b> <font color="#0000b6">min= &lt</font>-<font color="#0000b6">&gt</font><b>Y</b>; <br/> 
-						  					 <b>Y</b> <font color="#0000b6">min= [</font>-<font color="#0000b6">]</font><b>tt</b>;</td>
+				      <td class ="inconsolata"><span class="ace_constant">X</span> 
+											   <span class="ace_keyword ace_operator">max=</span>
+											   <span class="ace_keyword ace_operator">&lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span> 
+											   <span class="ace_keyword ace_operator">and</span> 
+											   <span class="ace_constant">Y</span> 
+											   <span class="ace_keyword ace_operator">and</span>
+											   <span class="ace_keyword ace_operator">[</span>-<span class="ace_keyword ace_operator">]</span><span class="ace_constant">X</span>; 
+											   <br/> 
+						  					   <span class="ace_constant">Y</span> 
+											   <span class="ace_keyword ace_operator">min=</span>
+											   <span class="ace_keyword ace_operator">&lt</span>b<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span> 
+											   <span class="ace_keyword ace_operator">or</span> 
+											   <span class="ace_constant">Y</span>;
+					  </td>
 					</tr>
 				  </tbody>
 				</table>	
@@ -537,6 +579,8 @@
     <script src="lib/graphics.js"></script>
     <script src="lib/ccs.js"></script>
     <script src="lib/main.js"></script>
+    <script src="lib/blob-stream.js"></script>
+    <script src="lib/pdfkit.js"></script>
     <script>$(document).ready(Main.setup);</script>
   </body>
 </html>

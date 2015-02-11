@@ -9,10 +9,17 @@ module Activity {
 
     import ccs = CCS;
     import dgMod = DependencyGraph;
+    import TooltipHtmlCCSNotationVisitor = Traverse.TooltipHtmlCCSNotationVisitor;
+    import CCSNotationVisitor = Traverse.CCSNotationVisitor;
 
+    enum PlayType {Attacker, Defender};
+    
     export class BisimulationGame extends Activity {
         
         static ComputerDealy: number = 500;
+        
+        private htmlNotationVisitor : TooltipHtmlCCSNotationVisitor;
+        private ccsNotationVisitor: CCSNotationVisitor;
         
         private snapCanvas: SnapCanvas;
         private graph: CCS.Graph;
@@ -21,7 +28,7 @@ module Activity {
         private rightProcess;
         private succGen: ccs.SuccessorGenerator;
         private marking;
-        private isBisimilar;
+        private isBisimilar: boolean;
 
         private delayedPlayTimeout;
 
@@ -31,18 +38,48 @@ module Activity {
         private lastMove = "";
         private lastAction;
 
-        private CCSNotation;
-
         private snapGame: SnapGame;
         private canvas = document.getElementById("tracesvg")[0];
         private actionsTable = "#game-actions-table-container";
+
+        private boundClick;
+        private gameConsole;
+        private table;
         
         constructor(container: string, button: string) {
             super(container, button);
             
-            this.leftProcessName;
-            this.rightProcessName;
-            this.CCSNotation = new Traverse.CCSNotationVisitor();
+            this.htmlNotationVisitor = new TooltipHtmlCCSNotationVisitor();
+            
+            this.ccsNotationVisitor = new CCSNotationVisitor();
+            this.table = $(this.actionsTable).find("tbody");
+            
+            var getCCSNotation = this.ccsNotationForProcessId.bind(this);
+            
+            this.gameConsole = $("#game-console");
+            
+            $("#game-container").tooltip({
+                title: function() {
+                    return getCCSNotation($(this).text());
+                },
+                selector: "span.ccs-tooltip-constant"
+            });
+        }
+        
+        private ccsNotationForProcessId(id : string) {
+            var process = this.graph.processByName(id) || this.graph.processById(id),
+                text = "Unknown definition";
+            if (process) {
+                text = this.getDefinitionForProcess(process, this.ccsNotationVisitor);
+            }
+            return text;
+        }
+        
+        private getDefinitionForProcess(process, visitor) : string {
+            if (process instanceof ccs.NamedProcess) {
+                return visitor.visit((<ccs.NamedProcess>process).subProcess);
+            }
+            return visitor.visit(process);
         }
 
         public onShow(configuration?: any): void {
@@ -55,6 +92,8 @@ module Activity {
         }
 
         beforeShow(configuration): void {
+            this.htmlNotationVisitor.clearCache();
+            
             /* Trace / Snap */
             traceWidth = this.canvas.clientWidth;
             traceHeight = this.canvas.clientHeight;
@@ -82,8 +121,10 @@ module Activity {
 
             // Run liuSmolka algorithm to check for bisimilarity and get a marked dependency graph.
             this.marking = dgMod.liuSmolkaLocal2(0, this.dependencyGraph);
-
-            $("#game-console").find("ul").empty();
+            
+            this.gameConsole.find("ul").empty();
+            this.gameConsole.css("max-height", "83px");
+            this.gameConsole.scrollTop($("#game-console")[0].scrollHeight);
         }
         
         beforeHide(): void {
@@ -104,56 +145,60 @@ module Activity {
             
             if (this.marking.getMarking(0) === this.marking.ONE) {
                 // The processes are NOT bisimilar. Take attacker role.
-                this.printToLog("You are playing as <span style='color: "+SnapGame.PlayerColor+"'>DEFENDER</span>.");
+                this.printToLog("You are playing as <span style='color: "+SnapGame.PlayerColor+"'>DEFENDER</span> and you will lose.");
                 this.isBisimilar = false;
                 this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(0));
                 
             } else if (this.marking.getMarking(0) === this.marking.ZERO) {
                 // The processes ARE bisimilar. Take defender role.
-                this.printToLog("You are playing as <span style='color: "+SnapGame.PlayerColor+"'>ATTACKER</span>.");
+                this.printToLog("You are playing as <span style='color: "+SnapGame.PlayerColor+"'>ATTACKER</span> and you will lose.");
                 this.isBisimilar = true;
                 this.updateTable(0);
-                
             }
+            
+            this.boundClick = this.clickConsole.bind(this);
+            this.gameConsole.on("click", this.boundClick);
 
-            $("#game-console").on("click", function() {
-                if( $(this).css("max-height") === "none" ) {
-                    $(this).css("max-height", "100px");
-                    $(this).scrollTop($(this)[0].scrollHeight);
-                } else {
-                    $(this).css("max-height", "none");
-                }
-            });
-
-            $("#game-console").hover(() => {
+            this.gameConsole.hover( () => {
                 $("#game-console").css("background", "rgba(0, 0, 0, 0.07)");
             }, 
-                                     () => {
-                                         // clear highlight
-                                         $("#game-console").css("background", "");
-                                     });
+            () => {
+                // clear highlight
+                $("#game-console").css("background", "");
+            });
         }
-
+        
+        afterHide() {
+            this.gameConsole.unbind("click", this.boundClick);
+            this.boundClick = null;
+        }
+        
+        private clickConsole() {
+            if( this.gameConsole.css("max-height") === "none" ) {
+                this.gameConsole.css("max-height", "83px");
+                this.gameConsole.scrollTop(this.gameConsole[0].scrollHeight);
+            } else {
+                this.gameConsole.css("max-height", "none");
+            }
+        }
+        
         private setOnHoverListener(row) {
             if(row){
                 $(row).hover(() => {
                     $(row).css("background", "rgba(0, 0, 0, 0.07)");
                 }, 
-                             () => {
-                                 // clear highlight
-                                 $(row).css("background", "");
-                             });
+                () => {
+                    // clear highlight
+                    $(row).css("background", "");
+                });
             }
         }
 
-
-        
-        private setOnClickListener(row, data?) {
+        private setOnClickListener(row, processDestination, action, data?) {
             if(row){
                 $(row).on('click', (event) => {
-
-                    var destination =  row.find("#destination").html();
-                    var action = row.find("#action").html();
+                    var destination = this.ccsNotationVisitor.visit(processDestination);
+                    var destinationHtml = this.htmlNotationVisitor.visit(processDestination);
                     
                     if (this.isBisimilar) {
 
@@ -167,11 +212,11 @@ module Activity {
                         }
 
                         this.snapCanvas.draw();
-                        this.printPlayer("ATTACKER", action, destination);
+                        this.printPlayer(PlayType.Attacker, action, destinationHtml);
                         
                         this.emptyTable();
                         
-                        this.delayedPlayTimeout = setTimeout(() => this.selectEdge(this.isBisimilar, row.find("#nodeid").html(), action), BisimulationGame.ComputerDealy);
+                        this.delayedPlayTimeout = setTimeout( () => this.selectEdge(this.isBisimilar, row.find("#nodeid").html(), action), BisimulationGame.ComputerDealy);
                         //this.selectEdgeMarkedZero(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()), action);
                         
                     } else if (!this.isBisimilar) {
@@ -182,14 +227,13 @@ module Activity {
                         }
 
                         this.snapCanvas.draw();
-                        this.printPlayer("DEFENDER", action, destination);
+                        this.printPlayer(PlayType.Defender, action, destinationHtml);
 
                         this.emptyTable();
 
-                        this.delayedPlayTimeout = setTimeout(() => this.selectEdge(this.isBisimilar, row.find("#nodeid").html()), BisimulationGame.ComputerDealy);
+                        this.delayedPlayTimeout = setTimeout( () => this.selectEdge(this.isBisimilar, row.find("#nodeid").html()), BisimulationGame.ComputerDealy);
                         //this.selectEdgeMarkedOne(this.dependencyGraph.getHyperEdges(row.find("#nodeid").html()));
                     }
-                    event.preventDefault();
                 });
             }
         }
@@ -208,16 +252,21 @@ module Activity {
                     if (this.marking.getMarking(edge[j]) === this.marking.ZERO) {
                         var data = this.dependencyGraph.constructData[edge[0]];
 
+                        var destination: string = "Unknown";
+                        var destinationHtml: string = "Unknown";
+                        
                         if(this.lastMove === "LEFT") {
-                            var destination =  this.CCSNotation.visit(this.graph.processById(data[2]));
+                            destination =  this.ccsNotationVisitor.visit(this.graph.processById(data[2]));
+                            destinationHtml = this.htmlNotationVisitor.visit(this.graph.processById(data[2]));
                             this.snapGame.playRight(action, destination, true);
                         } else if(this.lastMove === "RIGHT") {
-                            var destination =  this.CCSNotation.visit(this.graph.processById(data[1]));
+                            destination =  this.ccsNotationVisitor.visit(this.graph.processById(data[1]));
+                            destinationHtml = this.htmlNotationVisitor.visit(this.graph.processById(data[1]));
                             this.snapGame.playLeft(action, destination, true);
                         }
                         
                         this.snapCanvas.draw();
-                        this.printComputer("DEFENDER", action, destination);
+                        this.printComputer(PlayType.Defender, action, destinationHtml);
 
                         this.updateTable(edge.slice(0)[0]);
                         return;
@@ -241,18 +290,22 @@ module Activity {
                 if (allOne) {
                     var data = this.dependencyGraph.constructData[edge[0]];
                     var action = data[1].toString();
-
+                    var destination: string = "Unknown";
+                    var destinationHtml: string = "Unknown";
+                    
                     if(data[0] == 1) { // Left
-                        var destination =  this.CCSNotation.visit(this.graph.processById(data[2]));
+                        destination =  this.ccsNotationVisitor.visit(this.graph.processById(data[2]));
+                        destinationHtml = this.htmlNotationVisitor.visit(this.graph.processById(data[2]));
                         this.snapGame.playLeft(action, destination, true);
                         
                     } else if(data[0] == 2) { // Right
-                        var destination =  this.CCSNotation.visit(this.graph.processById(data[3]));
+                        destination =  this.ccsNotationVisitor.visit(this.graph.processById(data[3]));
+                        destinationHtml =  this.htmlNotationVisitor.visit(this.graph.processById(data[3]));
                         this.snapGame.playRight(action, destination, true);
                     }
                     
                     this.snapCanvas.draw();
-                    this.printComputer("ATTACKER", action, destination);
+                    this.printComputer(PlayType.Attacker, action, destinationHtml);
                     
                     this.lastMove = (data[0] == 1 ? "LEFT" : data[0] == 2 ? "RIGHT" : "");
                     this.updateTable(edge.slice(0)[0], data[1].toString());
@@ -264,13 +317,11 @@ module Activity {
         
         // empties the table and returns it
         private emptyTable() {
-            var table = $(this.actionsTable).find("tbody");
-            table.empty();
-            return table;
+            this.table.empty();
         }
         
         private updateTable(node, transition?) {
-            var table = this.emptyTable();
+            this.emptyTable();
 
             var hyperEdges = this.dependencyGraph.getHyperEdges(node);
 
@@ -289,52 +340,70 @@ module Activity {
                 var nodeid = $("<td id='nodeid'></td>").append(edge[0]);
                 nodeid.css({display: "none"});
                 
-                var LTS, action, destination;
+                var rowAction, rowDestination, rowLts;
+                var action, rowaction, destinationHtml, destinationProcess;
                 
                 if (this.isBisimilar) {
                     
-                    LTS = $("<td id='LTS'></td>").append(data[0] == 2 ? this.rightProcessName : data[0] == 1 ? this.leftProcessName : "ERROR" );
-                    action = $("<td id='action'></td>").append(data[1].toString());
-                    destination = $("<td id='destination'></td>").append(
-                        this.CCSNotation.visit(this.graph.processById(data[2])));
+                    rowLts = $("<td id='LTS'></td>").append(data[0] == 2 ? this.rightProcessName : data[0] == 1 ? this.leftProcessName : "ERROR" );
+                    action = data[1].toString();
+                    rowAction = $("<td id='action'></td>").append(action);
+                    
+                    destinationProcess = this.graph.processById(data[2]);
+                    destinationHtml = this.htmlNotationVisitor.visit(destinationProcess);
+                    rowDestination = $("<td id='destination'></td>").append(destinationHtml);
 
-                    this.setOnClickListener(row, data);
+                    this.setOnClickListener(row, destinationProcess, action, data);
 
                 } else if (!this.isBisimilar) {
                     
-                    LTS = $("<td id='LTS'></td>").append(this.lastMove ? this.rightProcessName : this.lastMove ? this.leftProcessName : "ERROR" );
-                    action = $("<td id='action'></td>").append(transition);
-                    destination = $("<td id='destination'></td>").append(
-                        this.CCSNotation.visit(
-                            (this.lastMove == "LEFT" ? this.graph.processById(data[2]) :
-                             this.lastMove == "RIGHT" ? this.graph.processById(data[3]):
-                             undefined )
-                        ));
+                    rowLts = $("<td id='LTS'></td>").append(this.lastMove ? this.rightProcessName : this.lastMove ? this.leftProcessName : "ERROR" );
+                    action = transition;
+                    rowAction = $("<td id='action'></td>").append(action);
+                    
+                    destinationProcess = (this.lastMove == "LEFT" ?
+                        this.graph.processById(data[2]) : this.lastMove == "RIGHT" ?
+                        this.graph.processById(data[3]) : undefined );
+                    destinationHtml = this.htmlNotationVisitor.visit(destinationProcess);
+                    rowDestination = $("<td id='destination'></td>").append(destinationHtml);
 
-                    this.setOnClickListener(row);
+                    this.setOnClickListener(row, destinationProcess, action);
                 }
                 
                 this.setOnHoverListener(row);
                 
-                row.append(LTS, action, destination, nodeid);
-                table.append(row);
+                row.append(rowLts, rowAction, rowDestination, nodeid);
+                this.table.append(row);
             }
         }
 
-        private printComputer(player: string, action: string, destination: string) {
-            this.printToLog("<span style='color: "+SnapGame.ComputerColor+"'>" + player + "</span>: " + "--- "+action+" --->   " + destination);
+        private printComputer(playType: PlayType, action: string, destination: string) {
+            if (playType == PlayType.Attacker)
+                this.printRound(SnapGame.StepCounter / 2 + 1);
+            
+            this.printToLog("<span style='color: "+SnapGame.ComputerColor+"'>" + this.playTypeStr(playType) + "</span>: " + "--- "+action+" --->   " + destination, 20);
         }
         
-        private printPlayer(player: string, action: string, destination: string) {
-            this.printToLog("<span style='color: "+SnapGame.PlayerColor+"'>" + player + "</span>: " + "--- "+action+" --->   " + destination);
+        private printPlayer(playType: PlayType, action: string, destination: string) {
+            if (playType == PlayType.Attacker)
+                this.printRound(SnapGame.StepCounter / 2 + 1);
+                
+            this.printToLog("<span style='color: "+SnapGame.PlayerColor+"'>" + this.playTypeStr(playType) + "</span>: " + "--- "+action+" --->   " + destination, 20);
         }
         
-        private printToLog(text: string) {
+        private printRound(round: number) {
+            this.printToLog("Round " + Math.floor(round) + ":");
+        }
+        
+        private printToLog(text: string, margin: number = 0) {
             var list = $("#game-console > ul");
-            list.append("<li>"+text+"</li>");
-            $("#game-console").scrollTop($("#game-console")[0].scrollHeight);
+            list.append("<li style='margin-left: " + margin + "px'>"+text+"</li>");
+            this.gameConsole.scrollTop(this.gameConsole[0].scrollHeight);
         }
         
+        private playTypeStr(playType: PlayType): string {
+            return playType == PlayType.Attacker ? "ATTACKER" : playType == PlayType.Defender ? "DEFENDER" : "UNKNOWN";
+        }
     }
     
 }

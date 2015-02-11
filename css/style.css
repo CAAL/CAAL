@@ -159,19 +159,6 @@ textarea {
     margin-top: 15px;
 }
 
-#tip{
-    display: none;
-    position : absolute;
-    border : 1px solid gray;
-    background-color : #efefef;
-    padding : 3px;
-    z-index: 1000;
-    margin-left: 6px;
-    margin-top: 6px;
-    /* set this to create word wrap */
-    max-width: 500px;
-}
-
 #game-console{
     cursor: pointer;
     max-height: 100px;
@@ -223,20 +210,8 @@ table.helpTable td {
   text-align: left;
 }
 
-td.tableColumn{
-  border: 1px solid #999;
-  padding: 0.5rem;
-  text-align: left;
+td.inconsolata{
   font: normal 14px "Inconsolata";   
-}
-
-tr.tableRow{
-   -webkit-touch-callout: default;
-   -webkit-user-select: text;
-   -khtml-user-select: text;
-   -moz-user-select: text;
-   -ms-user-select: element;
-   user-select: text; 
 }
 
 .noHighlight {
@@ -273,4 +248,44 @@ tr.tableRow{
 
 #property-table .fa-times {
     color: #c00;
+}
+
+/*
+    Tooltip for process constants
+*/
+#status-table-container span.ccs-tooltip-constant, #game-container span.ccs-tooltip-constant {
+    background-color: #eeeeee;
+    border: 1px solid #bbbbbb;
+    border-radius: 5px;
+    padding: 0px 2px 0px 2px;
+}
+#status-table-container .tooltip-inner, #game-container .tooltip-inner {
+    background-color: #eeeeee;
+    border: 1px solid #bbbbbb;
+    color: black;
+    max-width: 600px;
+}
+#status-table-container .tooltip.top .tooltip-arrow, #game-container .tooltip.top .tooltip-arrow {
+    border-top-color: #bbbbbb;
+}
+#status-table-container .tooltip.in, #game-container .tooltip.in {
+    filter: alpha(opacity=100);
+    opacity: 1.0;
+}
+
+/*
+    Tooltips in Game
+*/
+#tip{
+    display: none;
+    position : absolute;
+    border : 1px solid #bbbbbb;
+    background-color : #eeeeee;
+    border-radius: 5px;
+    padding : 3px;
+    z-index: 1000;
+    margin-left: 6px;
+    margin-top: 6px;
+    /* set this to create word wrap */
+    max-width: 500px;
 }

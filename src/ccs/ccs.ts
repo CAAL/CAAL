@@ -386,6 +386,9 @@ module CCS {
                 //Add the last
                 this.labels.push(cur);
             }
+            if (this.contains("tau")) {
+                throw new Error("tau not allowed in label set");
+            }
         }
 
         toArray() : string[] {

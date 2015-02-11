@@ -4,27 +4,22 @@ var tvs = Traverse,
     ccs = CCS,
     hml = HML;
 
-function getStrictSuccGenerator(graph) {
-    var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
-        treeReducer = new tvs.ProcessTreeReducer(graph),
-        reducingGenerator = new tvs.ReducingSuccessorGenerator(strictGenerator, treeReducer);
-    return reducingGenerator;
-}
-
 function checkFormula(program, processName, strFormula) {
     var graph = new CCSParser.parse(program, {ccs: CCS}),
-        succGen = getStrictSuccGenerator(graph),
+        strongSuccGen = ccs.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        weakSuccGen = new tvs.WeakSuccessorGenerator(strongSuccGen),
         formulaSet = HMLParser.parse(strFormula, {ccs: ccs, hml: hml}),
         formula = formulaSet.getAllFormulas()[0];
-    return dgMod.solveMuCalculus(formulaSet, formula, succGen, graph.processByName(processName).id);
+    return dgMod.solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, graph.processByName(processName).id);
 }
 
 function checkFormulaForVariable(program, processName, strFormula, formulaVar) {
     var graph = new CCSParser.parse(program, {ccs: CCS}),
-        succGen = getStrictSuccGenerator(graph),
+        strongSuccGen = ccs.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        weakSuccGen = new tvs.WeakSuccessorGenerator(strongSuccGen),
         formulaSet = HMLParser.parse(strFormula, {ccs: ccs, hml: hml}),
         formula = formulaSet.formulaByName(formulaVar);
-    return dgMod.solveMuCalculus(formulaSet, formula, succGen, graph.processByName(processName).id);
+    return dgMod.solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, graph.processByName(processName).id);
 }
 
 QUnit.module("Model Checking Tests");
@@ -44,27 +39,49 @@ QUnit.test("Conjunction", function ( assert ) {
     assert.ok(! checkFormula("P = a.0 + b.0;", "P", "<a>tt and <c>tt"), "should be false");
 });
 
-QUnit.test("Exists", function ( assert ) {
+QUnit.test("Action Matching", function ( assert ) {
+    assert.ok(  checkFormula("P = 'a.b.P;", "P", "<'a><b>tt"), "should be true");
+    assert.ok(  checkFormula("P = a.'b.P;", "P", "<a,'b><a,'b>tt"), "should be true");
+    assert.ok(  checkFormula("P = a.b.P;", "P", "<b,a><a,b>tt"), "should be true");
+    assert.ok(  checkFormula("P = a.b.P;", "P", "<a,b><b,a>tt"), "should be true");
+    assert.ok(! checkFormula("P = a.b.P;", "P", "<a,b><c,a>tt"), "should be false");
+    assert.ok(  checkFormula("P = a.'b.P;", "P", "<-><->tt"), "should be true");
+    assert.ok(  checkFormula("P = a.b.P;", "P", "<a><->tt"), "should be true");
+    assert.ok(  checkFormula("P = a.b.P;", "P", "<-><b>tt"), "should be true");
+    assert.ok(! checkFormula("P = a.b.P;", "P", "<-><c>tt"), "should be false");
+});
+
+QUnit.test("Strong Exists", function ( assert ) {
     assert.ok(  checkFormula("P = a.b.x.P + a.b.y.P;", "P", "<a><b><y>tt"), "should be true");
     assert.ok(! checkFormula("P = a.b.x.P + a.w.y.P;", "P", "<a><b><y>tt"), "should be false");
     assert.ok(  checkFormula("P = a.b.P;", "P", "<-><b>tt"), "should be true");
     assert.ok(  checkFormula("P = a.b.P;", "P", "<a><->tt"), "should be true");
-    assert.ok(! checkFormula("P = a.b.P;", "P", "<b><->tt"), "should be false");
-    assert.ok(  checkFormula("P = a.b.P;", "P", "<a,b><b,a>tt"), "should be true");
-    assert.ok(! checkFormula("P = a.b.P;", "P", "<-><c,d>tt"), "should be false");
 });
 
-QUnit.test("ForAll", function ( assert ) {
+QUnit.test("Strong ForAll", function ( assert ) {
     assert.ok(  checkFormula("P = a.x.P;", "P", "[a][y]ff"), "should be true");
     assert.ok(! checkFormula("P = a.y.P;", "P", "[a][y]ff"), "should be false");
     assert.ok(  checkFormula("P = a.b.P;", "P", "[a][b]tt"), "should be true");
     assert.ok(! checkFormula("P = a.b.P;", "P", "[-]ff"), "should be false");
-    assert.ok(! checkFormula("P = a.b.P;", "P", "[-][-]ff"), "should be false");
-    assert.ok(  checkFormula("P = a.b.P;", "P", "[-]<b>tt"), "should be false");
-    assert.ok(! checkFormula("P = a.b.P;", "P", "[-]<c>tt"), "should be false");
-    assert.ok(! checkFormula("P = a.b.P;", "P", "[a,b][b]ff"), "should be false");
-    assert.ok(! checkFormula("P = a.b.P;", "P", "[a][a,b]ff"), "should be false");
-    assert.ok(  checkFormula("P = a.b.P;", "P", "[a,b][c]ff"), "should be true");
+1});
+
+QUnit.test("Weak Exists", function ( assert ) {
+    assert.ok(  checkFormula("P = a.x.P;", "P", "<<a>><<x>>tt", "should be true"));
+    assert.ok(  checkFormula("P = a.tau.x.P;", "P", "<<a>><<x>>tt"), "should be true");
+    assert.ok(  checkFormula("P = tau.a.x.P;", "P", "<<a>><<x>>tt"), "should be true");
+    assert.ok(  checkFormula("P = a.x.tau.P;", "P", "<<a>><<x>>tt"), "should be true");
+    assert.ok(  checkFormula("P = tau.tau.a.tau.tau.b.tau.0;", "P", "<<a>><<b>>tt"), "should be true");
+    assert.ok(! checkFormula("P = a.tau.x.P;", "P", "<<a>><<y>>tt"), "should be false");
+    assert.ok(! checkFormula("P = a.tau.x.P;", "P", "<<b>><<->>tt"), "should be false");
+    assert.ok(! checkFormula("P = a.tau.x.P;", "P", "<<a>><<b>>ff"), "should be false");
+});
+
+QUnit.test("Weak ForAll", function ( assert ) {
+    assert.ok(  checkFormula("P = a.x.P;", "P", "[[a]][[x]]<<a>>tt"), "should be true");
+    assert.ok(  checkFormula("P = a.tau.x.P;", "P", "[[a]][[x]]<<a>>tt"), "should be true");
+    assert.ok(! checkFormula("P = a.tau.x.P;", "P", "[[a]][[x]]ff"), "should be false");
+    assert.ok(! checkFormula("P = tau.a.x.P;", "P", "[[a]][[x]]ff"), "should be false");
+    assert.ok(! checkFormula("P = a.tau.tau.y.P;", "P", "[[a]][[y]]ff"), "should be false")
 });
 
 QUnit.test("Others (simple)", function ( assert ) {
@@ -72,6 +89,13 @@ QUnit.test("Others (simple)", function ( assert ) {
         "P = a.Q + a.R + y.P;" + "Q = b.P;" + "R = b.P;",
         "P",
         "[a]<b>[z]ff"), "should be true");
+
+    assert.ok(checkFormulaForVariable(
+        "P = a.tau.b.P + c.tau.b.P;",
+        "P",
+        "X max= <<a>>[[b]]X and Y; Y min=<<c>><<b>>tt;",
+        "X"
+        ), "should be true");
 
     assert.ok(checkFormula("P = ('a.b.c.P | a.b.P) \\ {a};", "P", "<tau>[b](<b>tt or <c>tt)"), "should be true");
     assert.ok(checkFormula("P = (a.'b.c.0) [x/a, y/b, z/c];", "P", "<x><'y><z>tt", "should be true"));

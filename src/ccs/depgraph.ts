@@ -368,7 +368,7 @@ module DependencyGraph {
         }
     }
 
-    class MuCalculusMinModelCheckingDG implements DependencyGraph {
+    class MuCalculusMinModelCheckingDG implements DependencyGraph, hml.FormulaDispatchHandler<any> {
         private TRUE_ID = 1;
         private FALSE_ID = 2;
         // the 0th index is set in the constructor.
@@ -381,7 +381,9 @@ module DependencyGraph {
 
         private getForNodeId;
 
-        constructor(private succGen : ccs.SuccessorGenerator, nodeId, private formulaSet : hml.FormulaSet, formula : hml.Formula) {
+        constructor(private strongSuccGen : ccs.SuccessorGenerator,
+                    private weakSuccGen : ccs.SuccessorGenerator,
+                    nodeId, private formulaSet : hml.FormulaSet, formula : hml.Formula) {
             this.constructData[0] = [nodeId, formula];
             this.nextIdx = 3;
         }
@@ -425,9 +427,9 @@ module DependencyGraph {
             return this.nodes[this.FALSE_ID];
         }
 
-        dispatchExistsFormula(formula : hml.ExistsFormula) {
+        private existsFormula(formula : any, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = this.succGen.getSuccessors(this.getForNodeId);
+                transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -435,12 +437,12 @@ module DependencyGraph {
                     hyperedges.push([newIdx]);
                 }
             });
-            return hyperedges;
+            return hyperedges;            
         }
 
-        dispatchForAllFormula(formula : hml.ForAllFormula) {
+        private forallFormula(formula : any, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = this.succGen.getSuccessors(this.getForNodeId);
+                transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -451,12 +453,28 @@ module DependencyGraph {
             return [hyperedges];
         }
 
+        dispatchStrongExistsFormula(formula : hml.StrongExistsFormula) {
+            return this.existsFormula(formula, this.strongSuccGen);
+        }
+
+        dispatchStrongForAllFormula(formula : hml.StrongForAllFormula) {
+            return this.forallFormula(formula, this.strongSuccGen);
+        }
+
+        dispatchWeakExistsFormula(formula : hml.WeakExistsFormula) {
+            return this.existsFormula(formula, this.weakSuccGen);
+        }
+
+        dispatchWeakForAllFormula(formula : hml.WeakForAllFormula) {
+            return this.forallFormula(formula, this.weakSuccGen);
+        }
+
         dispatchMinFixedPointFormula(formula : hml.MinFixedPointFormula) {
             return formula.subFormula.dispatchOn(this);
         }
 
         dispatchMaxFixedPointFormula(formula : hml.MaxFixedPointFormula) {
-            var maxDg = new MuCalculusMaxModelCheckingDG(this.succGen, this.getForNodeId, this.formulaSet, formula);
+            var maxDg = new MuCalculusMaxModelCheckingDG(this.strongSuccGen, this.weakSuccGen, this.getForNodeId, this.formulaSet, formula);
             var marking = solveMuCalculusInternal(maxDg);
             return marking.getMarking(0) === marking.ZERO ? this.nodes[this.TRUE_ID] : this.nodes[this.FALSE_ID];
         }
@@ -471,7 +489,7 @@ module DependencyGraph {
         }
     }
 
-    class MuCalculusMaxModelCheckingDG implements DependencyGraph {
+    class MuCalculusMaxModelCheckingDG implements DependencyGraph, hml.FormulaDispatchHandler<any> {
         private TRUE_ID = 1;
         private FALSE_ID = 2;
         // the 0th index is set in the constructor.
@@ -484,7 +502,9 @@ module DependencyGraph {
 
         private getForNodeId;
 
-        constructor(private succGen : ccs.SuccessorGenerator, nodeId, private formulaSet : hml.FormulaSet, formula : hml.Formula) {
+        constructor(private strongSuccGen : ccs.SuccessorGenerator, 
+                    private weakSuccGen : ccs.SuccessorGenerator,
+                    nodeId, private formulaSet : hml.FormulaSet, formula : hml.Formula) {
             this.constructData[0] = [nodeId, formula];
             this.nextIdx = 3;
         }
@@ -529,9 +549,9 @@ module DependencyGraph {
             return this.nodes[this.TRUE_ID];
         }
 
-        dispatchExistsFormula(formula : hml.ExistsFormula) {
+        private existsFormula(formula : any, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = this.succGen.getSuccessors(this.getForNodeId);
+                transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -542,9 +562,9 @@ module DependencyGraph {
             return [hyperedges];
         }
 
-        dispatchForAllFormula(formula : hml.ForAllFormula) {
+        private forallFormula(formula : any, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = this.succGen.getSuccessors(this.getForNodeId);
+                transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -555,8 +575,24 @@ module DependencyGraph {
             return hyperedges;
         }
 
+        dispatchStrongExistsFormula(formula : hml.StrongExistsFormula) {
+            return this.existsFormula(formula, this.strongSuccGen);
+        }
+
+        dispatchStrongForAllFormula(formula : hml.StrongForAllFormula) {
+            return this.forallFormula(formula, this.strongSuccGen);
+        }
+
+        dispatchWeakExistsFormula(formula : hml.WeakExistsFormula) {
+            return this.existsFormula(formula, this.weakSuccGen);
+        }
+
+        dispatchWeakForAllFormula(formula : hml.WeakForAllFormula) {
+            return this.forallFormula(formula, this.weakSuccGen);
+        }
+
         dispatchMinFixedPointFormula(formula : hml.MinFixedPointFormula) {
-            var minDg = new MuCalculusMinModelCheckingDG(this.succGen, this.getForNodeId, this.formulaSet, formula);
+            var minDg = new MuCalculusMinModelCheckingDG(this.strongSuccGen, this.weakSuccGen, this.getForNodeId, this.formulaSet, formula);
             var marking = solveMuCalculusInternal(minDg);
             return marking.getMarking(0) === marking.ZERO ? this.nodes[this.TRUE_ID] : this.nodes[this.FALSE_ID];
         }
@@ -581,8 +617,8 @@ module DependencyGraph {
         return marking;
     }
 
-    export function solveMuCalculus(formulaSet, formula, succGen, processId) : boolean {
-        var dg = new MuCalculusMinModelCheckingDG(succGen, processId, formulaSet, formula),
+    export function solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, processId) : boolean {
+        var dg = new MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, processId, formulaSet, formula),
             marking = solveMuCalculusInternal(dg);
         return marking.getMarking(0) === marking.ONE;
     }
