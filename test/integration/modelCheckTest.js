@@ -40,9 +40,12 @@ QUnit.test("Conjunction", function ( assert ) {
 });
 
 QUnit.test("Action Matching", function ( assert ) {
+    assert.ok(  checkFormula("P = 'a.b.P;", "P", "<'a><b>tt"), "should be true");
+    assert.ok(  checkFormula("P = a.'b.P;", "P", "<a,'b><a,'b>tt"), "should be true");
+    assert.ok(  checkFormula("P = a.b.P;", "P", "<b,a><a,b>tt"), "should be true");
     assert.ok(  checkFormula("P = a.b.P;", "P", "<a,b><b,a>tt"), "should be true");
     assert.ok(! checkFormula("P = a.b.P;", "P", "<a,b><c,a>tt"), "should be false");
-    assert.ok(  checkFormula("P = a.b.P;", "P", "<-><->tt"), "should be true");
+    assert.ok(  checkFormula("P = a.'b.P;", "P", "<-><->tt"), "should be true");
     assert.ok(  checkFormula("P = a.b.P;", "P", "<a><->tt"), "should be true");
     assert.ok(  checkFormula("P = a.b.P;", "P", "<-><b>tt"), "should be true");
     assert.ok(! checkFormula("P = a.b.P;", "P", "<-><c>tt"), "should be false");
