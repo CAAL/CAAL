@@ -5,6 +5,7 @@
 /// <reference path="../lib/ccs.d.ts" />
 /// <reference path="gui/project.ts" />
 /// <reference path="gui/menu.ts" />
+/// <reference path="gui/menu/pdf_export.ts" />
 /// <reference path="gui/storage.ts" />
 /// <reference path="gui/examples.ts" />
 /// <reference path="activity/activity.ts" />
@@ -92,6 +93,8 @@ module Main {
             deleteId: '#delete-list',
         }
         new Delete(null, deleteIds, project, activityHandler);
+
+        new PdfExport("#export-pdf-btn", null, project, activityHandler);        
     }
 
     export class ActivityHandler {
