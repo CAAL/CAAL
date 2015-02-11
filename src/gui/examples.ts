@@ -26,12 +26,42 @@ var examples = [
         properties: [
             {
                 type: "HML",
-                status: true,
+                status: null,
                 options: {
                     process: "Peterson",
                     formula: "X max= ([exit1]ff or [exit2]ff) and [-]X;"
                 }
             }
         ]
-    }
+    },
+	
+	{
+		title: "Orchard",
+		ccs: "Man = 'shake.(Man1 + Man2);\n" +
+			 "Man1 = redapple.'walk.Man;\n" +
+			 "Man2 = greenapple.'walk.Man;\n" +
+			 "\n" + 
+			 "ColorTree = shake.('greenapple.ColorTree + redapple.ColorTree);\n" +
+			 "\n" +
+			 "Orchard = (ColorTree | Man) \\ {shake, redapple, greenapple};\n" +
+			 "\n" +
+			 "Spec = 'walk.Spec;\n",	
+		properties:[
+			{
+				type: "StrongBisimulation",
+				status: null,
+				options: {
+					firstProcess:"Orchard",
+					secondProcess:"Spec"
+			}
+			},
+			{	
+				type: "WeakBisimulation",
+				status: null,
+				options: {
+					firstProcess:"Orchard",
+					secondProcess:"Spec"}
+				}
+		]
+	}
 ]
