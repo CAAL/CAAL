@@ -236,7 +236,7 @@ module Traverse {
             "'": "&#x27;",
             "/": "&#x2F;"
         };
-        return str.replace(/[&<>"']/g, symbol => entities[symbol] || symbol);
+        return str.replace(/[&<>"'\/]/g, symbol => entities[symbol] || symbol);
     }
 
     export class TooltipHtmlCCSNotationVisitor implements ccs.ProcessVisitor<string>, ccs.ProcessDispatchHandler<string> {
