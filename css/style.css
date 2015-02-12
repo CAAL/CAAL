@@ -132,6 +132,10 @@ textarea {
     overflow-y: auto;
 }
 
+#status-table {
+    cursor: pointer;
+}
+
 #explorer-container table {
     margin: 0;
 }
@@ -242,39 +246,42 @@ td.inconsolata{
     color: #c00;
 }
 
+
 /*
-    Tooltip for process constants
-*/
-#status-table-container span.ccs-tooltip-constant, #game-container span.ccs-tooltip-constant {
-    background-color: #eeeeee;
-    border: 1px solid #bbbbbb;
+ *  Tooltip styles
+ */
+
+.ccs-tooltip-constant {
+    background-color: #eee;
+    border: 1px solid #bbb;
     border-radius: 5px;
     padding: 0px 2px 0px 2px;
+    cursor: pointer;
 }
-#status-table-container .tooltip-inner, #game-container .tooltip-inner {
-    background-color: #eeeeee;
-    border: 1px solid #bbbbbb;
+
+.tooltip.in {
+    opacity: 1.0;
+    filter: alpha(opacity=100); /* For IE8 and earlier */
+}
+
+.tooltip-inner {
+    background-color: #eee;
+    border: 1px solid #bbb;
     color: black;
     max-width: 600px;
 }
-#status-table-container .tooltip.top .tooltip-arrow, #game-container .tooltip.top .tooltip-arrow {
-    border-top-color: #bbbbbb;
-}
-#status-table-container .tooltip.in, #game-container .tooltip.in {
-    filter: alpha(opacity=100);
-    opacity: 1.0;
+
+.tooltip-arrow {
+    border-top-color: #bbb !important;
 }
 
-/*
-    Tooltips in Game
-*/
-#tip{
+#tip {
     display: none;
-    position : absolute;
-    border : 1px solid #bbbbbb;
-    background-color : #eeeeee;
+    position: absolute;
+    border: 1px solid #bbb;
+    background-color: #eee;
     border-radius: 5px;
-    padding : 3px;
+    padding: 3px;
     z-index: 1000;
     margin-left: 6px;
     margin-top: 6px;
