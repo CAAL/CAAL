@@ -5,30 +5,33 @@ declare var blobStream : any;
 
 class PdfExport extends MenuItem {
 
-    private doc = new PDFDocument();
+    private doc;
 
 	public onClick(e) : void {
+        this.doc = new PDFDocument();
 		var stream = this.doc.pipe(blobStream());
 		var project = this.project;
 
 		this.doc.info.Title = project.getTitle();
+
+        console.log(this.doc.info.Title);
 
         this.doc.fontSize(26).font('Helvetica').fillColor('black').text(project.getTitle(), {align: 'center'});
         this.doc.moveDown()
 
         var splitted = project.getCCS().split("\n");
         
-        console.log(splitted);
-
         for(var line in splitted) {
             this.addLine(splitted[line]);
         }
 
-		this.doc.end();
+		
 		stream.on("finish", () => {
-			window.open(stream.toBlobURL("application/pdf", project.getTitle()));
+			window.open(stream.toBlobURL("application/pdf"), project.getTitle());
 		});
-		console.log("test");
+
+        this.doc.end();
+        
 	}
 
     private addLine(text: string): void {
