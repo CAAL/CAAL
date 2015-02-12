@@ -26,7 +26,7 @@ module Activity {
             this.editor.getSession().setUseWrapMode(true);
             this.editor.setOptions({
                 enableBasicAutocompletion: true,
-                maxLines: Infinity,
+                //maxLines: 20, // destroys the ace viewport, dont do dis
                 showPrintMargin: false,
                 fontSize: 14,
                 fontFamily: "Inconsolata",
@@ -34,10 +34,33 @@ module Activity {
 
             // Focus editor whenever its parent element is clicked.
             this.$container.find("#editor").on("click", () => {this.editor.focus()});
+            
             this.$container.find("#parse-btn").on("click", () => {this.parse()});
             this.$statusArea.children("button").on("click", () => {this.$statusArea.hide()});
             this.$fontSizeButton.children("li").on("click", (e) => {this.setFontSize(e)});
-            this.editor.on("change", () => {this.project.setCCS(this.editor.getValue())});
+            
+            var heightUpdateFunction = function() {
+                // http://stackoverflow.com/questions/11584061/
+                var newHeight =
+                          this.editor.getSession().getScreenLength()
+                          * this.editor.renderer.lineHeight
+                          + this.editor.renderer.scrollBar.getWidth();
+
+                $('#editor').height(newHeight.toString() + "px");
+                $('#editor-section').height(newHeight.toString() + "px");
+
+                // This call is required for the editor to fix all of
+                // its inner structure for adapting to a change in size
+                this.editor.resize();
+            };
+
+            // Set initial size to match initial content
+            heightUpdateFunction.call(this);
+            
+            this.editor.on("change", (event) => {
+                this.project.setCCS(this.editor.getValue())
+                heightUpdateFunction.call(this);
+            });
         }
 
         public onShow(configuration?: any): void {
