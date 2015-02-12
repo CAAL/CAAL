@@ -180,7 +180,9 @@ textarea {
     margin: 0;
 }
 
-#explorer-container tbody, #explorer-source-definition {
+#explorer-container tbody,
+#explorer-source-definition,
+#actions-table tbody {
     font: normal 14px "Inconsolata";
 }
 
