@@ -44,7 +44,7 @@ module Main {
         activityHandler.addActivity("editor", new Activity.Editor("#editor-container", "#edit-btn"));
         activityHandler.addActivity("explorer", new Activity.Explorer("#explorer-container", "#explore-btn"));
         activityHandler.addActivity("verifier" , new Activity.Verifier("#verifier-container", "#verify-btn"));
-        activityHandler.addActivity("game", new Activity.BisimulationGame("#game-container", "#game-btn"));
+        //activityHandler.addActivity("game", new Activity.BisimulationGame("#game-container", "#game-btn"));
         activityHandler.selectActivity("editor");
 
         new New('#new-btn', null, project, activityHandler);
