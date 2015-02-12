@@ -148,8 +148,32 @@ textarea {
     overflow-y: auto;
 }
 
-#status-table {
+#status-table,
+#actions-table {
     cursor: pointer;
+    table-layout: fixed;
+}
+
+#status-table th, #status-table td,
+#actions-table th, #actions-table td {
+    text-align: left;
+}
+
+#status-table th.col-1,
+#actions-table th.col-1 {
+    width: 15%;
+    min-width: 140px;
+}
+
+#status-table th.col-2,
+#actions-table th.col-2 {
+    width: 15%;
+    min-width: 140px;
+}
+
+#status-table th.col-3,
+#actions-table th.col-3 {
+    width: auto;
 }
 
 #explorer-container table {
