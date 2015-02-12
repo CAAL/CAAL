@@ -17,6 +17,7 @@ module Property {
         private id: number;
         public status: boolean;
         public worker;
+        public statistics = {elapsedTime: null};
 
         public constructor(status: boolean) {
             this.status = status;

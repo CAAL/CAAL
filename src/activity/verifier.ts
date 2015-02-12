@@ -16,6 +16,7 @@ module Activity {
         private currentVerifyingProperty = null;
         private clockInterval;
         private propsToVerify = [];
+        private startTime;
 
         constructor(container: string, button: string) {
             super(container, button);
@@ -110,6 +111,11 @@ module Activity {
 
                 this.propertyTableBody.append(row);
 
+                tdStatus.tooltip({
+                    title: this.onStatusHover(properties[i]),
+                    selector: '.fa-check'
+                });
+                
                 tdStatus.on("click", {property: properties[i]}, (e) => this.onStatusClick(e));
                 row.on("click", {property: properties[i]}, (e) => this.editProperty(e));
                 tdDelete.on("click", {property: properties[i]}, (e) => this.deleteProperty(e));
@@ -136,6 +142,11 @@ module Activity {
             this.project.addProperty(property);
             this.displayProperties();
             this.editProperty({data: {property: property}});
+        }
+
+        private onStatusHover(property) {
+            return property.statistics.elapsedTime;
+            
         }
 
         private onStatusClick(e) {
@@ -212,6 +223,7 @@ module Activity {
         }
 
         private verifactionEnded() {
+            this.currentVerifyingProperty.statistics.elapsedTime = new Date().getTime() - this.startTime;
             clearInterval(this.clockInterval);
             this.verifyStopButton.prop("disabled", true);
             this.currentVerifyingProperty = null;
@@ -232,13 +244,13 @@ module Activity {
 
             var row = this.propertyTableBody.find("tr").eq(index);
             var statusTd = row.find("td").eq(0);
-            var startTime = new Date().getTime();
+            this.startTime = new Date().getTime();
             
             this.clockInterval = setInterval(updateTimer, 100);
             this.currentVerifyingProperty = property;
 
             function updateTimer() {
-                var elapsedTime = new Date().getTime() - startTime;
+                var elapsedTime = new Date().getTime() - this.startTime;
                 statusTd.text(elapsedTime + "ms");
             }
 
