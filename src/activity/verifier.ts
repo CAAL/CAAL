@@ -145,7 +145,7 @@ module Activity {
         }
 
         private onStatusHover(property) {
-            return property.statistics.elapsedTime;
+            return property.statistics.elapsedTime + " ms";
             
         }
 
