@@ -135,7 +135,7 @@ module GUI {
         }
 
         public clearHoverOutListener() : void {
-            this.handler.hoverOn = null;
+            this.handler.hoverOut = null;
         }
 
         public setHoverOutListener(f : (identifier : string) => void) : void {
@@ -145,7 +145,7 @@ module GUI {
         }
 
         public clearHoverOnListener() : void {
-            this.handler.hoverOut = null;
+            this.handler.hoverOn = null;
         }
 
         public clearAll() : void {

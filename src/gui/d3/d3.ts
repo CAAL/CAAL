@@ -9,16 +9,23 @@ module GUI {
     export class d3Graph implements GUI.ProcessGraphUI {
         public width : number = 960;
         public height : number = 500;
-        private onClick : Function = null;
+        private onClick : Function = (d) => {console.log('clicked')};
+        private onMouseOn : Function = (d) => {console.log('mouseon')};
+        private onMouseOut : Function = (d) => {console.log('mouseout')};
         private nodeColors = {
             "unexpanded" : "rgb(160,160,160)",
             "expanded"   : "rgb(51, 65, 185)",
             "selected"   : "rgb(245, 50, 50)",
             "stroke"     : "rgb(0, 0, 0)"
         }; 
+        private transitionColors = {
+            "highlight"     : "rgb(245, 50, 50)",
+            "default"       : "rgb(196, 196, 196)" 
+        }; 
+
         private vertices = [];
-        private verticeIds = {};
-        private transitionIds = {};
+        private verticesData = {};
+        private transitionsData = {};
         private transitions = []; // Remember it is not ID but index in the array
         private svg;
         private vis;
@@ -53,9 +60,9 @@ module GUI {
                     .nodes(this.vertices)
                     .links(this.transitions)
                     .size([this.width, this.height])
-                    .linkDistance(150)
-                    .charge(-500)
-                    .gravity(0.06)
+                    .linkDistance(100)
+                    .charge(-50)
+                    .gravity(0.02)
                     .on('tick', this.tick);
             // define arrow markers for graph links
             this.svg.append('svg:defs').append('svg:marker')
@@ -102,7 +109,7 @@ module GUI {
                 var sourcePadding = d.data.direction != 'post' ? this.circleRadius+5 : this.circleRadius;
                 var targetPadding = d.data.direction != 'pre' ? this.circleRadius+5 : this.circleRadius;
 
-                var oppositeTransitionExists = this.transitionIds[d.target.id + ',' + d.source.id];
+                var oppositeTransitionExists = this.transitionsData[d.target.id + ',' + d.source.id];
 
                 if (d.source == d.target) {
                     //self loop
@@ -155,7 +162,7 @@ module GUI {
 
             //link label
             this.links.selectAll('text').attr("transform", (d) => {
-                var oppositeTransitionExists = this.transitionIds[d.target.id + ',' + d.source.id];
+                var oppositeTransitionExists = this.transitionsData[d.target.id + ',' + d.source.id];
 
                 var sourceP = new Point(d.source.x, d.source.y);
                 var targetP = new Point(d.target.x, d.target.y);
@@ -215,7 +222,6 @@ module GUI {
                .style('fill', this.nodeColorChange)
                .style('stroke', this.nodeColors['stroke']);
                
-
             // add new vertices    
             var g = this.circle.enter().append('svg:g');
             
@@ -228,30 +234,68 @@ module GUI {
                 .attr('r', this.circleRadius)
                 .style('fill', this.nodeColorChange)
                 .style('stroke', this.nodeColors['stroke'])
-                .on('click', this.nodeClicked);
+                .on('click', (d) => {
+                    if (d3.event.defaultPrevented) return; // ignore drag
+
+                    this.selected_node = d;
+                    this.selected_node.data.expanded = true;
+                    this.update();
+
+                    if (this.onClick) {
+                        this.onClick(d);
+                    }
+                })
+                .on('mouseover', (d) => {
+                    if (this.onMouseOn) {
+                        this.onMouseOn(d);
+                    }
+                })
+                .on('mouseout', (d) => {
+                    if (this.onMouseOut) {
+                        this.onMouseOut(d);
+                    }
+                });
+
+            //update text
+            this.svg.selectAll('.circle_text')
+                .style('font-size', (d) => {
+                    return Math.round(this.circleRadius/2) + 'px';
+                })
+                .text((d) => { 
+                    if (d.data.hasOwnProperty('label')) {
+                        return d.data.label.substring(0, (this.circleRadius/3)); 
+                    }
+                });
 
             // Append text to circle
             g.append('svg:text')
                 .attr('x', 0)
                 .attr('y', 4)
-                .attr('class', 'id')
+                .attr('class', 'id circle_text')
                 .style('font-family','sans-serif') 
                 .style('font-size', (d) => {
-                    console.log(Math.round(this.circleRadius/2) + 'px')
                     return Math.round(this.circleRadius/2) + 'px';
                 })
                 .text((d) => { 
-                    return d.data.label.substring(0, (this.circleRadius/3)); 
+                    if (d.data.hasOwnProperty('label')) {
+                        return d.data.label.substring(0, (this.circleRadius/3));
+                    } 
                 });
 
             //remove old vertices
             this.circle.exit().remove();
 
             //Bind the data
-            this.links = this.links.data(this.transitions, (d : Transition) => {return d.id;});
-
+            this.links = this.links
+                .data(this.transitions, (d : Transition) => {return d.id;});               
             //update transitions
             this.links.selectAll('path')
+                .style("stroke", (d) => {
+                    if(d.data.highlight){
+                        return this.transitionColors['highlight'];
+                    }
+                    return this.transitionColors['default']
+                })
                 .style('marker-start', (d) => { return d.data.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
                 .style('marker-end', (d) => { return d.data.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
 
@@ -263,7 +307,12 @@ module GUI {
             glink.append('svg:path')
                 .attr("fill", "none")
                 .attr("class", "link")
-                .attr("stroke", "ff8888")
+                .style("stroke", (d) => {
+                    if (d.data.highlight) {
+                        return this.transitionColors['highlight'];
+                    }
+                    return this.transitionColors['default']
+                })
                 .style('marker-start', (d) => { return d.data.direction != 'post' ? 'url(#pre-arrow)' : ''; }) //pre&post checking is flipped because of "both"
                 .style('marker-end', (d) => { return d.data.direction != 'pre' ? 'url(#post-arrow)' : ''; }); //pre&post checking is flipped because of "both"
 
@@ -309,14 +358,6 @@ module GUI {
             }
         };
 
-        private nodeClicked = (d) => {
-            if (d3.event.defaultPrevented) return; // ignore drag
-
-            this.selected_node = d;
-            this.selected_node.data.expanded = true;
-            this.update();
-        };
-
         private boundingBox(p : Point) {
             p.x = Math.max(this.circleRadius, Math.min(this.width - this.circleRadius, p.x)); 
             p.y = Math.max(this.circleRadius, Math.min(this.height - this.circleRadius, p.y));
@@ -326,26 +367,27 @@ module GUI {
         public clearAll() : void {
             this.vertices = [];
             this.transitions = [];
-            this.verticeIds = {};
-            this.transitionIds = {};
+            this.verticesData = {};
+            this.transitionsData = {};
             this.update();
         }
 
         public showProcess(identifier : string, data : VertexData = {}) : Vertex {
             // So this is what should happend, when node is cliked it should fire the onClick method given from the holder of the graph.(who ever created the object)
-            var doesVertexExists = this.verticeIds[identifier]; 
+            var doesVertexExists = this.verticesData[identifier]; 
             var v : Vertex;
             if(doesVertexExists) {
                 //override vertex
                 v = this.getVertexById(identifier)
-                v.data = data
+                if (Object.getOwnPropertyNames(data).length > 0) {
+                    v.data = data
+                }
                 // console.log('Override vertex: ', v);
             }
             else {
-                v = new Vertex(identifier, data);
+                var v = new Vertex(identifier, data);
                 this.vertices.push(v);
-                this.verticeIds[v.id] = true;
-                // console.log('Insert vertex: ', v);
+                this.verticesData[v.id] = {exists:true, vertex:v, outGoingIds: []};
             }  
 
             this.update();
@@ -353,18 +395,13 @@ module GUI {
         }
 
         private getVertexById(identifier : string) : Vertex {
-            for (var i = 0; i < this.vertices.length; i++){
-                if(this.vertices[i].id === identifier){
-                    return this.vertices[i];
-                }
-            }
-
-            return null;
+            return this.verticesData[identifier].vertex;
         }
 
         private removeVertex(v : Vertex) : void {
-            this.verticeIds[v.id] = false;
+            delete this.verticesData[v.id] //maybe this will cause problems if removed, and added?
             this.vertices.splice(v.index, 1);
+            this.update()
         }
 
         private removeVertexbyId(identifier : string) : void {
@@ -376,35 +413,37 @@ module GUI {
             return this.getVertexById(identifier).data
         }
 
-        public showTransitions(sourceId : string, targetId : string, data : TransitionData = {}) : Transition {
+        public showTransitions(sourceId : string, targetId : string, data : TransitionData = {}, sourceData = {}, targetData = {}) : Transition {
             
             // Has the edge been defined
-            var doesTransitionExists = this.transitionIds[sourceId + "," +targetId];
+            var doesTransitionExists = this.transitionsData[sourceId + "," +targetId];
 
             if (doesTransitionExists) {
                 // If defined then override the edge with new data.
                 // console.log('Override: ')
             } else {
                 // Else define it
-                var edge = new Transition(this.showProcess(sourceId), this.showProcess(targetId), data);
-                this.transitions.push(edge);
-                this.transitionIds[sourceId + ',' + targetId] = true;
-                console.log("Inserted: ", edge);
+                var transition = new Transition(this.showProcess(sourceId, sourceData), this.showProcess(targetId, targetData), data);
+                if (transition.data.direction = "post") {
+                    this.verticesData[transition.source.id].outGoingIds.push(transition.id);
+                }
+                else if (transition.data.direction = "pre") {
+                    this.verticesData[transition.target.id].outGoingIds.push(transition.id);
+                }
+                else {
+                    this.verticesData[transition.source.id].push(transition.id)
+                    this.verticesData[transition.target.id].push(transition.id)
+                }
+                this.transitions.push(transition);
+                this.transitionsData[sourceId + ',' + targetId] = {exists: true, transition: transition};
             }
 
             this.update();
-            return edge;
+            return transition;
         }
 
         private getTransitionById(identifier : string) : Transition {
-            for (var i = 0; i < this.transitions.length; i++){
-                if(this.transitions[i].id === identifier){
-                    this.transitions[i].index = i;
-                    return this.transitions[i];
-                }
-            }
-
-            return null
+            return this.transitionsData[identifier].transition;
         }
 
         private removeTransitionById(identifier : string) : void { 
@@ -413,48 +452,70 @@ module GUI {
         }
 
         private removeTransition(e : Transition) : void {
-            this.transitionIds[e.source + ',' + e.target] = false;
+            delete this.transitionsData[e.id]; //maybe this will cause problems if removed, and added
             this.transitions.splice(this.transitions.indexOf(e), 1);
         }
 
-        public getTransitionDataObjects(identifier : string) : any {
-            return this.getTransitionById(identifier);
+        private getOutGoingTransitions(identifier : string) : string[] {
+            return this.verticesData[identifier].outGoingIds;
         }
 
-        public setOnSelectListener(f : (identifier) => void) : void {
+        public hightlightTransitions(v : Vertex){
+            var transitionsIds = this.getOutGoingTransitions(v.id);
+            for (var i = 0; i < transitionsIds.length; i++){
+                this.getTransitionById(transitionsIds[i]).data.highlight = true;
+            }
+            this.update();
+        }
+        public unhighlightTransitions(v : Vertex){
+            var transitionsIds = this.getOutGoingTransitions(v.id);
+            for (var i = 0; i < transitionsIds.length; i++){
+                this.getTransitionById(transitionsIds[i]).data.highlight = false;
+            }
+            this.update();
+        }
 
+        public getTransitionDataObjects(identifier : string) : any {
+            return this.getTransitionById(identifier).data;
+        }
+
+        public setOnSelectListener(f : (vertex : Vertex) => void) : void {
+            this.onClick = f;
         }
 
         public clearOnSelectListener() : void {
-
+            this.onClick = null;
         }
 
-        public setHoverOnListener(f : (identifier) => void ) : void {
-            
+        public setHoverOnListener(f : (vertex : Vertex) => void ) : void {
+            this.onMouseOn = f;
         }
 
         public clearHoverOnListener() : void {
-             
+            this.onMouseOn = null;    
         }
 
-        public setHoverOutListener(f : (identifier) => void ) : void {
-
+        public setHoverOutListener(f : (vertex : Vertex) => void ) : void {
+            this.onMouseOut = f;
         }
 
         public clearHoverOutListener() : void {
-
+            this.onMouseOut = null;
         }
 
-        public setSelected(name : string) : void {
+        public setSelected(identifier : string) : void {
             // Set selected node
+            this.selected_node = this.getVertexById(identifier)
         }
 
-        public setHover(name: string) : void {
+        public setHover(identifier: string) : void {
             // Mark a node as hover
+            this.hover_node = this.getVertexById(identifier);
         }
 
         public clearHover() : void {
             // Clear the node marked as hover
+            this.hover_node = null;
         }
 
         public freeze() : void {
@@ -503,17 +564,8 @@ module GUI {
 }
 
 var d3test = new GUI.d3Graph();
-d3test.showProcess("1", {label:"1234567890"});
-d3test.showProcess("2", {label:"1234567890"});
-d3test.showProcess("3", {label:"1234567890"});
-d3test.showProcess("4", {label:"1234567890"});
-d3test.showProcess("5", {label:"1234567890"});
-d3test.showProcess("6", {label:"1234567890"});
-d3test.showProcess("7", {label:"1234567890"});
-d3test.showProcess("8", {label:"1234567890"});
-d3test.showProcess("9", {label:"1234567890"});
-d3test.showTransitions("1","2", {label : 'test'});
-d3test.showTransitions("2","3", {label : 'edge 2->3'});
+d3test.showTransitions("1","2", {label : 'test'}, {label:"1label"}, {label:"2label"});
+d3test.showTransitions("2","3", {label : 'edge 2->3'}, {label:"2label"}, {label:"3label"});
 d3test.showTransitions("3","2", {label : 'edge 3->2'});
 d3test.showTransitions("3","4", {label : 'this is awesome'});
 d3test.showTransitions("4","5", {label : 'this is awesome'});
@@ -521,7 +573,16 @@ d3test.showTransitions("5","6", {label : 'this is awesome'});
 d3test.showTransitions("6","7", {label : 'this is awesome'});
 d3test.showTransitions("7","8", {label : 'this is awesome'});
 d3test.showTransitions("8","9", {label : 'this is awesome'});
+d3test.setHoverOnListener((d : Vertex) => {
+    d3test.hightlightTransitions(d);
+});
+d3test.setHoverOutListener((d : Vertex) => {
+    d3test.unhighlightTransitions(d);
+});
 
 
+// for (var i = 0; i < 50; i++){
+//     d3test.showTransitions(i.toString(), (i+1).toString(), {label: 'label'+i});
+// }
 
 

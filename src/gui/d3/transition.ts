@@ -2,11 +2,12 @@
 interface TransitionData {
     direction? : string
     label? : string
+    highlight? : boolean
 }
 
 class Transition {
     public id : string
-    public data : TransitionData = {direction: 'post', label: 'label'};
+    public data : TransitionData = {direction: 'post', label: 'label', highlight: false};
     constructor(public source : Vertex, 
         public target : Vertex, data : TransitionData) {
         this.id = source.id + ',' + target.id;
