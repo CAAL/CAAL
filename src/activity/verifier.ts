@@ -54,16 +54,16 @@ module Activity {
             });
         }
 
-        public checkPreconditions(): boolean {
+        protected checkPreconditions(): boolean {
             var graph = Main.getGraph();
 
             if (!graph) {
-                showExplainDialog("Syntax Error", "Your program contains syntax errors.");
+                this.showExplainDialog("Syntax Error", "Your program contains syntax errors.");
                 return false;
             }
 
             if (graph.getNamedProcesses().length === 0) {
-                showExplainDialog("No Named Processes", "There must be at least one named process in the program to verify.");
+                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program to verify.");
                 return false;
             }
 
@@ -162,7 +162,8 @@ module Activity {
                         processNameA: equivalence.firstProcess,
                         processNameB: equivalence.secondProcess
                     };
-                Main.activityHandler.openActivityWithConfiguration("game", configuration);
+                // Fix this
+                //Main.activityHandler.openActivityWithConfiguration("game", configuration);
                 //Don't process click event further
                 return false;
             }

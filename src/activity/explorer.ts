@@ -101,16 +101,16 @@ module Activity {
             $("#option-depth").on("change", () => this.expandDepth = $("#option-depth").val());
         }
 
-        public checkPreconditions(): boolean {
+        protected checkPreconditions(): boolean {
             this.graph = Main.getGraph();
 
             if (!this.graph) {
-                showExplainDialog("Syntax Error", "Your program contains syntax errors.");
+                this.showExplainDialog("Syntax Error", "Your program contains syntax errors.");
                 return false;
             }
 
             if (this.graph.getNamedProcesses().length === 0) {
-                showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
+                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
                 return false;
             }
 
