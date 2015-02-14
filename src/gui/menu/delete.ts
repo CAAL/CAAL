@@ -54,6 +54,8 @@ class Delete extends MenuItem {
         $("li.delete").remove();
 
         if (projects) {
+            projects.sort(function(a, b) {return b.title.localeCompare(a.title)});
+
             for (var i = 0; i < projects.length; i++) {
                 var html = $("<li class=\"delete\"><a>" + projects[i].title + "</a></li>");
                 this.$deleteList.after(html);

@@ -72,6 +72,8 @@ class Load extends MenuItem {
         $("li.project").remove();
 
         if (projects) {
+            projects.sort(function(a, b) {return b.title.localeCompare(a.title)});
+
             for (var i = 0; i < projects.length; i++) {
                 var html = $("<li class=\"project\"><a>" + projects[i].title + "</a></li>");
                 this.$projectsList.after(html);
@@ -82,6 +84,8 @@ class Load extends MenuItem {
 
     private showExamples() : void {
         if (examples) {
+            examples.sort(function(a, b) {return b.title.localeCompare(a.title)});
+
             for (var i = 0; i < examples.length; i++) {
                 var html = $("<li><a>" + examples[i].title + "</a></li>");
                 this.$examplesList.after(html);

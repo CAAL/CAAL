@@ -39,11 +39,11 @@ var examples : any[] = [
 		title: "Orchard",
 		ccs: "Man = 'shake.(redapple.walk.Man + greenapple.walk.Man);\n" +
 			 "\n" + 
-			 "AppleTree = shake.('greenapple.AppleTree + redapple.AppleTree);\n" +
+			 "AppleTree = shake.('greenapple.AppleTree + 'redapple.AppleTree);\n" +
 			 "\n" +
 			 "Orchard = (AppleTree | Man) \\ {shake, redapple, greenapple};\n" +
 			 "\n" +
-			 "Spec = walk.Spec;\n",	
+			 "Spec = walk.Spec;",	
 		properties:[
 			{
 				type: "StrongBisimulation",
@@ -76,7 +76,7 @@ var examples : any[] = [
 			 "T1 = a.T2 + b.T2;\n" +
 			 "T2 = a.T;\n" +
 			 "T3 = a.T4;\n" +
-			 "T4 = a.T;\n",	
+			 "T4 = a.T;",	
 		properties:[]
 	},
 	
@@ -88,7 +88,7 @@ var examples : any[] = [
 			 "Q = a.Q1;\n" +
 			 "Q1 = b.Q2 + c.Q;\n" +
 			 "Q2 = a.Q3;\n" +
-			 "Q3 = b.Q + c.Q2;\n",	
+			 "Q3 = b.Q + c.Q2;",	
 		properties:[]
 	}
 ]
