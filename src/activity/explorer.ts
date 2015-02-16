@@ -165,11 +165,17 @@ module Activity {
         public draw(): void {
             this.clear();
             var options = this.getOptions();
-            this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.successor, reduce: options.simplify});
+            this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
             this.initialProcessName = options.process;
+            var initialProcess = this.graph.processByName(this.initialProcessName);
+            if (options.collapse) {
+                var weakSuccGenerator = CCS.getSuccGenerator(this.graph, {succGen: "weak", reduce: options.simplify});
+                var collapseFn = DependencyGraph.getBisimulationCollapse(this.succGenerator, weakSuccGenerator, initialProcess.id, initialProcess.id);
+                this.succGenerator = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapseFn);
+            }
             this.htmlNotationVisitor.clearCache();
             this.ccsNotationVisitor.clearCache();
-            this.expand(this.graph.processByName(this.initialProcessName), 1);
+            this.expand(initialProcess, 1);
         }
 
         private ccsNotationForProcessId(id: string): string {

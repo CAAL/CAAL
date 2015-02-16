@@ -21,20 +21,22 @@ messageHandlers.program = data => {
 };
 
 messageHandlers.isStronglyBisimilar = data => {
-    var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+    var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        defendSuccGen = attackSuccGen,
         leftProcess = graph.processByName(data.leftProcess),
         rightProcess = graph.processByName(data.rightProcess),
-        isBisimilar = DependencyGraph.isBisimilar(strongSuccGen, leftProcess.id, rightProcess.id, graph);
+        isBisimilar = DependencyGraph.isBisimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
     //Add some kind of request id to determine for which problem have result? It is necessary? Right now just add the new data to the result.
     data.result = isBisimilar;
     self.postMessage(data);
 };
 
 messageHandlers.isWeaklyBisimilar = data => {
-    var weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
+    var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        defendSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
         leftProcess = graph.processByName(data.leftProcess),
         rightProcess = graph.processByName(data.rightProcess),
-        isBisimilar = DependencyGraph.isBisimilar(weakSuccGen, leftProcess.id, rightProcess.id, graph);
+        isBisimilar = DependencyGraph.isBisimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
     data.result = isBisimilar;
     self.postMessage(data);
 };
