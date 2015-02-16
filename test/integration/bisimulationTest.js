@@ -38,7 +38,8 @@ QUnit.test("Simple bisimilar", function ( assert ) {
 });
 
 QUnit.test("Weak bisimilar fail", function ( assert ) {
-    var graph = CCSParser.parse("S = tau.S1 + a.S3; S1 = tau.S + tau.S2 + b.S4; S2 = tau.S1 + tau.S5; S3 = 0; S4 = 0; S5 = 0; T = tau.T1 + a.T2 + b.T3; T1 = tau.T1; T2 = 0; T3 = 0;", {ccs: CCS}),
+    var graph = CCSParser.parse("S = a.0 + tau.0;\n" +
+                                "T = a.0 + tau.T;\n", {ccs: CCS});
         succGen = getWeakSuccGenerator(graph),
         processP = graph.processByName("S"),
         processQ = graph.processByName("T");
