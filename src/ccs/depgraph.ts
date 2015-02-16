@@ -22,15 +22,15 @@ module DependencyGraph {
             maximal fixed-point. The result marking should be
             inverted **/
 
-        private succGen;
         private nextIdx;
         private nodes = [];
         public constructData = [];
         private leftPairs = {};
         private isFullyConstructed = false;
 
-        constructor(succGen : ccs.SuccessorGenerator, leftNode, rightNode) {
-            this.succGen = succGen;
+        constructor(private attackSuccGen : ccs.SuccessorGenerator,
+                    private defendSuccGen : ccs.SuccessorGenerator,
+                    leftNode, rightNode) {
             this.constructData[0] = [0, leftNode, rightNode];
             this.nextIdx = 1;
         }
@@ -83,7 +83,7 @@ module DependencyGraph {
                 result = [];
             // for (s, fromRightId), s ----action---> toLeftId.
             // fromRightId must be able to match.
-            var rightTransitions = this.succGen.getSuccessors(fromRightId);
+            var rightTransitions = this.defendSuccGen.getSuccessors(fromRightId);
             rightTransitions.forEach(rightTransition => {
                 var existing, toRightId;
                 //Same action - possible candidate.
@@ -114,7 +114,7 @@ module DependencyGraph {
                 toRightId = data[2],
                 fromLeftId = data[3],
                 result = [];
-            var leftTransitions = this.succGen.getSuccessors(fromLeftId);
+            var leftTransitions = this.defendSuccGen.getSuccessors(fromLeftId);
             leftTransitions.forEach(leftTransition => {
                 var existing, toLeftId;
                 if (leftTransition.action.equals(action)) {
@@ -141,8 +141,8 @@ module DependencyGraph {
 
         private getProcessPairStates(leftProcessId, rightProcessId) {
             var hyperedges = [];
-            var leftTransitions = this.succGen.getSuccessors(leftProcessId);
-            var rightTransitions = this.succGen.getSuccessors(rightProcessId);
+            var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
+            var rightTransitions = this.attackSuccGen.getSuccessors(rightProcessId);
             leftTransitions.forEach(leftTransition => {
                 var newNodeIdx = this.nextIdx++;
                 this.constructData[newNodeIdx] = [1, leftTransition.action, leftTransition.targetProcess.id, rightProcessId];
@@ -560,10 +560,10 @@ module DependencyGraph {
         return marking.getMarking(0) === marking.ONE;
     }
 
-    export function isBisimilar(ltsSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
-        var dg = new BisimulationDG(ltsSuccGen, leftProcessId, rightProcessId),
-            marking = liuSmolkaGlobal(dg);
-            // marking = liuSmolkaLocal2(0, dg);
+    export function isBisimilar(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
+        var dg = new BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
+            // marking = liuSmolkaGlobal(dg);
+            marking = liuSmolkaLocal2(0, dg);
         //Bisimulation is maximal fixed point, the marking is reversed.
         // if (marking.getMarking(0) === marking.ONE && graph) {
         //     var traceIterator = dg.getTraceIterator(marking)
@@ -641,7 +641,6 @@ module DependencyGraph {
         D.empty(m);
         var W = [];
         load(m);
-
         while (W.length > 0) {
             var next = W.pop();
             var k = next[0];
@@ -719,7 +718,6 @@ module DependencyGraph {
             var sourceNode = pair[0];
             pair[1].forEach(hyperEdge => W.push([sourceNode, hyperEdge]));
         });
-
         while (W.length > 0) {
             var next = W.pop();
             var k = next[0];
@@ -734,7 +732,7 @@ module DependencyGraph {
                 }
                 if (l.length === 0) {
                     A.set(k, S_ONE);
-                    W = D.get(k).concat(W);
+                    W = W.concat(D.get(k));
                 } else {
                     D.add(headL, [k, l]);
                 }
