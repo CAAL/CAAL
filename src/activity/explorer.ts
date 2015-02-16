@@ -97,7 +97,7 @@ module Activity {
             // Prevent options menu from closing when pressing form elements.
             $(document).on('click', '.yamm .dropdown-menu', e => e.stopPropagation());
 
-            $("#explorer-process-list, #option-strong, #option-weak, #option-collapse, #option-simplify").on("change", () => this.draw());
+            $("#explorer-process-list, #option-strong, #option-weak, #option-depth, #option-collapse, #option-simplify").on("change", () => this.draw());
             $("#option-depth").on("change", () => this.expandDepth = $("#option-depth").val());
         }
 
@@ -156,10 +156,11 @@ module Activity {
         private getOptions(): any {
             var process = $("#explorer-process-list :selected").text();
             var successor = $('input[name=successor]:checked').val();
+            var depth = $("#option-depth").val();
             var collapse = $("#option-collapse").prop("checked");
             var simplify = $("#option-simplify").prop("checked");
 
-            return {process: process, successor: successor, collapse: collapse, simplify: simplify};
+            return {process: process, successor: successor, depth: depth, collapse: collapse, simplify: simplify};
         }
 
         public draw(): void {
@@ -169,7 +170,7 @@ module Activity {
             this.initialProcessName = options.process;
             this.htmlNotationVisitor.clearCache();
             this.ccsNotationVisitor.clearCache();
-            this.expand(this.graph.processByName(this.initialProcessName), 1);
+            this.expand(this.graph.processByName(this.initialProcessName), options.depth);
         }
 
         private ccsNotationForProcessId(id: string): string {
