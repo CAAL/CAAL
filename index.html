@@ -63,7 +63,7 @@
             <li id="edit-btn" class="active"><a>Edit</a></li>
             <li id="explore-btn"><a>Explore</a></li>
             <li id="verify-btn"><a>Verify</a></li>
-            <li id="game-btn" class="disabled"><a>Game</a></li>
+            <li id="game-btn"><a>Game</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right noHighlight">
             <!--<li><a>About</a></li>-->
@@ -262,30 +262,7 @@
 
       <!-- Game -->
       <div id="game-container">
-        <div class="row">
-          <div class="col-md-12">
-            <svg id="tracesvg"/>
-          </div>
-        </div>
-        <div id="game-console" class="well well-sm">
-          <ul>
-          </ul>
-        </div>
-        <div id="game-actions-table-container">
-          <table id="actions-table" class="table table-responsive table-striped table-condensed noHighlight" >
-            <thead>
-              <tr>
-                <th class="col-1">Process</th>
-                <th class="col-2">Action</th>
-                <th class="col-3">Target</th>
-              </tr>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
-        </div>
       </div>
-    </div>
 
     <!-- Modals -->
     <div id="delete-modal" class="modal fade" tabindex="-1">
@@ -574,6 +551,7 @@
     <script src="lib/ace/src/ext-language_tools.js"></script>
     <script src="lib/ccs_grammar.js"></script>
     <script src="lib/hml_grammar.js"></script>
+    <script src="lib/d3.min.js"></script>
     <script src="lib/arbor.js"></script>
     <script src="lib/graphics.js"></script>
     <script src="lib/ccs.js"></script>
