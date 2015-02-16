@@ -27,6 +27,7 @@ module DependencyGraph {
         private nodes = [];
         public constructData = [];
         private leftPairs = {};
+        private isFullyConstructed = false;
 
         constructor(succGen : ccs.SuccessorGenerator, leftNode, rightNode) {
             this.succGen = succGen;
@@ -35,22 +36,44 @@ module DependencyGraph {
         }
 
         getHyperEdges(identifier) {
-            var type, data, result;
+            var type, result;
             //Have we already built this? Then return copy of the edges.
             if (this.nodes[identifier]) {
                 result = this.nodes[identifier];
             } else {
-                data = this.constructData[identifier];
-                type = data[0];
-                if (type === 0) { //It it a pair?
-                    result = this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
-                } else if (type === 1) { // The left action and destination is fixed?
-                    result = this.nodes[identifier] = this.getNodeForLeftTransition(data);
-                } else if (type === 2) { // The right action and destination is fixed?
-                    result = this.nodes[identifier] = this.getNodeForRightTransition(data);
-                }
+                result = this.constructNode(identifier);
             }
             return copyHyperEdges(result);
+        }
+
+        private constructNode(identifier) {
+            var result,
+                data = this.constructData[identifier],
+                type = data[0];
+            if (type === 0) { //It it a pair?
+                result = this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
+            } else if (type === 1) { // The left action and destination is fixed?
+                result = this.nodes[identifier] = this.getNodeForLeftTransition(data);
+            } else if (type === 2) { // The right action and destination is fixed?
+                result = this.nodes[identifier] = this.getNodeForRightTransition(data);
+            }
+            return result;
+        }
+
+        getAllHyperEdges() : [any][] {
+            if (!this.isFullyConstructed) {
+                this.isFullyConstructed = true;
+                //All nodes have ids in order of creation, thus there are no gaps.
+                for (var i=0; i < this.nextIdx; i++) {
+                    this.constructNode(i);
+                }
+            }
+            var result = [];
+            result.length = this.nextIdx;
+            for (var i=0; i < this.nextIdx; i++) {
+                result[i] = [i, copyHyperEdges(this.nodes[i])];
+            }
+            return result;
         }
 
         private getNodeForLeftTransition(data) {
@@ -273,102 +296,16 @@ module DependencyGraph {
         }                
     }
 
-    export interface DependencyGraph {
+    export interface PartialDependencyGraph {
         getHyperEdges(identifier) : any[][];
     }
 
-    export function liuSmolkaLocal2(m, graph) : any {
-        var S_ZERO = 1, S_ONE = 2, S_BOTTOM = 3;
-
-        // A[k]
-        var A = (function () {
-            var a = {};
-            var o = {
-                get: function(k) {
-                    return a[k] || S_BOTTOM;
-                },
-                set: function(k, status) {
-                    a[k] = status;
-                },
-                dump: function() {
-                    return a;
-                }
-            };
-            return o;
-        }());
-
-        // D[k]
-        var D = (function () {
-            var d = {};
-            var o = {
-                empty: function(k) {
-                    d[k] = [];
-                },
-                add: function(k, edgeL) {
-                    d[k] = d[k] || [];
-                    d[k].push(edgeL);
-                },
-                get: function(k) {
-                    return d[k] || [];
-                }
-            };
-            return o;
-        }());
-
-        function getSucc(k) {
-            return graph.getHyperEdges(k);
-        }
-
-        function load(k) {
-            var l = getSucc(k);
-            while (l.length > 0) {
-                W.push([k, l.pop()]);
-            }
-        }
-
-        A.set(m, S_ZERO);
-        D.empty(m);
-        var W = [];
-        load(m);
-
-        while (W.length > 0) {
-            var next = W.pop();
-            var k = next[0];
-            var l = next[1];
-            if (A.get(k) === S_ZERO) {
-                if (l.length > 0) {
-                    var headL = l[l.length-1];
-                    while (A.get(headL) === S_ONE && l.length > 0) {
-                        l.pop();
-                        headL = l[l.length-1];
-                    }
-                }
-                if (l.length === 0) {
-                    A.set(k, S_ONE);
-                    W = W.concat(D.get(k));
-                }
-                else if (A.get(headL) === S_ZERO) {
-                    D.add(headL, [k, l]);
-                }
-                else if (A.get(headL) === S_BOTTOM) {
-                    A.set(headL, S_ZERO);
-                    D.empty(headL);
-                    D.add(headL, [k, l]); //Missing in smolka paper
-                    load(headL);
-                }
-            }
-        }
-        return {
-            getMarking: function(dgNodeId) {
-                return A.get(dgNodeId);
-            },
-            ZERO: S_ZERO,
-            ONE: S_ONE,
-            UNKNOWN: S_BOTTOM
-        }
+    export interface DependencyGraph extends PartialDependencyGraph {
+        getHyperEdges(identifier) : any[][];
+        getAllHyperEdges() : any[];
     }
 
-    class MuCalculusMinModelCheckingDG implements DependencyGraph, hml.FormulaDispatchHandler<any> {
+    class MuCalculusMinModelCheckingDG implements PartialDependencyGraph, hml.FormulaDispatchHandler<any> {
         private TRUE_ID = 1;
         private FALSE_ID = 2;
         // the 0th index is set in the constructor.
@@ -489,7 +426,7 @@ module DependencyGraph {
         }
     }
 
-    class MuCalculusMaxModelCheckingDG implements DependencyGraph, hml.FormulaDispatchHandler<any> {
+    class MuCalculusMaxModelCheckingDG implements PartialDependencyGraph, hml.FormulaDispatchHandler<any> {
         private TRUE_ID = 1;
         private FALSE_ID = 2;
         // the 0th index is set in the constructor.
@@ -612,7 +549,7 @@ module DependencyGraph {
         }
     }
 
-    function solveMuCalculusInternal(dg : DependencyGraph) : any {
+    function solveMuCalculusInternal(dg : PartialDependencyGraph) : any {
         var marking = liuSmolkaLocal2(0, dg);
         return marking;
     }
@@ -625,7 +562,8 @@ module DependencyGraph {
 
     export function isBisimilar(ltsSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
         var dg = new BisimulationDG(ltsSuccGen, leftProcessId, rightProcessId),
-            marking = liuSmolkaLocal2(0, dg);
+            marking = liuSmolkaGlobal(dg);
+            // marking = liuSmolkaLocal2(0, dg);
         //Bisimulation is maximal fixed point, the marking is reversed.
         // if (marking.getMarking(0) === marking.ONE && graph) {
         //     var traceIterator = dg.getTraceIterator(marking)
@@ -648,5 +586,166 @@ module DependencyGraph {
             else stringParts.push(notation.visit(graph.processById(trace[i])));
         }
         return stringParts.join("\n\t");
+    }
+
+    function liuSmolkaLocal2(m, graph : PartialDependencyGraph) : any {
+        var S_ZERO = 1, S_ONE = 2, S_BOTTOM = 3;
+
+        // A[k]
+        var A = (function () {
+            var a = {};
+            var o = {
+                get: function(k) {
+                    return a[k] || S_BOTTOM;
+                },
+                set: function(k, status) {
+                    a[k] = status;
+                },
+                dump: function() {
+                    return a;
+                }
+            };
+            return o;
+        }());
+
+        // D[k]
+        var D = (function () {
+            var d = {};
+            var o = {
+                empty: function(k) {
+                    d[k] = [];
+                },
+                add: function(k, edgeL) {
+                    d[k] = d[k] || [];
+                    d[k].push(edgeL);
+                },
+                get: function(k) {
+                    return d[k] || [];
+                }
+            };
+            return o;
+        }());
+
+        function getSucc(k) {
+            return graph.getHyperEdges(k);
+        }
+
+        function load(k) {
+            var l = getSucc(k);
+            while (l.length > 0) {
+                W.push([k, l.pop()]);
+            }
+        }
+
+        A.set(m, S_ZERO);
+        D.empty(m);
+        var W = [];
+        load(m);
+
+        while (W.length > 0) {
+            var next = W.pop();
+            var k = next[0];
+            var l = next[1];
+            if (A.get(k) === S_ZERO) {
+                if (l.length > 0) {
+                    var headL = l[l.length-1];
+                    while (l.length > 0 && A.get(headL) === S_ONE) {
+                        l.pop();
+                        headL = l[l.length-1];
+                    }
+                }
+                if (l.length === 0) {
+                    A.set(k, S_ONE);
+                    W = W.concat(D.get(k));
+                }
+                else if (A.get(headL) === S_ZERO) {
+                    D.add(headL, [k, l]);
+                }
+                else if (A.get(headL) === S_BOTTOM) {
+                    A.set(headL, S_ZERO);
+                    D.empty(headL);
+                    D.add(headL, [k, l]); //Missing in smolka paper
+                    load(headL);
+                }
+            }
+        }
+        return {
+            getMarking: function(dgNodeId) {
+                return A.get(dgNodeId);
+            },
+            ZERO: S_ZERO,
+            ONE: S_ONE,
+            UNKNOWN: S_BOTTOM
+        }
+    }
+
+    function liuSmolkaGlobal(graph : DependencyGraph) : any {
+        var S_ZERO = 1, S_ONE = 2;
+        // A[k]
+        var A = (function () {
+            var a = {};
+            var o = {
+                get: function(k) {
+                    return a[k] || S_ZERO;
+                },
+                set: function(k, status) {
+                    a[k] = status;
+                }
+            };
+            return o;
+        }());
+
+        // D[k]
+        var D = (function () {
+            var d = {};
+            var o = {
+                empty: function(k) {
+                    d[k] = [];
+                },
+                add: function(k, edgeL) {
+                    d[k] = d[k] || [];
+                    d[k].push(edgeL);
+                },
+                get: function(k) {
+                    return d[k] || [];
+                }
+            };
+            return o;
+        }());
+
+        var W = [];
+        //Unpack hyperedges
+        graph.getAllHyperEdges().forEach(pair => {
+            var sourceNode = pair[0];
+            pair[1].forEach(hyperEdge => W.push([sourceNode, hyperEdge]));
+        });
+
+        while (W.length > 0) {
+            var next = W.pop();
+            var k = next[0];
+            var l = next[1];
+            if (A.get(k) === S_ZERO) {
+                if (l.length > 0) {
+                    var headL = l[l.length-1];
+                    while (l.length > 0 && A.get(headL) === S_ONE) {
+                        l.pop();
+                        headL = l[l.length-1];
+                    }
+                }
+                if (l.length === 0) {
+                    A.set(k, S_ONE);
+                    W = D.get(k).concat(W);
+                } else {
+                    D.add(headL, [k, l]);
+                }
+            }
+        }
+        return {
+            getMarking: function(dgNodeId) {
+                return A.get(dgNodeId);
+            },
+            ZERO: S_ZERO,
+            ONE: S_ONE
+        }
     }
 }
