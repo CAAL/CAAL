@@ -37,6 +37,14 @@ QUnit.test("Simple bisimilar", function ( assert ) {
     assert.ok(dgMod.isBisimilar(succGen, processP.id, processQ.id, graph), "P and Q should be bisimilar");
 });
 
+QUnit.test("Weak bisimilar fail", function ( assert ) {
+    var graph = CCSParser.parse("S = tau.S1 + a.S3; S1 = tau.S + tau.S2 + b.S4; S2 = tau.S1 + tau.S5; S3 = 0; S4 = 0; S5 = 0; T = tau.T1 + a.T2 + b.T3; T1 = tau.T1; T2 = 0; T3 = 0;", {ccs: CCS}),
+        succGen = getWeakSuccGenerator(graph),
+        processP = graph.processByName("S"),
+        processQ = graph.processByName("T");
+    assert.ok(dgMod.isBisimilar(succGen, processP.id, processQ.id, graph), "S and T should be weakly bisimilar");
+});
+
 QUnit.test("Tau Cycles", function ( assert ) {
     var graph = CCSParser.parse(
             "P = tau.a.tau.b.tau.P;\n" +

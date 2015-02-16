@@ -72,7 +72,7 @@ var examples : any[] = [
 			 "S3 = a.S;\n" +
 			 "S4 = a.S;\n" +
 			 "\n" +
-			 "T = a.T3;\n" +
+			 "T = a.T1 + a.T3;\n" +
 			 "T1 = a.T2 + b.T2;\n" +
 			 "T2 = a.T;\n" +
 			 "T3 = a.T4;\n" +
@@ -83,7 +83,7 @@ var examples : any[] = [
 	{
 		title: "Exercise 3.2",
 		ccs: "P = a.P1;\n" +
-			 "P1 = b.P1 + c.P;\n" + 
+			 "P1 = b.P + c.P;\n" + 
 			 "\n" +
 			 "Q = a.Q1;\n" +
 			 "Q1 = b.Q2 + c.Q;\n" +
