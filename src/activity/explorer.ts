@@ -96,20 +96,18 @@ module Activity {
 
             // Prevent options menu from closing when pressing form elements.
             $(document).on('click', '.yamm .dropdown-menu', e => e.stopPropagation());
-
-            $("#explorer-process-list, #option-strong, #option-weak, #option-depth, #option-collapse, #option-simplify").on("change", () => this.draw());
+            $("#explorer-process-list").on("click", () => this.draw());
+            $("#option-strong, #option-weak, #option-depth, #option-collapse, #option-simplify").on("change", () => this.draw());
             $("#option-depth").on("change", () => this.expandDepth = $("#option-depth").val());
         }
 
         protected checkPreconditions(): boolean {
-            this.graph = Main.getGraph();
-
-            if (!this.graph) {
+            var temp = Main.getGraph();
+            if (!temp) {
                 this.showExplainDialog("Syntax Error", "Your program contains syntax errors.");
                 return false;
-            }
-
-            if (this.graph.getNamedProcesses().length === 0) {
+            } 
+            else if (temp.getNamedProcesses().length === 0) {
                 this.showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
                 return false;
             }
@@ -120,6 +118,10 @@ module Activity {
         public onShow(configuration?: any): void {
             $(window).on("resize", () => this.resize());
             this.resize();
+
+            if (this.project.getChanged()){
+                this.graph = Main.getGraph();
+            }
 
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId), this.expandDepth);
