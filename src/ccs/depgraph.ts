@@ -1,6 +1,7 @@
 /// <reference path="ccs.ts" />
 /// <reference path="hml.ts" />
 /// <reference path="util.ts" />
+/// <reference path="collapse.ts" />
 
 module DependencyGraph {
 
@@ -293,7 +294,74 @@ module DependencyGraph {
                 hasNext: hasNext,
                 next: getNext
             }
-        }                
+        }
+
+        getBisimulationCollapse(marking) : Traverse.Collapse {
+
+            var sets = Object.create(null);
+
+            //Union find / disjoint-set.
+            function singleton(id) {
+                var o : any = {val: id, rank: 0};
+                o.parent = o;
+                sets[id]= o;
+            }
+
+            function findRootInternal(set) {
+                if (set.parent !== set) {
+                    set.parent = findRootInternal(set.parent);
+                }
+                return set.parent;
+            }
+
+            function findRoot(id) {
+                return findRootInternal(sets[id]);
+            }
+
+            function union(pId, qId) {
+                var pRoot = findRoot(pId),
+                    qRoot = findRoot(qId);
+                if (pRoot === qRoot) return;
+                if (pRoot.rank < qRoot.rank) pRoot.parent = qRoot;
+                else if (pRoot.rank > qRoot.rank) qRoot.parent = pRoot;
+                else {
+                    qRoot.parent = pRoot;
+                    ++pRoot.rank;
+                }
+            }
+
+            //Apply union find algorithm
+            this.constructData.forEach((pair, i) => {
+                var pId, qId;
+                if (pair[0] !== 0) return;
+                pId = pair[1];
+                qId = pair[2];
+                if (!sets[pId]) singleton(pId);
+                if (!sets[qId]) singleton(qId);
+                //is bisimilar?
+                if (marking.getMarking(i) === marking.ZERO) {
+                    union(pId, qId);
+                }
+            });
+
+            //Create equivalence sets
+            var eqSet = {};
+            Object.keys(sets).forEach(procId => {
+                var reprId = getRepresentative(procId);
+                (eqSet[reprId] = eqSet[reprId] || []).push(procId);
+            });
+
+            function getRepresentative(id) {
+                return findRoot(id).val;
+            }
+
+            return {
+                getRepresentative: getRepresentative,
+                getEquivalenceSet: function(id) {
+                    return eqSet[getRepresentative(id)];
+                }
+            }
+        }
     }
 
     export interface PartialDependencyGraph {
@@ -562,7 +630,6 @@ module DependencyGraph {
 
     export function isBisimilar(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
         var dg = new BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
-            // marking = liuSmolkaGlobal(dg);
             marking = liuSmolkaLocal2(0, dg);
         //Bisimulation is maximal fixed point, the marking is reversed.
         // if (marking.getMarking(0) === marking.ONE && graph) {
@@ -576,6 +643,16 @@ module DependencyGraph {
         //     }
         // }
         return marking.getMarking(0) === marking.ZERO;
+    }
+
+    export function getBisimulationCollapse(
+                attackSuccGen : ccs.SuccessorGenerator,
+                defendSuccGen : ccs.SuccessorGenerator,
+                leftProcessId,
+                rightProcessId) : Traverse.Collapse {
+        var dg = new BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
+            marking = liuSmolkaGlobal(dg);
+        return dg.getBisimulationCollapse(marking);
     }
 
     function prettyPrintTrace(graph, trace) {
