@@ -97,7 +97,7 @@ module Activity {
             // Prevent options menu from closing when pressing form elements.
             $(document).on('click', '.yamm .dropdown-menu', e => e.stopPropagation());
 
-            $("#explorer-process-list, #option-strong, #option-weak, #option-collapse, #option-simplify").on("change", () => this.draw());
+            $("#explorer-process-list, input[name=option-collapse], #option-simplify").on("change", () => this.draw());
             $("#option-depth").on("change", () => this.expandDepth = $("#option-depth").val());
         }
 
@@ -155,11 +155,10 @@ module Activity {
 
         private getOptions(): any {
             var process = $("#explorer-process-list :selected").text();
-            var successor = $('input[name=successor]:checked').val();
-            var collapse = $("#option-collapse").prop("checked");
+            var collapse = $('input[name=option-collapse]:checked').val();
             var simplify = $("#option-simplify").prop("checked");
 
-            return {process: process, successor: successor, collapse: collapse, simplify: simplify};
+            return {process: process, collapse: collapse, simplify: simplify};
         }
 
         public draw(): void {
@@ -168,10 +167,10 @@ module Activity {
             this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
             this.initialProcessName = options.process;
             var initialProcess = this.graph.processByName(this.initialProcessName);
-            if (options.collapse) {
-                var weakSuccGenerator = CCS.getSuccGenerator(this.graph, {succGen: "weak", reduce: options.simplify});
-                var collapseFn = DependencyGraph.getBisimulationCollapse(this.succGenerator, weakSuccGenerator, initialProcess.id, initialProcess.id);
-                this.succGenerator = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapseFn);
+            if (options.collapse != "none") {
+                var otherSuccGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
+                var collapse = DependencyGraph.getBisimulationCollapse(this.succGenerator, otherSuccGenerator, initialProcess.id, initialProcess.id);
+                this.succGenerator = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
             }
             this.htmlNotationVisitor.clearCache();
             this.ccsNotationVisitor.clearCache();

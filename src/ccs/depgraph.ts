@@ -1,6 +1,7 @@
 /// <reference path="ccs.ts" />
 /// <reference path="hml.ts" />
 /// <reference path="util.ts" />
+/// <reference path="collapse.ts" />
 
 module DependencyGraph {
 
@@ -295,7 +296,7 @@ module DependencyGraph {
             }
         }
 
-        getBisimulationCollapse(marking) : (id : number) => number {
+        getBisimulationCollapse(marking) : Traverse.Collapse {
 
             var sets = Object.create(null);
 
@@ -329,29 +330,36 @@ module DependencyGraph {
                 }
             }
 
-            var totalPairs = 0;
-            var totalUnions = 0;
             //Apply union find algorithm
             this.constructData.forEach((pair, i) => {
                 var pId, qId;
                 if (pair[0] !== 0) return;
                 pId = pair[1];
                 qId = pair[2];
-                ++totalPairs;
                 if (!sets[pId]) singleton(pId);
                 if (!sets[qId]) singleton(qId);
                 //is bisimilar?
                 if (marking.getMarking(i) === marking.ZERO) {
                     union(pId, qId);
-                    console.log("Merging: " + pId + " and " + qId);
-                    ++totalUnions;
                 }
             });
 
-            return function collapse(id) {
-                var toReturn = findRoot(id).val
-                console.log("Was useful: " + id + " vs. " + toReturn);
-                return toReturn;
+            //Create equivalence sets
+            var eqSet = {};
+            Object.keys(sets).forEach(procId => {
+                var reprId = getRepresentative(procId);
+                (eqSet[reprId] = eqSet[reprId] || []).push(procId);
+            });
+
+            function getRepresentative(id) {
+                return findRoot(id).val;
+            }
+
+            return {
+                getRepresentative: getRepresentative,
+                getEquivalenceSet: function(id) {
+                    return eqSet[getRepresentative(id)];
+                }
             }
         }
     }
@@ -637,7 +645,11 @@ module DependencyGraph {
         return marking.getMarking(0) === marking.ZERO;
     }
 
-    export function getBisimulationCollapse(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId) {
+    export function getBisimulationCollapse(
+                attackSuccGen : ccs.SuccessorGenerator,
+                defendSuccGen : ccs.SuccessorGenerator,
+                leftProcessId,
+                rightProcessId) : Traverse.Collapse {
         var dg = new BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
             marking = liuSmolkaGlobal(dg);
         return dg.getBisimulationCollapse(marking);
