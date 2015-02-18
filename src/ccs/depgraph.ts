@@ -631,6 +631,7 @@ module DependencyGraph {
     export function isBisimilar(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
         var dg = new BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
             marking = liuSmolkaLocal2(0, dg);
+
         //Bisimulation is maximal fixed point, the marking is reversed.
         // if (marking.getMarking(0) === marking.ONE && graph) {
         //     var traceIterator = dg.getTraceIterator(marking)
@@ -718,6 +719,7 @@ module DependencyGraph {
         D.empty(m);
         var W = [];
         load(m);
+
         while (W.length > 0) {
             var next = W.pop();
             var k = next[0];
@@ -795,6 +797,7 @@ module DependencyGraph {
             var sourceNode = pair[0];
             pair[1].forEach(hyperEdge => W.push([sourceNode, hyperEdge]));
         });
+
         while (W.length > 0) {
             var next = W.pop();
             var k = next[0];
@@ -815,9 +818,92 @@ module DependencyGraph {
                 }
             }
         }
+
         return {
             getMarking: function(dgNodeId) {
                 return A.get(dgNodeId);
+            },
+            ZERO: S_ZERO,
+            ONE: S_ONE
+        }
+    }
+
+    function solveDgGlobalLevel(graph : DependencyGraph) : any {
+        var S_ZERO = 1, S_ONE = 2;
+        // A[k]
+        var Level = (function () {
+            var a = {};
+            var o = {
+                get: function(k) {
+                    return a[k] || Infinity;
+                },
+                set: function(k, level) {
+                    a[k] = level;
+                }
+            };
+            return o;
+        }());
+
+        // D[k]
+        var D = (function () {
+            var d = {};
+            var o = {
+                empty: function(k) {
+                    d[k] = [];
+                },
+                add: function(k, edgeL) {
+                    d[k] = d[k] || [];
+                    d[k].push(edgeL);
+                },
+                get: function(k, level) {
+                    var pairs = (d[k] || []).slice();
+                    pairs.forEach(pair => pair.push(level));
+                    return pairs;
+                }
+            };
+            return o;
+        }());
+
+        var W = [];
+        //Unpack hyperedges
+        graph.getAllHyperEdges().forEach(pair => {
+            var sourceNode = pair[0];
+            pair[1].forEach(hyperEdge => W.push([sourceNode, hyperEdge, -1]));
+        });
+        while (W.length > 0) {
+            var next = W.pop();
+            var k = next[0];
+            var l = next[1];
+            var candidateLevel = next[2];
+            var kLevel = Level.get(k);
+
+            //First run, add deps
+            if (candidateLevel === -1) {
+                for (var edgeIdx = 0; edgeIdx < l.length; edgeIdx++) {
+                    D.add(l[edgeIdx], [k, l]);
+                }
+                candidateLevel = Infinity;
+            }
+
+            if (candidateLevel < kLevel || kLevel === Infinity) {
+                //Check if situation improved.
+                var highestSubLevel = 0;
+                for (var edgeIdx = 0; edgeIdx < l.length; edgeIdx++) {
+                    var subLevel = Level.get(l[edgeIdx]);
+                    highestSubLevel = Math.max(subLevel, highestSubLevel);
+                    //This target node is too high level to improve "parent".
+                    if (subLevel >= candidateLevel) break; 
+                }
+                //Went through all and improved?
+                if ((edgeIdx >= l.length) && (highestSubLevel+1) < kLevel) {
+                    Level.set(k, highestSubLevel+1);
+                    W = W.concat(D.get(k, highestSubLevel+2));
+                }
+            }
+        }
+        return {
+            getMarking: function(dgNodeId) {
+                return Level.get(dgNodeId) === Infinity ? S_ZERO : S_ONE;
             },
             ZERO: S_ZERO,
             ONE: S_ONE
