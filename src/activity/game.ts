@@ -191,10 +191,6 @@ module Activity {
                 throw "No players in game.";
             
             this.attacker.prepareTurn();
-            // if (this.attacker instanceof Computer) {
-            //     var hest : Computer = <Computer>this.attacker;
-            //     hest.prepareTurn();
-            // }
         }
         
         public setPlayers(attacker : Player, defender : Player) {
@@ -301,16 +297,6 @@ module Activity {
         }
     }
 
-    // weak's difference from strong is the successor generators
-    /*class WeakBisimulationGame extends StrongBisimulationGame {
-        constructor( parameters) {
-            super();
-        }
-    }*/
-
-    // attack() and defend() could return the process-object they just played, and then use ccsNotationVisitor and htmlNotationVisitor on that process; print to log or reflect behaviour in game
-
-
     class Player { // abstract
         
         static Player1Color : string = "#e74c3c";
@@ -390,6 +376,7 @@ module Activity {
         }
         
         protected prepareDefend() : void {
+            // select the best play style
             if (this.game.isWinner(this))
                 setTimeout( () => this.winningDefend(), Computer.Delay);
             else
@@ -402,7 +389,7 @@ module Activity {
         
         private winningAttack() : void {
             var hyperedges : any = this.game.getCurrentHyperedges();
-            console.log(hyperedges);
+            
             var edge : any;
             var allOne : boolean = false;
             
