@@ -61,8 +61,8 @@ module Activity {
                 this.displayOptions();
             }
             
-            
-            var game : StrongBisimulationGame = new StrongBisimulationGame(this.project.getGraph(), "Spec", "Spec");
+            var strongSucGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true});
+            var game : StrongBisimulationGame = new BisimulationGame(this.project.getGraph(), strongSucGen, strongSucGen "Spec", "Spec");
             
             var attacker : Player, defender : Player;
             
@@ -134,12 +134,12 @@ module Activity {
         protected lastAction : string;
         protected currentNodeId : any; // TODO
         
-        constructor(protected graph : CCS.Graph) {
+        constructor(protected graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) {
             // set start node
             this.currentNodeId = 0;
             
             // create the dependency graph
-            this.dependencyGraph = this.createDependencyGraph(this.graph);
+            this.dependencyGraph = this.createDependencyGraph(attackerSuccessorGen, defenderSuccesorGen);
             
             // create markings
             this.marking = this.createMarking();
@@ -206,7 +206,7 @@ module Activity {
             this.defender = defender;
         }
         
-        protected createDependencyGraph(graph : CCS.Graph) : dg.DependencyGraph { // abstract
+        protected createDependencyGraph(attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) : dg.DependencyGraph { // abstract
             throw "Abstract method. Not implemented.";
             return undefined;
         }
@@ -253,21 +253,19 @@ module Activity {
         }
     }
 
-    class StrongBisimulationGame extends Game2 {
+    class BisimulationGame extends Game2 {
         
+        private leftProcessName : string;
+        private rightProcessName : string;
+        private bisimulationDG : dg.BisimulationDG;
         private bisimilar : boolean;
         
-        private bisimulationDG : dg.BisimulationDG;
-        protected strongSuccessorGenerator : CCS.SuccessorGenerator;
-        
-        private leftProcessName : string; private rightProcessName : string
-        
-        constructor(graph : CCS.Graph, leftProcessName : string, rightProcessName : string) {
+        constructor(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string) {
             // stupid compiler
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
             
-            super(graph); // creates dependency graph and marking
+            super(graph, attackerSuccessorGen, defenderSuccesorGen); // creates dependency graph and marking
         }
         
         public isBisimilar() : boolean {
@@ -278,12 +276,11 @@ module Activity {
             return this.bisimulationDG.constructData[nodeId];
         }
         
-        protected createDependencyGraph(graph : CCS.Graph) : dg.DependencyGraph {
+        protected createDependencyGraph(attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) : dg.DependencyGraph {
             var leftProcess : any  = graph.processByName(this.leftProcessName);
             var rightProcess : any = graph.processByName(this.rightProcessName);
             
-            this.strongSuccessorGenerator = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true});
-            return this.bisimulationDG = new dg.BisimulationDG(this.strongSuccessorGenerator, leftProcess.id, rightProcess.id);
+            return this.bisimulationDG = new dg.BisimulationDG(defenderSuccesorGen, leftProcess.id, rightProcess.id);
         }
         
         public getWinner() : Player {
