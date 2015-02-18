@@ -61,8 +61,9 @@ module Activity {
                 this.displayOptions();
             }
             
-            var strongSucGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true});
-            var game : StrongBisimulationGame = new BisimulationGame(this.project.getGraph(), strongSucGen, strongSucGen "Spec", "Spec");
+            /*
+            var strongSucGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: true});
+            var game : BisimulationGame = new BisimulationGame(this.project.getGraph(), strongSucGen, strongSucGen, "Spec", "Spec");
             
             var attacker : Player, defender : Player;
             
@@ -78,6 +79,7 @@ module Activity {
             
             game.setPlayers(attacker, defender);
             game.startGame();
+            */
         }
 
         public onHide() : void {
@@ -139,7 +141,7 @@ module Activity {
             this.currentNodeId = 0;
             
             // create the dependency graph
-            this.dependencyGraph = this.createDependencyGraph(attackerSuccessorGen, defenderSuccesorGen);
+            this.dependencyGraph = this.createDependencyGraph(this.graph, attackerSuccessorGen, defenderSuccesorGen);
             
             // create markings
             this.marking = this.createMarking();
@@ -206,7 +208,7 @@ module Activity {
             this.defender = defender;
         }
         
-        protected createDependencyGraph(attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) : dg.DependencyGraph { // abstract
+        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) : dg.DependencyGraph { // abstract
             throw "Abstract method. Not implemented.";
             return undefined;
         }
@@ -276,7 +278,7 @@ module Activity {
             return this.bisimulationDG.constructData[nodeId];
         }
         
-        protected createDependencyGraph(attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) : dg.DependencyGraph {
+        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) : dg.DependencyGraph {
             var leftProcess : any  = graph.processByName(this.leftProcessName);
             var rightProcess : any = graph.processByName(this.rightProcessName);
             
