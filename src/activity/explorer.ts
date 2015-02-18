@@ -89,7 +89,8 @@ module Activity {
             var getCCSNotation = this.ccsNotationForProcessId.bind(this);
             $(this.statusTableContainer).tooltip({
                 title: function() {
-                    return getCCSNotation($(this).text());
+                    var process : string = $(this).text();
+                    return process + " = " + getCCSNotation(process);
                 },
                 selector: "span.ccs-tooltip-constant"
             });
