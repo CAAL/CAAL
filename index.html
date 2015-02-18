@@ -178,7 +178,7 @@
           <canvas id="arbor-canvas"></canvas>
         </div>
         <div id="status-table-container">
-          <h4>Source Definition</h4>
+          <h4>Source Process</h4>
           <p id="explorer-source-definition" style="margin-left: 2em"></p>
           <h4>Target Processes</h4>
           <table id="status-table" class="table table-responsive table-striped table-condensed noHighlight" >
@@ -262,6 +262,36 @@
 
       <!-- Game -->
       <div id="game-container">
+        <div id="game-options" class="row">
+          <div class="row">
+            <div class="col-md-9">
+              <div class="col-md-3">
+                <select id="game-type" class="form-control">
+                  <option value="strong" selected>Strong Bisimulation</option>
+                  <option value="weak">Weak Bisimulation</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select id="game-left-process" class="form-control">
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select id="game-right-process" class="form-control">
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="game-main" class="row">
+          <div id="game-left-svg" class="col-md-6 col-border">
+          </div>
+          <div id="game-right-svg" class="col-md-6">
+          </div>
+        </div>
+        <div id="game-log" class="row">
+          <div class="col-md-12">
+          </div>
+        </div>
       </div>
 
     <!-- Modals -->

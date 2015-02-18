@@ -12,7 +12,7 @@ input[type=checkbox] {
     cursor: pointer;
 }
 
-canvas {
+canvas, svg {
     display: block;
 }
 
@@ -44,6 +44,17 @@ textarea {
 @media (max-width: 767px) {
     .navbar-collapse .nav > .divider-vertical {
         display: none;
+    }
+}
+
+.col-border {
+    padding-right: 15px;
+    border-right: 1px solid #e7e7e7;
+}
+
+@media (max-width: 991px) {
+    .col-border {
+        border: none;
     }
 }
 
@@ -278,14 +289,27 @@ td.inconsolata{
     min-height: 75px;
 }
 
-
-/* Colors the verification status */
 #property-table .fa-check {
     color: #0c0;
 }
 
 #property-table .fa-times {
     color: #c00;
+}
+
+
+/*
+ * Game activity styles
+ */
+
+#game-main {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+#game-log {
+    height: 200px;
+    border-top: 1px solid #e7e7e7;
 }
 
 
