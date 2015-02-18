@@ -13,7 +13,7 @@
   "scripts": {
     "build": "sh build.sh",
     "test": "./node_modules/.bin/node-qunit-phantomjs ./test/test.html",
-    "release": "set -e; npm run build; npm run test; rm -f release.tar.gz; tar -zcvf release.tar.gz lib/ css/ fonts/ index.html LICENSE README.md server.js"
+    "release": "sh build.sh || exit 1; ./node_modules/.bin/node-qunit-phantomjs ./test/test.html || exit 1; rm -f release.tar.gz; tar -zcvf release.tar.gz lib/ css/ fonts/ index.html LICENSE README.md server.js"
   },
   "authors": "Jacob K. Wortmann, Jesper R. Andersen, Mathias M. Hansen, Nicklas Andersen, Simon R. Olesen, Søren Enevoldsen ",
   "license": "MIT"
