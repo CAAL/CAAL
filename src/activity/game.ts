@@ -312,7 +312,7 @@ module Activity {
             var leftProcess : any  = graph.processByName(this.leftProcessName);
             var rightProcess : any = graph.processByName(this.rightProcessName);
             
-            return this.bisimulationDG = new dg.BisimulationDG(defenderSuccesorGen, leftProcess.id, rightProcess.id);
+            return this.bisimulationDG = new dg.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, leftProcess.id, rightProcess.id);
         }
         
         public getWinner() : Player {

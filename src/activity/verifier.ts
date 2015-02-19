@@ -157,7 +157,8 @@ module Activity {
                     graph = Main.getGraph(),
                     configuration = {
                         graph: graph,
-                        successorGenerator: (isWeak ? Main.getWeakSuccGenerator(graph) : Main.getStrictSuccGenerator(graph)),
+                        attackSuccGen: Main.getStrictSuccGenerator(graph),
+                        defendSuccGen: (isWeak ? Main.getWeakSuccGenerator(graph) : Main.getStrictSuccGenerator(graph)),
                         isWeakSuccessorGenerator: isWeak,
                         processNameA: equivalence.firstProcess,
                         processNameB: equivalence.secondProcess
