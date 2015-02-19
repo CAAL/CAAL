@@ -26,7 +26,8 @@ module Activity {
         private dependencyGraph: dgMod.BisimulationDG;
         private leftProcess;
         private rightProcess;
-        private succGen: ccs.SuccessorGenerator;
+        private attackSuccGen: ccs.SuccessorGenerator;
+        private defendSuccGen: ccs.SuccessorGenerator;
         private marking;
         private isBisimilar: boolean;
 
@@ -101,7 +102,8 @@ module Activity {
             this.leftProcessName = configuration.processNameA;
             this.rightProcessName = configuration.processNameB;
 
-            this.succGen = configuration.successorGenerator;
+            this.attackSuccGen = configuration.attackSuccGen;
+            this.defendSuccGen = configuration.defendSuccGen;
 
             if (configuration.isWeakSuccessorGenerator)
                 this.snapGame = new SnapGame(this.leftProcessName, this.rightProcessName, TraceType.Double);
@@ -117,7 +119,7 @@ module Activity {
             this.leftProcess = this.graph.processByName(this.leftProcessName);
             this.rightProcess = this.graph.processByName(this.rightProcessName);
 
-            this.dependencyGraph = new dgMod.BisimulationDG(this.succGen, this.leftProcess.id, this.rightProcess.id);
+            this.dependencyGraph = new dgMod.BisimulationDG(this.attackSuccGen, this.defendSuccGen, this.leftProcess.id, this.rightProcess.id);
 
             // Run liuSmolka algorithm to check for bisimilarity and get a marked dependency graph.
             this.marking = dgMod.liuSmolkaLocal2(0, this.dependencyGraph);

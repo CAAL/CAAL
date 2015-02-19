@@ -130,71 +130,59 @@ module Traverse {
 
         getSuccessors(processId : number) : ccs.TransitionSet {
             if (this.cache[processId]) return this.cache[processId];
+
             var result = new ccs.TransitionSet(),
                 process = this.strictSuccGenerator.getProcessById(processId),
                 toVisitProcesses = [process],
-                toVisitAcitons = [null],
-                visited = {},
-                visited2 = Object.create(null),
-                toVisit2Processes = [],
-                toVisit2Actions = [],
-                visitingNode : ccs.Process, successors, action;
+                visitedStage1 = {},
+                toVisitStage2Processes = [],
+                toVisitStage2Actions = [],
+                visitedStage2 = {},
+                visitingProcess,
+                visitingAction,
+                strongSuccessors;
+
+            //Add  P --tau-->P
+            result.add(new ccs.Transition(new ccs.Action("tau", false), process));
 
             //Stage 1
+            //Find all --tau-->* and
+            //     all --tau-->*  --x-->
             while (toVisitProcesses.length > 0) {
-                visitingNode = toVisitProcesses.pop();
-                action = toVisitAcitons.pop();
-                if (!visited[visitingNode.id]) {
-                    visited[visitingNode.id] = true;
-                    successors = this.strictSuccGenerator.getSuccessors(visitingNode.id);
-                    if (successors.count() > 0) {
-                        successors.forEach(transition => {
-                            if (transition.action.getLabel() === "tau") {
-                                toVisitProcesses.push(transition.targetProcess);
-                                toVisitAcitons.push(transition.action);
-                            } else {
-                                toVisit2Processes.push(transition.targetProcess);
-                                toVisit2Actions.push(transition.action);
-                                visited2[transition.action] = {};
-                                result.add(transition);
-                            }
-                        });
-                    } else { 
-                        if(visitingNode.id != processId){
-                            /* If sequence of only tau action is leading to a deadlock
-                            * then add it a tau transition to the result */
-                            result.add(new ccs.Transition(action, visitingNode));
-                        }
-                    }
-                }
-            }
-
-            //Stage 2
-            while (toVisit2Processes.length > 0) {
-                visitingNode = toVisit2Processes.pop();
-                action = toVisit2Actions.pop();
-                if (!visited2[action][visitingNode.id]) {
-                    visited2[action][visitingNode.id] = true;
-                    successors = this.strictSuccGenerator.getSuccessors(visitingNode.id);
-                    // if(successors.count() > 0) {
-                    successors.forEach(transition => {
-                        var targetProcess = transition.targetProcess;
+                visitingProcess = toVisitProcesses.pop();
+                if (!visitedStage1[visitingProcess.id]) {
+                    visitedStage1[visitingProcess.id] = true;
+                    strongSuccessors = this.strictSuccGenerator.getSuccessors(visitingProcess.id);
+                    strongSuccessors.forEach(transition => {
                         if (transition.action.getLabel() === "tau") {
-                            toVisit2Processes.push(targetProcess);
-                            toVisit2Actions.push(action);
-                            result.add(new ccs.Transition(action, targetProcess));
+                            toVisitProcesses.push(transition.targetProcess);
+                            result.add(transition);
+                        } else {
+                            toVisitStage2Processes.push(transition.targetProcess);
+                            toVisitStage2Actions.push(transition.action);
+                            visitedStage2[transition.action] = {};
+                            result.add(transition);
                         }
-                        /*else { 
-                            result.add(new ccs.Transition(action, targetProcess));
-                        }*/
                     });
-                    /*} 
-                    else {
-                        result.add(new ccs.Transition(action, visitingNode));
-                    }*/
                 }
             }
-
+            //Stage 2
+            //Find all continuing  P --tau-->* when already --tau->* --x--> P
+            while (toVisitStage2Processes.length > 0) {
+                visitingProcess = toVisitStage2Processes.pop();
+                visitingAction = toVisitStage2Actions.pop();
+                if (!visitedStage2[visitingAction][visitingProcess.id]) {
+                    visitedStage2[visitingAction][visitingProcess.id] = true;
+                    strongSuccessors = this.strictSuccGenerator.getSuccessors(visitingProcess.id);
+                    strongSuccessors.forEach(transition => {
+                        if (transition.action.getLabel() === "tau") {
+                            toVisitStage2Processes.push(transition.targetProcess);
+                            toVisitStage2Actions.push(visitingAction);
+                            result.add(new ccs.Transition(visitingAction, transition.targetProcess));
+                        }
+                    });
+                }
+            }
             this.cache[processId] = result;
             return result;
         }

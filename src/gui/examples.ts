@@ -37,15 +37,13 @@ var examples : any[] = [
 	
 	{
 		title: "Orchard",
-		ccs: "Man = 'shake.(Man1 + Man2);\n" +
-			 "Man1 = redapple.'walk.Man;\n" +
-			 "Man2 = greenapple.'walk.Man;\n" +
+		ccs: "Man = 'shake.(redapple.walk.Man + greenapple.walk.Man);\n" +
 			 "\n" + 
-			 "ColorTree = shake.('greenapple.ColorTree + redapple.ColorTree);\n" +
+			 "AppleTree = shake.('greenapple.AppleTree + 'redapple.AppleTree);\n" +
 			 "\n" +
-			 "Orchard = (ColorTree | Man) \\ {shake, redapple, greenapple};\n" +
+			 "Orchard = (AppleTree | Man) \\ {shake, redapple, greenapple};\n" +
 			 "\n" +
-			 "Spec = 'walk.Spec;\n",	
+			 "Spec = walk.Spec;",	
 		properties:[
 			{
 				type: "StrongBisimulation",
@@ -64,5 +62,33 @@ var examples : any[] = [
 				}
 			}
 		]
+	},
+	
+	{
+		title: "Exercise 3.1",
+		ccs: "S = a.S1 + a.S2;\n" +
+			 "S1 = a.S3 + b.S4;\n" + 
+			 "S2 = a.S4;\n" +
+			 "S3 = a.S;\n" +
+			 "S4 = a.S;\n" +
+			 "\n" +
+			 "T = a.T1 + a.T3;\n" +
+			 "T1 = a.T2 + b.T2;\n" +
+			 "T2 = a.T;\n" +
+			 "T3 = a.T4;\n" +
+			 "T4 = a.T;",	
+		properties:[]
+	},
+	
+	{
+		title: "Exercise 3.2",
+		ccs: "P = a.P1;\n" +
+			 "P1 = b.P + c.P;\n" + 
+			 "\n" +
+			 "Q = a.Q1;\n" +
+			 "Q1 = b.Q2 + c.Q;\n" +
+			 "Q2 = a.Q3;\n" +
+			 "Q3 = b.Q + c.Q2;",	
+		properties:[]
 	}
 ]

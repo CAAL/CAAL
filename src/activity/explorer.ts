@@ -89,7 +89,8 @@ module Activity {
             var getCCSNotation = this.ccsNotationForProcessId.bind(this);
             $(this.statusTableContainer).tooltip({
                 title: function() {
-                    return getCCSNotation($(this).text());
+                    var process : string = $(this).text();
+                    return process + " = " + getCCSNotation(process);
                 },
                 selector: "span.ccs-tooltip-constant"
             });
@@ -97,20 +98,21 @@ module Activity {
             // Prevent options menu from closing when pressing form elements.
             $(document).on('click', '.yamm .dropdown-menu', e => e.stopPropagation());
 
-            $("#explorer-process-list, #option-strong, #option-weak, #option-collapse, #option-simplify").on("change", () => this.draw());
-            $("#option-depth").on("change", () => this.expandDepth = $("#option-depth").val());
+            $("#explorer-process-list, input[name=option-collapse], #option-simplify").on("change", () => this.draw());
+            $("#option-depth").on("change", () => {
+                this.expandDepth = $("#option-depth").val();
+                this.draw()
+            });
         }
 
-        public checkPreconditions(): boolean {
-            this.graph = Main.getGraph();
-
-            if (!this.graph) {
-                showExplainDialog("Syntax Error", "Your program contains syntax errors.");
+        protected checkPreconditions(): boolean {
+            var temp = Main.getGraph();
+            if (!temp) {
+                this.showExplainDialog("Syntax Error", "Your program contains syntax errors.");
                 return false;
-            }
-
-            if (this.graph.getNamedProcesses().length === 0) {
-                showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
+            } 
+            else if (temp.getNamedProcesses().length === 0) {
+                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
                 return false;
             }
 
@@ -120,6 +122,10 @@ module Activity {
         public onShow(configuration?: any): void {
             $(window).on("resize", () => this.resize());
             this.resize();
+
+            if (this.project.getChanged()){
+                this.graph = Main.getGraph();
+            }
 
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId), this.expandDepth);
@@ -155,21 +161,27 @@ module Activity {
 
         private getOptions(): any {
             var process = $("#explorer-process-list :selected").text();
-            var successor = $('input[name=successor]:checked').val();
-            var collapse = $("#option-collapse").prop("checked");
+            var depth = $("#option-depth").val();
+            var collapse = $('input[name=option-collapse]:checked').val();
             var simplify = $("#option-simplify").prop("checked");
 
-            return {process: process, successor: successor, collapse: collapse, simplify: simplify};
+            return {process: process, depth: depth, collapse: collapse, simplify: simplify};
         }
 
         public draw(): void {
             this.clear();
             var options = this.getOptions();
-            this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.successor, reduce: options.simplify});
+            this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
             this.initialProcessName = options.process;
+            var initialProcess = this.graph.processByName(this.initialProcessName);
+            if (options.collapse != "none") {
+                var otherSuccGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
+                var collapse = DependencyGraph.getBisimulationCollapse(this.succGenerator, otherSuccGenerator, initialProcess.id, initialProcess.id);
+                this.succGenerator = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
+            }
             this.htmlNotationVisitor.clearCache();
             this.ccsNotationVisitor.clearCache();
-            this.expand(this.graph.processByName(this.initialProcessName), 1);
+            this.expand(this.graph.processByName(this.initialProcessName), options.depth);
         }
 
         private ccsNotationForProcessId(id: string): string {
