@@ -16,3 +16,4 @@ lib/ccs.js
 lib/ccs.d.ts
 lib/workers
 *.js.map
+release.tar.gz

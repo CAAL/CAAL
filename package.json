@@ -7,10 +7,13 @@
     "typescript": ">=1.3",
     "pegjs": "~0.8.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "node-qunit-phantomjs": ">=1.2.0"
+  },
   "scripts": {
     "build": "sh build.sh",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/.bin/node-qunit-phantomjs ./test/test.html",
+    "release": "sh build.sh || exit 1; ./node_modules/.bin/node-qunit-phantomjs ./test/test.html || exit 1; rm -f release.tar.gz; tar -zcvf release.tar.gz lib/ css/ fonts/ index.html LICENSE README.md server.js"
   },
   "authors": "Jacob K. Wortmann, Jesper R. Andersen, Mathias M. Hansen, Nicklas Andersen, Simon R. Olesen, Søren Enevoldsen ",
   "license": "MIT"

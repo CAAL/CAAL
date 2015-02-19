@@ -124,19 +124,6 @@
                 <ul class="dropdown-menu">
                   <li>
                     <div class="yamm-content">
-                      <div class="radio">
-                        <label>
-                          <input type="radio" id="option-strong" name="successor" value="strong" checked>
-                          Strong Successors
-                        </label>
-                      </div>
-                      <div class="radio">
-                        <label>
-                          <input type="radio" id="option-weak" name="successor" value="weak">
-                          Weak Successors
-                        </label>
-                      </div>
-                      <div class="divider"></div>
                       <div class="form-inline">
                         <label>Expand Depth: </label>
                         <select id="option-depth" class="form-control">
@@ -150,15 +137,26 @@
                         </select>
                       </div>
                       <div class="divider"></div>
-                      <div class="checkbox disabled">
-                        <label>
-                          <input id="option-collapse" type="checkbox" disabled>
-                          Bisimulation Collapse
+                      <div class="radio">
+                        <label data-tooltip="collapse-none">
+                          <input name="option-collapse" value="none" type="radio" checked>
+                          No Bisimulation Collapse
+                      </div>
+                      <div class="radio">
+                        <label data-tooltip="collapse-strong">
+                          <input name="option-collapse" value="strong" type="radio">
+                          Strong Bisimulation Collapse
+                        </label>
+                      </div>
+                      <div class="radio">
+                        <label data-tooltip="collapse-weak">
+                          <input name="option-collapse" value="weak" type="radio">
+                          Weak Bisimulation Collapse
                         </label>
                       </div>
                       <div class="divider"></div>
                       <div class="checkbox">
-                        <label>
+                        <label data-tooltip="simplify">
                           <input id="option-simplify" type="checkbox" checked>
                           Simplify
                         </label>

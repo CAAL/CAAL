@@ -18,7 +18,7 @@ mkdir -p modules/ace/lib/ace/mode/ccs
 # manually create requirejs files for the ccs data structure and the ccs parser
 echo "Compiling CCS subset"
 echo "For ace linter and verifier"
-tsc -d --out "$CCS_DEST" ./src/ccs/ccs.ts ./src/ccs/depgraph.ts ./src/ccs/hml.ts ./src/ccs/reducedparsetree.ts ./src/ccs/unguarded_recursion.ts ./src/ccs/util.ts
+tsc -d --out "$CCS_DEST" ./src/ccs/ccs.ts ./src/ccs/depgraph.ts ./src/ccs/hml.ts ./src/ccs/reducedparsetree.ts ./src/ccs/unguarded_recursion.ts ./src/ccs/collapse.ts ./src/ccs/util.ts
 
 cp lib/ccs.js .
 echo 'define(function(require, exports, module) {' | cat - ccs.js > temp && mv temp ccs.js
