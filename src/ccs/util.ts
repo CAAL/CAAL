@@ -74,7 +74,7 @@ module Traverse {
             process.subProcess.dispatchOn(this);
             var relabels = [];
             process.relabellings.forEach((f, t) => relabels.push(t + "/" + f));
-            this.stringPieces.push("\\ (" + relabels.join(",") + ")]");
+            this.stringPieces.push(" (" + relabels.join(",") + ")]");
         }
     }
 
@@ -221,7 +221,7 @@ module Traverse {
                 process.relabellings.forEach((from, to) => {
                     relabels.push(to + "/" + from);
                 });
-                result = this.cache[process.id] = subStr + " \\ [" + relabels.join(",") + "]";
+                result = this.cache[process.id] = subStr + " [" + relabels.join(",") + "]";
             }
             return result;
         }
@@ -331,7 +331,7 @@ module Traverse {
                 process.relabellings.forEach((from, to) => {
                     relabels.push(to + "/" + from);
                 });
-                result = this.cache[process.id] = subStr + " \\ [" + safeHtml(relabels.join(",")) + "]";
+                result = this.cache[process.id] = subStr + " [" + safeHtml(relabels.join(",")) + "]";
             }
             return result;
         }
