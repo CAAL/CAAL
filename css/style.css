@@ -12,7 +12,7 @@ input[type=checkbox] {
     cursor: pointer;
 }
 
-canvas, svg {
+canvas {
     display: block;
 }
 
@@ -307,8 +307,13 @@ td.inconsolata{
     margin-bottom: 20px;
 }
 
+#game-left-canvas, #game-right-canvas {
+    border: 1px solid #e7e7e7;
+    overflow-x: scroll;
+    overflow-y: scroll;
+}
+
 #game-log {
-    height: 200px;
     border-top: 1px solid #e7e7e7;
 }
 

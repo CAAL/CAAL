@@ -1,10 +1,26 @@
 /// <reference path="../../lib/d3.d.ts" />
 /// <reference path="../gui/project.ts" />
+/// <reference path="../gui/gui.ts" />
+/// <reference path="../gui/arbor/arbor.ts" />
+/// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="activity.ts" />
 
 module Activity {
 
     import dg = DependencyGraph;
+
+    function groupBy<T>(arr : T[], keyFn : (T) => any) : any {
+        var groupings = Object.create(null),
+            key, elem, group;
+        for (var i = 0; i < arr.length; i++) {
+            elem = arr[i];
+            key = keyFn(elem);
+            group = groupings[key];
+            if (!group) group = groupings[key] = [];
+            group.push(elem);
+        }
+        return groupings;
+    }
 
     export class Game extends Activity {
         private project : Project;
@@ -13,8 +29,14 @@ module Activity {
         private $gameType : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
-        private leftSvg : D3.Selection;
-        private rightSvg : D3.Selection;
+        private $leftContainer : JQuery;
+        private $rightContainer : JQuery;
+        private leftCanvas : HTMLCanvasElement;
+        private rightCanvas : HTMLCanvasElement;
+        private leftRenderer: Renderer;
+        private rightRenderer : Renderer;
+        private leftGraph: GUI.ProcessGraphUI;
+        private rightGraph: GUI.ProcessGraphUI;
 
         constructor(container : string, button : string) {
             super(container, button);
@@ -24,13 +46,17 @@ module Activity {
             this.$gameType = $("#game-type");
             this.$leftProcessList = $("#game-left-process");
             this.$rightProcessList = $("#game-right-process");
+            this.$leftContainer = $("#game-left-canvas");
+            this.$rightContainer = $("#game-right-canvas");
+
+            this.leftCanvas = <HTMLCanvasElement> $("#game-left-canvas > canvas")[0];
+            this.rightCanvas = <HTMLCanvasElement> $("#game-right-canvas > canvas")[0];
+            this.leftRenderer = new Renderer(this.leftCanvas);
+            this.rightRenderer = new Renderer(this.rightCanvas);
+            this.leftGraph = new GUI.ArborGraph(this.leftRenderer, {repulsion: 100, stiffness: 800, friction: 0.5});
+            this.rightGraph = new GUI.ArborGraph(this.rightRenderer, {repulsion: 100, stiffness: 800, friction: 0.5});
 
             this.$gameType.add(this.$leftProcessList).add(this.$rightProcessList).on("change", () => this.newGame());
-
-            this.leftSvg = d3.select("#game-left-svg").append("svg")
-                .attr("width", "100%");
-            this.rightSvg = d3.select("#game-right-svg").append("svg")
-                .attr("width", "100%");
         }
 
         public onShow(configuration? : any) : void {
@@ -73,76 +99,80 @@ module Activity {
 
         private newGame() : void {
             var options = this.getOptions();
-            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
-            this.draw(this.leftSvg);
+            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
+            this.expand(this.graph.processByName(options.leftProcess));
         }
 
-        private draw(svg : D3.Selection) : void {
-            var graph = this.getGraph(this.graph.processByName("A"));
+        private expand(process : ccs.Process) : void {
+            var allTransitions = this.expandBFS(process, 1000);
 
-            var force = d3.layout.force()
-                .nodes(graph.nodes)
-                .links(graph.links)
-                .size([parseInt(svg.attr("width")), parseInt(svg.attr("height"))]);
+            for (var fromId in allTransitions) {
+                var fromProcess = this.graph.processById(fromId);
+                this.showProcess(fromProcess);
+                var groupedByTargetProcessId = groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
 
-            force.start();
-            for (var i = 100; i > 0; --i) force.tick();
-            force.stop();
-
-            svg.selectAll("circle")
-                .data(graph.nodes)
-                .enter().append("circle")
-                .attr("cx", function(d) { return d.x; })
-                .attr("cy", function(d) { return d.y; })
-                .attr("r", 4.5);
-
-            svg.selectAll("line")
-                .data(graph.links)
-                .enter().append("line")
-                .attr("x1", function(d) { return d.source.x; })
-                .attr("y1", function(d) { return d.source.y; })
-                .attr("x2", function(d) { return d.target.x; })
-                .attr("y2", function(d) { return d.target.y; });
-        }
-
-        private getNodes() : any[] {
-            return this.graph.getNamedProcesses().map(function(p) {return {name: p}});
-        }
-
-        private getGraph(start : CCS.Process) : any {
-            var nodes = [],
-                links = [],
-                waiting = [start],
-                done = [],
-                source;
-
-            for (var i = 0; i < waiting.length; i++) {
-                source = waiting[i];
-                done.push(source.id);
-
-                this.succGen.getSuccessors(source.id).forEach(t => {
-                    if (done.indexOf(t.targetProcess.id) === -1) {
-                        waiting.push(t.targetProcess);
-                    }
-
-                    nodes[source.id] = {id: source.id, name: source.name};
-                    links.push({source: source.id, target: t.targetProcess.id});
+                Object.keys(groupedByTargetProcessId).forEach(tProcId => {
+                    var group = groupedByTargetProcessId[tProcId],
+                        datas = group.map(t => { return {label: t.action.toString()}; });
+                    this.showProcess(this.graph.processById(tProcId));
+                    this.leftGraph.showTransitions(fromProcess.id, tProcId, datas);
                 });
             }
+        }
 
-            return {nodes: nodes, links: links};
+        private expandBFS(process : ccs.Process, maxDepth) {
+            var result = {},
+                queue = [[1, process]], //non-emptying array as queue.
+                depth, qIdx, fromProcess, transitions;
+            for (qIdx = 0; qIdx < queue.length; qIdx++) {
+                depth = queue[qIdx][0];
+                fromProcess = queue[qIdx][1];
+                result[fromProcess.id] = transitions = this.succGen.getSuccessors(fromProcess.id);
+                transitions.forEach(t => {
+                    if (!result[t.targetProcess.id] && depth < maxDepth) {
+                        queue.push([depth + 1, t.targetProcess]);
+                    }
+                });
+            }
+            return result;
+        }
+
+        private showProcess(process : ccs.Process) : void {
+            var data;
+            if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
+            if (this.leftGraph.getProcessDataObject(process.id)) return;
+            data = {label: this.labelFor(process), status: "unexpanded"};
+            this.leftGraph.showProcess(process.id, data);
+        }
+
+        private showProcessAsExplored(process : ccs.Process) : void {
+            this.leftGraph.getProcessDataObject(process.id).status = "expanded";
+        }
+
+        private labelFor(process : ccs.Process) : string {
+            return (process instanceof ccs.NamedProcess) ? (<ccs.NamedProcess>process).name : "" + process.id;
         }
 
         private resize() : void {
             var offsetTop = $("#game-main").offset().top;
             var offsetBottom = $("#game-log").height();
 
+            /*var leftWidth = this.$leftContainer.width();
+            var rightWidth = this.$rightContainer.width();*/
+
             // Height = Total - (menu + options) - log - (margin + border).
             // Minimum size 275 px.
-            var height = Math.max(275, window.innerHeight - offsetTop - offsetBottom - 41);
+            var height = Math.max(275, window.innerHeight - offsetTop - offsetBottom - 43);
+            this.$leftContainer.height(height);
+            this.$rightContainer.height(height);
 
-            this.leftSvg.attr("height", height);
-            this.rightSvg.attr("height", height);
+            /*this.leftCanvas.width = leftWidth;
+            this.leftCanvas.height = height;
+            this.rightCanvas.width = rightWidth;
+            this.rightCanvas.height = height;
+
+            this.leftRenderer.resize(leftWidth, height);
+            this.rightRenderer.resize(rightWidth, height);*/
         }
     }
     
