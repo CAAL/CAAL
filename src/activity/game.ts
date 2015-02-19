@@ -425,23 +425,38 @@ module Activity {
         }
         
         private losingAttack() : void {
-            // TODO
+            // play random
+            var choices = this.game.getCurrentChoices(this);
+            var random : number = this.random(choices.length);
+            
+            var move : Move = choices[random].move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+            
+            this.game.play(this, choices[random].targetProcess, choices[random].action, move);
         }
         
         private winningAttack() : void {
             var choice : any = this.game.getBestWinningAttack();
-            var move : Move = choice.move == 1 ? Move.Left : Move.Right;
+            var move : Move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
             
             this.game.play(this, choice.targetProcess, choice.action, move);
         }
         
         private losingDefend() : void {
-            // TODO
+            // play random
+            var choices = this.game.getCurrentChoices(this);
+            var random : number = this.random(choices.length);
+            
+            this.game.play(this, choices[random].targetProcess);
         }
         
         private winningDefend() : void {
             var choice = this.game.getWinningDefend();
             this.game.play(this, choice.targetProcess);
+        }
+        
+        private random(max) : number {
+            // random number between 0 and max
+            return Math.floor((Math.random() * max));
         }
     }
 
