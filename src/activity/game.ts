@@ -1,5 +1,4 @@
 /// <reference path="../../lib/d3.d.ts" />
-/// <reference path="../../lib/tinyscrollbar/jquery.tinyscrollbar.d.ts" />
 /// <reference path="../gui/project.ts" />
 /// <reference path="../gui/gui.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
@@ -139,7 +138,7 @@ module Activity {
 
         private resize() : void {
             this.$leftContainer.height(this.$leftContainer.width());
-            this.$rightContainer.height(this.$leftContainer.width());
+            this.$rightContainer.height(this.$rightContainer.width());
         }
     }
     
