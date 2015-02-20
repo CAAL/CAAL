@@ -165,7 +165,6 @@ module Property {
                     callback(this.status)
                 }, false);
                 this.worker.addEventListener("message", event => {
-                    console.log(event.data.result);
                     var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
                     if (res === true) {
                         this.status = PropertyStatus.statisfied;
@@ -324,7 +323,6 @@ module Property {
 
         public verify(callback : Function): void {
             var isReady = this.isReadyForVerifcation() 
-            console.log("Property isReady: ", isReady);
             if (isReady) {
                 var program = Main.getProgram();
                 this.worker = getWorker(callback);
@@ -344,7 +342,6 @@ module Property {
                     callback(this.status) 
                 }, false);
                 this.worker.addEventListener("message", event => {
-                    console.log(event.data.result);
                     var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
                     if (res === true) {
                         this.status = PropertyStatus.statisfied;
