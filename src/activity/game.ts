@@ -19,10 +19,6 @@ module Activity {
         private $rightProcessList : JQuery;
         private $leftContainer : JQuery;
         private $rightContainer : JQuery;
-        private leftCanvas : HTMLCanvasElement;
-        private rightCanvas : HTMLCanvasElement;
-        private leftRenderer: Renderer;
-        private rightRenderer : Renderer;
         private leftGraph: GUI.ProcessGraphUI;
         private rightGraph: GUI.ProcessGraphUI;
 
@@ -38,12 +34,9 @@ module Activity {
             this.$leftContainer = $("#game-left-canvas");
             this.$rightContainer = $("#game-right-canvas");
 
-            this.leftCanvas = <HTMLCanvasElement> $("#game-left-canvas > canvas")[0];
-            this.rightCanvas = <HTMLCanvasElement> $("#game-right-canvas > canvas")[0];
-            this.leftRenderer = new Renderer(this.leftCanvas);
-            this.rightRenderer = new Renderer(this.rightCanvas);
-            this.leftGraph = new GUI.ArborGraph(this.leftRenderer, {repulsion: 100, stiffness: 800, friction: 0.5});
-            this.rightGraph = new GUI.ArborGraph(this.rightRenderer, {repulsion: 100, stiffness: 800, friction: 0.5});
+            var options = {repulsion: 100, stiffness: 800, friction: 0.5};
+            this.leftGraph = new GUI.ArborGraph(new Renderer(<HTMLCanvasElement> $("#game-left-canvas > canvas")[0]), options);
+            this.rightGraph = new GUI.ArborGraph(new Renderer(<HTMLCanvasElement> $("#game-right-canvas > canvas")[0]), options);
 
             this.$gameType.add(this.$playerType).add(this.$leftProcessList).add(this.$rightProcessList).on("change", () => this.newGame());
         }
