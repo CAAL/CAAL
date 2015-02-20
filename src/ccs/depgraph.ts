@@ -158,7 +158,7 @@ module DependencyGraph {
         }
 
         public getAttackerOptions(currentDgNode : any) {
-            if (this.nodes[currentDgNode][0] !== 0)
+            if (this.constructData[currentDgNode][0] !== 0)
                 throw "Bad node for attacker options";
             
             var hyperedges = this.getHyperEdges(currentDgNode);
@@ -184,8 +184,8 @@ module DependencyGraph {
         }
         
         public getAttackerChoice(currentDgNode, marking : LevelMarking) {
-            if (this.nodes[currentDgNode][0] !== 0)
-                throw "Bad node for attacker options";
+            if (this.constructData[currentDgNode][0] !== 0)
+                throw "Bad node for attacker choice";
             
             var hyperedges = this.getHyperEdges(currentDgNode);
             
@@ -222,16 +222,18 @@ module DependencyGraph {
         }
         
         public getDefenderOptions(currentDgNode : any) {
-            if (this.nodes[currentDgNode][0] === 0)
+            if (this.constructData[currentDgNode][0] === 0)
                 throw "Bad node for defender options";
             
             var hyperedge = this.getHyperEdges(currentDgNode)[0];
             
             var result = [];
             
+            var tcpi = this.constructData[currentDgNode][0] === 1 ? 2 : 1;
+            
             hyperedge.forEach(targetNode => {
                 var data = this.constructData[targetNode];
-                var targetProcess = this.defendSuccGen.getProcessById(data[2]);
+                var targetProcess = this.defendSuccGen.getProcessById(data[tcpi]);
                 
                 result.push({
                     targetProcess: targetProcess,
@@ -243,19 +245,11 @@ module DependencyGraph {
         }
         
         public getDefenderChoice(currentDgNode : any, marking : LevelMarking) {
-            if (this.nodes[currentDgNode][0] === 0)
-                throw "Bad node for defender options";
+            var options : any = this.getDefenderOptions(currentDgNode);
             
-            var hyperedge = this.getHyperEdges(currentDgNode)[0];
-            
-            for (var i = 0; i < hyperedge.length; i++) {
-                var targetNode = hyperedge[i];
-                
-                if (marking.getMarking(targetNode) === marking.ZERO) {
-                    return {
-                        targetProcess: this.defendSuccGen.getProcessById(this.constructData[targetNode][2]),
-                        nextNode: targetNode
-                    };
+            for (var i = 0; i < options.length; i++) {
+                if (marking.getMarking(options[i].nextNode) === marking.ZERO) {
+                    return options[i];
                 }
             }
             
@@ -804,7 +798,7 @@ module DependencyGraph {
         }
     }
 
-    function solveDgGlobalLevel(graph : DependencyGraph) : LevelMarking {
+    export function solveDgGlobalLevel(graph : DependencyGraph) : LevelMarking {
         var S_ZERO = 1, S_ONE = 2;
         // A[k]
         var Level = (function () {

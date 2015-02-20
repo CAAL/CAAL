@@ -27,7 +27,8 @@ module Activity {
         private rightRenderer : Renderer;
         private leftGraph: GUI.ProcessGraphUI;
         private rightGraph: GUI.ProcessGraphUI;
-
+        private dgGame : BisimulationGame; // make generic with DgGame isntead of BisimulationGame
+        
         constructor(container : string, button : string) {
             super(container, button);
 
@@ -70,6 +71,7 @@ module Activity {
 
         public onHide() : void {
             $(window).off("resize");
+            this.dgGame.stopGame();
         }
 
         private displayOptions() : void {
@@ -105,6 +107,33 @@ module Activity {
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
             this.draw(this.graph.processByName(options.leftProcess), this.leftGraph);
             this.draw(this.graph.processByName(options.rightProcess), this.rightGraph);
+            
+            this.makeDgGame(options);
+        }
+        
+        private makeDgGame(options : any) {
+            if (this.dgGame != undefined)
+                this.dgGame.stopGame();
+            
+            var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
+            var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
+            
+            this.dgGame = new BisimulationGame(this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess);
+            
+            var attacker : Player;
+            var defender : Player;
+            
+            // TODO make human player
+            if (this.dgGame.isBisimilar()) {
+                defender = new Computer(Player.Player1Color, this.dgGame, PlayType.Defender);
+                attacker = new Computer(Player.Player2Color, this.dgGame, PlayType.Attacker);
+            } else {
+                defender = new Computer(Player.Player1Color, this.dgGame, PlayType.Defender);
+                attacker = new Computer(Player.Player2Color, this.dgGame, PlayType.Attacker);
+            }
+            
+            this.dgGame.setPlayers(attacker, defender);
+            this.dgGame.startGame();
         }
 
         private draw(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
@@ -186,8 +215,10 @@ module Activity {
         protected dependencyGraph : dg.DependencyGraph;
         protected marking : dg.LevelMarking;
         
-        private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
-        private gameLog : GameLog = new GameLog();
+        //private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
+        private htmlNotationVisitor : Traverse.CCSNotationVisitor;
+        
+        private gameLog : GameLog = new GameLog(true);
         
         protected attacker : Player;
         protected defender : Player;
@@ -196,11 +227,11 @@ module Activity {
         
         protected lastMove : Move;
         protected lastAction : string;
-        protected currentNodeId : any;
+        protected currentNodeId : any = 0;
         
         constructor(protected graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) {
-            // set start node
-            this.currentNodeId = 0;
+            //this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
+            this.htmlNotationVisitor = new Traverse.CCSNotationVisitor();
             
             // create the dependency graph
             this.dependencyGraph = this.createDependencyGraph(this.graph, attackerSuccessorGen, defenderSuccesorGen);
@@ -231,7 +262,7 @@ module Activity {
         }
         
         public isWinner(player : Player) : boolean {
-            return this.getWinner() == player;
+            return this.getWinner() === player;
         }
         
         public getLastMove() : Move {
@@ -259,8 +290,17 @@ module Activity {
         public startGame() : void {
             if (this.attacker == undefined || this.defender == undefined)
                 throw "No players in game.";
+            this.currentNodeId = 0;
             
             this.attacker.prepareTurn();
+        }
+        
+        public stopGame() : void {
+            // tell players to abort their prepared play
+            this.attacker.abortPlay();
+            this.defender.abortPlay();
+            
+            //TODO consider rendering the dgGame unplayable now
         }
         
         public setPlayers(attacker : Player, defender : Player) {
@@ -286,10 +326,12 @@ module Activity {
             return undefined;
         }
         
-        public play(player : Player, destinationProcess : any, action : string = this.lastAction, move? : Move) {
+        public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) {
             this.step++;
-            
             var destinationHtml : string = this.htmlNotationVisitor.visit(destinationProcess);
+            
+            // change the current node id to the next
+            this.currentNodeId = nextNode;
             
             if (player == this.attacker) {
                 this.gameLog.printRound(this.step / 2 + 1);
@@ -298,20 +340,32 @@ module Activity {
                 this.lastAction = action;
                 this.lastMove = move;
                 
-                // tell the other player to prepare for their turn
-                this.defender.prepareTurn();
+                if (this.hasPlayerLost(this.defender)) {
+                    this.gameLog.printWinner(this.attacker);
+                    this.stopGame();
+                } else {
+                    // tell the other player to prepare for their turn
+                    this.defender.prepareTurn();
+                }
             } else {
                 this.gameLog.printPlay(player, action, destinationHtml);
                 
                 // if the play is a defense, then flip the saved last move
                 this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
                 
-                // tell the other player to prepare for their turn
-                this.attacker.prepareTurn();
+                if (this.hasPlayerLost(this.attacker)) {
+                    this.gameLog.printWinner(this.defender);
+                    this.stopGame();
+                } else {
+                    // tell the other player to prepare for their turn
+                    this.attacker.prepareTurn();
+                }
             }
-            
-            // change the current node id to the one played
-            this.currentNodeId = destinationProcess.id;
+        }
+        
+        private hasPlayerLost(player : Player) : boolean {
+            var choices : any = this.getCurrentChoices(player);
+            return choices.length === 0;
         }
     }
 
@@ -346,8 +400,8 @@ module Activity {
         }
         
         protected createMarking() : dg.LevelMarking {
-            var marking : dg.LevelMarking;// = dg.liuSmolkaLocal2(0, this.bisimulationDG);
-            this.bisimilar = marking.getMarking(0) === marking.ONE;
+            var marking : dg.LevelMarking = dg.solveDgGlobalLevel(this.dependencyGraph);
+            this.bisimilar = marking.getMarking(0) === marking.ZERO;
             return marking;
         }
         
@@ -409,6 +463,10 @@ module Activity {
             throw "Abstract method. Not implemented.";
         }
         
+        public abortPlay() : void {
+            // empty, override
+        }
+        
         public playTypeStr() : string {
             return this.playType == PlayType.Attacker ? "ATTACKER" : this.playType == PlayType.Defender ? "DEFENDER" : "UNKNOWN";
         }
@@ -429,30 +487,40 @@ module Activity {
             var choices = this.game.getCurrentChoices(this);
             // clickHandler on choices
         }
+        
+        public abortPlay() : void {
+            // optional override, delete if you feel like it
+        }
     }
 
     class Computer extends Player {
         
         static Delay : number = 2000;
         
+        private delayedPlay;
+        
         constructor(playerColor : string, game: DgGame, playType : PlayType) {
             super(playerColor, game, playType);
+        }
+        
+        public abortPlay() : void {
+            clearTimeout(this.delayedPlay);
         }
         
         protected prepareAttack() : void {
             // select strategy
             if (this.game.isWinner(this))
-                setTimeout( () => this.winningAttack(), Computer.Delay);
+                this.delayedPlay = setTimeout( () => this.winningAttack(), Computer.Delay);
             else
-                setTimeout( () => this.losingAttack(), Computer.Delay);
+                this.delayedPlay = setTimeout( () => this.losingAttack(), Computer.Delay);
         }
         
         protected prepareDefend() : void {
             // select strategy
             if (this.game.isWinner(this))
-                setTimeout( () => this.winningDefend(), Computer.Delay);
+                this.delayedPlay = setTimeout( () => this.winningDefend(), Computer.Delay);
             else
-                setTimeout( () => this.losingDefend(), Computer.Delay);
+                this.delayedPlay = setTimeout( () => this.losingDefend(), Computer.Delay);
         }
         
         private losingAttack() : void {
@@ -462,14 +530,14 @@ module Activity {
             
             var move : Move = choices[random].move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
             
-            this.game.play(this, choices[random].targetProcess, choices[random].action, move);
+            this.game.play(this, choices[random].targetProcess, choices[random].nextNode, choices[random].action, move);
         }
         
         private winningAttack() : void {
             var choice : any = this.game.getBestWinningAttack();
             var move : Move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
             
-            this.game.play(this, choice.targetProcess, choice.action, move);
+            this.game.play(this, choice.targetProcess, choice.nextNode, choice.action, move);
         }
         
         private losingDefend() : void {
@@ -477,12 +545,12 @@ module Activity {
             var choices = this.game.getCurrentChoices(this);
             var random : number = this.random(choices.length);
             
-            this.game.play(this, choices[random].targetProcess);
+            this.game.play(this, choices[random].targetProcess, choices[random].nextNode);
         }
         
         private winningDefend() : void {
             var choice = this.game.getWinningDefend();
-            this.game.play(this, choice.targetProcess);
+            this.game.play(this, choice.targetProcess, choice.nextNode);
         }
         
         private random(max) : number {
@@ -495,12 +563,19 @@ module Activity {
         
         private $list : any;
         
-        constructor() {
+        constructor(private printConsole : boolean = false) {
             this.$list = $("#game-console").find("ul");
             this.$list.empty();
         }
         
         public print(line : string, margin : number = 0) : void {
+            if (this.printConsole) {
+                var marginStr : string = "";
+                for (var i = 0; i < margin/5; i++)
+                    marginStr += " ";
+                console.log(marginStr + line);
+            }
+                
             this.$list.append("<li style='margin-left: " + margin + "px'>" + line + "</li>");
         }
         
@@ -509,7 +584,16 @@ module Activity {
         }
         
         public printPlay(player : Player, action : string, destination : string) : void {
-            this.print("<span style='color: "+player.getColor()+"'>" + player.playTypeStr() + "</span>: " + "--- "+action+" --->   " + destination, 20);
+            this.print(this.getColoredPlayer(player) + ": " + "--- "+action+" --->   " + destination, 20);
+        }
+        
+        public printWinner(winner : Player) : void {
+            this.print(this.getColoredPlayer(winner) + " wins.");
+        }
+        
+        private getColoredPlayer(player : Player) : string {
+            return player.playTypeStr();
+            // return "<span style='color: "+player.getColor()+"'>" + player.playTypeStr() + "</span>";
         }
     }
 }
