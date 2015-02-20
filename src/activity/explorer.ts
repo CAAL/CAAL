@@ -123,7 +123,7 @@ module Activity {
             $(window).on("resize", () => this.resize());
             this.resize();
 
-            if (this.project.getChanged()){
+            if (this.project.isChanged()){
                 this.graph = Main.getGraph();
             }
 
@@ -139,7 +139,7 @@ module Activity {
                 this.uiGraph.clearHover();
             });
 
-            if (this.project.getChanged()) {
+            if (this.project.isChanged()) {
                 this.namedProcesses = this.graph.getNamedProcesses().reverse();
                 var list = $("#explorer-process-list > select").empty();
 
