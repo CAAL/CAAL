@@ -248,6 +248,10 @@ td.inconsolata{
   font: normal 14px "Inconsolata";   
 }
 
+p.small {
+  font-variant: small-caps;
+}
+
 .noHighlight {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
