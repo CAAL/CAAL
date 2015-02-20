@@ -71,11 +71,39 @@ module Activity {
         }
 
         public onShow(configuration?: any): void {
-            this.beforeShow();
-        }
 
-        public beforeShow(): void {
-            this.displayProperties();
+            if (this.project.isChanged()) {
+                // If project has changed check whether the properties are still valid? Meaning that their processes are still defined,
+                // Also check wether the actions exists in used in the ccs program. (low prio)
+                var properties = this.project.getProperties();
+                var processList = Main.getGraph().getNamedProcesses()
+
+                properties.forEach((property) => {
+                    if (property instanceof Property.StrongBisimulation || 
+                        property instanceof Property.WeakBisimulation) {
+                        if (processList.indexOf(property.getFirstProcess()) === -1 || processList.indexOf(property.getSecondProcess()) === -1 ) {
+                            // If process is not in list of named processes, show the red triangle
+                            property.setInvalidateStatus()
+                        }
+                        else {
+                            // Otherwise set the unknown status
+                            property.setUnknownStatus();
+                        }
+                    }
+                    else if (property instanceof Property.HML) {
+                        if (processList.indexOf(property.getProcess()) === -1) {
+                            // If process is not in list of named processes, show the red triangle
+                            property.setInvalidateStatus()
+                        }
+                        else {
+                            property.setUnknownStatus();
+
+                        }
+                    }   
+                });
+            }
+
+            this.displayProperties(); // update the properties table
         }
 
         public displayProcessList(processes: string[], list: JQuery, selected: string): void {
@@ -90,7 +118,8 @@ module Activity {
             }
 
             if (!selected) {
-                list.prop("selectedIndex", -1);
+                // select the first element in the list
+                list.prop("selectedIndex", 0);
             }
         }
 
@@ -113,7 +142,7 @@ module Activity {
 
                 tdStatus.tooltip({
                     title: this.onStatusHover(properties[i]),
-                    selector: '.fa-check'
+                    selector: '.fa-check .fa-exclamation-triangle'
                 });
                 
                 tdStatus.on("click", {property: properties[i]}, (e) => this.onStatusClick(e));
@@ -129,13 +158,13 @@ module Activity {
 
             switch(type) {
                 case "strong":
-                    property = new Property.StrongBisimulation(null, {firstProcess: "", secondProcess: ""});
+                    property = new Property.StrongBisimulation({firstProcess: "", secondProcess: ""});
                     break;
                 case "weak":
-                    property = new Property.WeakBisimulation(null, {firstProcess: "", secondProcess: ""});
+                    property = new Property.WeakBisimulation({firstProcess: "", secondProcess: ""});
                     break;
                 case "hml":
-                    property = new Property.HML(null, {process: "", formula: ""});
+                    property = new Property.HML({process: "", formula: ""});
                     break;
             }
 
@@ -146,7 +175,6 @@ module Activity {
 
         private onStatusHover(property) {
             return property.statistics.elapsedTime + " ms";
-            
         }
 
         private onStatusClick(e) {
@@ -184,14 +212,22 @@ module Activity {
                 this.displayProcessList(processes, firstProcessList, property.getFirstProcess());
                 this.displayProcessList(processes, secondProcessList, property.getSecondProcess());
 
+                if (firstProcessList.length > 0 && secondProcessList.length) {
+                    property.setFirstProcess(firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
+                    property.setSecondProcess(secondProcessList.val()); // Re-set the chosen process, since the process might have been deleted
+                    this.displayProperties(); // update the process table
+                }
+
                 firstProcessList.off("change");
                 firstProcessList.on("change", () => {
+                    // On change, set the process.
                     property.setFirstProcess(firstProcessList.val());
                     this.displayProperties();
                 });
 
                 secondProcessList.off("change");
                 secondProcessList.on("change", () => {
+                    // On change, set the process.
                     property.setSecondProcess(secondProcessList.val());
                     this.displayProperties();
                 });
@@ -201,6 +237,11 @@ module Activity {
 
                 var processList = $("#hml-process");
                 this.displayProcessList(Main.getGraph().getNamedProcesses(), processList, property.getProcess());
+
+                if (processList.length > 0) {
+                    property.setProcess(processList.val()); // Re-set the chosen process, since the process might have been deleted
+                    this.displayProperties(); // update the process table
+                }
 
                 processList.off("change");
                 processList.on("change", () => {
@@ -241,6 +282,7 @@ module Activity {
         }
 
         public verify(index): void {
+            // TODO some checking before running verify
             var property = this.project.getProperties()[index];
             this.verifyStopButton.prop("disabled", false);
 

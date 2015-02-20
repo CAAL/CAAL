@@ -1,6 +1,8 @@
 /// <reference path="../main.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
 
+enum PropertyStatus {statisfied, unstatisfied, invalid, unknown};
+
 module Property {
 
     function getWorker() : Worker {
@@ -13,13 +15,14 @@ module Property {
     }
 
     export class Property {
+        // statisfied = check-mark, unstatisfied = cross, invalid = yellow triangle, unknown = question mark
         private static counter: number = 0;
         private id: number;
-        public status: boolean;
+        public status: PropertyStatus;
         public worker;
         public statistics = {elapsedTime: null};
 
-        public constructor(status: boolean) {
+        public constructor(status: PropertyStatus = PropertyStatus.unknown) {
             this.status = status;
             this.id = Property.counter;
             Property.counter++;
@@ -29,18 +32,31 @@ module Property {
             return this.id;
         }
 
-        public getStatus(): boolean {
+        public getStatus(): PropertyStatus {
             return this.status;
         }
 
         public getStatusIcon(): string {
-            if (this.status === null) {return "<i class=\"fa fa-question\"></i>"}
-            else if (this.status) {return "<i class=\"fa fa-check\"></i>"}
-            else {return "<i class=\"fa fa-times\"></i>"}
+            if (this.status === PropertyStatus.unknown) {
+                return "<i class=\"fa fa-question\"></i>"
+            }
+            else if (this.status === PropertyStatus.statisfied) {
+                return "<i class=\"fa fa-check\"></i>"
+            }
+            else if (this.status === PropertyStatus.unstatisfied) {
+                return "<i class=\"fa fa-times\"></i>"
+            }
+            else if (this.status === PropertyStatus.invalid) {
+                return "<i class=\"fa fa-exclamation-triangle\"></i>" // todo red triangle
+            }
         }
 
-        protected invalidateStatus(): void {
-            this.status = null;
+        public setInvalidateStatus() : void {
+            this.status = PropertyStatus.invalid;
+        }
+
+        public setUnknownStatus(): void {
+            this.status = PropertyStatus.unknown;
         }
 
         public abortVerification(): void {
@@ -56,7 +72,7 @@ module Property {
         public firstProcess: string;
         public secondProcess: string;
 
-        public constructor(status: boolean, options: any) {
+        public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
             super(status);
             this.firstProcess = options.firstProcess;
             this.secondProcess = options.secondProcess;
@@ -68,7 +84,7 @@ module Property {
 
         public setFirstProcess(firstProcess: string): void {
             this.firstProcess = firstProcess;
-            this.invalidateStatus();
+            this.setUnknownStatus();
         }
 
         public getSecondProcess(): string {
@@ -77,13 +93,13 @@ module Property {
 
         public setSecondProcess(secondProcess: string): void {
             this.secondProcess = secondProcess;
-            this.invalidateStatus();
+            this.setUnknownStatus();
         }
     }
 
     export class StrongBisimulation extends Equivalence {
-        public constructor(status: boolean, options: any) {
-            super(status, options);
+        public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
         }
 
         public getDescription(): string {
@@ -114,7 +130,16 @@ module Property {
                 rightProcess: this.secondProcess
             });
             this.worker.addEventListener("message", event => {
-                this.status = (typeof event.data.result === "boolean") ? event.data.result : null;
+                var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
+                if (res === true) {
+                    this.status = PropertyStatus.statisfied;
+                }
+                else if (res === false) {
+                    this.status = PropertyStatus.unstatisfied; 
+                }
+                else {
+                    this.status = res;
+                }
                 this.worker.terminate();
                 this.worker = null;
                 callback();
@@ -123,8 +148,8 @@ module Property {
     }
 
     export class WeakBisimulation extends Equivalence {
-        public constructor(status: boolean, options: any) {
-            super(status, options);
+        public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
         }
 
         public getDescription(): string {
@@ -155,7 +180,16 @@ module Property {
                 rightProcess: this.secondProcess
             });
             this.worker.addEventListener("message", event => {
-                this.status = (typeof event.data.result === "boolean") ? event.data.result : null;
+                var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
+                if (res === true) {
+                    this.status = PropertyStatus.statisfied;
+                }
+                else if (res === false) {
+                    this.status = PropertyStatus.unstatisfied; 
+                }
+                else {
+                    this.status = res;
+                }
                 this.worker.terminate();
                 this.worker = null;
                 callback();
@@ -167,7 +201,7 @@ module Property {
         private process: string;
         private formula: string;
 
-        public constructor(status: boolean, options: any) {
+        public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
             super(status);
             this.process = options.process;
             this.formula = options.formula;
@@ -179,7 +213,7 @@ module Property {
 
         public setProcess(process: string): void {
             this.process = process;
-            this.invalidateStatus();
+            this.setUnknownStatus();
         }
 
         public getFormula(): string {
@@ -188,7 +222,7 @@ module Property {
 
         public setFormula(formula: string): void {
             this.formula = formula;
-            this.invalidateStatus();
+            this.setUnknownStatus();
         }
 
         public getDescription(): string {
@@ -221,7 +255,16 @@ module Property {
                 formula: this.formula
             });
             this.worker.addEventListener("message", event => {
-                this.status = (typeof event.data.result === "boolean") ? event.data.result : null;
+                var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
+                if (res === true) {
+                    this.status = PropertyStatus.statisfied;
+                }
+                else if (res === false) {
+                    this.status = PropertyStatus.unstatisfied; 
+                }
+                else {
+                    this.status = res;
+                }
                 this.worker.terminate();
                 this.worker = null;
                 callback();

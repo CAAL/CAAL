@@ -89,7 +89,7 @@ class Project {
             if (properties.length !== 0) {
                 for (var i = 0; i < properties.length; i++) {
                     try {
-                        this.addProperty(new window["Property"][properties[i].type](properties[i].status, properties[i].options));
+                        this.addProperty(new window["Property"][properties[i].type](properties[i].options, properties[i].status));
                     } catch (e) {
                         console.log("Unknown property type");
                     }
@@ -113,7 +113,7 @@ class Project {
         }
     }
 
-    public getChanged(): boolean {
+    public isChanged(): boolean {
         return this.changed;
     }
 

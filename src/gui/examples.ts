@@ -26,7 +26,7 @@ var examples : any[] = [
         properties: [
             {
                 type: "HML",
-                status: null,
+                status: 3,
                 options: {
                     process: "Peterson",
                     formula: "X max= ([exit1]ff or [exit2]ff) and [-]X;"
@@ -47,7 +47,7 @@ var examples : any[] = [
 		properties:[
 			{
 				type: "StrongBisimulation",
-				status: null,
+				status: 3,
 				options: {
 					firstProcess:"Orchard",
 					secondProcess:"Spec"
@@ -55,7 +55,7 @@ var examples : any[] = [
 			},
 			{	
 				type: "WeakBisimulation",
-				status: null,
+				status: 3,
 				options: {
 					firstProcess:"Orchard",
 					secondProcess:"Spec"

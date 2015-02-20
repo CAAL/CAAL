@@ -288,6 +288,10 @@ td.inconsolata{
     color: #c00;
 }
 
+#property-table .fa-exclamation-triangle {
+    color: #c00;
+}
+
 
 /*
  *  Tooltip styles
