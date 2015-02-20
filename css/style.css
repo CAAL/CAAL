@@ -313,10 +313,6 @@ td.inconsolata{
     overflow-y: scroll;
 }
 
-#game-log {
-    border-top: 1px solid #e7e7e7;
-}
-
 
 /*
  *  Tooltip styles

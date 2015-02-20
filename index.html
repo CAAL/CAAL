@@ -262,30 +262,42 @@
       <div id="game-container">
         <div id="game-options" class="row">
           <div class="row">
-            <div class="col-md-9">
+            <div class="col-md-10">
               <div class="col-md-3">
                 <select id="game-type" class="form-control">
                   <option value="strong" selected>Strong Bisimulation</option>
                   <option value="weak">Weak Bisimulation</option>
                 </select>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-2">
                 <select id="game-left-process" class="form-control">
                 </select>
               </div>
-              <div class="col-md-3">
+              <div class="col-md-2">
                 <select id="game-right-process" class="form-control">
                 </select>
+              </div>
+              <div class="col-md-5">
+                <div class="btn-group" data-toggle="buttons">
+                  <label class="btn btn-default">
+                    <input name="player-type" value="attacker" type="radio"> Attacker
+                  </label>
+                  <label class="btn btn-default active">
+                    <input name="player-type" value="defender" type="radio" checked> Defender
+                  </label>
+                </div>
               </div>
             </div>
           </div>
         </div>
         <div id="game-main" class="row">
-          <div id="game-left-canvas" class="col-md-6">
-            <canvas width="1000" height="1000"></canvas>
-          </div>
-          <div id="game-right-canvas" class="col-md-6">
-            <canvas width="1000" height="1000"></canvas>
+          <div class="col-md-12">
+            <div id="game-left-canvas" class="col-md-6">
+              <canvas width="1000" height="1000"></canvas>
+            </div>
+            <div id="game-right-canvas" class="col-md-6 pull-right">
+              <canvas width="1000" height="1000"></canvas>
+            </div>
           </div>
         </div>
         <div id="game-log" class="row">
