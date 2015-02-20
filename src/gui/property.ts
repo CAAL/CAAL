@@ -5,7 +5,7 @@ enum PropertyStatus {statisfied, unstatisfied, invalid, unknown};
 
 module Property {
 
-    function getWorker() : Worker {
+    function getWorker(callback? : Function) : Worker {
         var worker = new Worker("lib/workers/verifier.js");
         worker.addEventListener("error", (error) => {
             console.log("Verifier Worker Error at line " + error.lineno +
@@ -149,7 +149,7 @@ module Property {
             var isReady = this.isReadyForVerifcation() 
             if (isReady) {
                 var program = Main.getProgram();
-                this.worker = getWorker();
+                this.worker = getWorker(callback); /*on error*/
                 this.worker.postMessage({
                     type: "program",
                     program: program
@@ -159,7 +159,13 @@ module Property {
                     leftProcess: this.firstProcess,
                     rightProcess: this.secondProcess
                 });
+                this.worker.addEventListener("error", (error) => {
+                    /*display tooltip with error*/
+                    this.setInvalidateStatus();
+                    callback(this.status)
+                }, false);
                 this.worker.addEventListener("message", event => {
+                    console.log(event.data.result);
                     var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
                     if (res === true) {
                         this.status = PropertyStatus.statisfied;
@@ -206,7 +212,7 @@ module Property {
             var isReady = this.isReadyForVerifcation();
             if (isReady) {
                 var program = Main.getProgram();
-                this.worker = getWorker();
+                this.worker = getWorker(callback);
                 this.worker.postMessage({
                     type: "program",
                     program: program
@@ -216,6 +222,11 @@ module Property {
                     leftProcess: this.firstProcess,
                     rightProcess: this.secondProcess
                 });
+                this.worker.addEventListener("error", (error) => {
+                    /*display tooltip with error*/
+                    this.setInvalidateStatus();
+                    callback(this.status)
+                }, false);
                 this.worker.addEventListener("message", event => {
                     var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
                     if (res === true) {
@@ -299,7 +310,10 @@ module Property {
                 }
             }
 
-            // HML syntax check (simple)
+            /**
+             * HML syntax check (simple)
+             * complete syntax check are done by the worker, it will post a error if the hml syntax did not parse. 
+             */
             if(!this.formula || this.formula === "") {
                 this.setInvalidateStatus();
                 isReady = false;
@@ -313,7 +327,7 @@ module Property {
             console.log("Property isReady: ", isReady);
             if (isReady) {
                 var program = Main.getProgram();
-                this.worker = getWorker();
+                this.worker = getWorker(callback);
                 this.worker.postMessage({
                     type: "program",
                     program: program
@@ -324,7 +338,13 @@ module Property {
                     useStrict: false,
                     formula: this.formula
                 });
+                this.worker.addEventListener("error", (error) => {
+                    /* HML syntax error */
+                    this.setInvalidateStatus();
+                    callback(this.status) 
+                }, false);
                 this.worker.addEventListener("message", event => {
+                    console.log(event.data.result);
                     var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
                     if (res === true) {
                         this.status = PropertyStatus.statisfied;
