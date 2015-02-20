@@ -229,10 +229,11 @@ module DependencyGraph {
             
             var result = [];
             
+            var tcpi = this.constructData[currentDgNode][0] === 1 ? 2 : 1;
+            
             hyperedge.forEach(targetNode => {
                 var data = this.constructData[targetNode];
-                var tpci = data[0] === 1 ? 2 : 1;
-                var targetProcess = this.defendSuccGen.getProcessById(data[tpci]);
+                var targetProcess = this.defendSuccGen.getProcessById(data[tcpi]);
                 
                 result.push({
                     targetProcess: targetProcess,
