@@ -37,7 +37,7 @@ module Activity {
                     } catch (error) {
                         console.log("Error stopping verification of property " + this.currentVerifyingProperty + ": " + error);
                     }
-                    this.verifactionEnded();
+                    this.verifactionEnded(PropertyStatus.unknown);
                 }
             });
 
@@ -142,7 +142,7 @@ module Activity {
 
                 tdStatus.tooltip({
                     title: this.onStatusHover(properties[i]),
-                    selector: '.fa-check .fa-exclamation-triangle'
+                    selector: '.fa-check'
                 });
                 
                 tdStatus.on("click", {property: properties[i]}, (e) => this.onStatusClick(e));
@@ -212,7 +212,7 @@ module Activity {
                 this.displayProcessList(processes, firstProcessList, property.getFirstProcess());
                 this.displayProcessList(processes, secondProcessList, property.getSecondProcess());
 
-                if (firstProcessList.length > 0 && secondProcessList.length) {
+                if (property.getFirstProcess() !== firstProcessList.val() && property.getSecondProcess() !== secondProcessList.val()) {
                     property.setFirstProcess(firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
                     property.setSecondProcess(secondProcessList.val()); // Re-set the chosen process, since the process might have been deleted
                     this.displayProperties(); // update the process table
@@ -238,7 +238,7 @@ module Activity {
                 var processList = $("#hml-process");
                 this.displayProcessList(Main.getGraph().getNamedProcesses(), processList, property.getProcess());
 
-                if (processList.length > 0) {
+                if (property.getProcess() !== processList.val()) {
                     property.setProcess(processList.val()); // Re-set the chosen process, since the process might have been deleted
                     this.displayProperties(); // update the process table
                 }
@@ -265,8 +265,8 @@ module Activity {
             this.displayProperties();
         }
 
-        private verifactionEnded() {
-            this.currentVerifyingProperty.statistics.elapsedTime = new Date().getTime() - this.startTime;
+        private verifactionEnded(result? : PropertyStatus) {
+            this.currentVerifyingProperty.statistics.elapsedTime = (this.startTime) ? new Date().getTime() - this.startTime : 0;
             clearInterval(this.clockInterval);
             this.verifyStopButton.prop("disabled", true);
             this.currentVerifyingProperty = null;
@@ -290,13 +290,14 @@ module Activity {
             var statusTd = row.find("td").eq(0);
             this.startTime = new Date().getTime();
             
-            this.clockInterval = setInterval(updateTimer, 100);
-            this.currentVerifyingProperty = property;
-
-            function updateTimer() {
+            var updateTimer = () => {
                 var elapsedTime = new Date().getTime() - this.startTime;
                 statusTd.text(elapsedTime + "ms");
             }
+
+            this.clockInterval = setInterval(updateTimer, 100);
+            this.currentVerifyingProperty = property;
+
 
             property.verify(this.verifactionEnded.bind(this));
         }

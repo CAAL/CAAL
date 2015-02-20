@@ -66,6 +66,8 @@ module Property {
         public getDescription(): string {throw "Not implemented by subclass"}
         public toJSON(): any {throw "Not implemented by subclass"}
         public verify(callback: () => any): void {throw "Not implemented by subclass"}
+
+        protected isReadyForVerifcation() : boolean {throw "Not implemented by subclass"}
     }
 
     export class Equivalence extends Property {
@@ -95,6 +97,32 @@ module Property {
             this.secondProcess = secondProcess;
             this.setUnknownStatus();
         }
+        /**
+         * Check whether both process(first and second) is defined, and it exists in the CCS program.
+         * And property status must not be invalid.
+         * @return {boolean} if true, everything is defined.
+         */
+        protected isReadyForVerifcation() : boolean {
+            var isReady = true;
+            
+            if(!this.getFirstProcess() && !this.getSecondProcess()) {
+                return isReady = false;
+            } 
+            else {
+                // if they are defined check whether they are defined in the CCS-program
+                var processList = Main.getGraph().getNamedProcesses()
+                if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
+                    return isReady = false;
+                    this.setInvalidateStatus();
+                }
+            }
+
+            if(this.status === PropertyStatus.invalid) { 
+                return isReady = false;
+            }
+
+            return isReady
+        }
     }
 
     export class StrongBisimulation extends Equivalence {
@@ -117,33 +145,40 @@ module Property {
             };
         }
 
-        public verify(callback): void {
-            var program = Main.getProgram();
-            this.worker = getWorker();
-            this.worker.postMessage({
-                type: "program",
-                program: program
-            });
-            this.worker.postMessage({
-                type: "isStronglyBisimilar",
-                leftProcess: this.firstProcess,
-                rightProcess: this.secondProcess
-            });
-            this.worker.addEventListener("message", event => {
-                var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
-                if (res === true) {
-                    this.status = PropertyStatus.statisfied;
-                }
-                else if (res === false) {
-                    this.status = PropertyStatus.unstatisfied; 
-                }
-                else {
-                    this.status = res;
-                }
-                this.worker.terminate();
-                this.worker = null;
-                callback();
-            });
+        public verify(callback : Function): void {
+            var isReady = this.isReadyForVerifcation() 
+            if (isReady) {
+                var program = Main.getProgram();
+                this.worker = getWorker();
+                this.worker.postMessage({
+                    type: "program",
+                    program: program
+                });
+                this.worker.postMessage({
+                    type: "isStronglyBisimilar",
+                    leftProcess: this.firstProcess,
+                    rightProcess: this.secondProcess
+                });
+                this.worker.addEventListener("message", event => {
+                    var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
+                    if (res === true) {
+                        this.status = PropertyStatus.statisfied;
+                    }
+                    else if (res === false) {
+                        this.status = PropertyStatus.unstatisfied; 
+                    }
+                    else {
+                        this.status = res;
+                    }
+                    this.worker.terminate();
+                    this.worker = null;
+                    callback(this.status); /* verification ended */
+                });
+            } else {
+                // something is not defined or syntax error
+                console.log("something is wrong, please check the property");
+                callback(this.status); /*verification ended*/
+            }
         }
     }
 
@@ -167,33 +202,40 @@ module Property {
             };
         }
 
-        public verify(callback): void {
-            var program = Main.getProgram();
-            this.worker = getWorker();
-            this.worker.postMessage({
-                type: "program",
-                program: program
-            });
-            this.worker.postMessage({
-                type: "isWeaklyBisimilar",
-                leftProcess: this.firstProcess,
-                rightProcess: this.secondProcess
-            });
-            this.worker.addEventListener("message", event => {
-                var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
-                if (res === true) {
-                    this.status = PropertyStatus.statisfied;
-                }
-                else if (res === false) {
-                    this.status = PropertyStatus.unstatisfied; 
-                }
-                else {
-                    this.status = res;
-                }
-                this.worker.terminate();
-                this.worker = null;
-                callback();
-            });
+        public verify(callback : Function): void {
+            var isReady = this.isReadyForVerifcation();
+            if (isReady) {
+                var program = Main.getProgram();
+                this.worker = getWorker();
+                this.worker.postMessage({
+                    type: "program",
+                    program: program
+                });
+                this.worker.postMessage({
+                    type: "isWeaklyBisimilar",
+                    leftProcess: this.firstProcess,
+                    rightProcess: this.secondProcess
+                });
+                this.worker.addEventListener("message", event => {
+                    var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
+                    if (res === true) {
+                        this.status = PropertyStatus.statisfied;
+                    }
+                    else if (res === false) {
+                        this.status = PropertyStatus.unstatisfied; 
+                    }
+                    else {
+                        this.status = res;
+                    }
+                    this.worker.terminate();
+                    this.worker = null;
+                    callback(this.status); /* verification ended */
+                });
+            } else {
+                // something is not defined or syntax error
+                console.log("something is wrong, please check the property");
+                callback(this.status); /*verification ended*/
+            }
         }
     }
 
@@ -213,7 +255,7 @@ module Property {
 
         public setProcess(process: string): void {
             this.process = process;
-            this.setUnknownStatus();
+            this.setUnknownStatus(); /*When setting a new process, we don't know the result yet*/
         }
 
         public getFormula(): string {
@@ -222,7 +264,7 @@ module Property {
 
         public setFormula(formula: string): void {
             this.formula = formula;
-            this.setUnknownStatus();
+            this.setUnknownStatus(); /*When setting a new formula, we don't know the result yet*/
         }
 
         public getDescription(): string {
@@ -240,35 +282,67 @@ module Property {
                 }
             };
         }
+        /**
+         * Checks whehter the process is defined, and the property is not invalid, and the HML syntactically correct.
+         * @return {boolean} if true everything is defined correctly.
+         */
+        protected isReadyForVerifcation() : boolean {
+            var isReady = true;
 
-        public verify(callback): void {
-            var program = Main.getProgram();
-            this.worker = getWorker();
-            this.worker.postMessage({
-                type: "program",
-                program: program
-            });
-            this.worker.postMessage({
-                type: "checkFormula",
-                processName: this.process,
-                useStrict: false,
-                formula: this.formula
-            });
-            this.worker.addEventListener("message", event => {
-                var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
-                if (res === true) {
-                    this.status = PropertyStatus.statisfied;
+            if (!this.getProcess()) {
+                return isReady = false;
+            } else {
+                // if they are defined check whether they are defined in the CCS-program
+                var processList = Main.getGraph().getNamedProcesses()
+                if (processList.indexOf(this.getProcess()) === -1 ) {
+                    return isReady = false;
                 }
-                else if (res === false) {
-                    this.status = PropertyStatus.unstatisfied; 
-                }
-                else {
-                    this.status = res;
-                }
-                this.worker.terminate();
-                this.worker = null;
-                callback();
-            });
+            }
+
+            // HML syntax check (simple)
+            if(!this.formula || this.formula === "") {
+                return isReady = false;
+            }
+            
+            return isReady
+        }
+
+        public verify(callback : Function): void {
+            var isReady = this.isReadyForVerifcation() 
+            console.log("Property isReady: ", isReady);
+            if (isReady) {
+                var program = Main.getProgram();
+                this.worker = getWorker();
+                this.worker.postMessage({
+                    type: "program",
+                    program: program
+                });
+                this.worker.postMessage({
+                    type: "checkFormula",
+                    processName: this.process,
+                    useStrict: false,
+                    formula: this.formula
+                });
+                this.worker.addEventListener("message", event => {
+                    var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
+                    if (res === true) {
+                        this.status = PropertyStatus.statisfied;
+                    }
+                    else if (res === false) {
+                        this.status = PropertyStatus.unstatisfied; 
+                    }
+                    else {
+                        this.status = res;
+                    }
+                    this.worker.terminate();
+                    this.worker = null;
+                    callback(this.status); /* verification ended */
+                });
+            } else {
+                // something is not defined or syntax error
+                console.log("something is wrong, please check the property");
+                callback(this.status); /*verification ended*/
+            }
         }
     }
 }
