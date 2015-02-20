@@ -47,7 +47,7 @@ module Property {
                 return "<i class=\"fa fa-times\"></i>"
             }
             else if (this.status === PropertyStatus.invalid) {
-                return "<i class=\"fa fa-exclamation-triangle\"></i>" // todo red triangle
+                return "<i class=\"fa fa-exclamation-triangle\"></i>"
             }
         }
 
@@ -106,19 +106,19 @@ module Property {
             var isReady = true;
             
             if(!this.getFirstProcess() && !this.getSecondProcess()) {
-                return isReady = false;
+                isReady = false;
             } 
             else {
                 // if they are defined check whether they are defined in the CCS-program
                 var processList = Main.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
-                    return isReady = false;
                     this.setInvalidateStatus();
+                    isReady = false;
                 }
             }
 
             if(this.status === PropertyStatus.invalid) { 
-                return isReady = false;
+                isReady = false;
             }
 
             return isReady
@@ -290,18 +290,19 @@ module Property {
             var isReady = true;
 
             if (!this.getProcess()) {
-                return isReady = false;
+                isReady = false;
             } else {
                 // if they are defined check whether they are defined in the CCS-program
                 var processList = Main.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getProcess()) === -1 ) {
-                    return isReady = false;
+                    isReady = false;
                 }
             }
 
             // HML syntax check (simple)
             if(!this.formula || this.formula === "") {
-                return isReady = false;
+                this.setInvalidateStatus();
+                isReady = false;
             }
             
             return isReady
