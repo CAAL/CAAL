@@ -7,6 +7,7 @@ module GUI {
 
         showProcess(identifier, data : any) : void;
         getProcessDataObject(identifier) : any;
+        getNode(name : string) : Node;
 
         showTransitions(fromId, toId, datas : any[]);
         getTransitionDataObjects(fromId, toId) : any[];
