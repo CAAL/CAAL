@@ -23,7 +23,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="index.html">Caal</a>
+          <p class="navbar-brand">Caal</p>
         </div>
         <div class="collapse navbar-collapse" id="navbar-collapse">
           <ul class="nav navbar-nav noHighlight">
@@ -66,8 +66,8 @@
             <li id="game-btn" class="disabled"><a>Game</a></li>
           </ul>
           <ul class="nav navbar-nav navbar-right noHighlight">
-            <!--<li><a>About</a></li>-->
-            <li button onclick="helpDialogFunction()"><a>Help</a></button li>
+            <li button onclick="$('#about-dialog').modal('show');"><a>About</a></li>
+            <li button onclick="$('#help-dialog').modal('show')"><a>Help</a></button li>
             <li><a href="https://github.com/CAAL/CAAL"><i class="fa fa-github fa-lg"></i></a></li>
           </ul>
         </div>
@@ -389,6 +389,24 @@
           </div>
           <div class="modal-body">
             <p id="explain-dialog-body-par"></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+          </div>
+        </div>
+      </div>
+    </div>
+	<div class="modal fade" id="about-dialog" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title" id="about-dialog-title">About</h4>
+          </div>
+          <div class="modal-body">
+            <p>
+				Caal
+			</p>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
