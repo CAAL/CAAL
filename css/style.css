@@ -303,20 +303,20 @@ td.inconsolata{
  */
 
 #game-main {
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin: 20px 0;
 }
 
 #game-left-canvas, #game-right-canvas {
     border: 1px solid #e7e7e7;
     overflow-x: scroll;
     overflow-y: scroll;
+    padding: 0;
 }
 
 #game-left-canvas input[type=range], #game-right-canvas input[type=range] {
     position: fixed;
     width: 100px;
-    margin-top: 5px;
+    margin: 10px 0 0 10px;
 }
 
 

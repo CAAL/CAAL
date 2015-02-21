@@ -42,6 +42,10 @@ module GUI {
             return this.sys.getNode(name);
         }
 
+        public getPosition(name : string) : Point {
+            return this.sys.toScreen(this.getNode(name).p);
+        }
+
         public showTransitions(fromId : string, toId : string, datas : Object[]) {
             var edges = this.sys.getEdges(fromId, toId),
                 edge = edges.length > 0 ? edges[0] : null;

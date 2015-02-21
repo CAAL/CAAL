@@ -50,17 +50,19 @@ module Activity {
             this.leftGraph = new GUI.ArborGraph(this.leftRenderer);
             this.rightGraph = new GUI.ArborGraph(this.rightRenderer);
 
-            this.$gameType.add(this.$playerType).add(this.$leftProcessList).add(this.$rightProcessList).on("input", () => this.newGame());
+            // Temporary fix.
+            this.$leftContainer.find("canvas").off("mousedown");
+            this.$leftContainer.find("canvas").off("mousemove");
+            this.$rightContainer.find("canvas").off("mousedown");
+            this.$rightContainer.find("canvas").off("mousemove");
+
+            this.$gameType.add(this.$leftProcessList).add(this.$rightProcessList).on("input", () => this.newGame());
             this.$leftZoom.add(this.$rightZoom).on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
         }
 
         public onShow(configuration? : any) : void {
             $(window).on("resize", () => this.resize());
             this.resize();
-
-            this.leftGraph.setOnSelectListener((processId) => {
-                this.centerNode(processId.toString());
-            });
 
             if (this.project.getChanged()) {
                 this.graph = this.project.getGraph();
@@ -99,9 +101,10 @@ module Activity {
         }
 
         private newGame() : void {
+            this.resize();
+
             this.$leftZoom.val("1");
             this.$rightZoom.val("1");
-            this.resize();
 
             var options = this.getOptions();
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
@@ -178,8 +181,10 @@ module Activity {
             return (process instanceof ccs.NamedProcess) ? process.name : "" + process.id;
         }
 
-        private centerNode(process : string) : void {
-            var node = this.leftGraph.getNode(process);
+        private centerNode(process : string, graph : GUI.ProcessGraphUI, container : JQuery) : void {
+            var position = graph.getPosition(process);
+            container.scrollLeft(position.x - (container.width() / 2));
+            container.scrollTop(position.y - (container.height() / 2));
         }
 
         private resize(leftZoom : number = 1, rightZoom : number = 1) : void {
@@ -188,18 +193,25 @@ module Activity {
 
             // Height = Total - (menu + options) - log - (margin + border).
             // Minimum size 275 px.
-            var height = window.innerHeight - offsetTop - offsetBottom - 43;
+            var availableHeight = window.innerHeight - offsetTop - offsetBottom - 42;
 
-            // Needed for overflow to work correctly.
-            this.$leftContainer.height(height);
-            this.$rightContainer.height(height);
+            var width = this.$leftContainer.width();
 
-            this.leftCanvas.width = (this.$leftContainer.width() - 2) * leftZoom;
-            this.rightCanvas.width = (this.$rightContainer.width() - 2) * rightZoom;
-            this.leftCanvas.height = (height - 18) * leftZoom;
-            this.rightCanvas.height = (height - 18) * rightZoom;
+            if (availableHeight < 275) {
+                this.$leftContainer.height(275);
+                this.$rightContainer.height(275);
+            } else if (availableHeight < width) {
+                this.$leftContainer.height(availableHeight);
+                this.$rightContainer.height(availableHeight);
+            } else {
+                this.$leftContainer.height(width);
+                this.$rightContainer.height(width);
+            }
 
-            console.log(this.$leftContainer[0].scrollWidth);
+            this.leftCanvas.width = (this.$leftContainer.width() - 17) * leftZoom; // (Width - border) * zoom
+            this.rightCanvas.width = (this.$rightContainer.width() - 17) * rightZoom; // (Width - border) * zoom
+            this.leftCanvas.height = (this.$leftContainer.height() - 17) * leftZoom;
+            this.rightCanvas.height = (this.$rightContainer.height() - 17) * rightZoom;
 
             this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
             this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
