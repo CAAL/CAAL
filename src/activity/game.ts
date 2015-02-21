@@ -228,6 +228,11 @@ module Activity {
         protected lastAction : string;
         protected currentNodeId : any = 0;
         
+        protected currentLeft : any;
+        protected currentRight : any;
+        
+        private cycleCache : any;
+        
         constructor(protected graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) {
             //this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
             this.htmlNotationVisitor = new Traverse.CCSNotationVisitor();
@@ -256,6 +261,10 @@ module Activity {
             return this.lastMove;
         }
         
+        public getCurrentConfiguration() : any {
+            return { left: this.currentLeft, right: this.currentRight };
+        }
+        
         public getBestWinningAttack(choices : any) : any {
             // consider adding this method to DepedencyGraph interface
             throw "Abstract method. Not implemented.";
@@ -279,6 +288,9 @@ module Activity {
                 throw "No players in game.";
             this.currentNodeId = 0;
             this.step = 0;
+            
+            this.cycleCache = {};
+            this.cycleCache[this.currentNodeId] = this.currentNodeId;
             
             this.attacker.prepareTurn(this.getCurrentChoices(PlayType.Attacker), this);
         }
@@ -314,6 +326,14 @@ module Activity {
             return undefined;
         }
         
+        private saveCurrentProcess(process : any, move : Move) : void {
+            switch (move)
+            {
+                case Move.Left : this.currentLeft  = process; break;
+                case Move.Right: this.currentRight = process; break;
+            }
+        }
+        
         public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) {
             this.step++;
             var destinationHtml : string = this.htmlNotationVisitor.visit(destinationProcess);
@@ -328,12 +348,18 @@ module Activity {
                 this.lastAction = action;
                 this.lastMove = move;
                 
+                this.cycleDetection(nextNode, destinationHtml);
+                this.saveCurrentProcess(destinationProcess, this.lastMove);
+                
                 this.preparePlayer(this.defender);
             } else {
                 this.gameLog.printPlay(player, action, destinationHtml);
                 
                 // the play is a defense, flip the saved last move
                 this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
+                
+                this.cycleDetection(nextNode, destinationHtml);
+                this.saveCurrentProcess(destinationProcess, this.lastMove);
                 
                 this.preparePlayer(this.attacker);
             }
@@ -352,6 +378,19 @@ module Activity {
             } else {
                 // tell the player to prepare for his turn
                 player.prepareTurn(choices, this);
+            }
+        }
+        
+        private cycleDetection(dgNode : any, process : string) : void {
+            if (this.cycleCache[dgNode] != undefined) {
+                // cycle detected
+                this.gameLog.printCycleFound(process);
+                
+                // clear the cache, there's a good chance any successors will also be dtected as a cycle
+                this.cycleCache = {};
+                this.cycleCache[dgNode] = dgNode;
+            } else {
+                this.cycleCache[dgNode] = dgNode;
             }
         }
     }
@@ -376,10 +415,10 @@ module Activity {
         }
         
         protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) : dg.DependencyGraph {
-            var leftProcess : any  = graph.processByName(this.leftProcessName);
-            var rightProcess : any = graph.processByName(this.rightProcessName);
+            this.currentLeft  = graph.processByName(this.leftProcessName);
+            this.currentRight = graph.processByName(this.rightProcessName);
             
-            return this.bisimulationDG = new dg.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, leftProcess.id, rightProcess.id);
+            return this.bisimulationDG = new dg.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
         }
         
         public getWinner() : Player {
@@ -588,12 +627,16 @@ module Activity {
         }
         
         public printWinner(winner : Player) : void {
-            this.print(this.getColoredPlayer(winner) + " wins.");
+            this.print("No more valid transitions, " + this.getColoredPlayer(winner) + " wins.");
         }
         
         private getColoredPlayer(player : Player) : string {
             return player.playTypeStr();
             // return "<span style='color: "+player.getColor()+"'>" + player.playTypeStr() + "</span>";
+        }
+        
+        public printCycleFound(process : string) : void {
+            this.print("Cycle detected. " + process + " has been visited before.");
         }
     }
 }
