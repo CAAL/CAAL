@@ -19,6 +19,12 @@ module Activity {
         private $rightProcessList : JQuery;
         private $leftContainer : JQuery;
         private $rightContainer : JQuery;
+        private $leftZoom : JQuery;
+        private $rightZoom : JQuery;
+        private leftCanvas : HTMLCanvasElement;
+        private rightCanvas : HTMLCanvasElement;
+        private leftRenderer: Renderer;
+        private rightRenderer : Renderer;
         private leftGraph: GUI.ProcessGraphUI;
         private rightGraph: GUI.ProcessGraphUI;
         private dgGame : BisimulationGame; // make generic with DgGame isntead of BisimulationGame
@@ -34,17 +40,27 @@ module Activity {
             this.$rightProcessList = $("#game-right-process");
             this.$leftContainer = $("#game-left-canvas");
             this.$rightContainer = $("#game-right-canvas");
+            this.$leftZoom = $("#zoom-left");
+            this.$rightZoom = $("#zoom-right");
+            this.leftCanvas = <HTMLCanvasElement> this.$leftContainer.find("canvas")[0];
+            this.rightCanvas = <HTMLCanvasElement> this.$rightContainer.find("canvas")[0];
 
-            var options = {repulsion: 100, stiffness: 800, friction: 0.5};
-            this.leftGraph = new GUI.ArborGraph(new Renderer(<HTMLCanvasElement> $("#game-left-canvas > canvas")[0]), options);
-            this.rightGraph = new GUI.ArborGraph(new Renderer(<HTMLCanvasElement> $("#game-right-canvas > canvas")[0]), options);
+            this.leftRenderer = new Renderer(this.leftCanvas);
+            this.rightRenderer = new Renderer(this.rightCanvas);
+            this.leftGraph = new GUI.ArborGraph(this.leftRenderer);
+            this.rightGraph = new GUI.ArborGraph(this.rightRenderer);
 
-            this.$gameType.add(this.$playerType).add(this.$leftProcessList).add(this.$rightProcessList).on("change", () => this.newGame());
+            this.$gameType.add(this.$playerType).add(this.$leftProcessList).add(this.$rightProcessList).on("input", () => this.newGame());
+            this.$leftZoom.add(this.$rightZoom).on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
         }
 
         public onShow(configuration? : any) : void {
             $(window).on("resize", () => this.resize());
             this.resize();
+
+            this.leftGraph.setOnSelectListener((processId) => {
+                this.centerNode(processId.toString());
+            });
 
             if (this.project.getChanged()) {
                 this.graph = this.project.getGraph();
@@ -83,6 +99,10 @@ module Activity {
         }
 
         private newGame() : void {
+            this.$leftZoom.val("1");
+            this.$rightZoom.val("1");
+            this.resize();
+
             var options = this.getOptions();
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
             this.draw(this.graph.processByName(options.leftProcess), this.leftGraph);
@@ -158,9 +178,31 @@ module Activity {
             return (process instanceof ccs.NamedProcess) ? process.name : "" + process.id;
         }
 
-        private resize() : void {
-            this.$leftContainer.height(this.$leftContainer.width());
-            this.$rightContainer.height(this.$rightContainer.width());
+        private centerNode(process : string) : void {
+            var node = this.leftGraph.getNode(process);
+        }
+
+        private resize(leftZoom : number = 1, rightZoom : number = 1) : void {
+            var offsetTop = $("#game-main").offset().top;
+            var offsetBottom = $("#game-log").height();
+
+            // Height = Total - (menu + options) - log - (margin + border).
+            // Minimum size 275 px.
+            var height = window.innerHeight - offsetTop - offsetBottom - 43;
+
+            // Needed for overflow to work correctly.
+            this.$leftContainer.height(height);
+            this.$rightContainer.height(height);
+
+            this.leftCanvas.width = (this.$leftContainer.width() - 2) * leftZoom;
+            this.rightCanvas.width = (this.$rightContainer.width() - 2) * rightZoom;
+            this.leftCanvas.height = (height - 18) * leftZoom;
+            this.rightCanvas.height = (height - 18) * rightZoom;
+
+            console.log(this.$leftContainer[0].scrollWidth);
+
+            this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
+            this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
         }
     }
     

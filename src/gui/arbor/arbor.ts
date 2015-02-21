@@ -38,6 +38,10 @@ module GUI {
             return data;
         }
 
+        public getNode(name : string) : Node {
+            return this.sys.getNode(name);
+        }
+
         public showTransitions(fromId : string, toId : string, datas : Object[]) {
             var edges = this.sys.getEdges(fromId, toId),
                 edge = edges.length > 0 ? edges[0] : null;

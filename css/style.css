@@ -313,6 +313,12 @@ td.inconsolata{
     overflow-y: scroll;
 }
 
+#game-left-canvas input[type=range], #game-right-canvas input[type=range] {
+    position: fixed;
+    width: 100px;
+    margin-top: 5px;
+}
+
 
 /*
  *  Tooltip styles
