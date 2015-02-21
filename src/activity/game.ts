@@ -179,12 +179,12 @@ module Activity {
         }
 
         private resize(leftZoom : number = 1, rightZoom : number = 1) : void {
-            var offsetTop = $("#game-main").offset().top;
-            var offsetBottom = $("#game-log").height();
+            var offsetTop = $("#game-main").offset().top 20 + 2; // + margin + border.
+            var offsetBottom = $("#game-status").height() + 20 + 2; // + margin + border.
 
             // Height = Total - (menu + options) - log - (margin + border).
             // Minimum size 275 px.
-            var availableHeight = window.innerHeight - offsetTop - offsetBottom - 42;
+            var availableHeight = window.innerHeight - offsetTop - offsetBottom;
 
             var width = this.$leftContainer.width();
 

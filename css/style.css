@@ -302,7 +302,7 @@ td.inconsolata{
  * Game activity styles
  */
 
-#game-main {
+#game-main, #game-status {
     margin: 20px 0;
 }
 
@@ -317,6 +317,10 @@ td.inconsolata{
     position: fixed;
     width: 100px;
     margin: 10px 0 0 10px;
+}
+
+#game-status {
+    border: 1px solid #e7e7e7;
 }
 
 
