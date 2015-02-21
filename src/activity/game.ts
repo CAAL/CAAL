@@ -1,4 +1,3 @@
-/// <reference path="../../lib/d3.d.ts" />
 /// <reference path="../gui/project.ts" />
 /// <reference path="../gui/gui.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
@@ -101,22 +100,10 @@ module Activity {
         }
 
         private newGame() : void {
-            this.resize();
-
-            this.$leftZoom.val("1");
-            this.$rightZoom.val("1");
-
             var options = this.getOptions();
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
             this.draw(this.graph.processByName(options.leftProcess), this.leftGraph);
             this.draw(this.graph.processByName(options.rightProcess), this.rightGraph);
-            
-            this.makeDgGame(options);
-        }
-        
-        private makeDgGame(options : any) {
-            if (this.dgGame != undefined)
-                this.dgGame.stopGame();
             
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
@@ -125,14 +112,13 @@ module Activity {
             
             var attacker : Player;
             var defender : Player;
-            
-            // TODO make human player
-            if (this.dgGame.isBisimilar()) {
-                defender = new Computer(Player.Player1Color, PlayType.Defender);
-                attacker = new Computer(Player.Player2Color, PlayType.Attacker);
+
+            if (options.playerType === "defender") {
+                attacker = new Computer(PlayType.Attacker);
+                defender = new Human(PlayType.Defender);
             } else {
-                defender = new Computer(Player.Player1Color, PlayType.Defender);
-                attacker = new Computer(Player.Player2Color, PlayType.Attacker);
+                attacker = new Human(PlayType.Attacker);
+                defender = new Computer(PlayType.Defender);
             }
             
             this.dgGame.setPlayers(attacker, defender);
@@ -140,6 +126,11 @@ module Activity {
         }
 
         private draw(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
+            this.resize();
+
+            this.$leftZoom.val("1");
+            this.$rightZoom.val("1");
+
             this.clear(graph);
 
             var allTransitions = this.expandBFS(process, 1000);
@@ -444,12 +435,7 @@ module Activity {
 
     class Player { // abstract
         
-        static Player1Color : string = "#e74c3c";
-        static Player2Color : string = "#2980b9";
-        static HumanColor : string = Player.Player1Color;
-        static ComputerColor : string = Player.Player2Color;
-        
-        constructor(protected playerColor : string, private playType : PlayType) {
+        constructor(private playType : PlayType) {
             
         }
         
@@ -466,10 +452,6 @@ module Activity {
                     break;
                 }
             }
-        }
-        
-        public getColor() : string {
-            return this.playerColor;
         }
         
         public getPlayType() : PlayType {
@@ -495,8 +477,8 @@ module Activity {
     
     class Human extends Player {
         
-        constructor(playerColor : string, playType : PlayType) {
-            super(playerColor, playType);
+        constructor(playType : PlayType) {
+            super(playType);
         }
         
         protected prepareAttack(choices : any, game : DgGame) : void {
@@ -514,8 +496,8 @@ module Activity {
         
         private delayedPlay;
         
-        constructor(playerColor : string, playType : PlayType) {
-            super(playerColor, playType);
+        constructor(playType : PlayType) {
+            super(playType);
         }
         
         public abortPlay() : void {
@@ -596,16 +578,11 @@ module Activity {
         }
         
         public printPlay(player : Player, action : string, destination : string) : void {
-            this.print(this.getColoredPlayer(player) + ": " + "--- "+action+" --->   " + destination, 20);
+            this.print(player.playTypeStr() + ": " + "--- "+action+" --->   " + destination, 20);
         }
         
         public printWinner(winner : Player) : void {
-            this.print(this.getColoredPlayer(winner) + " wins.");
-        }
-        
-        private getColoredPlayer(player : Player) : string {
-            return player.playTypeStr();
-            // return "<span style='color: "+player.getColor()+"'>" + player.playTypeStr() + "</span>";
+            this.print(winner.playTypeStr() + " wins.");
         }
     }
 }
