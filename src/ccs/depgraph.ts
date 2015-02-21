@@ -183,44 +183,6 @@ module DependencyGraph {
             return result;
         }
         
-        public getAttackerChoice(currentDgNode, marking : LevelMarking) {
-            if (this.constructData[currentDgNode][0] !== 0)
-                throw "Bad node for attacker choice";
-            
-            var hyperedges = this.getHyperEdges(currentDgNode);
-            
-            var options = [];
-            var bestCandidateIndex = 0;
-            var bestCandidateLevel = Infinity;
-            var ownLevel = marking.getLevel(currentDgNode);
-            
-            hyperedges.forEach((hyperedge, i) => {
-                var targetNode = hyperedge[0];
-                var data = this.constructData[targetNode];
-                var action = data[1];
-                var targetProcess = this.attackSuccGen.getProcessById(data[2]);
-                var move = data[0];
-                
-                options.push({
-                    action: action,
-                    targetProcess: targetProcess,
-                    nextNode: targetNode,
-                    move: move
-                });
-                
-                var targetNodeLevel = marking.getLevel(targetNode);
-                if (targetNodeLevel < ownLevel && targetNodeLevel < bestCandidateLevel) {
-                    bestCandidateLevel = targetNodeLevel;
-                    bestCandidateIndex = i;
-                }
-            });
-            
-            if (options.length == 0)
-                throw "No options for attacker";
-            
-            return options[bestCandidateIndex];
-        }
-        
         public getDefenderOptions(currentDgNode : any) {
             if (this.constructData[currentDgNode][0] === 0)
                 throw "Bad node for defender options";
@@ -242,18 +204,6 @@ module DependencyGraph {
             });
             
             return result;
-        }
-        
-        public getDefenderChoice(currentDgNode : any, marking : LevelMarking) {
-            var options : any = this.getDefenderOptions(currentDgNode);
-            
-            for (var i = 0; i < options.length; i++) {
-                if (marking.getMarking(options[i].nextNode) === marking.ZERO) {
-                    return options[i];
-                }
-            }
-            
-            throw "No defender moves";
         }
         
         getBisimulationCollapse(marking) : Traverse.Collapse {
