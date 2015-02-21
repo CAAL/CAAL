@@ -107,7 +107,6 @@ var examples : any[] = [
 			 "T3 = 0;\n",
 		properties:[]
 	},
-	
 	{
 		title: "Exercise 5.1",
 		ccs: "S = a.S1 + a.S2;\n" +
@@ -116,19 +115,7 @@ var examples : any[] = [
 			 "S3 = a.S;\n" +
 			 "S4 = a.S;\n",	
 		properties:[]
-	},
-	
-	{
-		title: "Exercise 5.1",
-		ccs: "S = a.S1 + a.S2;\n" +
-			 "S1 = a.S3 + a.S4;\n" + 
-			 "S2 = a.S4;\n" +
-			 "S3 = a.S;\n" +
-			 "S4 = a.S;\n",	
-		properties:[]
-	},
-	
-	
+	},	
 	{
 		title: "Lecture Example",
 		ccs: "Send = acc.Sending;\n" +
