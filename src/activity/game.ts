@@ -108,7 +108,7 @@ module Activity {
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
             
-            this.dgGame = new BisimulationGame(this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess);
+            this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess);
             
             var attacker : Player;
             var defender : Player;
@@ -242,7 +242,7 @@ module Activity {
         
         private cycleCache : any;
         
-        constructor(protected graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) {
+        constructor(private gameActivity : Game, protected graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) {
             //this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
             this.htmlNotationVisitor = new Traverse.CCSNotationVisitor();
             
@@ -268,6 +268,10 @@ module Activity {
         
         public getLastMove() : Move {
             return this.lastMove;
+        }
+        
+        public getLastAction() : string {
+            return this.lastAction;
         }
         
         public getCurrentConfiguration() : any {
@@ -411,12 +415,12 @@ module Activity {
         private bisimulationDG : dg.BisimulationDG;
         private bisimilar : boolean;
         
-        constructor(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string) {
+        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string) {
             // stupid compiler
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
             
-            super(graph, attackerSuccessorGen, defenderSuccesorGen); // creates dependency graph and marking
+            super(gameActivity, graph, attackerSuccessorGen, defenderSuccesorGen); // creates dependency graph and marking
         }
         
         public isBisimilar() : boolean {
@@ -522,16 +526,70 @@ module Activity {
     
     class Human extends Player {
         
+        private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
+        private $table;
+        
         constructor(playType : PlayType) {
             super(playType);
+            
+            this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
+            this.$table = $("#game-transitions-table").find("tbody");
         }
         
         protected prepareAttack(choices : any, game : DgGame) : void {
-            
+            this.fillTable(choices, game, true);
         }
         
         protected prepareDefend(choices : any, game : DgGame) : void {
+            this.fillTable(choices, game, false);
+        }
+        
+        private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
+            var currentConfiguration = game.getCurrentConfiguration();
+            var source : string;
+            var action : string = game.getLastAction();
             
+            if (!isAttack) {
+                var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
+                source = this.htmlNotationVisitor.visit(sourceProcess);
+            }
+            
+            this.$table.empty();
+            
+            choices.forEach( (choice) => {
+                var row = $("<tr></tr>");
+                
+                if (isAttack) {
+                    var sourceProcess = choice.move == 1 ? currentConfiguration.left : currentConfiguration.right;
+                    source = this.htmlNotationVisitor.visit(sourceProcess);
+                    action = choice.action;
+                }
+                
+                var targetHtml = this.htmlNotationVisitor.visit(choice.targetProcess);
+                
+                var sourceTd = $("<td id='source'></td>").append(source);
+                var actionTd = $("<td id='action'></td>").append(action);
+                var targetTd = $("<td id='target'></td>").append(targetHtml);
+                
+                $(row).on("click", () => {
+                    this.clickChoice(choice, game, isAttack);
+                });
+                
+                row.append(sourceTd, actionTd, targetTd);
+                this.$table.append(row);
+            });
+        }
+        
+        private clickChoice(choice : any, game: DgGame, isAttack : boolean) : void {
+            this.$table.empty();
+            
+            if (isAttack) {
+                var move : Move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+                game.play(this, choice.targetProcess, choice.nextNode, choice.action, move);
+            }
+            else {
+                game.play(this, choice.targetProcess, choice.nextNode);
+            }
         }
     }
 
@@ -627,7 +685,6 @@ module Activity {
         }
         
         public printWinner(winner : Player) : void {
-            this.print(winner.playTypeStr() + " wins.");
             this.print("No more valid transitions, " + winner.playTypeStr() + " wins.");
         }
 

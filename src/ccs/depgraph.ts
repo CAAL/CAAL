@@ -168,7 +168,7 @@ module DependencyGraph {
             hyperedges.forEach(hyperedge => {
                 var targetNode = hyperedge[0];
                 var data = this.constructData[targetNode];
-                var action = data[1];
+                var action = data[1].toString();
                 var targetProcess = this.attackSuccGen.getProcessById(data[2]);
                 var move = data[0];
                 
