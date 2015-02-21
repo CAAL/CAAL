@@ -147,6 +147,12 @@ module Activity {
             graph.setSelected(process.id.toString());
         }
 
+        private highlightNodes() : void {
+            var conf = this.dgGame.getCurrentConfiguration();
+            this.leftGraph.setSelected(conf.left.id.toString());
+            this.rightGraph.setSelected(conf.right.id.toString());
+        }
+
         private clear(graph : GUI.ProcessGraphUI) : void {
             graph.clearAll();
         }
@@ -179,7 +185,7 @@ module Activity {
         }
 
         private resize(leftZoom : number = 1, rightZoom : number = 1) : void {
-            var offsetTop = $("#game-main").offset().top 20 + 2; // + margin + border.
+            var offsetTop = $("#game-main").offset().top + 20 + 2; // + margin + border.
             var offsetBottom = $("#game-status").height() + 20 + 2; // + margin + border.
 
             // Height = Total - (menu + options) - log - (margin + border).
