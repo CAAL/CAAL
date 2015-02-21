@@ -105,11 +105,11 @@ module Activity {
             
             // TODO make human player
             if (this.dgGame.isBisimilar()) {
-                defender = new Computer(Player.Player1Color, this.dgGame, PlayType.Defender);
-                attacker = new Computer(Player.Player2Color, this.dgGame, PlayType.Attacker);
+                defender = new Computer(Player.Player1Color, PlayType.Defender);
+                attacker = new Computer(Player.Player2Color, PlayType.Attacker);
             } else {
-                defender = new Computer(Player.Player1Color, this.dgGame, PlayType.Defender);
-                attacker = new Computer(Player.Player2Color, this.dgGame, PlayType.Attacker);
+                defender = new Computer(Player.Player1Color, PlayType.Defender);
+                attacker = new Computer(Player.Player2Color, PlayType.Attacker);
             }
             
             this.dgGame.setPlayers(attacker, defender);
@@ -180,7 +180,6 @@ module Activity {
         
         protected attacker : Player;
         protected defender : Player;
-        private round : number = 1;
         private step : number = 0;
         
         protected lastMove : Move;
@@ -199,19 +198,7 @@ module Activity {
         }
         
         public getRound() : number {
-            return this.round;
-        }
-        
-        public getMarking(nodeId : any = undefined) : any {
-            return this.marking.getMarking(nodeId);
-        }
-        
-        public getProcessById(id : any) : any {
-            return this.graph.processById(id);
-        }
-        
-        public getDependencyGraph() : dg.DependencyGraph {
-            return this.dependencyGraph;
+            return this.step / 2 + 1;
         }
         
         public getWinner() : Player {
@@ -227,19 +214,19 @@ module Activity {
             return this.lastMove;
         }
         
-        public getBestWinningAttack() : any {
+        public getBestWinningAttack(choices : any) : any {
             // consider adding this method to DepedencyGraph interface
             throw "Abstract method. Not implemented.";
             return undefined;
         }
         
-        public getWinningDefend() : any {
+        public getWinningDefend(choices : any) : any {
             // consider adding this method to DepedencyGraph interface
             throw "Abstract method. Not implemented.";
             return undefined;
         }
         
-        public getCurrentChoices(player : Player) : any {
+        public getCurrentChoices(playType : PlayType) : any {
             // consider adding this method to DepedencyGraph interface
             throw "Abstract method. Not implemented.";
             return undefined;
@@ -249,8 +236,9 @@ module Activity {
             if (this.attacker == undefined || this.defender == undefined)
                 throw "No players in game.";
             this.currentNodeId = 0;
+            this.step = 0;
             
-            this.attacker.prepareTurn();
+            this.attacker.prepareTurn(this.getCurrentChoices(PlayType.Attacker), this);
         }
         
         public stopGame() : void {
@@ -258,7 +246,7 @@ module Activity {
             this.attacker.abortPlay();
             this.defender.abortPlay();
             
-            //TODO consider rendering the dgGame unplayable now
+            //TODO consider rendering the dgGame unplayable now by some flag
         }
         
         public setPlayers(attacker : Player, defender : Player) {
@@ -291,39 +279,38 @@ module Activity {
             // change the current node id to the next
             this.currentNodeId = nextNode;
             
-            if (player == this.attacker) {
-                this.gameLog.printRound(this.step / 2 + 1);
+            if (player.getPlayType() == PlayType.Attacker) {
+                this.gameLog.printRound(this.getRound());
                 this.gameLog.printPlay(player, action, destinationHtml);
                 
                 this.lastAction = action;
                 this.lastMove = move;
                 
-                if (this.hasPlayerLost(this.defender)) {
-                    this.gameLog.printWinner(this.attacker);
-                    this.stopGame();
-                } else {
-                    // tell the other player to prepare for their turn
-                    this.defender.prepareTurn();
-                }
+                this.preparePlayer(this.defender);
             } else {
                 this.gameLog.printPlay(player, action, destinationHtml);
                 
-                // if the play is a defense, then flip the saved last move
+                // the play is a defense, flip the saved last move
                 this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
                 
-                if (this.hasPlayerLost(this.attacker)) {
-                    this.gameLog.printWinner(this.defender);
-                    this.stopGame();
-                } else {
-                    // tell the other player to prepare for their turn
-                    this.attacker.prepareTurn();
-                }
+                this.preparePlayer(this.attacker);
             }
         }
         
-        private hasPlayerLost(player : Player) : boolean {
-            var choices : any = this.getCurrentChoices(player);
-            return choices.length === 0;
+        private preparePlayer(player : Player) {
+            var choices : any = this.getCurrentChoices(player.getPlayType());
+            
+            if (choices.length === 0) {
+                // the player to be prepared cannot make a move
+                // the player to prepare has lost, announce it
+                this.gameLog.printWinner(player == this.attacker ? this.defender : this.attacker);
+                
+                // stop game
+                this.stopGame();
+            } else {
+                // tell the player to prepare for his turn
+                player.prepareTurn(choices, this);
+            }
         }
     }
 
@@ -363,16 +350,38 @@ module Activity {
             return marking;
         }
         
-        public getBestWinningAttack() : any {
-            return this.bisimulationDG.getAttackerChoice(this.currentNodeId, this.marking);
+        public getBestWinningAttack(choices : any) : any {
+            if (choices.length == 0)
+                throw "No choices for attacker";
+            
+            var bestCandidateIndex = 0;
+            var bestCandidateLevel = Infinity;
+            var ownLevel = this.marking.getLevel(this.currentNodeId);
+            
+            choices.forEach((option, i) => {
+                var targetNodeLevel = this.marking.getLevel(option.nextNode);
+                
+                if (targetNodeLevel < ownLevel && targetNodeLevel < bestCandidateLevel) {
+                    bestCandidateLevel = targetNodeLevel;
+                    bestCandidateIndex = i;
+                }
+            });
+            
+            return choices[bestCandidateIndex];
         }
         
-        public getWinningDefend() : any {
-            return this.bisimulationDG.getDefenderChoice(this.currentNodeId, this.marking);
+        public getWinningDefend(choices : any) : any {
+            for (var i = 0; i < choices.length; i++) {
+                if (this.marking.getMarking(choices[i].nextNode) === this.marking.ZERO) {
+                    return choices[i];
+                }
+            }
+            
+            throw "No defender moves";
         }
         
-        public getCurrentChoices(player : Player) : any {
-            if (player == this.attacker)
+        public getCurrentChoices(playType : PlayType) : any {
+            if (playType == PlayType.Attacker)
                 return this.bisimulationDG.getAttackerOptions(this.currentNodeId);
             else
                 return this.bisimulationDG.getDefenderOptions(this.currentNodeId);
@@ -386,20 +395,20 @@ module Activity {
         static HumanColor : string = Player.Player1Color;
         static ComputerColor : string = Player.Player2Color;
         
-        constructor(protected playerColor : string, protected game: DgGame, private playType : PlayType) {
+        constructor(protected playerColor : string, private playType : PlayType) {
             
         }
         
-        public prepareTurn() : void {
+        public prepareTurn(choices : any, game : DgGame) : void {
             // input list of processes
             switch (this.playType)
             {
                 case PlayType.Attacker: {
-                    this.prepareAttack();
+                    this.prepareAttack(choices, game);
                     break;
                 }
                 case PlayType.Defender: {
-                    this.prepareDefend();
+                    this.prepareDefend(choices, game);
                     break;
                 }
             }
@@ -413,11 +422,11 @@ module Activity {
             return this.playType;
         }
         
-        protected prepareAttack() : void {
+        protected prepareAttack(choices : any, game : DgGame) : void {
             throw "Abstract method. Not implemented.";
         }
         
-        protected prepareDefend() : void {
+        protected prepareDefend(choices : any, game : DgGame) : void {
             throw "Abstract method. Not implemented.";
         }
         
@@ -432,22 +441,16 @@ module Activity {
     
     class Human extends Player {
         
-        constructor(playerColor : string, game : DgGame, playType : PlayType) {
-            super(playerColor, game, playType);
+        constructor(playerColor : string, playType : PlayType) {
+            super(playerColor, playType);
         }
         
-        protected prepareAttack() : void {
-            var choices = this.game.getCurrentChoices(this);
-            // clickHandler on choices
+        protected prepareAttack(choices : any, game : DgGame) : void {
+            
         }
         
-        protected prepareDefend() : void {
-            var choices = this.game.getCurrentChoices(this);
-            // clickHandler on choices
-        }
-        
-        public abortPlay() : void {
-            // optional override, delete if you feel like it
+        protected prepareDefend(choices : any, game : DgGame) : void {
+            
         }
     }
 
@@ -457,62 +460,59 @@ module Activity {
         
         private delayedPlay;
         
-        constructor(playerColor : string, game: DgGame, playType : PlayType) {
-            super(playerColor, game, playType);
+        constructor(playerColor : string, playType : PlayType) {
+            super(playerColor, playType);
         }
         
         public abortPlay() : void {
             clearTimeout(this.delayedPlay);
         }
         
-        protected prepareAttack() : void {
+        protected prepareAttack(choices : any, game : DgGame) : void {
             // select strategy
-            if (this.game.isWinner(this))
-                this.delayedPlay = setTimeout( () => this.winningAttack(), Computer.Delay);
+            if (game.isWinner(this))
+                this.delayedPlay = setTimeout( () => this.winningAttack(choices, game), Computer.Delay);
             else
-                this.delayedPlay = setTimeout( () => this.losingAttack(), Computer.Delay);
+                this.delayedPlay = setTimeout( () => this.losingAttack(choices, game), Computer.Delay);
         }
         
-        protected prepareDefend() : void {
+        protected prepareDefend(choices : any, game : DgGame) : void {
             // select strategy
-            if (this.game.isWinner(this))
-                this.delayedPlay = setTimeout( () => this.winningDefend(), Computer.Delay);
+            if (game.isWinner(this))
+                this.delayedPlay = setTimeout( () => this.winningDefend(choices, game), Computer.Delay);
             else
-                this.delayedPlay = setTimeout( () => this.losingDefend(), Computer.Delay);
+                this.delayedPlay = setTimeout( () => this.losingDefend(choices, game), Computer.Delay);
         }
         
-        private losingAttack() : void {
+        private losingAttack(choices : any, game : DgGame) : void {
             // play random
-            var choices = this.game.getCurrentChoices(this);
             var random : number = this.random(choices.length);
             
             var move : Move = choices[random].move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
             
-            this.game.play(this, choices[random].targetProcess, choices[random].nextNode, choices[random].action, move);
+            game.play(this, choices[random].targetProcess, choices[random].nextNode, choices[random].action, move);
         }
         
-        private winningAttack() : void {
-            var choice : any = this.game.getBestWinningAttack();
+        private winningAttack(choices : any, game : DgGame) : void {
+            var choice : any = game.getBestWinningAttack(choices);
             var move : Move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
             
-            this.game.play(this, choice.targetProcess, choice.nextNode, choice.action, move);
+            game.play(this, choice.targetProcess, choice.nextNode, choice.action, move);
         }
         
-        private losingDefend() : void {
+        private losingDefend(choices : any, game : DgGame) : void {
             // play random
-            var choices = this.game.getCurrentChoices(this);
             var random : number = this.random(choices.length);
-            
-            this.game.play(this, choices[random].targetProcess, choices[random].nextNode);
+            game.play(this, choices[random].targetProcess, choices[random].nextNode);
         }
         
-        private winningDefend() : void {
-            var choice = this.game.getWinningDefend();
-            this.game.play(this, choice.targetProcess, choice.nextNode);
+        private winningDefend(choices : any, game : DgGame) : void {
+            var choice = game.getWinningDefend(choices);
+            game.play(this, choice.targetProcess, choice.nextNode);
         }
         
         private random(max) : number {
-            // random number between 0 and max
+            // random integer between 0 and max
             return Math.floor((Math.random() * max));
         }
     }
