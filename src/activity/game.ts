@@ -8,6 +8,19 @@ module Activity {
 
     import dg = DependencyGraph;
 
+    function groupBy<T>(arr : T[], keyFn : (T) => any) : any {
+        var groupings = Object.create(null),
+            key, elem, group;
+        for (var i = 0; i < arr.length; i++) {
+            elem = arr[i];
+            key = keyFn(elem);
+            group = groupings[key];
+            if (!group) group = groupings[key] = [];
+            group.push(elem);
+        }
+        return groupings;
+    }
+
     export class Game extends Activity {
         private project : Project;
         private graph : CCS.Graph;
@@ -55,7 +68,7 @@ module Activity {
             this.$rightContainer.find("canvas").off("mousedown");
             this.$rightContainer.find("canvas").off("mousemove");
 
-            this.$gameType.add(this.$leftProcessList).add(this.$rightProcessList).on("input", () => this.newGame());
+            this.$gameType.add(this.$playerType).add(this.$leftProcessList).add(this.$rightProcessList).on("change", () => this.newGame());
             this.$leftZoom.add(this.$rightZoom).on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
         }
 
@@ -125,7 +138,7 @@ module Activity {
             this.dgGame.startGame();
         }
 
-        private draw(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
+        /*private draw(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
             this.resize();
 
             this.$leftZoom.val("1");
@@ -145,9 +158,45 @@ module Activity {
             }
 
             graph.setSelected(process.id.toString());
+        }*/
+
+        // Use this for now. Needs refactor.
+        private draw(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
+            if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
+            this.resize();
+
+            this.$leftZoom.val("1");
+            this.$rightZoom.val("1");
+
+            this.clear(graph);
+
+            var allTransitions = this.expandBFS(process, 1000);
+
+            for (var fromId in allTransitions) {
+                var fromProcess = this.graph.processById(fromId);
+                this.showProcess(fromProcess, graph);
+                var groupedByTargetProcessId = groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
+
+                Object.keys(groupedByTargetProcessId).forEach(tProcId => {
+                    var group = groupedByTargetProcessId[tProcId],
+                        data = group.map(t => { return {label: t.action.toString()}; });
+                    this.showProcess(this.graph.processById(tProcId), graph);
+                    graph.showTransitions(fromProcess.id, tProcId, data);
+                });
+            }
+
+            graph.setSelected(process.id.toString());
         }
 
-        private highlightNodes() : void {
+        private showProcess(process : ccs.Process, graph : GUI.ProcessGraphUI) : void {
+            var data;
+            if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
+            if (graph.getProcessDataObject(process.id)) return;
+            data = {label: this.labelFor(process)};
+            graph.showProcess(process.id, data);
+        }
+
+        public highlightNodes() : void {
             var conf = this.dgGame.getCurrentConfiguration();
             this.leftGraph.setSelected(conf.left.id.toString());
             this.rightGraph.setSelected(conf.right.id.toString());
@@ -157,7 +206,7 @@ module Activity {
             graph.clearAll();
         }
 
-        private expandBFS(process : ccs.Process, maxDepth) {
+        private expandBFS(process : CCS.Process, maxDepth) {
             var result = {},
                 queue = [[1, process]], //non-emptying array as queue.
                 depth, qIdx, fromProcess, transitions;
@@ -174,19 +223,25 @@ module Activity {
             return result;
         }
 
-        private labelFor(process : ccs.Process) : string {
-            return (process instanceof ccs.NamedProcess) ? process.name : "" + process.id;
+        private labelFor(process : CCS.Process) : string {
+            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : "" + process.id;
         }
 
-        private centerNode(process : string, graph : GUI.ProcessGraphUI, container : JQuery) : void {
-            var position = graph.getPosition(process);
-            container.scrollLeft(position.x - (container.width() / 2));
-            container.scrollTop(position.y - (container.height() / 2));
+        public centerNode(process : CCS.Process, move : Move) : void {
+            if (move === Move.Left) {
+                var position = this.leftGraph.getPosition(process.id.toString());
+                this.$leftContainer.scrollLeft(position.x - (this.$leftContainer.width() / 2));
+                this.$leftContainer.scrollTop(position.y - (this.$leftContainer.height() / 2));
+            } else {
+                var position = this.rightGraph.getPosition(process.id.toString());
+                this.$rightContainer.scrollLeft(position.x - (this.$rightContainer.width() / 2));
+                this.$rightContainer.scrollTop(position.y - (this.$rightContainer.height() / 2));
+            }
         }
 
         private resize(leftZoom : number = 1, rightZoom : number = 1) : void {
-            var offsetTop = $("#game-main").offset().top + 20 + 2; // + margin + border.
-            var offsetBottom = $("#game-status").height() + 20 + 2; // + margin + border.
+            var offsetTop = $("#game-main").offset().top + 20; // + margin + border.
+            var offsetBottom = $("#game-status").height();
 
             // Height = Total - (menu + options) - log - (margin + border).
             // Minimum size 275 px.
@@ -216,8 +271,8 @@ module Activity {
     }
     
     
-    enum PlayType { Attacker, Defender }
-    enum Move { Right, Left }
+    export enum PlayType { Attacker, Defender }
+    export enum Move { Right, Left }
 
     class DgGame {
         
@@ -227,7 +282,7 @@ module Activity {
         //private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
         private htmlNotationVisitor : Traverse.CCSNotationVisitor;
         
-        private gameLog : GameLog = new GameLog(true);
+        private gameLog : GameLog = new GameLog();
         
         protected attacker : Player;
         protected defender : Player;
@@ -355,9 +410,8 @@ module Activity {
             this.currentNodeId = nextNode;
             
             if (player.getPlayType() == PlayType.Attacker) {
-                this.gameLog.printRound(this.getRound());
-                this.gameLog.printPlay(player, action, destinationHtml);
-                
+                this.gameLog.printPlay(player, action, destinationProcess);
+
                 this.lastAction = action;
                 this.lastMove = move;
                 
@@ -366,8 +420,8 @@ module Activity {
                 
                 this.preparePlayer(this.defender);
             } else {
-                this.gameLog.printPlay(player, action, destinationHtml);
-                
+                this.gameLog.printPlay(player, action, destinationProcess);
+
                 // the play is a defense, flip the saved last move
                 this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
                 
@@ -376,6 +430,9 @@ module Activity {
                 
                 this.preparePlayer(this.attacker);
             }
+
+            this.gameActivity.highlightNodes();
+            this.gameActivity.centerNode(destinationProcess, this.lastMove);
         }
         
         private preparePlayer(player : Player) {
@@ -384,7 +441,7 @@ module Activity {
             if (choices.length === 0) {
                 // the player to be prepared cannot make a move
                 // the player to prepare has lost, announce it
-                this.gameLog.printWinner(player == this.attacker ? this.defender : this.attacker);
+                this.gameLog.printWinner((player === this.attacker) ? this.defender : this.attacker);
                 
                 // stop game
                 this.stopGame();
@@ -397,7 +454,7 @@ module Activity {
         private cycleDetection(dgNode : any, process : string) : void {
             if (this.cycleCache[dgNode] != undefined) {
                 // cycle detected
-                this.gameLog.printCycleFound(process);
+                //this.gameLog.printCycleFound(process);
                 
                 // clear the cache, there's a good chance any successors will also be dtected as a cycle
                 this.cycleCache = {};
@@ -483,6 +540,8 @@ module Activity {
     }
 
     class Player { // abstract
+
+        protected gameLog : GameLog = new GameLog();
         
         constructor(private playType : PlayType) {
             
@@ -490,6 +549,13 @@ module Activity {
         
         public prepareTurn(choices : any, game : DgGame) : void {
             // input list of processes
+            if (this.playType === PlayType.Attacker) {
+                this.gameLog.printRound(game.getRound());
+                this.gameLog.printConfiguration(game.getCurrentConfiguration());
+                this.gameLog.printPlayerType(this);
+            } else {
+            }
+
             switch (this.playType)
             {
                 case PlayType.Attacker: {
@@ -520,7 +586,7 @@ module Activity {
         }
         
         public playTypeStr() : string {
-            return this.playType == PlayType.Attacker ? "ATTACKER" : this.playType == PlayType.Defender ? "DEFENDER" : "UNKNOWN";
+            return this.playType == PlayType.Attacker ? "attacker" : this.playType == PlayType.Defender ? "defender" : "unknown";
         }
     }
     
@@ -542,6 +608,7 @@ module Activity {
         
         protected prepareDefend(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, false);
+            this.gameLog.println("Pick a transition ...");
         }
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
@@ -595,7 +662,7 @@ module Activity {
 
     class Computer extends Player {
         
-        static Delay : number = 2000;
+        static Delay : number = 0;
         
         private delayedPlay;
         
@@ -657,39 +724,62 @@ module Activity {
     }
 
     class GameLog {
-        
-        private $list : any;
-        
-        constructor(private printConsole : boolean = false) {
-            this.$list = $("#game-console").find("ul");
-            this.$list.empty();
-        }
-        
-        public print(line : string, margin : number = 0) : void {
-            if (this.printConsole) {
-                var marginStr : string = "";
-                for (var i = 0; i < margin/5; i++)
-                    marginStr += " ";
-                console.log(marginStr + line);
-            }
-                
-            this.$list.append("<li style='margin-left: " + margin + "px'>" + line + "</li>");
-        }
-        
-        public printRound(round : number) : void {
-            this.print("Round " + Math.floor(round) + ":");
-        }
-        
-        public printPlay(player : Player, action : string, destination : string) : void {
-            this.print(player.playTypeStr() + ": " + "--- "+action+" --->   " + destination, 20);
-        }
-        
-        public printWinner(winner : Player) : void {
-            this.print("No more valid transitions, " + winner.playTypeStr() + " wins.");
+        private $log : JQuery;
+
+        constructor() {
+            this.$log = $("#game-log");
+            this.$log.empty();
         }
 
-        public printCycleFound(process : string) : void {
-            this.print("Cycle detected. " + process + " has been visited before.");
+        public println(msg : string) : void {
+            this.$log.append($("<p></p>").append(msg));
+            this.$log.scrollTop(this.$log[0].scrollHeight);
         }
+
+        public printRound(round : number) : void {
+            this.$log.append("<h4>Round " + Math.floor(round) + "</h4>");
+        }
+
+        public printConfiguration(conf : any) {
+            this.println("Current configuration: (" + this.labelFor(conf.left) + ", " + this.labelFor(conf.right) + ").");
+        }
+
+        public printPlayerType(attacker : Player) {
+            if (attacker instanceof Computer) {
+                this.println("You are playing as defender.");
+            } else {
+                this.println("You are playing as attacker.");
+                this.println("Pick a transition ...");
+            }
+        }
+
+        public printPlay(player : Player, action : string, destination : CCS.Process) : void {
+            if (player instanceof Computer) {
+                if (player.getPlayType() === PlayType.Attacker) {
+                    this.println("Attacker plays (" + action + ", " + this.labelFor(destination) + ").");
+                } else {
+                    this.println("Defender plays (" + action + ", " + this.labelFor(destination) + ").");
+                }
+            } else {
+                this.println("You played (" + action + ", " + this.labelFor(destination) + ").");
+            }
+        }
+
+        public printWinner(winner : Player) : void {
+            if (winner instanceof Computer) {
+                this.println("You are stuck. You lose!");
+            } else {
+                var loser = (winner.getPlayType() === PlayType.Attacker) ? "Defender" : "Attacker";
+                this.println(loser + " is stuck. You win!");
+            }
+        }
+
+        private labelFor(process : CCS.Process) : string {
+            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : "" + process.id;
+        }
+
+        /*public printCycleFound(process : string) : void {
+            this.print("Cycle detected. " + process + " has been visited before.");
+        }*/
     }
 }

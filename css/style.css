@@ -332,15 +332,23 @@ td.inconsolata{
 
 #game-status {
     border: 1px solid #e7e7e7;
+    border-top: none;
 }
 
 #game-log {
+    height: 230px;
     overflow-x: auto;
-    overflow-y: auto;
+    overflow-y: scroll;
 }
 
 #game-log p {
     margin-left: 20px;
+}
+
+#game-transitions {
+    height: 230px;
+    overflow-x: auto;
+    overflow-y: scroll;
 }
 
 
