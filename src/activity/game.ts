@@ -62,11 +62,11 @@ module Activity {
             this.leftGraph = new GUI.ArborGraph(this.leftRenderer);
             this.rightGraph = new GUI.ArborGraph(this.rightRenderer);
 
-            // Temporary fix.
-            this.$leftContainer.find("canvas").off("mousedown");
+            // Temporary fix. (no longer needed)
+            /*this.$leftContainer.find("canvas").off("mousedown");
             this.$leftContainer.find("canvas").off("mousemove");
             this.$rightContainer.find("canvas").off("mousedown");
-            this.$rightContainer.find("canvas").off("mousemove");
+            this.$rightContainer.find("canvas").off("mousemove");*/
 
             this.$gameType.add(this.$playerType).add(this.$leftProcessList).add(this.$rightProcessList).on("change", () => this.newGame());
             this.$leftZoom.add(this.$rightZoom).on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
