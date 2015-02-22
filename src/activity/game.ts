@@ -230,6 +230,22 @@ module Activity {
             this.rightGraph.setSelected(conf.right.id.toString());
         }
 
+        public hightlightChoices(isLeft : boolean, targetId : string) : void {
+            if (isLeft) {
+                this.leftGraph.setHover(targetId); 
+            } else {
+                this.rightGraph.setHover(targetId);
+            }
+        }
+
+        public removeHightlightChoices(isLeft : boolean){
+            if(isLeft) {
+                this.leftGraph.clearHover();
+            } else {
+                this.rightGraph.clearHover();
+            }
+        }
+
         private clear(graph : GUI.ProcessGraphUI) : void {
             graph.clearAll();
         }
@@ -462,6 +478,14 @@ module Activity {
             this.gameActivity.highlightNodes();
             this.gameActivity.centerNode(destinationProcess, this.lastMove);
         }
+
+        public highlightChoices(isLeft : boolean, targetId : string) : void {
+            this.gameActivity.hightlightChoices(isLeft, targetId);
+        }
+
+        public removeHightlightChoices(isLeft : boolean) : void {
+            this.gameActivity.removeHightlightChoices(isLeft);
+        }
         
         private preparePlayer(player : Player) {
             var choices : any = this.getCurrentChoices(player.getPlayType());
@@ -666,10 +690,10 @@ module Activity {
             }
             
             this.$table.empty();
-            
             choices.forEach( (choice) => {
                 var row = $("<tr></tr>");
-                
+                row.attr("data-target-id", choice.targetProcess.id); // attach targetid on the row
+
                 if (isAttack) {
                     var sourceProcess = choice.move == 1 ? currentConfiguration.left : currentConfiguration.right;
                     source = this.labelFor(sourceProcess);
@@ -680,8 +704,19 @@ module Activity {
                 var actionTd = $("<td id='action'></td>").append(action);
                 var targetTd = $("<td id='target'></td>").append(this.labelFor(choice.targetProcess));
                 
-                $(row).on("click", () => {
+                // onClick
+                $(row).on("click", (event) => {
                     this.clickChoice(choice, game, isAttack);
+                });
+
+                // hightlight the edge
+                $(row).on("mouseenter", (event) => { 
+                    this.hightlightChoices(choice, game, isAttack, true, event);
+                });
+
+                // remove the highlight
+                $(row).on("mouseleave", (event) => {
+                    this.hightlightChoices(choice, game, isAttack, false, event);
                 });
                 
                 row.append(sourceTd, actionTd, targetTd);
@@ -695,10 +730,36 @@ module Activity {
             else 
                 return process.id.toString(); //TODO make tooltip for process.id
         }
-        
+
+        private hightlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
+            var move : Move;
+            
+            if (isAttack) {
+                move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+            } else {
+                move = game.getLastMove() == 1 ? Move.Right : Move.Left // this is flipped because of defender role 
+            }
+
+            if (entering) {
+                var targetId = $(event.currentTarget).data("targetId");
+                if(move === Move.Left) {
+                    game.highlightChoices(true, targetId); // hightlight the left graph
+                } else{
+                    game.highlightChoices(false, targetId) // hightlight the right graph
+                }
+                $(event.currentTarget).css("background", "rgba(0, 0, 0, 0.07)"); // color the row
+            } else {
+                if(move === Move.Left) {
+                    game.removeHightlightChoices(true);
+                } else{
+                    game.removeHightlightChoices(false);
+                }
+                $(event.currentTarget).css("background", ""); // remove highlight
+            }
+        }
+
         private clickChoice(choice : any, game: DgGame, isAttack : boolean) : void {
             this.$table.empty();
-            
             if (isAttack) {
                 var move : Move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
                 game.play(this, choice.targetProcess, choice.nextNode, choice.action, move);
@@ -706,6 +767,8 @@ module Activity {
             else {
                 game.play(this, choice.targetProcess, choice.nextNode);
             }
+            game.removeHightlightChoices(true); // remove highlight from both graphs
+            game.removeHightlightChoices(false); // remove highlight from both graphs
         }
         
         public abortPlay() : void {
