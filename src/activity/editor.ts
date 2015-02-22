@@ -48,6 +48,7 @@ module Activity {
         }
 
         public onShow(configuration?: any): void {
+            this.project.setChanged(false);
             this.$statusArea.hide();
             this.initialCCS = this.editor.getValue()
             this.setText(this.project.getCCS());
