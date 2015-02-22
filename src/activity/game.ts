@@ -105,11 +105,11 @@ module Activity {
                 this.zoom(this.$rightZoom.val(), "right");
             });
 
-            if (this.changed) {
+            if (this.changed || configuration) {
                 this.changed = false;
                 this.graph = this.project.getGraph();
                 this.displayOptions();
-                this.newGame(true, true);
+                this.newGame(true, true, configuration);
             }
         }
 
@@ -132,7 +132,7 @@ module Activity {
             this.$rightProcessList.find("option:nth-child(2)").prop("selected", true);
         }
 
-        private getOptions() : any {           
+        private getOptions() : any {
             return {
                 gameType: this.$gameType.val(),
                 playerType: this.$playerType.filter(":checked").val(),
@@ -141,8 +141,29 @@ module Activity {
             };
         }
 
-        private newGame(drawLeft : boolean, drawRight : boolean, forceLosingType : boolean = false) : void {
-            var options = this.getOptions();
+        private setOptions(options : any) : void {
+            this.$gameType.find("option[value=" + options.gameType + "]").prop("selected", true);
+            this.$playerType.each(function() {
+                if ($(this).attr("value") === options.playerType) {
+                    $(this).parent().addClass("active");
+                } else {
+                    $(this).parent().removeClass("active");
+                }
+            });
+            this.$leftProcessList.val(options.leftProcess);
+            this.$rightProcessList.val(options.rightProcess);
+        }
+
+        private newGame(drawLeft : boolean, drawRight : boolean, configuration? : any) : void {
+            var options;
+
+            if (configuration) {
+                options = configuration;
+                this.setOptions(options);
+            } else {
+                options = this.getOptions();
+            }
+
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
 
             if (drawLeft) {this.draw(this.graph.processByName(options.leftProcess), this.leftGraph)}
@@ -150,21 +171,15 @@ module Activity {
             
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
+
+            if (this.dgGame != undefined) {this.dgGame.stopGame()};
             
             this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess);
             
             var attacker : Player;
             var defender : Player;
             
-            if (forceLosingType) {
-                if ((<BisimulationGame> this.dgGame).isBisimilar()) {
-                    // TODO: change gui to show player as attacker
-                } else {
-                    // TODO: change gui to show player as defender
-                }
-            }
-            
-            if ((forceLosingType && !(<BisimulationGame> this.dgGame).isBisimilar()) || options.playerType === "defender") {
+            if (options.playerType === "defender") {
                 attacker = new Computer(PlayType.Attacker);
                 defender = new Human(PlayType.Defender);
             } else {

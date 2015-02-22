@@ -24,8 +24,9 @@ import hml = HML;
 
 module Main {
 
+    export var activityHandler = new Activity.ActivityHandler();
+
     $(document).ready(function() {
-        var activityHandler = new Activity.ActivityHandler();
         activityHandler.addActivity("editor", new Activity.Editor("#editor-container", "#edit-btn"));
         activityHandler.addActivity("explorer", new Activity.Explorer("#explorer-container", "#explore-btn"));
         activityHandler.addActivity("verifier" , new Activity.Verifier("#verifier-container", "#verify-btn"));

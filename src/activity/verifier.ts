@@ -152,21 +152,16 @@ module Activity {
         private onStatusClick(e) {
             var property = e.data.property;
             if (property instanceof Property.Equivalence) {
-                var equivalence = <Property.Equivalence>property,
-                    isWeak = equivalence instanceof Property.WeakBisimulation,
-                    graph = Main.getGraph(),
+                var equivalence = <Property.Equivalence> property,
+                    gameType = (equivalence instanceof Property.StrongBisimulation) ? "strong" : "weak",
+                    playerType = (equivalence.getStatus()) ? "attacker" : "defender",
                     configuration = {
-                        graph: graph,
-                        attackSuccGen: Main.getStrictSuccGenerator(graph),
-                        defendSuccGen: (isWeak ? Main.getWeakSuccGenerator(graph) : Main.getStrictSuccGenerator(graph)),
-                        isWeakSuccessorGenerator: isWeak,
-                        processNameA: equivalence.firstProcess,
-                        processNameB: equivalence.secondProcess
+                        gameType: gameType,
+                        playerType: playerType,
+                        leftProcess: equivalence.firstProcess,
+                        rightProcess: equivalence.secondProcess
                     };
-                // Fix this
-                //Main.activityHandler.openActivityWithConfiguration("game", configuration);
-                //Don't process click event further
-                return false;
+                Main.activityHandler.selectActivity("game", configuration);
             }
         }
 
