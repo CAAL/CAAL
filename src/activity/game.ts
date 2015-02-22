@@ -252,7 +252,7 @@ module Activity {
         }
 
         private labelFor(process : CCS.Process) : string {
-            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : "" + process.id;
+            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
         }
 
         public centerNode(process : CCS.Process, move : Move) : void {
@@ -388,7 +388,7 @@ module Activity {
             this.step = 0;
             
             this.cycleCache = {};
-            this.cycleCache[this.currentNodeId] = this.currentNodeId;
+            this.cycleCache[this.getConfigurationStr(this.getCurrentConfiguration())] = this.currentNodeId;
             
             this.preparePlayer(this.attacker);
         }
@@ -446,8 +446,6 @@ module Activity {
                 this.lastMove = move;
                 
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
-                this.cycleDetection();
-                
                 this.preparePlayer(this.defender);
             } else {
                 this.gameLog.printPlay(player, action, destinationProcess);
@@ -456,9 +454,9 @@ module Activity {
                 this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
                 
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
-                this.cycleDetection();
                 
-                this.preparePlayer(this.attacker);
+                if (!this.cycleDetection())
+                    this.preparePlayer(this.attacker);
             }
 
             this.gameActivity.highlightNodes();
@@ -481,25 +479,33 @@ module Activity {
             }
         }
         
-        private cycleDetection() : void {
+        private cycleDetection() : boolean {
             var configuration = this.getCurrentConfiguration();
-            var leftId  = configuration.left.id;
-            var rightId = configuration.right.id;
+            var cacheStr = this.getConfigurationStr(configuration);
             
-            if (this.cycleCache[leftId] != undefined && this.cycleCache[leftId][rightId] != undefined) {
+            if (this.cycleCache[cacheStr] != undefined) {
                 // cycle detected
-                //this.gameLog.printCycleFound(process);
+                this.gameLog.printCycleWinner(configuration, this.defender);
                 
                 // clear the cache
                 this.cycleCache = {};
-                
-                this.cycleCache[leftId] = {};
-                this.cycleCache[leftId][rightId] = this.currentNodeId;
+                this.cycleCache[cacheStr] = this.currentNodeId;
+                return true;
             } else {
-                if (this.cycleCache[leftId] == undefined)
-                    this.cycleCache[leftId] = {};
-                this.cycleCache[leftId][rightId] = this.currentNodeId;
+                this.cycleCache[cacheStr] = this.currentNodeId;
+                return false;
             }
+        }
+        
+        public getConfigurationStr(configuration : any) : string {
+            var result = "(";
+            
+            result += configuration.left instanceof CCS.NamedProcess ? (<CCS.NamedProcess>configuration.left).name : configuration.left.id.toString();
+            result += ", ";
+            result += configuration.right instanceof CCS.NamedProcess ? (<CCS.NamedProcess>configuration.right).name : configuration.right.id.toString();
+            result += ")"
+
+            return result;
         }
     }
 
@@ -822,20 +828,17 @@ module Activity {
                 this.println(loser + " is stuck. You win!");
             }
         }
-
-        // private labelFor(process : CCS.Process) : string {
-        //     return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
-        // }
+        
+        public printCycleWinner(configuration : any, defender : Player) : void {
+            this.println("Cycle detected. (" + this.labelFor(configuration.left) + ", " + this.labelFor(configuration.right) + ") has been visited before.");
+            this.println(defender instanceof Human ? "You win!" : "You lose!");
+        }
         
         private labelFor(process : CCS.Process) : string {
             if (process instanceof CCS.NamedProcess)
                 return this.htmlNotationVisitor.visit(process);
             else 
-                return process.id.toString(); //TODO make tooltip for process.id
+                return process.id.toString(); //TODO make tooltip for process.id if possible
         }
-
-        /*public printCycleFound(process : string) : void {
-            this.print("Cycle detected. " + process + " has been visited before.");
-        }*/
     }
 }
