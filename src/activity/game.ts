@@ -23,6 +23,7 @@ module Activity {
 
     export class Game extends Activity {
         private project : Project;
+        private changed : boolean;
         private graph : CCS.Graph;
         private succGen : CCS.SuccessorGenerator;
         private $gameType : JQuery;
@@ -71,6 +72,8 @@ module Activity {
 
             this.$gameType.add(this.$playerType).add(this.$leftProcessList).add(this.$rightProcessList).on("change", () => this.newGame());
             this.$leftZoom.add(this.$rightZoom).on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+
+            $(document).on("ccs-changed", () => this.changed = true);
             
             // Set tooltip handler
             var getCCSNotation = this.ccsNotationForProcessId.bind(this);
@@ -99,7 +102,8 @@ module Activity {
             $(window).on("resize", () => this.resize());
             this.resize();
 
-            if (this.project.getChanged()) {
+            if (this.changed) {
+                this.changed = false;
                 this.graph = this.project.getGraph();
                 this.displayOptions();
                 this.newGame();
