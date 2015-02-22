@@ -270,6 +270,10 @@ module Activity {
             return this.lastMove;
         }
         
+        public getLastAction() : string {
+            return this.lastAction;
+        }
+        
         public getCurrentConfiguration() : any {
             return { left: this.currentLeft, right: this.currentRight };
         }
@@ -522,16 +526,63 @@ module Activity {
     
     class Human extends Player {
         
+        private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
+        
         constructor(playType : PlayType) {
             super(playType);
+            
+            this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
         }
         
         protected prepareAttack(choices : any, game : DgGame) : void {
-            
+            this.fillTable(choices, game, true);
         }
         
         protected prepareDefend(choices : any, game : DgGame) : void {
+            this.fillTable(choices, game, false);
+        }
+        
+        private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
+            var currentConfiguration = game.getCurrentConfiguration();
+            var source : string;
             
+            if (!isAttack) {
+                var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
+                source = this.htmlNotationVisitor.visit(sourceProcess);
+            }
+            //TODO empty table
+            
+            choices.forEach( (choice) => {
+                var row = $("<tr></tr>");
+                
+                if (isAttack) {
+                    var sourceProcess = choice.move == 1 ? currentConfiguration.left : currentConfiguration.right;
+                    source = this.htmlNotationVisitor.visit(sourceProcess);
+                }
+                
+                var targetHtml = this.htmlNotationVisitor.visit(choice.targetProcess);
+                
+                var sourceTd = $("<td id='source'></td>").append(source);
+                var actionTd = $("<td id='action'></td>").append(game.getLastAction());
+                var targetTd = $("<td id='target'></td>").append(targetHtml);
+                
+                $(row).on("click", () => {
+                    this.clickChoice(choice, game, isAttack);
+                });
+                
+                row.append(sourceTd, actionTd, targetTd);
+                // TODO add row to table
+            });
+        }
+        
+        private clickChoice(choice : any, game: DgGame, isAttack : boolean) : void {
+            if (isAttack) {
+                var move : Move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+                game.play(this, choice.targetProcess, choice.nextNode, choice.action, move);
+            }
+            else {
+                game.play(this, choice.targetProcess, choice.nextNode);
+            }
         }
     }
 
