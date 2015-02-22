@@ -237,6 +237,22 @@ module Activity {
             this.rightGraph.setSelected(conf.right.id.toString());
         }
 
+        public hightlightChoices(isLeft : boolean, targetId : string) : void {
+            if (isLeft) {
+                this.leftGraph.setHover(targetId); 
+            } else {
+                this.rightGraph.setHover(targetId);
+            }
+        }
+
+        public removeHightlightChoices(isLeft : boolean){
+            if(isLeft) {
+                this.leftGraph.clearHover();
+            } else {
+                this.rightGraph.clearHover();
+            }
+        }
+
         private clear(graph : GUI.ProcessGraphUI) : void {
             graph.clearAll();
         }
@@ -259,7 +275,7 @@ module Activity {
         }
 
         private labelFor(process : CCS.Process) : string {
-            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : "" + process.id;
+            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
         }
 
         private zoom(value : number, side : string) : void {
@@ -373,8 +389,8 @@ module Activity {
             return undefined;
         }
         
-        // returns true if the player has a universal winning strategy
         public isUniversalWinner(player : Player) : boolean {
+            // returns true if the player has a universal winning strategy
             return this.getUniversalWinner() === player;
         }
         
@@ -396,14 +412,25 @@ module Activity {
             return undefined;
         }
         
+        public getTryHardAttack(choices : any) : any {
+            // consider adding this method to DepedencyGraph interface
+            throw "Abstract method. Not implemented.";
+            return undefined;
+        }
+        
         public getWinningDefend(choices : any) : any {
             // consider adding this method to DepedencyGraph interface
             throw "Abstract method. Not implemented.";
             return undefined;
         }
         
-        public getCurrentChoices(playType : PlayType) : any {
+        public getTryHardDefend(choices : any) : any {
             // consider adding this method to DepedencyGraph interface
+            throw "Abstract method. Not implemented.";
+            return undefined;
+        }
+        
+        public getCurrentChoices(playType : PlayType) : any {
             throw "Abstract method. Not implemented.";
             return undefined;
         }
@@ -416,7 +443,7 @@ module Activity {
             this.step = 0;
             
             this.cycleCache = {};
-            this.cycleCache[this.currentNodeId] = this.currentNodeId;
+            this.cycleCache[this.getConfigurationStr(this.getCurrentConfiguration())] = this.currentNodeId;
             
             this.preparePlayer(this.attacker);
         }
@@ -425,8 +452,6 @@ module Activity {
             // tell players to abort their prepared play
             this.attacker.abortPlay();
             this.defender.abortPlay();
-            
-            //TODO consider rendering the dgGame unplayable now by some flag
         }
         
         public setPlayers(attacker : Player, defender : Player) {
@@ -474,8 +499,6 @@ module Activity {
                 this.lastMove = move;
                 
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
-                this.cycleDetection();
-                
                 this.preparePlayer(this.defender);
             } else {
                 this.gameLog.printPlay(player, action, destinationProcess);
@@ -484,13 +507,21 @@ module Activity {
                 this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
                 
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
-                this.cycleDetection();
                 
-                this.preparePlayer(this.attacker);
+                if (!this.cycleDetection())
+                    this.preparePlayer(this.attacker);
             }
 
             this.gameActivity.highlightNodes();
             this.gameActivity.centerNode(destinationProcess, this.lastMove);
+        }
+
+        public highlightChoices(isLeft : boolean, targetId : string) : void {
+            this.gameActivity.hightlightChoices(isLeft, targetId);
+        }
+
+        public removeHightlightChoices(isLeft : boolean) : void {
+            this.gameActivity.removeHightlightChoices(isLeft);
         }
         
         private preparePlayer(player : Player) {
@@ -509,25 +540,34 @@ module Activity {
             }
         }
         
-        private cycleDetection() : void {
+        private cycleDetection() : boolean {
             var configuration = this.getCurrentConfiguration();
-            var leftId  = configuration.left.id;
-            var rightId = configuration.right.id;
+            var cacheStr = this.getConfigurationStr(configuration);
             
-            if (this.cycleCache[leftId] != undefined && this.cycleCache[leftId][rightId] != undefined) {
+            if (this.cycleCache[cacheStr] != undefined) {
                 // cycle detected
-                //this.gameLog.printCycleFound(process);
+                this.gameLog.printCycleWinner(configuration, this.defender);
+                this.stopGame();
                 
                 // clear the cache
                 this.cycleCache = {};
-                
-                this.cycleCache[leftId] = {};
-                this.cycleCache[leftId][rightId] = this.currentNodeId;
+                this.cycleCache[cacheStr] = this.currentNodeId;
+                return true;
             } else {
-                if (this.cycleCache[leftId] == undefined)
-                    this.cycleCache[leftId] = {};
-                this.cycleCache[leftId][rightId] = this.currentNodeId;
+                this.cycleCache[cacheStr] = this.currentNodeId;
+                return false;
             }
+        }
+        
+        public getConfigurationStr(configuration : any) : string {
+            var result = "(";
+            
+            result += configuration.left instanceof CCS.NamedProcess ? (<CCS.NamedProcess>configuration.left).name : configuration.left.id.toString();
+            result += ", ";
+            result += configuration.right instanceof CCS.NamedProcess ? (<CCS.NamedProcess>configuration.right).name : configuration.right.id.toString();
+            result += ")"
+
+            return result;
         }
     }
 
@@ -576,8 +616,8 @@ module Activity {
             var bestCandidateLevel = Infinity;
             var ownLevel = this.marking.getLevel(this.currentNodeId);
             
-            choices.forEach((option, i) => {
-                var targetNodeLevel = this.marking.getLevel(option.nextNode);
+            choices.forEach((choice, i) => {
+                var targetNodeLevel = this.marking.getLevel(choice.nextNode);
                 
                 if (targetNodeLevel < ownLevel && targetNodeLevel < bestCandidateLevel) {
                     bestCandidateLevel = targetNodeLevel;
@@ -586,6 +626,44 @@ module Activity {
             });
             
             return choices[bestCandidateIndex];
+        }
+        
+        public getTryHardAttack(choices : any) : any {
+            // strategy: Play the choice which yields the highest ratio of one-markings on the defenders next choice
+            var bestCandidateIndices = [];
+            var bestRatio = 0;
+            
+            choices.forEach((choice, i) => {
+                var oneMarkings = 0;
+                var defenderChoices = this.bisimulationDG.getDefenderOptions(choice.nextNode);
+                
+                if (defenderChoices.length > 0) {
+                    defenderChoices.forEach( (defendChoice) => {
+                        if (this.marking.getMarking(defendChoice.nextNode) === this.marking.ONE)
+                            oneMarkings++;
+                    });
+                    
+                    var ratio = oneMarkings / defenderChoices.length;
+                    
+                    if (ratio > bestRatio) {
+                        bestRatio = ratio;
+                        bestCandidateIndices = [i];
+                    } else if (ratio == bestRatio) {
+                        bestCandidateIndices.push(i);
+                    }
+                } else {
+                    bestCandidateIndices = [i];
+                }
+            });
+            
+            if (bestRatio == 0) {
+                // no-one markings were found, retun random choice
+                return choices[this.random(choices.length-1)];
+            }
+            else {
+                // return a random choice between the equally best choices
+                return choices[bestCandidateIndices[this.random(bestCandidateIndices.length - 1)]];
+            }
         }
         
         public getWinningDefend(choices : any) : any {
@@ -598,11 +676,41 @@ module Activity {
             throw "No defender moves";
         }
         
+        public getTryHardDefend(choices : any) : any {
+            // strategy: Play the choice with the highest level
+            var bestCandidateIndices = [];
+            var bestLevel = 0;
+            
+            for (var i = 0; i < choices.length; i++) {
+                var level = this.marking.getLevel(choices[i].nextNode);
+                
+                if (level > bestLevel) {
+                    bestLevel = level;
+                    bestCandidateIndices = [i];
+                } else if (level == bestLevel) {
+                    bestCandidateIndices.push(i);
+                }
+            }
+            
+            if (bestLevel == 0) {
+                // if no good levels were found return a random play
+                return choices[this.random(choices.length-1)];
+            } else {
+                // return a random choice between the equally best choices
+                return choices[bestCandidateIndices[this.random(bestCandidateIndices.length - 1)]];
+            }
+        }
+        
         public getCurrentChoices(playType : PlayType) : any {
             if (playType == PlayType.Attacker)
                 return this.bisimulationDG.getAttackerOptions(this.currentNodeId);
             else
                 return this.bisimulationDG.getDefenderOptions(this.currentNodeId);
+        }
+        
+        private random(max) : number {
+            // random integer between 0 and max
+            return Math.floor((Math.random() * (max+1)));
         }
     }
 
@@ -688,10 +796,10 @@ module Activity {
             }
             
             this.$table.empty();
-            
             choices.forEach( (choice) => {
                 var row = $("<tr></tr>");
-                
+                row.attr("data-target-id", choice.targetProcess.id); // attach targetid on the row
+
                 if (isAttack) {
                     var sourceProcess = choice.move == 1 ? currentConfiguration.left : currentConfiguration.right;
                     source = this.labelFor(sourceProcess);
@@ -702,8 +810,19 @@ module Activity {
                 var actionTd = $("<td id='action'></td>").append(action);
                 var targetTd = $("<td id='target'></td>").append(this.labelFor(choice.targetProcess));
                 
-                $(row).on("click", () => {
+                // onClick
+                $(row).on("click", (event) => {
                     this.clickChoice(choice, game, isAttack);
+                });
+
+                // hightlight the edge
+                $(row).on("mouseenter", (event) => { 
+                    this.hightlightChoices(choice, game, isAttack, true, event);
+                });
+
+                // remove the highlight
+                $(row).on("mouseleave", (event) => {
+                    this.hightlightChoices(choice, game, isAttack, false, event);
                 });
                 
                 row.append(sourceTd, actionTd, targetTd);
@@ -717,10 +836,36 @@ module Activity {
             else 
                 return process.id.toString(); //TODO make tooltip for process.id
         }
-        
+
+        private hightlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
+            var move : Move;
+            
+            if (isAttack) {
+                move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+            } else {
+                move = game.getLastMove() == 1 ? Move.Right : Move.Left // this is flipped because of defender role 
+            }
+
+            if (entering) {
+                var targetId = $(event.currentTarget).data("targetId");
+                if(move === Move.Left) {
+                    game.highlightChoices(true, targetId); // hightlight the left graph
+                } else{
+                    game.highlightChoices(false, targetId) // hightlight the right graph
+                }
+                $(event.currentTarget).css("background", "rgba(0, 0, 0, 0.07)"); // color the row
+            } else {
+                if(move === Move.Left) {
+                    game.removeHightlightChoices(true);
+                } else{
+                    game.removeHightlightChoices(false);
+                }
+                $(event.currentTarget).css("background", ""); // remove highlight
+            }
+        }
+
         private clickChoice(choice : any, game: DgGame, isAttack : boolean) : void {
             this.$table.empty();
-            
             if (isAttack) {
                 var move : Move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
                 game.play(this, choice.targetProcess, choice.nextNode, choice.action, move);
@@ -728,6 +873,8 @@ module Activity {
             else {
                 game.play(this, choice.targetProcess, choice.nextNode);
             }
+            game.removeHightlightChoices(true); // remove highlight from both graphs
+            game.removeHightlightChoices(false); // remove highlight from both graphs
         }
         
         public abortPlay() : void {
@@ -766,12 +913,13 @@ module Activity {
         }
         
         private losingAttack(choices : any, game : DgGame) : void {
-            // play random
-            var random : number = this.random(choices.length);
+            // var random : number = this.random(choices.length - 1);
+            // var move : Move = choices[random].move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+            // game.play(this, choices[random].targetProcess, choices[random].nextNode, choices[random].action, move);
             
-            var move : Move = choices[random].move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
-            
-            game.play(this, choices[random].targetProcess, choices[random].nextNode, choices[random].action, move);
+            var tryHardChoice = game.getTryHardAttack(choices);
+            var move : Move = tryHardChoice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+            game.play(this, tryHardChoice.targetProcess, tryHardChoice.nextNode, tryHardChoice.action, move);
         }
         
         private winningAttack(choices : any, game : DgGame) : void {
@@ -782,9 +930,11 @@ module Activity {
         }
         
         private losingDefend(choices : any, game : DgGame) : void {
-            // play random
-            var random : number = this.random(choices.length);
-            game.play(this, choices[random].targetProcess, choices[random].nextNode);
+            // var random : number = this.random(choices.length - 1);
+            // game.play(this, choices[random].targetProcess, choices[random].nextNode);
+            
+            var tryHardChoice = game.getTryHardDefend(choices);
+            game.play(this, tryHardChoice.targetProcess, tryHardChoice.nextNode);
         }
         
         private winningDefend(choices : any, game : DgGame) : void {
@@ -794,7 +944,7 @@ module Activity {
         
         private random(max) : number {
             // random integer between 0 and max
-            return Math.floor((Math.random() * max));
+            return Math.floor((Math.random() * (max+1)));
         }
     }
 
@@ -850,20 +1000,16 @@ module Activity {
                 this.println(loser + " is stuck. You win!");
             }
         }
-
-        // private labelFor(process : CCS.Process) : string {
-        //     return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
-        // }
+        
+        public printCycleWinner(configuration : any, defender : Player) : void {
+            this.println("Cycle detected. (" + this.labelFor(configuration.left) + ", " + this.labelFor(configuration.right) + ") has been visited before. " + ((defender instanceof Human) ? "You win!" : "You lose!"));
+        }
         
         private labelFor(process : CCS.Process) : string {
             if (process instanceof CCS.NamedProcess)
                 return this.htmlNotationVisitor.visit(process);
             else 
-                return process.id.toString(); //TODO make tooltip for process.id
+                return process.id.toString(); //TODO make tooltip for process.id if possible
         }
-
-        /*public printCycleFound(process : string) : void {
-            this.print("Cycle detected. " + process + " has been visited before.");
-        }*/
     }
 }
