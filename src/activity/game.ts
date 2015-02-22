@@ -71,7 +71,8 @@ module Activity {
             this.$rightContainer.find("canvas").off("mousemove");*/
 
             this.$gameType.add(this.$playerType).add(this.$leftProcessList).add(this.$rightProcessList).on("change", () => this.newGame());
-            this.$leftZoom.add(this.$rightZoom).on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+            this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
+            this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
 
             $(document).on("ccs-changed", () => this.changed = true);
             
@@ -99,8 +100,11 @@ module Activity {
         }
         
         public onShow(configuration? : any) : void {
-            $(window).on("resize", () => this.resize());
-            this.resize();
+            $(window).on("resize", () => {
+                this.resize();
+                this.zoom(this.$leftZoom.val(), "left");
+                this.zoom(this.$rightZoom.val(), "right");
+            });
 
             if (this.changed) {
                 this.changed = false;
@@ -255,6 +259,20 @@ module Activity {
             return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : "" + process.id;
         }
 
+        private zoom(value : number, side : string) : void {
+            if (side === "left") {
+                this.leftCanvas.width = (this.$leftContainer.width() - 17) * value; // 17px = scrollbar size.
+                this.leftCanvas.height = (this.$leftContainer.height() - 17) * value;
+                this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
+                this.centerNode(this.dgGame.getCurrentConfiguration().left, Move.Left);
+            } else {
+                this.rightCanvas.width = (this.$rightContainer.width() - 17) * value;
+                this.rightCanvas.height = (this.$rightContainer.height() - 17) * value;
+                this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
+                this.centerNode(this.dgGame.getCurrentConfiguration().right, Move.Right);
+            }
+        }
+
         public centerNode(process : CCS.Process, move : Move) : void {
             if (move === Move.Left) {
                 var position = this.leftGraph.getPosition(process.id.toString());
@@ -267,7 +285,7 @@ module Activity {
             }
         }
 
-        private resize(leftZoom : number = 1, rightZoom : number = 1) : void {
+        private resize() : void {
             var offsetTop = $("#game-main").offset().top + 20; // + margin + border.
             var offsetBottom = $("#game-status").height();
 
@@ -288,10 +306,10 @@ module Activity {
                 this.$rightContainer.height(width);
             }
 
-            this.leftCanvas.width = (this.$leftContainer.width() - 17) * leftZoom; // (Width - border) * zoom
-            this.rightCanvas.width = (this.$rightContainer.width() - 17) * rightZoom; // (Width - border) * zoom
-            this.leftCanvas.height = (this.$leftContainer.height() - 17) * leftZoom;
-            this.rightCanvas.height = (this.$rightContainer.height() - 17) * rightZoom;
+            this.leftCanvas.width = (this.$leftContainer.width() - 17); // 17px = scrollbar size.
+            this.rightCanvas.width = (this.$rightContainer.width() - 17);
+            this.leftCanvas.height = (this.$leftContainer.height() - 17);
+            this.rightCanvas.height = (this.$rightContainer.height() - 17);
 
             this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
             this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
