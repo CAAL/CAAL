@@ -351,6 +351,11 @@ td.inconsolata{
     overflow-y: scroll;
 }
 
+#game-transitions-table tbody {
+    font: normal 14px "Inconsolata";
+    cursor: pointer;
+}
+
 
 /*
  *  Tooltip styles
@@ -362,6 +367,10 @@ td.inconsolata{
     border-radius: 5px;
     padding: 0px 2px 0px 2px;
     cursor: pointer;
+}
+
+.tooltip {
+    position: fixed;
 }
 
 .tooltip.in {

@@ -120,7 +120,6 @@ class Project {
     public setChanged(changed: boolean): void {
         // Changed from false to true.
         if (changed !== this.changed && changed === true) {
-            console.log("changed");
             $(document).trigger("ccs-changed");
         }
 
