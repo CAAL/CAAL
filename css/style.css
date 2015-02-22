@@ -323,10 +323,10 @@ td.inconsolata{
 }
 
 #game-left-canvas input[type=range], #game-right-canvas input[type=range] {
-    position: fixed;
+    position: absolute;
+    top: 10px;
+    left: 10px;
     width: 100px;
-    margin: 10px 0 0 10px;
-    padding: 0;
     cursor: pointer;
 }
 

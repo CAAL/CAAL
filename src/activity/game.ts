@@ -71,8 +71,11 @@ module Activity {
             this.$rightContainer.find("canvas").off("mousemove");*/
 
             this.$gameType.add(this.$playerType).add(this.$leftProcessList).add(this.$rightProcessList).on("change", () => this.newGame());
+
             this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
             this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
+            
+            this.$leftContainer.add(this.$rightContainer).on("scroll", () => this.positionSliders());
 
             $(document).on("ccs-changed", () => this.changed = true);
             
@@ -283,6 +286,13 @@ module Activity {
                 this.$rightContainer.scrollLeft(position.x - (this.$rightContainer.width() / 2));
                 this.$rightContainer.scrollTop(position.y - (this.$rightContainer.height() / 2));
             }
+        }
+
+        private positionSliders() : void {
+            this.$leftZoom.css("top", this.$leftContainer.scrollTop() + 10);
+            this.$leftZoom.css("left", this.$leftContainer.scrollLeft() + 10);
+            this.$rightZoom.css("top", this.$rightContainer.scrollTop() + 10);
+            this.$rightZoom.css("left", this.$rightContainer.scrollLeft() + 10);
         }
 
         private resize() : void {
