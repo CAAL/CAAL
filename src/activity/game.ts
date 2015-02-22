@@ -39,7 +39,8 @@ module Activity {
         private rightRenderer : Renderer;
         private leftGraph: GUI.ProcessGraphUI;
         private rightGraph: GUI.ProcessGraphUI;
-        private dgGame : BisimulationGame; // make generic with DgGame isntead of BisimulationGame
+        private dgGame : DgGame;
+        private ccsNotationVisitor = new Traverse.CCSNotationVisitor();
         
         constructor(container : string, button : string) {
             super(container, button);
@@ -70,8 +71,30 @@ module Activity {
 
             this.$gameType.add(this.$playerType).add(this.$leftProcessList).add(this.$rightProcessList).on("change", () => this.newGame());
             this.$leftZoom.add(this.$rightZoom).on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+            
+            // Set tooltip handler
+            var getCCSNotation = this.ccsNotationForProcessId.bind(this);
+            $("#game-status").tooltip({
+                title: function() {
+                    var process = $(this).text();
+                    return process + " = " + getCCSNotation(process);
+                },
+                selector: "span.ccs-tooltip-constant"
+            });
         }
-
+        
+        private ccsNotationForProcessId(id: string): string {
+            var process = this.graph.processByName(id) || this.graph.processById(id),
+                text = "Unknown definition";
+            if (process) {
+                if (process instanceof ccs.NamedProcess)
+                    text = this.ccsNotationVisitor.visit((<ccs.NamedProcess>process).subProcess);
+                else
+                    text = this.ccsNotationVisitor.visit(process);
+            }
+            return text;
+        }
+        
         public onShow(configuration? : any) : void {
             $(window).on("resize", () => this.resize());
             this.resize();
@@ -85,7 +108,6 @@ module Activity {
 
         public onHide() : void {
             $(window).off("resize");
-            this.dgGame.stopGame();
         }
 
         private displayOptions() : void {
@@ -121,6 +143,8 @@ module Activity {
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
             
+            if (this.dgGame != undefined)
+                this.dgGame.stopGame();
             this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess);
             
             var attacker : Player;
@@ -279,8 +303,8 @@ module Activity {
         protected dependencyGraph : dg.DependencyGraph;
         protected marking : dg.LevelMarking;
         
-        //private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
-        private htmlNotationVisitor : Traverse.CCSNotationVisitor;
+        private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
+        // private htmlNotationVisitor : Traverse.CCSNotationVisitor;
         
         private gameLog : GameLog = new GameLog();
         
@@ -290,19 +314,19 @@ module Activity {
         
         protected lastMove : Move;
         protected lastAction : string;
-        protected currentNodeId : any = 0;
-        
-        protected currentLeft : any;
-        protected currentRight : any;
+        protected currentNodeId : any = 0; // the DG node id
         
         private cycleCache : any;
         
-        constructor(private gameActivity : Game, protected graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) {
-            //this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
-            this.htmlNotationVisitor = new Traverse.CCSNotationVisitor();
+        constructor(private gameActivity : Game, protected graph : CCS.Graph,
+            attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator,
+            protected currentLeft : any, protected currentRight : any) {
+            
+            this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
+            //this.htmlNotationVisitor = new Traverse.CCSNotationVisitor();
             
             // create the dependency graph
-            this.dependencyGraph = this.createDependencyGraph(this.graph, attackerSuccessorGen, defenderSuccesorGen);
+            this.dependencyGraph = this.createDependencyGraph(this.graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight);
             
             // create markings
             this.marking = this.createMarking();
@@ -312,13 +336,14 @@ module Activity {
             return this.step / 2 + 1;
         }
         
-        public getWinner() : Player {
+        public getUniversalWinner() : Player {
             throw "Abstract method. Not implemented.";
             return undefined;
         }
         
-        public isWinner(player : Player) : boolean {
-            return this.getWinner() === player;
+        // returns true if the player has a universal winning strategy
+        public isUniversalWinner(player : Player) : boolean {
+            return this.getUniversalWinner() === player;
         }
         
         public getLastMove() : Move {
@@ -354,13 +379,14 @@ module Activity {
         public startGame() : void {
             if (this.attacker == undefined || this.defender == undefined)
                 throw "No players in game.";
+            this.stopGame();
             this.currentNodeId = 0;
             this.step = 0;
             
             this.cycleCache = {};
             this.cycleCache[this.currentNodeId] = this.currentNodeId;
             
-            this.attacker.prepareTurn(this.getCurrentChoices(PlayType.Attacker), this);
+            this.preparePlayer(this.attacker);
         }
         
         public stopGame() : void {
@@ -384,7 +410,7 @@ module Activity {
             this.defender = defender;
         }
         
-        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) : dg.DependencyGraph { // abstract
+        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph { // abstract
             throw "Abstract method. Not implemented.";
             return undefined;
         }
@@ -415,8 +441,8 @@ module Activity {
                 this.lastAction = action;
                 this.lastMove = move;
                 
-                this.cycleDetection(nextNode, destinationHtml);
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
+                this.cycleDetection();
                 
                 this.preparePlayer(this.defender);
             } else {
@@ -425,8 +451,8 @@ module Activity {
                 // the play is a defense, flip the saved last move
                 this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
                 
-                this.cycleDetection(nextNode, destinationHtml);
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
+                this.cycleDetection();
                 
                 this.preparePlayer(this.attacker);
             }
@@ -451,16 +477,24 @@ module Activity {
             }
         }
         
-        private cycleDetection(dgNode : any, process : string) : void {
-            if (this.cycleCache[dgNode] != undefined) {
+        private cycleDetection() : void {
+            var configuration = this.getCurrentConfiguration();
+            var leftId  = configuration.left.id;
+            var rightId = configuration.right.id;
+            
+            if (this.cycleCache[leftId] != undefined && this.cycleCache[leftId][rightId] != undefined) {
                 // cycle detected
                 //this.gameLog.printCycleFound(process);
                 
-                // clear the cache, there's a good chance any successors will also be dtected as a cycle
+                // clear the cache
                 this.cycleCache = {};
-                this.cycleCache[dgNode] = dgNode;
+                
+                this.cycleCache[leftId] = {};
+                this.cycleCache[leftId][rightId] = this.currentNodeId;
             } else {
-                this.cycleCache[dgNode] = dgNode;
+                if (this.cycleCache[leftId] == undefined)
+                    this.cycleCache[leftId] = {};
+                this.cycleCache[leftId][rightId] = this.currentNodeId;
             }
         }
     }
@@ -477,21 +511,22 @@ module Activity {
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
             
-            super(gameActivity, graph, attackerSuccessorGen, defenderSuccesorGen); // creates dependency graph and marking
+            var currentLeft  = graph.processByName(this.leftProcessName);
+            var currentRight = graph.processByName(this.rightProcessName);
+            
+            super(gameActivity, graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight); // creates dependency graph and marking
         }
         
         public isBisimilar() : boolean {
             return this.bisimilar;
         }
         
-        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator) : dg.DependencyGraph {
-            this.currentLeft  = graph.processByName(this.leftProcessName);
-            this.currentRight = graph.processByName(this.rightProcessName);
+        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph {
             
             return this.bisimulationDG = new dg.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
         }
         
-        public getWinner() : Player {
+        public getUniversalWinner() : Player {
             return this.bisimilar ? this.defender : this.attacker;
         }
         
@@ -592,13 +627,12 @@ module Activity {
     
     class Human extends Player {
         
-        private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
+        private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
         private $table;
         
         constructor(playType : PlayType) {
             super(playType);
             
-            this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
             this.$table = $("#game-transitions-table").find("tbody");
         }
         
@@ -618,7 +652,7 @@ module Activity {
             
             if (!isAttack) {
                 var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
-                source = this.htmlNotationVisitor.visit(sourceProcess);
+                source = this.labelFor(sourceProcess);
             }
             
             this.$table.empty();
@@ -628,15 +662,13 @@ module Activity {
                 
                 if (isAttack) {
                     var sourceProcess = choice.move == 1 ? currentConfiguration.left : currentConfiguration.right;
-                    source = this.htmlNotationVisitor.visit(sourceProcess);
+                    source = this.labelFor(sourceProcess);
                     action = choice.action;
                 }
                 
-                var targetHtml = this.htmlNotationVisitor.visit(choice.targetProcess);
-                
                 var sourceTd = $("<td id='source'></td>").append(source);
                 var actionTd = $("<td id='action'></td>").append(action);
-                var targetTd = $("<td id='target'></td>").append(targetHtml);
+                var targetTd = $("<td id='target'></td>").append(this.labelFor(choice.targetProcess));
                 
                 $(row).on("click", () => {
                     this.clickChoice(choice, game, isAttack);
@@ -645,6 +677,13 @@ module Activity {
                 row.append(sourceTd, actionTd, targetTd);
                 this.$table.append(row);
             });
+        }
+        
+        private labelFor(process : CCS.Process) : string {
+            if (process instanceof CCS.NamedProcess)
+                return this.htmlNotationVisitor.visit(process);
+            else 
+                return process.id.toString(); //TODO make tooltip for process.id
         }
         
         private clickChoice(choice : any, game: DgGame, isAttack : boolean) : void {
@@ -658,11 +697,15 @@ module Activity {
                 game.play(this, choice.targetProcess, choice.nextNode);
             }
         }
+        
+        public abortPlay() : void {
+            this.$table.empty();
+        }
     }
 
     class Computer extends Player {
         
-        static Delay : number = 0;
+        static Delay : number = 1500;
         
         private delayedPlay;
         
@@ -676,7 +719,7 @@ module Activity {
         
         protected prepareAttack(choices : any, game : DgGame) : void {
             // select strategy
-            if (game.isWinner(this))
+            if (game.isUniversalWinner(this))
                 this.delayedPlay = setTimeout( () => this.winningAttack(choices, game), Computer.Delay);
             else
                 this.delayedPlay = setTimeout( () => this.losingAttack(choices, game), Computer.Delay);
@@ -684,7 +727,7 @@ module Activity {
         
         protected prepareDefend(choices : any, game : DgGame) : void {
             // select strategy
-            if (game.isWinner(this))
+            if (game.isUniversalWinner(this))
                 this.delayedPlay = setTimeout( () => this.winningDefend(choices, game), Computer.Delay);
             else
                 this.delayedPlay = setTimeout( () => this.losingDefend(choices, game), Computer.Delay);
@@ -724,8 +767,10 @@ module Activity {
     }
 
     class GameLog {
+        
+        private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
         private $log : JQuery;
-
+        
         constructor() {
             this.$log = $("#game-log");
             this.$log.empty();
@@ -774,8 +819,15 @@ module Activity {
             }
         }
 
+        // private labelFor(process : CCS.Process) : string {
+        //     return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
+        // }
+        
         private labelFor(process : CCS.Process) : string {
-            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : "" + process.id;
+            if (process instanceof CCS.NamedProcess)
+                return this.htmlNotationVisitor.visit(process);
+            else 
+                return process.id.toString(); //TODO make tooltip for process.id
         }
 
         /*public printCycleFound(process : string) : void {
