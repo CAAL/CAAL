@@ -86,9 +86,10 @@ module Activity {
             });
         }
         
-        private ccsNotationForProcessId(id: string): string {
-            var process = this.graph.processByName(id) || this.graph.processById(id),
+        private ccsNotationForProcessId(id : string): string {
+            var process = this.graph.processById(id) || this.graph.processByName(id),
                 text = "Unknown definition";
+                
             if (process) {
                 if (process instanceof ccs.NamedProcess)
                     text = this.ccsNotationVisitor.visit((<ccs.NamedProcess>process).subProcess);
@@ -855,7 +856,8 @@ module Activity {
             if (process instanceof CCS.NamedProcess)
                 return this.htmlNotationVisitor.visit(process);
             else 
-                return process.id.toString(); //TODO make tooltip for process.id
+                // return process.id.toString();
+                return '<span class="ccs-tooltip-constant">' + process.id + '</span>';
         }
 
         private hightlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
@@ -1025,7 +1027,8 @@ module Activity {
             if (process instanceof CCS.NamedProcess)
                 return this.htmlNotationVisitor.visit(process);
             else 
-                return process.id.toString(); //TODO make tooltip for process.id if possible
+                // return process.id.toString();
+                return '<span class="ccs-tooltip-constant">' + process.id + '</span>';
         }
     }
 }
