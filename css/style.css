@@ -27,6 +27,7 @@ textarea {
 
 .navbar-header .navbar-brand {
 	font-variant: small-caps;
+    cursor: auto;
 }
  
 /* Align rightmost menu element with body */

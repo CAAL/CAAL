@@ -64,18 +64,15 @@ module Activity {
             this.leftGraph = new GUI.ArborGraph(this.leftRenderer);
             this.rightGraph = new GUI.ArborGraph(this.rightRenderer);
 
-            // Temporary fix. (no longer needed)
-            /*this.$leftContainer.find("canvas").off("mousedown");
-            this.$leftContainer.find("canvas").off("mousemove");
-            this.$rightContainer.find("canvas").off("mousedown");
-            this.$rightContainer.find("canvas").off("mousemove");*/
+            this.$gameType.on("change", () => this.newGame(true, true));
+            this.$playerType.on("change", () => this.newGame(false, false));
+            this.$leftProcessList.on("change", () => this.newGame(true, false));
+            this.$rightProcessList.on("change", () => this.newGame(false, true));
 
-            this.$gameType.add(this.$playerType).add(this.$leftProcessList).add(this.$rightProcessList).on("change", () => this.newGame());
 
+            this.$leftContainer.add(this.$rightContainer).on("scroll", () => this.positionSliders());
             this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
             this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
-            
-            this.$leftContainer.add(this.$rightContainer).on("scroll", () => this.positionSliders());
 
             $(document).on("ccs-changed", () => this.changed = true);
             
@@ -113,7 +110,7 @@ module Activity {
                 this.changed = false;
                 this.graph = this.project.getGraph();
                 this.displayOptions();
-                this.newGame();
+                this.newGame(true, true);
             }
         }
 
@@ -145,11 +142,12 @@ module Activity {
             };
         }
 
-        private newGame() : void {
+        private newGame(drawLeft : boolean, drawRight : boolean) : void {
             var options = this.getOptions();
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
-            this.draw(this.graph.processByName(options.leftProcess), this.leftGraph);
-            this.draw(this.graph.processByName(options.rightProcess), this.rightGraph);
+
+            if (drawLeft) {this.draw(this.graph.processByName(options.leftProcess), this.leftGraph)}
+            if (drawRight) {this.draw(this.graph.processByName(options.rightProcess), this.rightGraph)}
             
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
