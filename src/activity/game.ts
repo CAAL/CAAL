@@ -69,7 +69,6 @@ module Activity {
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
 
-
             this.$leftContainer.add(this.$rightContainer).on("scroll", () => this.positionSliders());
             this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
             this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
@@ -142,7 +141,7 @@ module Activity {
             };
         }
 
-        private newGame(drawLeft : boolean, drawRight : boolean) : void {
+        private newGame(drawLeft : boolean, drawRight : boolean, forceLosingType : boolean = false) : void {
             var options = this.getOptions();
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
 
@@ -152,14 +151,20 @@ module Activity {
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
             
-            if (this.dgGame != undefined)
-                this.dgGame.stopGame();
             this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess);
             
             var attacker : Player;
             var defender : Player;
-
-            if (options.playerType === "defender") {
+            
+            if (forceLosingType) {
+                if ((<BisimulationGame> this.dgGame).isBisimilar()) {
+                    // TODO: change gui to show player as attacker
+                } else {
+                    // TODO: change gui to show player as defender
+                }
+            }
+            
+            if ((forceLosingType && !(<BisimulationGame> this.dgGame).isBisimilar()) || options.playerType === "defender") {
                 attacker = new Computer(PlayType.Attacker);
                 defender = new Human(PlayType.Defender);
             } else {
@@ -484,14 +489,16 @@ module Activity {
         }
         
         public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) {
+            
             this.step++;
-            var destinationHtml : string = this.htmlNotationVisitor.visit(destinationProcess);
+            var previousConfig = this.getCurrentConfiguration();
             
             // change the current node id to the next
             this.currentNodeId = nextNode;
             
             if (player.getPlayType() == PlayType.Attacker) {
-                this.gameLog.printPlay(player, action, destinationProcess);
+                var sourceProcess = move == Move.Left ? previousConfig.left : previousConfig.right;
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess);
 
                 this.lastAction = action;
                 this.lastMove = move;
@@ -499,14 +506,15 @@ module Activity {
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
                 this.preparePlayer(this.defender);
             } else {
-                this.gameLog.printPlay(player, action, destinationProcess);
-
                 // the play is a defense, flip the saved last move
                 this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
                 
+                var sourceProcess = this.lastMove == Move.Left ? previousConfig.left : previousConfig.right;
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess);
+                
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
                 
-                if (!this.cycleDetection())
+                if (!this.cycleExists())
                     this.preparePlayer(this.attacker);
             }
 
@@ -538,7 +546,7 @@ module Activity {
             }
         }
         
-        private cycleDetection() : boolean {
+        private cycleExists() : boolean {
             var configuration = this.getCurrentConfiguration();
             var cacheStr = this.getConfigurationStr(configuration);
             
@@ -939,11 +947,6 @@ module Activity {
             var choice = game.getWinningDefend(choices);
             game.play(this, choice.targetProcess, choice.nextNode);
         }
-        
-        private random(max) : number {
-            // random integer between 0 and max
-            return Math.floor((Math.random() * (max+1)));
-        }
     }
 
     class GameLog {
@@ -978,15 +981,15 @@ module Activity {
             }
         }
 
-        public printPlay(player : Player, action : string, destination : CCS.Process) : void {
+        public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process) : void {
             if (player instanceof Computer) {
                 if (player.getPlayType() === PlayType.Attacker) {
-                    this.println("Attacker plays (" + action + ", " + this.labelFor(destination) + ").");
+                    this.println("Attacker plays (" + this.labelFor(source) + ", " + action + ", " + this.labelFor(destination) + ").");
                 } else {
-                    this.println("Defender plays (" + action + ", " + this.labelFor(destination) + ").");
+                    this.println("Defender plays (" + this.labelFor(source) + ", " + action + ", " + this.labelFor(destination) + ").");
                 }
             } else {
-                this.println("You played (" + action + ", " + this.labelFor(destination) + ").");
+                this.println("You played (" + this.labelFor(source) + ", " + action + ", " + this.labelFor(destination) + ").");
             }
         }
 
