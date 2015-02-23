@@ -8,6 +8,7 @@ module Activity {
 
     export class Verifier extends Activity {
         private project: Project;
+        private changed : boolean
         private editor: any;
         private addPropertyList: JQuery;
         private propertyTableBody: JQuery;
@@ -41,6 +42,8 @@ module Activity {
                 }
             });
 
+            $(document).on("ccs-changed", () => this.changed = true); // on CCS change event (reset everything)
+
             this.editor = ace.edit("hml-editor");
             this.editor.setTheme("ace/theme/crisp");
             this.editor.getSession().setMode("ace/mode/hml");
@@ -70,11 +73,12 @@ module Activity {
 
         public onShow(configuration?: any): void {
 
-            if (this.project.isChanged()) {
+            if (this.changed) {
                 // If project has changed check whether the properties are still valid? Meaning that their processes are still defined,
                 // Also check wether the actions exists in used in the ccs program. (low prio)
                 var properties = this.project.getProperties();
                 var processList = Main.getGraph().getNamedProcesses()
+                this.changed = false;
 
                 properties.forEach((property) => {
                     if (property instanceof Property.StrongBisimulation || 
