@@ -315,6 +315,10 @@ p.small {
     margin-bottom: 20px;
 }
 
+#game-fullscreen {
+    margin-right: 15px;
+}
+
 #game-main, #game-status {
     margin: 0;
 }
