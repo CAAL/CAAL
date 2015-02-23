@@ -24,7 +24,7 @@ module HML {
     }
 
     export class DisjFormula implements Formula {
-        constructor(public left : Formula, public right : Formula) {
+        constructor(public subFormulas : Formula[]) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchDisjFormula(this);
@@ -35,7 +35,7 @@ module HML {
     }
 
     export class ConjFormula implements Formula {
-        constructor(public left : Formula, public right : Formula) {
+        constructor(public subFormulas : Formula[]) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchConjFormula(this);
@@ -152,12 +152,12 @@ module HML {
         constructor() {
         }
 
-        newDisj(left : Formula, right : Formula) {
-            return new DisjFormula(left, right);
+        newDisj(formulas : Formula[]) {
+            return new DisjFormula(formulas);
         }
 
-        newConj(left : Formula, right : Formula) {
-            return new ConjFormula(left, right);
+        newConj(formulas : Formula[]) {
+            return new ConjFormula(formulas);
         }
 
         newTrue() {
@@ -280,11 +280,21 @@ module HML {
         }
 
         dispatchDisjFormula(formula : DisjFormula) : boolean {
-            return formula.left.dispatchOn(this) || formula.right.dispatchOn(this);
+            var result = false;
+            formula.subFormulas.forEach(subFormula => {
+                result = result || subFormula.dispatchOn(this);
+            });
+            //cast potentially undefined.
+            return !!result;
         }
 
         dispatchConjFormula(formula : ConjFormula) : boolean {
-            return formula.left.dispatchOn(this) || formula.right.dispatchOn(this);
+            var result = false;
+            formula.subFormulas.forEach(subFormula => {
+                result = result || subFormula.dispatchOn(this);
+            });
+            //cast potentially undefined.
+            return !!result;
         }
 
         dispatchTrueFormula(formula : TrueFormula) : boolean {
