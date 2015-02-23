@@ -30,6 +30,7 @@ module Activity {
 
     export class Explorer extends Activity {
         private project: Project;
+        private changed: boolean;
         private canvas;
         private renderer: Renderer;
         private uiGraph: ProcessGraphUI;
@@ -98,6 +99,8 @@ module Activity {
             // Prevent options menu from closing when pressing form elements.
             $(document).on('click', '.yamm .dropdown-menu', e => e.stopPropagation());
 
+            $(document).on("ccs-changed", () => this.changed = true);
+
             $("#explorer-process-list, input[name=option-collapse], #option-simplify").on("change", () => this.draw());
             $("#option-depth").on("change", () => {
                 this.expandDepth = $("#option-depth").val();
@@ -123,8 +126,19 @@ module Activity {
             $(window).on("resize", () => this.resize());
             this.resize();
 
-            if (this.project.isChanged()){
-                this.graph = Main.getGraph();
+            if (this.changed) {
+                this.changed = false;
+
+                this.graph = this.project.getGraph();
+
+                this.namedProcesses = this.graph.getNamedProcesses().reverse();
+                var list = $("#explorer-process-list > select").empty();
+
+                for (var i = 0; i < this.namedProcesses.length; i++) {
+                    list.append($("<option></option>").append(this.namedProcesses[i]));
+                }
+
+                this.draw();
             }
 
             this.uiGraph.setOnSelectListener((processId) => {
@@ -138,17 +152,6 @@ module Activity {
             this.uiGraph.setHoverOutListener(() => {
                 this.uiGraph.clearHover();
             });
-
-            if (this.project.isChanged()) {
-                this.namedProcesses = this.graph.getNamedProcesses().reverse();
-                var list = $("#explorer-process-list > select").empty();
-
-                for (var i = 0; i < this.namedProcesses.length; i++) {
-                    list.append($("<option></option>").append(this.namedProcesses[i]));
-                }
-
-                this.draw();
-            }
         }
 
         public onHide(): void {

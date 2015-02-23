@@ -1,7 +1,7 @@
 /// <reference path="../main.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
 
-enum PropertyStatus {statisfied, unstatisfied, invalid, unknown};
+enum PropertyStatus {satisfied, unsatisfied, invalid, unknown};
 
 module Property {
 
@@ -15,7 +15,7 @@ module Property {
     }
 
     export class Property {
-        // statisfied = check-mark, unstatisfied = cross, invalid = yellow triangle, unknown = question mark
+        // satisfied = check-mark, unsatisfied = cross, invalid = yellow triangle, unknown = question mark
         private static counter: number = 0;
         private id: number;
         public status: PropertyStatus;
@@ -40,10 +40,10 @@ module Property {
             if (this.status === PropertyStatus.unknown) {
                 return "<i class=\"fa fa-question\"></i>"
             }
-            else if (this.status === PropertyStatus.statisfied) {
+            else if (this.status === PropertyStatus.satisfied) {
                 return "<i class=\"fa fa-check\"></i>"
             }
-            else if (this.status === PropertyStatus.unstatisfied) {
+            else if (this.status === PropertyStatus.unsatisfied) {
                 return "<i class=\"fa fa-times\"></i>"
             }
             else if (this.status === PropertyStatus.invalid) {
@@ -167,10 +167,10 @@ module Property {
                 this.worker.addEventListener("message", event => {
                     var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
                     if (res === true) {
-                        this.status = PropertyStatus.statisfied;
+                        this.status = PropertyStatus.satisfied;
                     }
                     else if (res === false) {
-                        this.status = PropertyStatus.unstatisfied; 
+                        this.status = PropertyStatus.unsatisfied; 
                     }
                     else {
                         this.status = res;
@@ -229,10 +229,10 @@ module Property {
                 this.worker.addEventListener("message", event => {
                     var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
                     if (res === true) {
-                        this.status = PropertyStatus.statisfied;
+                        this.status = PropertyStatus.satisfied;
                     }
                     else if (res === false) {
-                        this.status = PropertyStatus.unstatisfied; 
+                        this.status = PropertyStatus.unsatisfied; 
                     }
                     else {
                         this.status = res;
@@ -344,10 +344,10 @@ module Property {
                 this.worker.addEventListener("message", event => {
                     var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
                     if (res === true) {
-                        this.status = PropertyStatus.statisfied;
+                        this.status = PropertyStatus.satisfied;
                     }
                     else if (res === false) {
-                        this.status = PropertyStatus.unstatisfied; 
+                        this.status = PropertyStatus.unsatisfied; 
                     }
                     else {
                         this.status = res;

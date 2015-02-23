@@ -27,6 +27,7 @@ textarea {
 
 .navbar-header .navbar-brand {
 	font-variant: small-caps;
+    cursor: auto;
 }
  
 /* Align rightmost menu element with body */
@@ -44,6 +45,17 @@ textarea {
 @media (max-width: 767px) {
     .navbar-collapse .nav > .divider-vertical {
         display: none;
+    }
+}
+
+.col-border {
+    padding-right: 15px;
+    border-right: 1px solid #e7e7e7;
+}
+
+@media (max-width: 991px) {
+    .col-border {
+        border: none;
     }
 }
 
@@ -282,8 +294,6 @@ p.small {
     min-height: 75px;
 }
 
-
-/* Colors the verification status */
 #property-table .fa-check {
     color: #0c0;
 }
@@ -294,6 +304,65 @@ p.small {
 
 #property-table .fa-exclamation-triangle {
     color: #c00;
+}
+
+
+/*
+ * Game activity styles
+ */
+
+#game-options {
+    margin-bottom: 20px;
+}
+
+#game-main, #game-status {
+    margin: 0;
+}
+
+#game-left-canvas, #game-right-canvas {
+    margin: 0;
+    padding: 0;
+    border: 1px solid #e7e7e7;
+    overflow-x: scroll;
+    overflow-y: scroll;
+}
+
+#game-right-canvas {
+    border-left: none;
+}
+
+#game-left-canvas input[type=range], #game-right-canvas input[type=range] {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 100px;
+    cursor: pointer;
+}
+
+#game-status {
+    border: 1px solid #e7e7e7;
+    border-top: none;
+}
+
+#game-log {
+    height: 230px;
+    overflow-x: auto;
+    overflow-y: scroll;
+}
+
+#game-log p {
+    margin-left: 20px;
+}
+
+#game-transitions {
+    height: 230px;
+    overflow-x: auto;
+    overflow-y: scroll;
+}
+
+#game-transitions-table tbody {
+    font: normal 14px "Inconsolata";
+    cursor: pointer;
 }
 
 
@@ -309,6 +378,10 @@ p.small {
     cursor: pointer;
 }
 
+.tooltip {
+    position: fixed;
+}
+
 .tooltip.in {
     opacity: 1.0;
     filter: alpha(opacity=100); /* For IE8 and earlier */
@@ -318,7 +391,7 @@ p.small {
     background-color: #eee;
     border: 1px solid #bbb;
     color: black;
-    max-width: 600px;
+    max-width: 300px;
 }
 
 .tooltip-arrow {

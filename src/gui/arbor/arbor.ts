@@ -13,10 +13,10 @@ module GUI {
         private handler : Handler;
         private highlightedEdges : Edge[] = [];
 
-        constructor(renderer) {
+        constructor(renderer, particleSystemOptions = {repulsion: 400, stiffness: 800, friction: 0.5}) {
             //this.sys = arbor.ParticleSystem(500, 3000, 0.95);
             /* Repulsion, stiffness, friction, gravity, fps, dt, precision. */
-            this.sys = arbor.ParticleSystem(400, 800, 0.5);
+            this.sys = arbor.ParticleSystem(particleSystemOptions.repulsion, particleSystemOptions.stiffness, particleSystemOptions.friction);
             this.sys.parameters({gravity:true});
             this.renderer = renderer;
             this.sys.renderer = renderer;
@@ -36,6 +36,14 @@ module GUI {
             var node = this.sys.getNode(nodeId),
                 data = node ? node.data : null;
             return data;
+        }
+
+        public getNode(name : string) : Node {
+            return this.sys.getNode(name);
+        }
+
+        public getPosition(name : string) : Point {
+            return this.sys.toScreen(this.getNode(name).p);
         }
 
         public showTransitions(fromId : string, toId : string, datas : Object[]) {
