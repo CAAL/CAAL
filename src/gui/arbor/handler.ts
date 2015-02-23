@@ -82,7 +82,7 @@ class Handler {
             var p = this.renderer.particleSystem.fromScreen(s);
             this.selectedNode.p = p;
 
-            this.selectedNode.tempMass = 1000;
+            this.selectedNode.tempMass = 10;
         }
 
         return false;

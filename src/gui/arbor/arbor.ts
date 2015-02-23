@@ -13,10 +13,10 @@ module GUI {
         private handler : Handler;
         private highlightedEdges : Edge[] = [];
 
-        constructor(renderer, particleSystemOptions = {repulsion: 400, stiffness: 800, friction: 0.5}) {
+        constructor(renderer, particleSystemOptions = {repulsion: 400, stiffness: 800, friction: 0.5, integrator:'verlet'}) {
             //this.sys = arbor.ParticleSystem(500, 3000, 0.95);
             /* Repulsion, stiffness, friction, gravity, fps, dt, precision. */
-            this.sys = arbor.ParticleSystem(particleSystemOptions.repulsion, particleSystemOptions.stiffness, particleSystemOptions.friction);
+            this.sys = arbor.ParticleSystem(particleSystemOptions);
             this.sys.parameters({gravity:true});
             this.renderer = renderer;
             this.sys.renderer = renderer;
