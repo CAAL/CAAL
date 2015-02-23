@@ -3,6 +3,7 @@
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="activity.ts" />
+/// <reference path="../../lib/suppressWarnings.d.ts" />
 
 module Activity {
 
@@ -30,6 +31,8 @@ module Activity {
         private $playerType : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
+        private $fullscreenBtn : JQuery;
+        private $fullScreenContainer;
         private $leftContainer : JQuery;
         private $rightContainer : JQuery;
         private $leftZoom : JQuery;
@@ -54,6 +57,8 @@ module Activity {
             this.$rightProcessList = $("#game-right-process");
             this.$leftContainer = $("#game-left-canvas");
             this.$rightContainer = $("#game-right-canvas");
+            this.$fullscreenBtn = $("#game-fullscreen");
+            this.$fullScreenContainer = $("#game-container")[0];
             this.$leftZoom = $("#zoom-left");
             this.$rightZoom = $("#zoom-right");
             this.leftCanvas = <HTMLCanvasElement> this.$leftContainer.find("canvas")[0];
@@ -68,10 +73,21 @@ module Activity {
             this.$playerType.on("change", () => this.newGame(false, false));
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
-
+            this.$fullscreenBtn.on("click", () => this.toggleFullscreen());
+            
             this.$leftContainer.add(this.$rightContainer).on("scroll", () => this.positionSliders());
             this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
             this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
+
+            $(document).on("fullscreenchange", () => this.fullscreenChanged());
+            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
+            
+            $(document).on("fullscreenerror", () => this.fullscreenError());
+            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
+            $(document).on("mozfullscreenerror", () => this.fullscreenError());
+            $(document).on("MSFullscreenError", () => this.fullscreenError());
 
             $(document).on("ccs-changed", () => this.changed = true);
             
@@ -84,6 +100,49 @@ module Activity {
                 },
                 selector: "span.ccs-tooltip-constant"
             });
+        }
+        
+        private isFullscreen(): boolean {
+            return !!document.fullscreenElement ||
+                   !!document.mozFullScreenElement ||
+                   !!document.webkitFullscreenElement ||
+                   !!document.msFullscreenElement;
+        }
+        
+        private toggleFullscreen() {
+            if (!this.isFullscreen()) {
+                if (this.$fullScreenContainer.requestFullscreen) {
+                    this.$fullScreenContainer.requestFullscreen();
+                } else if (this.$fullScreenContainer.msRequestFullscreen) {
+                    this.$fullScreenContainer.msRequestFullscreen();
+                } else if (this.$fullScreenContainer.mozRequestFullScreen) {
+                    this.$fullScreenContainer.mozRequestFullScreen();
+                } else if (this.$fullScreenContainer.webkitRequestFullscreen) {
+                    this.$fullScreenContainer.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        private fullscreenChanged() {
+            this.$fullscreenBtn.text(this.isFullscreen() ? "Exit" : "Fullscreen");
+            this.resize();
+        }
+        
+        private fullscreenError() {
+            console.log("Fullscreen error");
+            
+            // user might have entered fullscreen and gone out of it, treat as fullscreen changed
+            this.fullscreenChanged();
         }
 
         protected checkPreconditions(): boolean {
