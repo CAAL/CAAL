@@ -108,6 +108,7 @@ module Activity {
 
             if (this.changed || configuration) {
                 this.changed = false;
+                this.resize();
                 this.graph = this.project.getGraph();
                 this.displayOptions();
                 this.newGame(true, true, configuration);
@@ -144,6 +145,9 @@ module Activity {
 
         private setOptions(options : any) : void {
             this.$gameType.find("option[value=" + options.gameType + "]").prop("selected", true);
+
+            // Bootstrap radio buttons only support changes via click events.
+            // Manually handle .active class.
             this.$playerType.each(function() {
                 if ($(this).attr("value") === options.playerType) {
                     $(this).parent().addClass("active");
@@ -151,6 +155,7 @@ module Activity {
                     $(this).parent().removeClass("active");
                 }
             });
+
             this.$leftProcessList.val(options.leftProcess);
             this.$rightProcessList.val(options.rightProcess);
         }
@@ -167,8 +172,8 @@ module Activity {
 
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
 
-            if (drawLeft) {this.draw(this.graph.processByName(options.leftProcess), this.leftGraph)}
-            if (drawRight) {this.draw(this.graph.processByName(options.rightProcess), this.rightGraph)}
+            if (drawLeft) {this.draw(this.graph.processByName(options.leftProcess), this.leftGraph, "left")}
+            if (drawRight) {this.draw(this.graph.processByName(options.rightProcess), this.rightGraph, "right")}
             
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
@@ -215,14 +220,9 @@ module Activity {
         }*/
 
         // Use this for now. Needs refactor.
-        private draw(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
-            if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
-            this.resize();
-
-            this.$leftZoom.val("1");
-            this.$rightZoom.val("1");
-
+        private draw(process : CCS.Process, graph : GUI.ProcessGraphUI, side : string) : void {
             this.clear(graph);
+            this.zoom(1, side)
 
             var allTransitions = this.expandBFS(process, 1000);
 
@@ -299,15 +299,17 @@ module Activity {
 
         private zoom(value : number, side : string) : void {
             if (side === "left") {
+                this.$leftZoom.val(value.toString());
                 this.leftCanvas.width = (this.$leftContainer.width() - 17) * value; // 17px = scrollbar size.
                 this.leftCanvas.height = (this.$leftContainer.height() - 17) * value;
                 this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
-                this.centerNode(this.dgGame.getCurrentConfiguration().left, Move.Left);
+                if (value > 1) {this.centerNode(this.dgGame.getCurrentConfiguration().left, Move.Left);}
             } else {
+                this.$rightZoom.val(value.toString());
                 this.rightCanvas.width = (this.$rightContainer.width() - 17) * value;
                 this.rightCanvas.height = (this.$rightContainer.height() - 17) * value;
                 this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
-                this.centerNode(this.dgGame.getCurrentConfiguration().right, Move.Right);
+                if (value > 1) {this.centerNode(this.dgGame.getCurrentConfiguration().right, Move.Right);}
             }
         }
 
@@ -804,7 +806,7 @@ module Activity {
         
         protected prepareDefend(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, false);
-            this.gameLog.println("Pick a transition ...");
+            this.gameLog.println("Pick a transition from " + ((game.getLastMove() === Move.Left) ? "right." : "left."));
         }
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
@@ -994,7 +996,7 @@ module Activity {
                 this.println("You are playing as defender.");
             } else {
                 this.println("You are playing as attacker.");
-                this.println("Pick a transition ...");
+                this.println("Pick a transition from left or right.");
             }
         }
 
@@ -1020,7 +1022,7 @@ module Activity {
         }
         
         public printCycleWinner(configuration : any, defender : Player) : void {
-            this.println("Cycle detected. (" + this.labelFor(configuration.left) + ", " + this.labelFor(configuration.right) + ") has been visited before. " + ((defender instanceof Human) ? "You win!" : "You lose!"));
+            this.println("Cycle detected. " + ((defender instanceof Human) ? "You win!" : "You lose!"));
         }
         
         private labelFor(process : CCS.Process) : string {
