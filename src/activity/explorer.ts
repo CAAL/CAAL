@@ -109,13 +109,13 @@ module Activity {
         }
 
         protected checkPreconditions(): boolean {
-            var temp = Main.getGraph();
-            if (!temp) {
-                this.showExplainDialog("Syntax Error", "Your program contains syntax errors.");
+            var graph = Main.getGraph();
+
+            if (!graph) {
+                this.showExplainDialog("Syntax Error", "Your program contains one or more syntax errors.");
                 return false;
-            } 
-            else if (temp.getNamedProcesses().length === 0) {
-                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
+            } else if (graph.getNamedProcesses().length === 0) {
+                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
                 return false;
             }
 

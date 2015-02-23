@@ -58,12 +58,10 @@ module Activity {
             var graph = Main.getGraph();
 
             if (!graph) {
-                this.showExplainDialog("Syntax Error", "Your program contains syntax errors.");
+                this.showExplainDialog("Syntax Error", "Your program contains one or more syntax errors.");
                 return false;
-            }
-
-            if (graph.getNamedProcesses().length === 0) {
-                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program to verify.");
+            } else if (graph.getNamedProcesses().length === 0) {
+                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
                 return false;
             }
 
