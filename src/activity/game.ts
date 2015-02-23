@@ -361,8 +361,8 @@ module Activity {
             return undefined;
         }
         
-        // returns true if the player has a universal winning strategy
         public isUniversalWinner(player : Player) : boolean {
+            // returns true if the player has a universal winning strategy
             return this.getUniversalWinner() === player;
         }
         
@@ -384,14 +384,25 @@ module Activity {
             return undefined;
         }
         
+        public getTryHardAttack(choices : any) : any {
+            // consider adding this method to DepedencyGraph interface
+            throw "Abstract method. Not implemented.";
+            return undefined;
+        }
+        
         public getWinningDefend(choices : any) : any {
             // consider adding this method to DepedencyGraph interface
             throw "Abstract method. Not implemented.";
             return undefined;
         }
         
-        public getCurrentChoices(playType : PlayType) : any {
+        public getTryHardDefend(choices : any) : any {
             // consider adding this method to DepedencyGraph interface
+            throw "Abstract method. Not implemented.";
+            return undefined;
+        }
+        
+        public getCurrentChoices(playType : PlayType) : any {
             throw "Abstract method. Not implemented.";
             return undefined;
         }
@@ -413,8 +424,6 @@ module Activity {
             // tell players to abort their prepared play
             this.attacker.abortPlay();
             this.defender.abortPlay();
-            
-            //TODO consider rendering the dgGame unplayable now by some flag
         }
         
         public setPlayers(attacker : Player, defender : Player) {
@@ -510,6 +519,7 @@ module Activity {
             if (this.cycleCache[cacheStr] != undefined) {
                 // cycle detected
                 this.gameLog.printCycleWinner(configuration, this.defender);
+                this.stopGame();
                 
                 // clear the cache
                 this.cycleCache = {};
@@ -578,8 +588,8 @@ module Activity {
             var bestCandidateLevel = Infinity;
             var ownLevel = this.marking.getLevel(this.currentNodeId);
             
-            choices.forEach((option, i) => {
-                var targetNodeLevel = this.marking.getLevel(option.nextNode);
+            choices.forEach((choice, i) => {
+                var targetNodeLevel = this.marking.getLevel(choice.nextNode);
                 
                 if (targetNodeLevel < ownLevel && targetNodeLevel < bestCandidateLevel) {
                     bestCandidateLevel = targetNodeLevel;
@@ -588,6 +598,44 @@ module Activity {
             });
             
             return choices[bestCandidateIndex];
+        }
+        
+        public getTryHardAttack(choices : any) : any {
+            // strategy: Play the choice which yields the highest ratio of one-markings on the defenders next choice
+            var bestCandidateIndices = [];
+            var bestRatio = 0;
+            
+            choices.forEach((choice, i) => {
+                var oneMarkings = 0;
+                var defenderChoices = this.bisimulationDG.getDefenderOptions(choice.nextNode);
+                
+                if (defenderChoices.length > 0) {
+                    defenderChoices.forEach( (defendChoice) => {
+                        if (this.marking.getMarking(defendChoice.nextNode) === this.marking.ONE)
+                            oneMarkings++;
+                    });
+                    
+                    var ratio = oneMarkings / defenderChoices.length;
+                    
+                    if (ratio > bestRatio) {
+                        bestRatio = ratio;
+                        bestCandidateIndices = [i];
+                    } else if (ratio == bestRatio) {
+                        bestCandidateIndices.push(i);
+                    }
+                } else {
+                    bestCandidateIndices = [i];
+                }
+            });
+            
+            if (bestRatio == 0) {
+                // no-one markings were found, retun random choice
+                return choices[this.random(choices.length-1)];
+            }
+            else {
+                // return a random choice between the equally best choices
+                return choices[bestCandidateIndices[this.random(bestCandidateIndices.length - 1)]];
+            }
         }
         
         public getWinningDefend(choices : any) : any {
@@ -600,11 +648,41 @@ module Activity {
             throw "No defender moves";
         }
         
+        public getTryHardDefend(choices : any) : any {
+            // strategy: Play the choice with the highest level
+            var bestCandidateIndices = [];
+            var bestLevel = 0;
+            
+            for (var i = 0; i < choices.length; i++) {
+                var level = this.marking.getLevel(choices[i].nextNode);
+                
+                if (level > bestLevel) {
+                    bestLevel = level;
+                    bestCandidateIndices = [i];
+                } else if (level == bestLevel) {
+                    bestCandidateIndices.push(i);
+                }
+            }
+            
+            if (bestLevel == 0) {
+                // if no good levels were found return a random play
+                return choices[this.random(choices.length-1)];
+            } else {
+                // return a random choice between the equally best choices
+                return choices[bestCandidateIndices[this.random(bestCandidateIndices.length - 1)]];
+            }
+        }
+        
         public getCurrentChoices(playType : PlayType) : any {
             if (playType == PlayType.Attacker)
                 return this.bisimulationDG.getAttackerOptions(this.currentNodeId);
             else
                 return this.bisimulationDG.getDefenderOptions(this.currentNodeId);
+        }
+        
+        private random(max) : number {
+            // random integer between 0 and max
+            return Math.floor((Math.random() * (max+1)));
         }
     }
 
@@ -807,12 +885,13 @@ module Activity {
         }
         
         private losingAttack(choices : any, game : DgGame) : void {
-            // play random
-            var random : number = this.random(choices.length);
+            // var random : number = this.random(choices.length - 1);
+            // var move : Move = choices[random].move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+            // game.play(this, choices[random].targetProcess, choices[random].nextNode, choices[random].action, move);
             
-            var move : Move = choices[random].move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
-            
-            game.play(this, choices[random].targetProcess, choices[random].nextNode, choices[random].action, move);
+            var tryHardChoice = game.getTryHardAttack(choices);
+            var move : Move = tryHardChoice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+            game.play(this, tryHardChoice.targetProcess, tryHardChoice.nextNode, tryHardChoice.action, move);
         }
         
         private winningAttack(choices : any, game : DgGame) : void {
@@ -823,9 +902,11 @@ module Activity {
         }
         
         private losingDefend(choices : any, game : DgGame) : void {
-            // play random
-            var random : number = this.random(choices.length);
-            game.play(this, choices[random].targetProcess, choices[random].nextNode);
+            // var random : number = this.random(choices.length - 1);
+            // game.play(this, choices[random].targetProcess, choices[random].nextNode);
+            
+            var tryHardChoice = game.getTryHardDefend(choices);
+            game.play(this, tryHardChoice.targetProcess, tryHardChoice.nextNode);
         }
         
         private winningDefend(choices : any, game : DgGame) : void {
@@ -835,7 +916,7 @@ module Activity {
         
         private random(max) : number {
             // random integer between 0 and max
-            return Math.floor((Math.random() * max));
+            return Math.floor((Math.random() * (max+1)));
         }
     }
 
@@ -893,8 +974,7 @@ module Activity {
         }
         
         public printCycleWinner(configuration : any, defender : Player) : void {
-            this.println("Cycle detected. (" + this.labelFor(configuration.left) + ", " + this.labelFor(configuration.right) + ") has been visited before.");
-            this.println(defender instanceof Human ? "You win!" : "You lose!");
+            this.println("Cycle detected. (" + this.labelFor(configuration.left) + ", " + this.labelFor(configuration.right) + ") has been visited before. " + ((defender instanceof Human) ? "You win!" : "You lose!"));
         }
         
         private labelFor(process : CCS.Process) : string {
