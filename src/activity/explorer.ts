@@ -30,6 +30,7 @@ module Activity {
 
     export class Explorer extends Activity {
         private project: Project;
+        private changed: boolean;
         private canvas;
         private renderer: Renderer;
         private uiGraph: ProcessGraphUI;
@@ -71,16 +72,6 @@ module Activity {
             $(this.saveBtn).on("click", () => this.saveCanvas());
             $(this.fullscreenBtn).on("click", this.toggleFullscreen.bind(this));
 
-            $(document).on("fullscreenchange", () => this.fullscreenChanged());
-            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
-            
-            $(document).on("fullscreenerror", () => this.fullscreenError());
-            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
-            $(document).on("mozfullscreenerror", () => this.fullscreenError());
-            $(document).on("MSFullscreenError", () => this.fullscreenError());
-
             $(this.statusTableContainer).find("tbody")
                 .on("click", "tr", this.onTransitionTableRowClick.bind(this))
                 .on("mouseenter", "tr", this.onTransitionTableRowHover.bind(this, true))
@@ -98,6 +89,8 @@ module Activity {
             // Prevent options menu from closing when pressing form elements.
             $(document).on('click', '.yamm .dropdown-menu', e => e.stopPropagation());
 
+            $(document).on("ccs-changed", () => this.changed = true);
+
             $("#explorer-process-list, input[name=option-collapse], #option-simplify").on("change", () => this.draw());
             $("#option-depth").on("change", () => {
                 this.expandDepth = $("#option-depth").val();
@@ -106,13 +99,13 @@ module Activity {
         }
 
         protected checkPreconditions(): boolean {
-            var temp = Main.getGraph();
-            if (!temp) {
-                this.showExplainDialog("Syntax Error", "Your program contains syntax errors.");
+            var graph = Main.getGraph();
+
+            if (!graph) {
+                this.showExplainDialog("Syntax Error", "Your program contains one or more syntax errors.");
                 return false;
-            } 
-            else if (temp.getNamedProcesses().length === 0) {
-                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program to explore.");
+            } else if (graph.getNamedProcesses().length === 0) {
+                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
                 return false;
             }
 
@@ -122,9 +115,30 @@ module Activity {
         public onShow(configuration?: any): void {
             $(window).on("resize", () => this.resize());
             this.resize();
+            
+            $(document).on("fullscreenchange", () => this.fullscreenChanged());
+            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
+            
+            $(document).on("fullscreenerror", () => this.fullscreenError());
+            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
+            $(document).on("mozfullscreenerror", () => this.fullscreenError());
+            $(document).on("MSFullscreenError", () => this.fullscreenError());
+            
+            if (this.changed) {
+                this.changed = false;
 
-            if (this.project.getChanged()){
-                this.graph = Main.getGraph();
+                this.graph = this.project.getGraph();
+
+                this.namedProcesses = this.graph.getNamedProcesses().reverse();
+                var list = $("#explorer-process-list > select").empty();
+
+                for (var i = 0; i < this.namedProcesses.length; i++) {
+                    list.append($("<option></option>").append(this.namedProcesses[i]));
+                }
+
+                this.draw();
             }
 
             this.uiGraph.setOnSelectListener((processId) => {
@@ -138,21 +152,20 @@ module Activity {
             this.uiGraph.setHoverOutListener(() => {
                 this.uiGraph.clearHover();
             });
-
-            if (this.project.getChanged()) {
-                this.namedProcesses = this.graph.getNamedProcesses().reverse();
-                var list = $("#explorer-process-list > select").empty();
-
-                for (var i = 0; i < this.namedProcesses.length; i++) {
-                    list.append($("<option></option>").append(this.namedProcesses[i]));
-                }
-
-                this.draw();
-            }
         }
 
         public onHide(): void {
             $(window).off("resize");
+
+            $(document).off("fullscreenchange");
+            $(document).off("webkitfullscreenchange");
+            $(document).off("mozfullscreenchange");
+            $(document).off("MSFullscreenChange");
+            
+            $(document).off("fullscreenerror");
+            $(document).off("webkitfullscreenerror");
+            $(document).off("mozfullscreenerror");
+            $(document).off("MSFullscreenError");
 
             this.uiGraph.clearOnSelectListener();
             this.uiGraph.clearHoverOnListener();

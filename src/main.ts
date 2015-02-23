@@ -15,6 +15,7 @@
 /// <reference path="activity/editor.ts" />
 /// <reference path="activity/explorer.ts" />
 /// <reference path="activity/verifier.ts" />
+/// <reference path="activity/game.ts" />
 
 declare var CCSParser;
 declare var HMLParser;
@@ -23,11 +24,13 @@ import hml = HML;
 
 module Main {
 
+    export var activityHandler = new Activity.ActivityHandler();
+
     $(document).ready(function() {
-        var activityHandler = new Activity.ActivityHandler();
         activityHandler.addActivity("editor", new Activity.Editor("#editor-container", "#edit-btn"));
         activityHandler.addActivity("explorer", new Activity.Explorer("#explorer-container", "#explore-btn"));
         activityHandler.addActivity("verifier" , new Activity.Verifier("#verifier-container", "#verify-btn"));
+        activityHandler.addActivity("game" , new Activity.Game("#game-container", "#game-btn"));
         activityHandler.selectActivity("editor");
 
         new New("#new-btn", activityHandler);

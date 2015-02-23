@@ -8,6 +8,7 @@ module Activity {
 
     export class Verifier extends Activity {
         private project: Project;
+        private changed : boolean
         private editor: any;
         private addPropertyList: JQuery;
         private propertyTableBody: JQuery;
@@ -37,9 +38,11 @@ module Activity {
                     } catch (error) {
                         console.log("Error stopping verification of property " + this.currentVerifyingProperty + ": " + error);
                     }
-                    this.verifactionEnded();
+                    this.verifactionEnded(PropertyStatus.unknown);
                 }
             });
+
+            $(document).on("ccs-changed", () => this.changed = true); // on CCS change event (reset everything)
 
             this.editor = ace.edit("hml-editor");
             this.editor.setTheme("ace/theme/crisp");
@@ -58,12 +61,10 @@ module Activity {
             var graph = Main.getGraph();
 
             if (!graph) {
-                this.showExplainDialog("Syntax Error", "Your program contains syntax errors.");
+                this.showExplainDialog("Syntax Error", "Your program contains one or more syntax errors.");
                 return false;
-            }
-
-            if (graph.getNamedProcesses().length === 0) {
-                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program to verify.");
+            } else if (graph.getNamedProcesses().length === 0) {
+                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
                 return false;
             }
 
@@ -71,11 +72,47 @@ module Activity {
         }
 
         public onShow(configuration?: any): void {
-            this.beforeShow();
+            if (this.changed) {
+                this.changed = false;
+                // If project has changed check whether the properties are still valid? Meaning that their processes are still defined,
+                // Also check wether the actions exists in used in the ccs program. (low prio)
+                var properties = this.project.getProperties();
+                var processList = Main.getGraph().getNamedProcesses()
+                //$("#equivalence").hide(); // hide the equivalence box(process selector), since it might have the wrong data 
+                //$("#model-checking").hide(); // hide the model-checking(HMl process selector) box, since it might have the wrong data
+
+                properties.forEach((property) => {
+                    if (property instanceof Property.StrongBisimulation || 
+                        property instanceof Property.WeakBisimulation) {
+                        if (processList.indexOf(property.getFirstProcess()) === -1 || processList.indexOf(property.getSecondProcess()) === -1 ) {
+                            // If process is not in list of named processes, show the red triangle
+                            property.setInvalidateStatus()
+                        }
+                        else {
+                            property.setUnknownStatus(); // Otherwise set the unknown status
+                        }
+                    }
+                    else if (property instanceof Property.HML) {
+                        if (processList.indexOf(property.getProcess()) === -1) {
+                            // If process is not in list of named processes, show the red triangle
+                            property.setInvalidateStatus()
+                        }
+                        else {
+                            property.setUnknownStatus(); // Otherwise set the unknown status
+                        }
+                    }   
+                });
+            }
+
+            this.displayProperties(); // update the properties table
         }
 
-        public beforeShow(): void {
-            this.displayProperties();
+        public onHide() : void {
+            $("#equivalence-first-process").empty(); // empty the process selector (HML)
+            $("#equivalence-second-process").empty(); // empty the process selector (HML)
+            $("#hml-process").empty(); // empty the process selector (HML)
+            $("#equivalence").hide(); // hide the equivalence box(process selector), since it might have the wrong data 
+            $("#model-checking").hide(); // hide the model-checking(HMl process selector) box, since it might have the wrong data
         }
 
         public displayProcessList(processes: string[], list: JQuery, selected: string): void {
@@ -90,7 +127,8 @@ module Activity {
             }
 
             if (!selected) {
-                list.prop("selectedIndex", -1);
+                // select the first element in the list
+                list.prop("selectedIndex", 0);
             }
         }
 
@@ -129,13 +167,13 @@ module Activity {
 
             switch(type) {
                 case "strong":
-                    property = new Property.StrongBisimulation(null, {firstProcess: "", secondProcess: ""});
+                    property = new Property.StrongBisimulation({firstProcess: "", secondProcess: ""});
                     break;
                 case "weak":
-                    property = new Property.WeakBisimulation(null, {firstProcess: "", secondProcess: ""});
+                    property = new Property.WeakBisimulation({firstProcess: "", secondProcess: ""});
                     break;
                 case "hml":
-                    property = new Property.HML(null, {process: "", formula: ""});
+                    property = new Property.HML({process: "", formula: ""});
                     break;
             }
 
@@ -146,27 +184,21 @@ module Activity {
 
         private onStatusHover(property) {
             return property.statistics.elapsedTime + " ms";
-            
         }
 
         private onStatusClick(e) {
             var property = e.data.property;
             if (property instanceof Property.Equivalence) {
-                var equivalence = <Property.Equivalence>property,
-                    isWeak = equivalence instanceof Property.WeakBisimulation,
-                    graph = Main.getGraph(),
+                var equivalence = <Property.Equivalence> property,
+                    gameType = (equivalence instanceof Property.StrongBisimulation) ? "strong" : "weak",
+                    playerType = (equivalence.getStatus() === PropertyStatus.satisfied) ? "attacker" : "defender",
                     configuration = {
-                        graph: graph,
-                        attackSuccGen: Main.getStrictSuccGenerator(graph),
-                        defendSuccGen: (isWeak ? Main.getWeakSuccGenerator(graph) : Main.getStrictSuccGenerator(graph)),
-                        isWeakSuccessorGenerator: isWeak,
-                        processNameA: equivalence.firstProcess,
-                        processNameB: equivalence.secondProcess
+                        gameType: gameType,
+                        playerType: playerType,
+                        leftProcess: equivalence.firstProcess,
+                        rightProcess: equivalence.secondProcess
                     };
-                // Fix this
-                //Main.activityHandler.openActivityWithConfiguration("game", configuration);
-                //Don't process click event further
-                return false;
+                Main.activityHandler.selectActivity("game", configuration);
             }
         }
 
@@ -181,17 +213,26 @@ module Activity {
                 var secondProcessList = $("#equivalence-second-process");
 
                 var processes = Main.getGraph().getNamedProcesses();
+                processes.reverse() // reverse the list since the most used processes are at the buttom.
                 this.displayProcessList(processes, firstProcessList, property.getFirstProcess());
                 this.displayProcessList(processes, secondProcessList, property.getSecondProcess());
 
+                if (property.getFirstProcess() !== firstProcessList.val() && property.getSecondProcess() !== secondProcessList.val()) {
+                    property.setFirstProcess(firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
+                    property.setSecondProcess(secondProcessList.val()); // Re-set the chosen process, since the process might have been deleted
+                    this.displayProperties(); // update the process table
+                }
+
                 firstProcessList.off("change");
                 firstProcessList.on("change", () => {
+                    // On change, set the process.
                     property.setFirstProcess(firstProcessList.val());
                     this.displayProperties();
                 });
 
                 secondProcessList.off("change");
                 secondProcessList.on("change", () => {
+                    // On change, set the process.
                     property.setSecondProcess(secondProcessList.val());
                     this.displayProperties();
                 });
@@ -201,6 +242,11 @@ module Activity {
 
                 var processList = $("#hml-process");
                 this.displayProcessList(Main.getGraph().getNamedProcesses(), processList, property.getProcess());
+
+                if (property.getProcess() !== processList.val()) {
+                    property.setProcess(processList.val()); // Re-set the chosen process, since the process might have been deleted
+                    this.displayProperties(); // update the process table
+                }
 
                 processList.off("change");
                 processList.on("change", () => {
@@ -224,8 +270,8 @@ module Activity {
             this.displayProperties();
         }
 
-        private verifactionEnded() {
-            this.currentVerifyingProperty.statistics.elapsedTime = new Date().getTime() - this.startTime;
+        private verifactionEnded(result? : PropertyStatus) {
+            this.currentVerifyingProperty.statistics.elapsedTime = (this.startTime) ? new Date().getTime() - this.startTime : 0;
             clearInterval(this.clockInterval);
             this.verifyStopButton.prop("disabled", true);
             this.currentVerifyingProperty = null;
@@ -241,6 +287,7 @@ module Activity {
         }
 
         public verify(index): void {
+            // TODO some checking before running verify
             var property = this.project.getProperties()[index];
             this.verifyStopButton.prop("disabled", false);
 
@@ -248,13 +295,14 @@ module Activity {
             var statusTd = row.find("td").eq(0);
             this.startTime = new Date().getTime();
             
-            this.clockInterval = setInterval(updateTimer, 100);
-            this.currentVerifyingProperty = property;
-
-            function updateTimer() {
+            var updateTimer = () => {
                 var elapsedTime = new Date().getTime() - this.startTime;
                 statusTd.text(elapsedTime + "ms");
             }
+
+            this.clockInterval = setInterval(updateTimer, 100);
+            this.currentVerifyingProperty = property;
+
 
             property.verify(this.verifactionEnded.bind(this));
         }

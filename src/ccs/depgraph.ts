@@ -25,7 +25,7 @@ module DependencyGraph {
 
         private nextIdx;
         private nodes = [];
-        public constructData = [];
+        private constructData = [];
         private leftPairs = {};
         private isFullyConstructed = false;
 
@@ -157,145 +157,55 @@ module DependencyGraph {
             return hyperedges;
         }
 
-        getTraceIterator(marking) {
-            var that = this;
-            if (marking.getMarking(0) !== marking.ONE) throw "getTraceIterator: Processes do not diverge.";
-
-            //Hyperedge [ [X, Y], [Q, R, S], ... ], find the next index starting at startFrom, such that
-            //all "edges" inside are marked ONE. E.g. if Q,R,S are all marked ONE then return "1", (assuming X, Y are not).
-            //otherwise returns -1.
-            function indexNextHyperEdgeMarkedOne(hyperEdges, marking, startFrom?) : number {
-                startFrom = startFrom || 0;
-                for (var i=startFrom; i < hyperEdges.length; i++) {
-                    var edge = hyperEdges[i];
-                    var allOne = true;
-                    for (var j=0; j < edge.length; j++) {
-                        if (marking.getMarking(edge[j]) !== marking.ONE) {
-                            allOne = false;
-                            break;
-                        }
-                    }
-                    if (allOne) {
-                        return i;
-                    }
-                }
-                return -1;
-            }
-
-            //Build the arrays of alternating process id, and actions.
-            function buildTraces(dfs) {
-                var leftTrace = [],
-                    rightTrace = [],
-                    node, leftMovedLast, constructData, type, action;
-                for (var i=0; i < dfs.length; i++) {
-                    node = dfs[i][0];
-                    constructData = that.constructData[node];
-                    type = constructData[0];
-                    //Both are in their respective processes in the bisim relation.
-                    if (type === 0) {
-                        leftTrace.push(constructData[1]);
-                        rightTrace.push(constructData[2]);
-                    }
-                    else {
-                        //One of them could do action. Mirror the other.
-                        leftMovedLast = type === 1;
-                        action = constructData[1];
-                        leftTrace.push(action);
-                        rightTrace.push(action);
-                    }
-                }
-                //One of them could not do the last action.
-                leftMovedLast ? rightTrace.pop() : leftTrace.pop();
-                return {
-                    left: leftTrace,
-                    right: rightTrace
-                }
-            }
-
-            //Used for the iterator
-            var latestResult = null;
-
-            //The entire iterator state, for the DFS.
-            var dfs = [ [0, 0, 0, that.getHyperEdges(0)] ];
-            var dfsDepth = 1;
-            //Nodes in the path - to prevent cycles.
-            var visited = [];
-
-            function yieldNext() {
-                var yieldResult = null;
-                while (dfsDepth > 0 && yieldResult === null) {
-                    var current : any[] = dfs[dfsDepth-1];
-                    var node = current[0];
-                    var hyperEdgeIdx : number = current[1];
-                    var edgeIdx : number = current[2];
-                    var hyperEdges = current[3];
-
-                    //Tried all hyperEdges?
-                    if (hyperEdgeIdx >= hyperEdges.length) {
-                        dfs.pop();
-                        visited.pop();
-                        --dfsDepth;
-                    } else {
-                        //Process edge if possible
-                        var edges = hyperEdges[hyperEdgeIdx];            
-                        //Base case, the edge trivially marked ONE.
-                        if (edges.length === 0) {
-                            yieldResult = buildTraces(dfs);
-                        }
-                        //Tried all edges?
-                        if (edgeIdx >= edges.length) {
-                            //Try next hyperedge
-                            var hyperEdgeIdx = indexNextHyperEdgeMarkedOne(hyperEdges, marking, hyperEdgeIdx+1);
-                            //If none found drop on next iteration
-                            if (hyperEdgeIdx === -1) {
-                                hyperEdgeIdx = hyperEdges.length;
-                            }
-                            //Update dfs data
-                            current[1] = hyperEdgeIdx;
-                            current[2] = 0;
-                        } else {
-                            //try edge then
-                            var nextNode = edges[edgeIdx];
-                            if (visited.indexOf(nextNode) === -1) {
-                                dfs.push([nextNode, 0, 0, that.getHyperEdges(nextNode)]);
-                                visited.push(nextNode);
-                                ++dfsDepth;
-                            }
-                            //Update dfs data
-                            current[2] = ++edgeIdx;
-                        }
-                    }
-                }
-                return yieldResult;
-            }
-
-            //Iterations may be expensive. don't bother if not called.
-            var didFirstRun = false;
-            function ensureFirstRun() {
-                if (!didFirstRun) {
-                    didFirstRun = true;
-                    latestResult = yieldNext();
-                }
-            }
-
-            function hasNext() {
-                ensureFirstRun();
-                return latestResult !== null;
-            }
-
-            function getNext() {
-                ensureFirstRun();
-                var result = latestResult;
-                latestResult = yieldNext();
-                return result;
-            }
-
-            return {
-                hasNext: hasNext,
-                next: getNext
-            }
+        public getAttackerOptions(currentDgNode : any) {
+            if (this.constructData[currentDgNode][0] !== 0)
+                throw "Bad node for attacker options";
+            
+            var hyperedges = this.getHyperEdges(currentDgNode);
+            
+            var result = [];
+            
+            hyperedges.forEach(hyperedge => {
+                var targetNode = hyperedge[0];
+                var data = this.constructData[targetNode];
+                var action = data[1].toString();
+                var targetProcess = this.attackSuccGen.getProcessById(data[2]);
+                var move = data[0];
+                
+                result.push({
+                    action: action,
+                    targetProcess: targetProcess,
+                    nextNode: targetNode,
+                    move: move
+                });
+            });
+            
+            return result;
         }
-
+        
+        public getDefenderOptions(currentDgNode : any) {
+            if (this.constructData[currentDgNode][0] === 0)
+                throw "Bad node for defender options";
+            
+            var hyperedge = this.getHyperEdges(currentDgNode)[0];
+            
+            var result = [];
+            
+            var tcpi = this.constructData[currentDgNode][0] === 1 ? 2 : 1;
+            
+            hyperedge.forEach(targetNode => {
+                var data = this.constructData[targetNode];
+                var targetProcess = this.defendSuccGen.getProcessById(data[tcpi]);
+                
+                result.push({
+                    targetProcess: targetProcess,
+                    nextNode: targetNode
+                });
+            });
+            
+            return result;
+        }
+        
         getBisimulationCollapse(marking) : Traverse.Collapse {
 
             var sets = Object.create(null);
@@ -409,19 +319,24 @@ module DependencyGraph {
         }
 
         dispatchDisjFormula(formula : hml.DisjFormula) {
-            var leftIdx = this.nextIdx++,
-                rightIdx = this.nextIdx++;
-            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
-            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
-            return [ [leftIdx], [rightIdx] ];
+            var hyperEdges = [];
+            formula.subFormulas.forEach(subFormula => {
+                var newIndex = this.nextIdx++;
+                this.constructData[newIndex] = [this.getForNodeId, subFormula];
+                hyperEdges.push([newIndex]);
+            });
+            return hyperEdges;
         }
 
         dispatchConjFormula(formula : hml.ConjFormula) {
-            var leftIdx = this.nextIdx++,
-                rightIdx = this.nextIdx++;
-            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
-            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
-            return [ [leftIdx, rightIdx] ];          
+            var targetNodes = [];
+            formula.subFormulas.forEach(subFormula => {
+                var newIndex = this.nextIdx++;
+                this.constructData[newIndex] = [this.getForNodeId, subFormula];
+                targetNodes.push(newIndex);
+            });
+            //Return single hyperedge
+            return [targetNodes];
         }
 
         dispatchTrueFormula(formula : hml.TrueFormula) {
@@ -522,6 +437,7 @@ module DependencyGraph {
                 data = this.constructData[identifier];
                 nodeId = data[0];
                 formula = data[1];
+                //Prevents having to pass around the node identifier.
                 this.getForNodeId = nodeId;
                 result = formula.dispatchOn(this);
                 this.nodes[identifier] = result;
@@ -531,19 +447,24 @@ module DependencyGraph {
 
         /* Remember Max fixed point - dependency graph should be "inverted" */
         dispatchDisjFormula(formula : hml.DisjFormula) {
-            var leftIdx = this.nextIdx++,
-                rightIdx = this.nextIdx++;
-            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
-            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
-            return [ [leftIdx, rightIdx] ];
+            var targetNodes = [];
+            formula.subFormulas.forEach(subFormula => {
+                var newIndex = this.nextIdx++;
+                this.constructData[newIndex] = [this.getForNodeId, subFormula];
+                targetNodes.push(newIndex);
+            });
+            //Return single hyperedge
+            return [targetNodes];
         }
 
         dispatchConjFormula(formula : hml.ConjFormula) {
-            var leftIdx = this.nextIdx++,
-                rightIdx = this.nextIdx++;
-            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
-            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
-            return [ [leftIdx], [rightIdx] ];          
+            var hyperEdges = [];
+            formula.subFormulas.forEach(subFormula => {
+                var newIndex = this.nextIdx++;
+                this.constructData[newIndex] = [this.getForNodeId, subFormula];
+                hyperEdges.push([newIndex]);
+            });
+            return hyperEdges;
         }
 
         dispatchTrueFormula(formula : hml.TrueFormula) {
@@ -664,6 +585,16 @@ module DependencyGraph {
             else stringParts.push(notation.visit(graph.processById(trace[i])));
         }
         return stringParts.join("\n\t");
+    }
+    
+    export interface Marking {
+        getMarking(any) : number;
+        ZERO : number;
+        ONE : number;
+    }
+    
+    export interface LevelMarking extends Marking {
+        getLevel(any) : number;
     }
 
     function liuSmolkaLocal2(m, graph : PartialDependencyGraph) : any {
@@ -828,7 +759,7 @@ module DependencyGraph {
         }
     }
 
-    function solveDgGlobalLevel(graph : DependencyGraph) : any {
+    export function solveDgGlobalLevel(graph : DependencyGraph) : LevelMarking {
         var S_ZERO = 1, S_ONE = 2;
         // A[k]
         var Level = (function () {
@@ -904,6 +835,9 @@ module DependencyGraph {
         return {
             getMarking: function(dgNodeId) {
                 return Level.get(dgNodeId) === Infinity ? S_ZERO : S_ONE;
+            },
+            getLevel: function(dgNodeId) {
+                return Level.get(dgNodeId);
             },
             ZERO: S_ZERO,
             ONE: S_ONE

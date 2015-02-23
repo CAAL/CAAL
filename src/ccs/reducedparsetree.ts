@@ -142,7 +142,7 @@ module Traverse {
                 visitingAction,
                 strongSuccessors;
 
-            //Add  P --tau-->P
+            //Add  P --tau--> P
             result.add(new ccs.Transition(new ccs.Action("tau", false), process));
 
             //Stage 1
@@ -183,6 +183,7 @@ module Traverse {
                     });
                 }
             }
+            
             this.cache[processId] = result;
             return result;
         }
