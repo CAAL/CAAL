@@ -145,7 +145,7 @@ module Activity {
             };
         }
 
-        private newGame() : void {
+        private newGame(forceLosingType : boolean = false) : void {
             var options = this.getOptions();
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
             this.draw(this.graph.processByName(options.leftProcess), this.leftGraph);
@@ -156,12 +156,14 @@ module Activity {
             
             if (this.dgGame != undefined)
                 this.dgGame.stopGame();
-            this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess);
+            
+            var bisimGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess);
+            this.dgGame = bisimGame;
             
             var attacker : Player;
             var defender : Player;
 
-            if (options.playerType === "defender") {
+            if ((forceLosingType && !bisimGame.isBisimilar()) || options.playerType === "defender") {
                 attacker = new Computer(PlayType.Attacker);
                 defender = new Human(PlayType.Defender);
             } else {
