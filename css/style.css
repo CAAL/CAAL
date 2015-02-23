@@ -351,10 +351,19 @@ p.small {
     overflow: auto;
     border: 1px solid #e7e7e7;
     border-top: none;
+    padding: 10px;
 }
 
 #game-log p {
     margin-left: 20px;
+}
+
+#game-log p.intro {
+    margin-left: 0;
+}
+
+#game-log h4 {
+    margin-top: 20px;
 }
 
 span.transition {

@@ -194,7 +194,7 @@ module Activity {
 
             if (this.dgGame != undefined) {this.dgGame.stopGame()};
             
-            this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess);
+            this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, options.gameType);
             
             var attacker : Player;
             var defender : Player;
@@ -379,7 +379,7 @@ module Activity {
         private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
         // private htmlNotationVisitor : Traverse.CCSNotationVisitor;
         
-        private gameLog : GameLog = new GameLog();
+        protected gameLog : GameLog = new GameLog();
         
         protected attacker : Player;
         protected defender : Player;
@@ -472,6 +472,8 @@ module Activity {
 
             this.gameActivity.highlightNodes();
             
+            this.gameLog.printPlayerType(this.attacker);
+            
             this.preparePlayer(this.attacker);
         }
         
@@ -522,7 +524,7 @@ module Activity {
             
             if (player.getPlayType() == PlayType.Attacker) {
                 var sourceProcess = move == Move.Left ? previousConfig.left : previousConfig.right;
-                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess);
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, move);
 
                 this.lastAction = action;
                 this.lastMove = move;
@@ -534,7 +536,7 @@ module Activity {
                 this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
                 
                 var sourceProcess = this.lastMove == Move.Left ? previousConfig.left : previousConfig.right;
-                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess);
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove);
                 
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
                 
@@ -607,16 +609,23 @@ module Activity {
         private rightProcessName : string;
         private bisimulationDG : dg.BisimulationDG;
         private bisimilar : boolean;
+        private gameType : string;
         
-        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string) {
+        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
             // stupid compiler
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
+            this.gameType = gameType;
             
             var currentLeft  = graph.processByName(this.leftProcessName);
             var currentRight = graph.processByName(this.rightProcessName);
             
             super(gameActivity, graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight); // creates dependency graph and marking
+        }
+        
+        public startGame() : void {
+            this.gameLog.printIntro(this.gameType, this.getCurrentConfiguration());
+            super.startGame();
         }
         
         public isBisimilar() : boolean {
@@ -757,7 +766,6 @@ module Activity {
             if (this.playType === PlayType.Attacker) {
                 this.gameLog.printRound(game.getRound());
                 this.gameLog.printConfiguration(game.getCurrentConfiguration());
-                this.gameLog.printPlayerType(this);
             } else {
             }
 
@@ -791,7 +799,7 @@ module Activity {
         }
         
         public playTypeStr() : string {
-            return this.playType == PlayType.Attacker ? "attacker" : this.playType == PlayType.Defender ? "defender" : "unknown";
+            return this.playType == PlayType.Attacker ? "Attacker" : this.playType == PlayType.Defender ? "Defender" : "unknown";
         }
     }
     
@@ -808,6 +816,7 @@ module Activity {
         
         protected prepareAttack(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, true);
+            this.gameLog.println("Pick a transition from left or right.");
         }
         
         protected prepareDefend(choices : any, game : DgGame) : void {
@@ -983,12 +992,16 @@ module Activity {
             this.$log = $("#game-log");
             this.$log.empty();
         }
-
-        public println(msg : string) : void {
-            this.$log.append($("<p></p>").append(msg));
+        
+        public print(msg : string) : void {
+            this.$log.append(msg);
             this.$log.scrollTop(this.$log[0].scrollHeight);
         }
-
+        
+        public println(msg : string) : void {
+            this.print("<p>" + msg + "</p>");
+        }
+        
         public printRound(round : number) : void {
             this.$log.append("<h4>Round " + Math.floor(round) + "</h4>");
         }
@@ -999,30 +1012,19 @@ module Activity {
         }
 
         public printPlayerType(attacker : Player) {
-            if (attacker instanceof Computer) {
-                this.println("You are playing as defender.");
-            } else {
-                this.println("You are playing as attacker.");
-                this.println("Pick a transition from left or right.");
-            }
+            if (attacker instanceof Computer)
+                this.print('<p class="intro">You are playing as defender.</p>');
+            else
+                this.print('<p class="intro">You are playing as attacker.</p>');
         }
 
-        public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process) : void {
-            var who;
-
-            if (player instanceof Computer) {
-                if (player.getPlayType() === PlayType.Attacker) {
-                    who = "Attacker";
-                } else {
-                    who = "Defender";
-                }
-            } else {
-                who = "You";
-            }
+        public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process, move : Move) : void {
+            
+            var who = player instanceof Computer ? player.playTypeStr() : "You";
 
             this.println(who + " played (<span class=\"transition\">" + this.labelFor(source) +
                 "</span>, <span class=\"transition\">" + action +
-                "</span>, <span class=\"transition\">" + this.labelFor(destination) + "</span>).");
+                "</span>, <span class=\"transition\">" + this.labelFor(destination) + "</span>) on " + (move == Move.Left ? "left" : "right") + ".");
         }
 
         public printWinner(winner : Player) : void {
@@ -1036,6 +1038,11 @@ module Activity {
         
         public printCycleWinner(configuration : any, defender : Player) : void {
             this.println("Cycle detected. " + ((defender instanceof Human) ? "You win!" : "You lose!"));
+        }
+        
+        public printIntro(gameType : string, configuration : any) : void {
+            this.print('<p class="intro">You are playing a ' + gameType + " bisimulation game starting from (<span class=\"transition\">" + this.labelFor(configuration.left) +
+                "</span>, <span class=\"transition\">" + this.labelFor(configuration.right) + "</span>).</p>");
         }
         
         private labelFor(process : CCS.Process) : string {
