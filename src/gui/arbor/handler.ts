@@ -36,6 +36,9 @@ class Handler {
         this.selectedNode = this.draggedObject.node;
 
         if (this.selectedNode && this.draggedObject.distance <= this.clickDistance) {
+            this.selectedNode.fixed = true;
+            this.selectedNode.tempMass = 50;
+
             $(this.renderer.canvas).unbind('mousemove', this.hover);
             $(this.renderer.canvas).bind('mousemove', this.dragged);
             $(window).bind('mouseup', this.dropped);
@@ -82,7 +85,7 @@ class Handler {
             var p = this.renderer.particleSystem.fromScreen(s);
             this.selectedNode.p = p;
 
-            this.selectedNode.tempMass = 10;
+            //this.selectedNode.tempMass = 10;
         }
 
         return false;
@@ -90,10 +93,10 @@ class Handler {
 
     public dropped = (e) => {
         this.selectedNode.fixed = false;
+        this.selectedNode.tempMass = 50;
         
         if (this.selectedNode && !this.isDragging && this.onClick) {
             this.onClick(this.selectedNode.name);
-            this.renderer.redraw();
         }
         
         this.selectedNode = null;
