@@ -3,6 +3,7 @@
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="activity.ts" />
+/// <reference path="../../lib/suppressWarnings.d.ts" />
 
 module Activity {
 
@@ -30,6 +31,8 @@ module Activity {
         private $playerType : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
+        private $fullscreenBtn : JQuery;
+        private $fullScreenContainer;
         private $leftContainer : JQuery;
         private $rightContainer : JQuery;
         private $leftZoom : JQuery;
@@ -54,6 +57,8 @@ module Activity {
             this.$rightProcessList = $("#game-right-process");
             this.$leftContainer = $("#game-left-canvas");
             this.$rightContainer = $("#game-right-canvas");
+            this.$fullscreenBtn = $("#game-fullscreen");
+            this.$fullScreenContainer = $("#game-container")[0];
             this.$leftZoom = $("#zoom-left");
             this.$rightZoom = $("#zoom-right");
             this.leftCanvas = <HTMLCanvasElement> this.$leftContainer.find("canvas")[0];
@@ -68,7 +73,8 @@ module Activity {
             this.$playerType.on("change", () => this.newGame(false, false));
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
-
+            this.$fullscreenBtn.on("click", () => this.toggleFullscreen());
+            
             this.$leftContainer.add(this.$rightContainer).on("scroll", () => this.positionSliders());
             this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
             this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
@@ -84,6 +90,49 @@ module Activity {
                 },
                 selector: "span.ccs-tooltip-constant"
             });
+        }
+        
+        private isFullscreen(): boolean {
+            return !!document.fullscreenElement ||
+                   !!document.mozFullScreenElement ||
+                   !!document.webkitFullscreenElement ||
+                   !!document.msFullscreenElement;
+        }
+        
+        private toggleFullscreen() {
+            if (!this.isFullscreen()) {
+                if (this.$fullScreenContainer.requestFullscreen) {
+                    this.$fullScreenContainer.requestFullscreen();
+                } else if (this.$fullScreenContainer.msRequestFullscreen) {
+                    this.$fullScreenContainer.msRequestFullscreen();
+                } else if (this.$fullScreenContainer.mozRequestFullScreen) {
+                    this.$fullScreenContainer.mozRequestFullScreen();
+                } else if (this.$fullScreenContainer.webkitRequestFullscreen) {
+                    this.$fullScreenContainer.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        private fullscreenChanged() {
+            this.$fullscreenBtn.text(this.isFullscreen() ? "Exit" : "Fullscreen");
+            this.resize();
+        }
+        
+        private fullscreenError() {
+            console.log("Fullscreen error");
+            
+            // user might have entered fullscreen and gone out of it, treat as fullscreen changed
+            this.fullscreenChanged();
         }
 
         protected checkPreconditions(): boolean {
@@ -119,6 +168,16 @@ module Activity {
                 this.zoom(this.$leftZoom.val(), "left");
                 this.zoom(this.$rightZoom.val(), "right");
             });
+            
+            $(document).on("fullscreenchange", () => this.fullscreenChanged());
+            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
+            
+            $(document).on("fullscreenerror", () => this.fullscreenError());
+            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
+            $(document).on("mozfullscreenerror", () => this.fullscreenError());
+            $(document).on("MSFullscreenError", () => this.fullscreenError());
 
             if (this.changed || configuration) {
                 this.changed = false;
@@ -131,6 +190,16 @@ module Activity {
 
         public onHide() : void {
             $(window).off("resize");
+            
+            $(document).off("fullscreenchange");
+            $(document).off("webkitfullscreenchange");
+            $(document).off("mozfullscreenchange");
+            $(document).off("MSFullscreenChange");
+            
+            $(document).off("fullscreenerror");
+            $(document).off("webkitfullscreenerror");
+            $(document).off("mozfullscreenerror");
+            $(document).off("MSFullscreenError");
         }
 
         private displayOptions() : void {
@@ -194,7 +263,7 @@ module Activity {
 
             if (this.dgGame != undefined) {this.dgGame.stopGame()};
             
-            this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess);
+            this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, options.gameType);
             
             var attacker : Player;
             var defender : Player;
@@ -347,10 +416,13 @@ module Activity {
         }
 
         private resize() : void {
-            var offsetTop = $("#game-main").offset().top + 20; // + margin + border.
+            var offsetTop = $("#game-main").offset().top + 20;
             var offsetBottom = $("#game-status").height() + 3; // + border.
 
             var availableHeight = window.innerHeight - offsetTop - offsetBottom;
+            
+            if (this.isFullscreen())
+                availableHeight += 10;
 
             // Minimum height 275 px.
             this.$leftContainer.height(Math.max(275, availableHeight));
@@ -379,7 +451,7 @@ module Activity {
         private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
         // private htmlNotationVisitor : Traverse.CCSNotationVisitor;
         
-        private gameLog : GameLog = new GameLog();
+        protected gameLog : GameLog = new GameLog();
         
         protected attacker : Player;
         protected defender : Player;
@@ -522,7 +594,7 @@ module Activity {
             
             if (player.getPlayType() == PlayType.Attacker) {
                 var sourceProcess = move == Move.Left ? previousConfig.left : previousConfig.right;
-                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess);
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, move);
 
                 this.lastAction = action;
                 this.lastMove = move;
@@ -534,7 +606,7 @@ module Activity {
                 this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
                 
                 var sourceProcess = this.lastMove == Move.Left ? previousConfig.left : previousConfig.right;
-                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess);
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove);
                 
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
                 
@@ -607,16 +679,23 @@ module Activity {
         private rightProcessName : string;
         private bisimulationDG : dg.BisimulationDG;
         private bisimilar : boolean;
+        private gameType : string;
         
-        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string) {
+        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
             // stupid compiler
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
+            this.gameType = gameType;
             
             var currentLeft  = graph.processByName(this.leftProcessName);
             var currentRight = graph.processByName(this.rightProcessName);
             
             super(gameActivity, graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight); // creates dependency graph and marking
+        }
+        
+        public startGame() : void {
+            this.gameLog.printIntro(this.gameType, this.getCurrentConfiguration(), this.getUniversalWinner(), this.attacker);
+            super.startGame();
         }
         
         public isBisimilar() : boolean {
@@ -757,7 +836,6 @@ module Activity {
             if (this.playType === PlayType.Attacker) {
                 this.gameLog.printRound(game.getRound());
                 this.gameLog.printConfiguration(game.getCurrentConfiguration());
-                this.gameLog.printPlayerType(this);
             } else {
             }
 
@@ -791,7 +869,7 @@ module Activity {
         }
         
         public playTypeStr() : string {
-            return this.playType == PlayType.Attacker ? "attacker" : this.playType == PlayType.Defender ? "defender" : "unknown";
+            return this.playType == PlayType.Attacker ? "Attacker" : this.playType == PlayType.Defender ? "Defender" : "unknown";
         }
     }
     
@@ -808,6 +886,7 @@ module Activity {
         
         protected prepareAttack(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, true);
+            this.gameLog.println("Pick a transition from left or right.");
         }
         
         protected prepareDefend(choices : any, game : DgGame) : void {
@@ -983,12 +1062,16 @@ module Activity {
             this.$log = $("#game-log");
             this.$log.empty();
         }
-
-        public println(msg : string) : void {
-            this.$log.append($("<p></p>").append(msg));
+        
+        public print(msg : string) : void {
+            this.$log.append(msg);
             this.$log.scrollTop(this.$log[0].scrollHeight);
         }
-
+        
+        public println(msg : string) : void {
+            this.print("<p>" + msg + "</p>");
+        }
+        
         public printRound(round : number) : void {
             this.$log.append("<h4>Round " + Math.floor(round) + "</h4>");
         }
@@ -999,43 +1082,45 @@ module Activity {
         }
 
         public printPlayerType(attacker : Player) {
-            if (attacker instanceof Computer) {
-                this.println("You are playing as defender.");
-            } else {
-                this.println("You are playing as attacker.");
-                this.println("Pick a transition from left or right.");
-            }
+            if (attacker instanceof Computer)
+                this.print('<p class="intro">You are playing as defender.</p>');
+            else
+                this.print('<p class="intro">You are playing as attacker.</p>');
         }
 
-        public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process) : void {
-            var who;
-
-            if (player instanceof Computer) {
-                if (player.getPlayType() === PlayType.Attacker) {
-                    who = "Attacker";
-                } else {
-                    who = "Defender";
-                }
-            } else {
-                who = "You";
-            }
+        public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process, move : Move) : void {
+            
+            var who = player instanceof Computer ? player.playTypeStr() : "You";
 
             this.println(who + " played (<span class=\"transition\">" + this.labelFor(source) +
                 "</span>, <span class=\"transition\">" + action +
-                "</span>, <span class=\"transition\">" + this.labelFor(destination) + "</span>).");
+                "</span>, <span class=\"transition\">" + this.labelFor(destination) + "</span>) on " + (move == Move.Left ? "left" : "right") + ".");
         }
 
         public printWinner(winner : Player) : void {
             if (winner instanceof Computer) {
-                this.println("You are stuck. You lose!");
+                this.print('<p class="outro">You have no available transitions. You lose!</p>');
             } else {
                 var loser = (winner.getPlayType() === PlayType.Attacker) ? "Defender" : "Attacker";
-                this.println(loser + " is stuck. You win!");
+                this.print('<p class="outro">' + loser + " has no available transitions. You win!</p>");
             }
         }
         
         public printCycleWinner(configuration : any, defender : Player) : void {
-            this.println("Cycle detected. " + ((defender instanceof Human) ? "You win!" : "You lose!"));
+            this.print('<p class="outro">A cycle has been detected. ' + ((defender instanceof Human) ? "You win!" : "You lose!") + "</p>");
+        }
+        
+        public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
+            this.print('<p class="intro">You are playing a ' + gameType + " bisimulation game starting from (<span class=\"transition\">" + this.labelFor(configuration.left) +
+                "</span>, <span class=\"transition\">" + this.labelFor(configuration.right) + "</span>).</p>");
+            
+            this.printPlayerType(attacker);
+            
+            if (winner instanceof Human){
+                this.print('<p class="intro">You have a winning strategy.</p>');
+            } else {
+                this.print('<p class="intro">' + winner.playTypeStr() + ' has a winning strategy. You are going to lose.</p>');
+            }
         }
         
         private labelFor(process : CCS.Process) : string {
