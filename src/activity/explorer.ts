@@ -72,16 +72,6 @@ module Activity {
             $(this.saveBtn).on("click", () => this.saveCanvas());
             $(this.fullscreenBtn).on("click", this.toggleFullscreen.bind(this));
 
-            $(document).on("fullscreenchange", () => this.fullscreenChanged());
-            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
-            
-            $(document).on("fullscreenerror", () => this.fullscreenError());
-            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
-            $(document).on("mozfullscreenerror", () => this.fullscreenError());
-            $(document).on("MSFullscreenError", () => this.fullscreenError());
-
             $(this.statusTableContainer).find("tbody")
                 .on("click", "tr", this.onTransitionTableRowClick.bind(this))
                 .on("mouseenter", "tr", this.onTransitionTableRowHover.bind(this, true))
@@ -125,7 +115,17 @@ module Activity {
         public onShow(configuration?: any): void {
             $(window).on("resize", () => this.resize());
             this.resize();
-
+            
+            $(document).on("fullscreenchange", () => this.fullscreenChanged());
+            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
+            
+            $(document).on("fullscreenerror", () => this.fullscreenError());
+            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
+            $(document).on("mozfullscreenerror", () => this.fullscreenError());
+            $(document).on("MSFullscreenError", () => this.fullscreenError());
+            
             if (this.changed) {
                 this.changed = false;
 
@@ -156,6 +156,16 @@ module Activity {
 
         public onHide(): void {
             $(window).off("resize");
+
+            $(document).off("fullscreenchange");
+            $(document).off("webkitfullscreenchange");
+            $(document).off("mozfullscreenchange");
+            $(document).off("MSFullscreenChange");
+            
+            $(document).off("fullscreenerror");
+            $(document).off("webkitfullscreenerror");
+            $(document).off("mozfullscreenerror");
+            $(document).off("MSFullscreenError");
 
             this.uiGraph.clearOnSelectListener();
             this.uiGraph.clearHoverOnListener();

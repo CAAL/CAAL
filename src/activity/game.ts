@@ -79,16 +79,6 @@ module Activity {
             this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
             this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
 
-            $(document).on("fullscreenchange", () => this.fullscreenChanged());
-            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
-            
-            $(document).on("fullscreenerror", () => this.fullscreenError());
-            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
-            $(document).on("mozfullscreenerror", () => this.fullscreenError());
-            $(document).on("MSFullscreenError", () => this.fullscreenError());
-
             $(document).on("ccs-changed", () => this.changed = true);
             
             // Set tooltip handler
@@ -178,6 +168,16 @@ module Activity {
                 this.zoom(this.$leftZoom.val(), "left");
                 this.zoom(this.$rightZoom.val(), "right");
             });
+            
+            $(document).on("fullscreenchange", () => this.fullscreenChanged());
+            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
+            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
+            
+            $(document).on("fullscreenerror", () => this.fullscreenError());
+            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
+            $(document).on("mozfullscreenerror", () => this.fullscreenError());
+            $(document).on("MSFullscreenError", () => this.fullscreenError());
 
             if (this.changed || configuration) {
                 this.changed = false;
@@ -190,6 +190,16 @@ module Activity {
 
         public onHide() : void {
             $(window).off("resize");
+            
+            $(document).off("fullscreenchange");
+            $(document).off("webkitfullscreenchange");
+            $(document).off("mozfullscreenchange");
+            $(document).off("MSFullscreenChange");
+            
+            $(document).off("fullscreenerror");
+            $(document).off("webkitfullscreenerror");
+            $(document).off("mozfullscreenerror");
+            $(document).off("MSFullscreenError");
         }
 
         private displayOptions() : void {
@@ -406,10 +416,13 @@ module Activity {
         }
 
         private resize() : void {
-            var offsetTop = $("#game-main").offset().top + 20; // + margin + border.
+            var offsetTop = $("#game-main").offset().top + 20;
             var offsetBottom = $("#game-status").height() + 3; // + border.
 
             var availableHeight = window.innerHeight - offsetTop - offsetBottom;
+            
+            if (this.isFullscreen())
+                availableHeight += 10;
 
             // Minimum height 275 px.
             this.$leftContainer.height(Math.max(275, availableHeight));
