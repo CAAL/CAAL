@@ -465,6 +465,8 @@ module Activity {
             
             this.cycleCache = {};
             this.cycleCache[this.getConfigurationStr(this.getCurrentConfiguration())] = this.currentNodeId;
+
+            this.gameActivity.highlightNodes();
             
             this.preparePlayer(this.attacker);
         }
@@ -988,7 +990,8 @@ module Activity {
         }
 
         public printConfiguration(conf : any) {
-            this.println("Current configuration: (" + this.labelFor(conf.left) + ", " + this.labelFor(conf.right) + ").");
+            this.println("Current configuration: (<span class=\"transition\">" + this.labelFor(conf.left) +
+                "</span>, <span class=\"transition\">" + this.labelFor(conf.right) + "</span>).");
         }
 
         public printPlayerType(attacker : Player) {
@@ -1001,15 +1004,21 @@ module Activity {
         }
 
         public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process) : void {
+            var who;
+
             if (player instanceof Computer) {
                 if (player.getPlayType() === PlayType.Attacker) {
-                    this.println("Attacker plays (" + this.labelFor(source) + ", " + action + ", " + this.labelFor(destination) + ").");
+                    who = "Attacker";
                 } else {
-                    this.println("Defender plays (" + this.labelFor(source) + ", " + action + ", " + this.labelFor(destination) + ").");
+                    who = "Defender";
                 }
             } else {
-                this.println("You played (" + this.labelFor(source) + ", " + action + ", " + this.labelFor(destination) + ").");
+                who = "You";
             }
+
+            this.println(who + " played (<span class=\"transition\">" + this.labelFor(source) +
+                "</span>, <span class=\"transition\">" + action +
+                "</span>, <span class=\"transition\">" + this.labelFor(destination) + "</span>).");
         }
 
         public printWinner(winner : Player) : void {

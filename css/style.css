@@ -354,6 +354,10 @@ p.small {
     margin-left: 20px;
 }
 
+span.transition {
+    font: normal 14px "Inconsolata";
+}
+
 #game-transitions {
     height: 230px;
     overflow-x: auto;
