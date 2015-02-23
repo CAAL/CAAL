@@ -314,14 +314,14 @@ module Activity {
         private zoom(value : number, side : string) : void {
             if (side === "left") {
                 this.$leftZoom.val(value.toString());
-                this.leftCanvas.width = (this.$leftContainer.width() - 17) * value; // 17px = scrollbar size.
-                this.leftCanvas.height = (this.$leftContainer.height() - 17) * value;
+                this.leftCanvas.width = (this.$leftContainer.width() - 20) * value;
+                this.leftCanvas.height = (this.$leftContainer.height() - 20) * value;
                 this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
                 if (value > 1) {this.centerNode(this.dgGame.getCurrentConfiguration().left, Move.Left);}
             } else {
                 this.$rightZoom.val(value.toString());
-                this.rightCanvas.width = (this.$rightContainer.width() - 17) * value;
-                this.rightCanvas.height = (this.$rightContainer.height() - 17) * value;
+                this.rightCanvas.width = (this.$rightContainer.width() - 20) * value;
+                this.rightCanvas.height = (this.$rightContainer.height() - 20) * value;
                 this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
                 if (value > 1) {this.centerNode(this.dgGame.getCurrentConfiguration().right, Move.Right);}
             }
@@ -356,10 +356,11 @@ module Activity {
             this.$leftContainer.height(Math.max(275, availableHeight));
             this.$rightContainer.height(Math.max(275, availableHeight));
 
-            this.leftCanvas.width = (this.$leftContainer.width() - 17); // 17px = scrollbar size.
-            this.rightCanvas.width = (this.$rightContainer.width() - 17);
-            this.leftCanvas.height = (this.$leftContainer.height() - 17);
-            this.rightCanvas.height = (this.$rightContainer.height() - 17);
+            // Container height - 20 scrollbar size. 20px should be a safe value.
+            this.leftCanvas.width = (this.$leftContainer.width() - 20);
+            this.rightCanvas.width = (this.$rightContainer.width() - 20);
+            this.leftCanvas.height = (this.$leftContainer.height() - 20);
+            this.rightCanvas.height = (this.$rightContainer.height() - 20);
 
             this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
             this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);

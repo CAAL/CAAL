@@ -323,8 +323,7 @@ p.small {
     margin: 0;
     padding: 0;
     border: 1px solid #e7e7e7;
-    overflow-x: scroll;
-    overflow-y: scroll;
+    overflow: auto;
 }
 
 #game-right-canvas {
@@ -341,14 +340,13 @@ p.small {
 
 #game-status {
     height: 205px;
-    border: 1px solid #e7e7e7;
-    border-top: none;
 }
 
 #game-log {
     height: 100%;
-    overflow-x: auto;
-    overflow-y: scroll;
+    overflow: auto;
+    border: 1px solid #e7e7e7;
+    border-top: none;
 }
 
 #game-log p {
@@ -361,13 +359,27 @@ span.transition {
 
 #game-transitions {
     height: 100%;
-    overflow-x: auto;
-    overflow-y: scroll;
+    overflow: auto;
+    border: 1px solid #e7e7e7;
+    border-top: none;
+    border-left: none;
 }
 
 #game-transitions-table tbody {
     font: normal 14px "Inconsolata";
     cursor: pointer;
+}
+
+@media (max-width: 991px) {
+    #game-right-canvas {
+        border-top: none;
+        border-left: 1px solid #e7e7e7;
+    }
+
+    #game-transitions {
+        border-left: 1px solid #e7e7e7;
+        margin-bottom: 20px;
+    }
 }
 
 
