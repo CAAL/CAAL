@@ -340,12 +340,13 @@ p.small {
 }
 
 #game-status {
+    height: 200px;
     border: 1px solid #e7e7e7;
     border-top: none;
 }
 
 #game-log {
-    height: 230px;
+    height: 100%;
     overflow-x: auto;
     overflow-y: scroll;
 }
@@ -359,7 +360,7 @@ span.transition {
 }
 
 #game-transitions {
-    height: 230px;
+    height: 100%;
     overflow-x: auto;
     overflow-y: scroll;
 }

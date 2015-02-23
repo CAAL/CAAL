@@ -334,24 +334,13 @@ module Activity {
 
         private resize() : void {
             var offsetTop = $("#game-main").offset().top + 20; // + margin + border.
-            var offsetBottom = $("#game-status").height();
+            var offsetBottom = $("#game-status").height() + 3; // + border.
 
-            // Height = Total - (menu + options) - log - (margin + border).
-            // Minimum size 275 px.
             var availableHeight = window.innerHeight - offsetTop - offsetBottom;
 
-            var width = this.$leftContainer.width();
-
-            if (availableHeight < 275) {
-                this.$leftContainer.height(275);
-                this.$rightContainer.height(275);
-            } else if (availableHeight < width) {
-                this.$leftContainer.height(availableHeight);
-                this.$rightContainer.height(availableHeight);
-            } else {
-                this.$leftContainer.height(width);
-                this.$rightContainer.height(width);
-            }
+            // Minimum height 275 px.
+            this.$leftContainer.height(Math.max(275, availableHeight));
+            this.$rightContainer.height(Math.max(275, availableHeight));
 
             this.leftCanvas.width = (this.$leftContainer.width() - 17); // 17px = scrollbar size.
             this.rightCanvas.width = (this.$rightContainer.width() - 17);
