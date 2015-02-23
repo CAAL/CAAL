@@ -91,7 +91,7 @@ module Activity {
 
             $(document).on("ccs-changed", () => this.changed = true);
 
-            $("#explorer-process-list, input[name=option-collapse], #option-simplify").on("change", () => this.draw());
+            $("#explorer-process-list, input[name=option-collapse], input[name=option-successor], #option-simplify").on("change", () => this.draw());
             $("#option-depth").on("change", () => {
                 this.expandDepth = $("#option-depth").val();
                 this.draw()
@@ -173,18 +173,19 @@ module Activity {
         }
 
         private getOptions(): any {
-            var process = $("#explorer-process-list :selected").text();
-            var depth = $("#option-depth").val();
-            var collapse = $('input[name=option-collapse]:checked').val();
-            var simplify = $("#option-simplify").prop("checked");
-
-            return {process: process, depth: depth, collapse: collapse, simplify: simplify};
+            return {
+                process: $("#explorer-process-list :selected").text(),
+                depth: $("#option-depth").val(),
+                successor: $("input[name=option-successor]:checked").val(),
+                collapse: $("input[name=option-collapse]:checked").val(),
+                simplify: $("#option-simplify").prop("checked")
+            };
         }
 
         public draw(): void {
             this.clear();
             var options = this.getOptions();
-            this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
+            this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.successor, reduce: options.simplify});
             this.initialProcessName = options.process;
             var initialProcess = this.graph.processByName(this.initialProcessName);
             if (options.collapse != "none") {
