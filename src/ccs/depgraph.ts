@@ -25,7 +25,7 @@ module DependencyGraph {
 
         private nextIdx;
         private nodes = [];
-        public constructData = [];
+        private constructData = [];
         private leftPairs = {};
         private isFullyConstructed = false;
 
