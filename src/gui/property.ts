@@ -67,7 +67,7 @@ module Property {
         public toJSON(): any {throw "Not implemented by subclass"}
         public verify(callback: () => any): void {throw "Not implemented by subclass"}
 
-        protected isReadyForVerifcation() : boolean {throw "Not implemented by subclass"}
+        protected isReadyForVerification() : boolean {throw "Not implemented by subclass"}
     }
 
     export class Equivalence extends Property {
@@ -102,7 +102,7 @@ module Property {
          * And property status must not be invalid.
          * @return {boolean} if true, everything is defined.
          */
-        protected isReadyForVerifcation() : boolean {
+        protected isReadyForVerification() : boolean {
             var isReady = true;
             
             if(!this.getFirstProcess() && !this.getSecondProcess()) {
@@ -146,7 +146,7 @@ module Property {
         }
 
         public verify(callback : Function): void {
-            var isReady = this.isReadyForVerifcation() 
+            var isReady = this.isReadyForVerification() 
             if (isReady) {
                 var program = Main.getProgram();
                 this.worker = getWorker(callback); /*on error*/
@@ -208,7 +208,7 @@ module Property {
         }
 
         public verify(callback : Function): void {
-            var isReady = this.isReadyForVerifcation();
+            var isReady = this.isReadyForVerification();
             if (isReady) {
                 var program = Main.getProgram();
                 this.worker = getWorker(callback);
@@ -296,7 +296,7 @@ module Property {
          * Checks whehter the process is defined, and the property is not invalid, and the HML syntactically correct.
          * @return {boolean} if true everything is defined correctly.
          */
-        protected isReadyForVerifcation() : boolean {
+        protected isReadyForVerification() : boolean {
             var isReady = true;
 
             if (!this.getProcess()) {
@@ -322,7 +322,7 @@ module Property {
         }
 
         public verify(callback : Function): void {
-            var isReady = this.isReadyForVerifcation() 
+            var isReady = this.isReadyForVerification() 
             if (isReady) {
                 var program = Main.getProgram();
                 this.worker = getWorker(callback);
