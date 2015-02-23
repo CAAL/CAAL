@@ -162,7 +162,15 @@ module Activity {
             
             var attacker : Player;
             var defender : Player;
-
+            
+            if (forceLosingType) {
+                if (bisimGame.isBisimilar()) {
+                    // TODO: change gui to show player as attacker
+                } else {
+                    // TODO: change gui to show player as defender
+                }
+            }
+            
             if ((forceLosingType && !bisimGame.isBisimilar()) || options.playerType === "defender") {
                 attacker = new Computer(PlayType.Attacker);
                 defender = new Human(PlayType.Defender);
