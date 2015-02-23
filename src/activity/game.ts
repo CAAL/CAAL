@@ -544,8 +544,6 @@ module Activity {
 
             this.gameActivity.highlightNodes();
             
-            this.gameLog.printPlayerType(this.attacker);
-            
             this.preparePlayer(this.attacker);
         }
         
@@ -696,7 +694,7 @@ module Activity {
         }
         
         public startGame() : void {
-            this.gameLog.printIntro(this.gameType, this.getCurrentConfiguration());
+            this.gameLog.printIntro(this.gameType, this.getCurrentConfiguration(), this.getUniversalWinner(), this.attacker);
             super.startGame();
         }
         
@@ -1101,20 +1099,28 @@ module Activity {
 
         public printWinner(winner : Player) : void {
             if (winner instanceof Computer) {
-                this.println("You are stuck. You lose!");
+                this.print('<p class="outro">You have no available transitions. You lose!</p>');
             } else {
                 var loser = (winner.getPlayType() === PlayType.Attacker) ? "Defender" : "Attacker";
-                this.println(loser + " is stuck. You win!");
+                this.print('<p class="outro">' + loser + " has no available transitions. You win!</p>");
             }
         }
         
         public printCycleWinner(configuration : any, defender : Player) : void {
-            this.println("Cycle detected. " + ((defender instanceof Human) ? "You win!" : "You lose!"));
+            this.print('<p class="outro">A cycle has been detected. ' + ((defender instanceof Human) ? "You win!" : "You lose!") + "</p>");
         }
         
-        public printIntro(gameType : string, configuration : any) : void {
+        public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
             this.print('<p class="intro">You are playing a ' + gameType + " bisimulation game starting from (<span class=\"transition\">" + this.labelFor(configuration.left) +
                 "</span>, <span class=\"transition\">" + this.labelFor(configuration.right) + "</span>).</p>");
+            
+            this.printPlayerType(attacker);
+            
+            if (winner instanceof Human){
+                this.print('<p class="intro">You have a winning strategy.</p>');
+            } else {
+                this.print('<p class="intro">' + winner.playTypeStr() + ' has a winning strategy. You are going to lose.</p>');
+            }
         }
         
         private labelFor(process : CCS.Process) : string {

@@ -365,8 +365,12 @@ p.small {
     margin-left: 20px;
 }
 
-#game-log p.intro {
+#game-log p.intro, #game-log p.outro {
     margin-left: 0;
+}
+
+#game-log p.outro {
+    margin-top: 20px;
 }
 
 #game-log h4 {
