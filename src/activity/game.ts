@@ -486,14 +486,16 @@ module Activity {
         }
         
         public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) {
+            
             this.step++;
-            var destinationHtml : string = this.htmlNotationVisitor.visit(destinationProcess);
+            var previousConfig = this.getCurrentConfiguration();
             
             // change the current node id to the next
             this.currentNodeId = nextNode;
             
             if (player.getPlayType() == PlayType.Attacker) {
-                this.gameLog.printPlay(player, action, destinationProcess);
+                var sourceProcess = move == Move.Left ? previousConfig.left : previousConfig.right;
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess);
 
                 this.lastAction = action;
                 this.lastMove = move;
@@ -501,14 +503,15 @@ module Activity {
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
                 this.preparePlayer(this.defender);
             } else {
-                this.gameLog.printPlay(player, action, destinationProcess);
-
                 // the play is a defense, flip the saved last move
                 this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
                 
+                var sourceProcess = this.lastMove == Move.Left ? previousConfig.left : previousConfig.right;
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess);
+                
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
                 
-                if (!this.cycleDetection())
+                if (!this.cycleExists())
                     this.preparePlayer(this.attacker);
             }
 
@@ -540,7 +543,7 @@ module Activity {
             }
         }
         
-        private cycleDetection() : boolean {
+        private cycleExists() : boolean {
             var configuration = this.getCurrentConfiguration();
             var cacheStr = this.getConfigurationStr(configuration);
             
@@ -941,11 +944,6 @@ module Activity {
             var choice = game.getWinningDefend(choices);
             game.play(this, choice.targetProcess, choice.nextNode);
         }
-        
-        private random(max) : number {
-            // random integer between 0 and max
-            return Math.floor((Math.random() * (max+1)));
-        }
     }
 
     class GameLog {
@@ -980,15 +978,15 @@ module Activity {
             }
         }
 
-        public printPlay(player : Player, action : string, destination : CCS.Process) : void {
+        public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process) : void {
             if (player instanceof Computer) {
                 if (player.getPlayType() === PlayType.Attacker) {
-                    this.println("Attacker plays (" + action + ", " + this.labelFor(destination) + ").");
+                    this.println("Attacker plays (" + this.labelFor(source) + ", " + action + ", " + this.labelFor(destination) + ").");
                 } else {
-                    this.println("Defender plays (" + action + ", " + this.labelFor(destination) + ").");
+                    this.println("Defender plays (" + this.labelFor(source) + ", " + action + ", " + this.labelFor(destination) + ").");
                 }
             } else {
-                this.println("You played (" + action + ", " + this.labelFor(destination) + ").");
+                this.println("You played (" + this.labelFor(source) + ", " + action + ", " + this.labelFor(destination) + ").");
             }
         }
 
