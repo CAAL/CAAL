@@ -319,19 +319,24 @@ module DependencyGraph {
         }
 
         dispatchDisjFormula(formula : hml.DisjFormula) {
-            var leftIdx = this.nextIdx++,
-                rightIdx = this.nextIdx++;
-            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
-            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
-            return [ [leftIdx], [rightIdx] ];
+            var hyperEdges = [];
+            formula.subFormulas.forEach(subFormula => {
+                var newIndex = this.nextIdx++;
+                this.constructData[newIndex] = [this.getForNodeId, subFormula];
+                hyperEdges.push([newIndex]);
+            });
+            return hyperEdges;
         }
 
         dispatchConjFormula(formula : hml.ConjFormula) {
-            var leftIdx = this.nextIdx++,
-                rightIdx = this.nextIdx++;
-            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
-            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
-            return [ [leftIdx, rightIdx] ];          
+            var targetNodes = [];
+            formula.subFormulas.forEach(subFormula => {
+                var newIndex = this.nextIdx++;
+                this.constructData[newIndex] = [this.getForNodeId, subFormula];
+                targetNodes.push(newIndex);
+            });
+            //Return single hyperedge
+            return [targetNodes];
         }
 
         dispatchTrueFormula(formula : hml.TrueFormula) {
@@ -432,6 +437,7 @@ module DependencyGraph {
                 data = this.constructData[identifier];
                 nodeId = data[0];
                 formula = data[1];
+                //Prevents having to pass around the node identifier.
                 this.getForNodeId = nodeId;
                 result = formula.dispatchOn(this);
                 this.nodes[identifier] = result;
@@ -441,19 +447,24 @@ module DependencyGraph {
 
         /* Remember Max fixed point - dependency graph should be "inverted" */
         dispatchDisjFormula(formula : hml.DisjFormula) {
-            var leftIdx = this.nextIdx++,
-                rightIdx = this.nextIdx++;
-            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
-            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
-            return [ [leftIdx, rightIdx] ];
+            var targetNodes = [];
+            formula.subFormulas.forEach(subFormula => {
+                var newIndex = this.nextIdx++;
+                this.constructData[newIndex] = [this.getForNodeId, subFormula];
+                targetNodes.push(newIndex);
+            });
+            //Return single hyperedge
+            return [targetNodes];
         }
 
         dispatchConjFormula(formula : hml.ConjFormula) {
-            var leftIdx = this.nextIdx++,
-                rightIdx = this.nextIdx++;
-            this.constructData[leftIdx] = [this.getForNodeId, formula.left];
-            this.constructData[rightIdx] = [this.getForNodeId, formula.right];
-            return [ [leftIdx], [rightIdx] ];          
+            var hyperEdges = [];
+            formula.subFormulas.forEach(subFormula => {
+                var newIndex = this.nextIdx++;
+                this.constructData[newIndex] = [this.getForNodeId, subFormula];
+                hyperEdges.push([newIndex]);
+            });
+            return hyperEdges;
         }
 
         dispatchTrueFormula(formula : hml.TrueFormula) {

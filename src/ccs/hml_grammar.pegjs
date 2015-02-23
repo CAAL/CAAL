@@ -21,10 +21,10 @@ FixedPoint = _ V:Variable _ [mM][aA][xX] "=" _ P:Disjunction { return formulas.n
 		   / _ V:Variable _ [mM][iI][nN] "=" _ P:Disjunction { return formulas.newMinFixedPoint(V, P); }
 		   / P:Disjunction { return formulas.unnamedMinFixedPoint(P); }
 
-Disjunction = P:Conjunction Whitespace _ "or" Whitespace _ Q:Disjunction { return formulas.newDisj(P, Q); }
+Disjunction = P:Conjunction Whitespace _ "or" Whitespace _ Q:Disjunction { return Q instanceof hml.DisjFormula ? formulas.newDisj([P].concat(Q.subFormulas)) : formulas.newDisj([P, Q]); }
 			/ P:Conjunction { return P; }
 
-Conjunction = M:Modal Whitespace _ "and" Whitespace _ P:Conjunction { return formulas.newConj(M, P); }
+Conjunction = M:Modal Whitespace _ "and" Whitespace _ P:Conjunction { return P instanceof hml.ConjFormula ? formulas.newConj([M].concat(P.subFormulas)) : formulas.newConj([M, P]); }
 			/ M:Modal { return M; }
 
 Modal = _ "[" _ "[" _ AM:ActionList _ "]" _ "]" _ F:Modal { return formulas.newWeakForAll(AM, F); }
