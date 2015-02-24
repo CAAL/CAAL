@@ -449,7 +449,6 @@ module Activity {
         protected marking : dg.LevelMarking;
         
         private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
-        // private htmlNotationVisitor : Traverse.CCSNotationVisitor;
         
         protected gameLog : GameLog = new GameLog();
         
@@ -468,7 +467,6 @@ module Activity {
             protected currentLeft : any, protected currentRight : any) {
             
             this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
-            //this.htmlNotationVisitor = new Traverse.CCSNotationVisitor();
             
             // create the dependency graph
             this.dependencyGraph = this.createDependencyGraph(this.graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight);
@@ -486,9 +484,18 @@ module Activity {
             return undefined;
         }
         
+        public getCurrentWinner() : Player {
+            throw "Abstract method. Not implemented.";
+            return undefined;
+        }
+        
         public isUniversalWinner(player : Player) : boolean {
             // returns true if the player has a universal winning strategy
             return this.getUniversalWinner() === player;
+        }
+        
+        public isCurrentWinner(player : Player) : boolean {
+            return this.getCurrentWinner() === player;
         }
         
         public getLastMove() : Move {
@@ -553,7 +560,7 @@ module Activity {
             this.defender.abortPlay();
         }
         
-        public setPlayers(attacker : Player, defender : Player) {
+        public setPlayers(attacker : Player, defender : Player) : void {
             if (attacker.getPlayType() == defender.getPlayType()) {
                 throw "Cannot make game with two " + attacker.playTypeStr() + "s";
             }
@@ -584,7 +591,7 @@ module Activity {
             }
         }
         
-        public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) {
+        public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) : void {
             
             this.step++;
             var previousConfig = this.getCurrentConfiguration();
@@ -680,6 +687,7 @@ module Activity {
         private bisimulationDG : dg.BisimulationDG;
         private bisimilar : boolean;
         private gameType : string;
+        private currentWinner : Player;
         
         constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
             // stupid compiler
@@ -698,6 +706,17 @@ module Activity {
             super.startGame();
         }
         
+        public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) : void {
+            
+            var winner = this.marking.getMarking(nextNode) === this.marking.ONE ? this.attacker : this.defender;
+            if (this.currentWinner !== winner) {
+                // TODO winner changed, do something?
+            }
+            this.currentWinner = winner;
+            
+            super.play(player, destinationProcess, nextNode, action, move);
+        }
+        
         public isBisimilar() : boolean {
             return this.bisimilar;
         }
@@ -707,8 +726,17 @@ module Activity {
             return this.bisimulationDG = new dg.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
         }
         
+        public setPlayers(attacker : Player, defender : Player) : void {
+            super.setPlayers(attacker, defender);
+            this.currentWinner = this.getUniversalWinner();
+        }
+        
         public getUniversalWinner() : Player {
             return this.bisimilar ? this.defender : this.attacker;
+        }
+        
+        public getCurrentWinner() : Player {
+            return this.currentWinner;
         }
         
         protected createMarking() : dg.LevelMarking {
@@ -1008,7 +1036,7 @@ module Activity {
         
         protected prepareAttack(choices : any, game : DgGame) : void {
             // select strategy
-            if (game.isUniversalWinner(this))
+            if (game.isCurrentWinner(this))
                 this.delayedPlay = setTimeout( () => this.winningAttack(choices, game), Computer.Delay);
             else
                 this.delayedPlay = setTimeout( () => this.losingAttack(choices, game), Computer.Delay);
@@ -1016,7 +1044,7 @@ module Activity {
         
         protected prepareDefend(choices : any, game : DgGame) : void {
             // select strategy
-            if (game.isUniversalWinner(this))
+            if (game.isCurrentWinner(this))
                 this.delayedPlay = setTimeout( () => this.winningDefend(choices, game), Computer.Delay);
             else
                 this.delayedPlay = setTimeout( () => this.losingDefend(choices, game), Computer.Delay);
