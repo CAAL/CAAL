@@ -10,6 +10,10 @@ module HML {
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T;
     }
 
+    export interface FormulaVisitor<T> {
+        visit(formula : Formula) : T;
+    }
+
     export interface FormulaDispatchHandler<T> {
         dispatchDisjFormula(formula : DisjFormula, ... args) : T
         dispatchConjFormula(formula : ConjFormula, ... args) : T
@@ -256,6 +260,10 @@ module HML {
             return new VariableFormula(this.nextId++, variable);
         }
 
+        addFormula(formula : Formula) {
+            this.allFormulas.push(formula);
+        }
+
         getErrors() {
             var errors = this.errors.slice(0);
             this.undefinedVariables.forEach(variable => {
@@ -376,6 +384,7 @@ module HML {
 
     export interface ActionMatcher {
         matches(action : ccs.Action) : boolean;
+        actionMatchingString() : string //Returns string representing matching actions
     }
 
     export class SingleActionMatcher {
@@ -392,6 +401,9 @@ module HML {
         equals(other) {
             if (!(other instanceof SingleActionMatcher)) return false;
             return this.action.equals(other.action);
+        }
+        actionMatchingString() : string {
+            return this.action.toString();
         }
     }
 
@@ -442,6 +454,9 @@ module HML {
             }
             return true;
         }
+        actionMatchingString() : string {
+            return this.actions.map(action => action.toString()).join(",");
+        }
     }
 
     export class AllActionMatcher {
@@ -450,6 +465,9 @@ module HML {
         }
         equals(other) {
             return other instanceof AllActionMatcher;
+        }
+        actionMatchingString() : string {
+            return "-";
         }
     }
 
