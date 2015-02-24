@@ -1,6 +1,7 @@
 /// <reference path="../main.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
 
+// satisfied = check-mark, unsatisfied = cross, invalid = yellow triangle, unknown = question mark
 enum PropertyStatus {satisfied, unsatisfied, invalid, unknown};
 
 module Property {
@@ -15,12 +16,17 @@ module Property {
     }
 
     export class Property {
-        // satisfied = check-mark, unsatisfied = cross, invalid = yellow triangle, unknown = question mark
         private static counter: number = 0;
         private id: number;
         public status: PropertyStatus;
         public worker;
         public statistics = {elapsedTime: null};
+        public onStatusClick : Function = null;
+        public onEdit : Function = null;
+        public onDelete : Function = null;
+        public onVerify : Function = null;
+        public onStatusHover : Function;
+
 
         public constructor(status: PropertyStatus = PropertyStatus.unknown) {
             this.status = status;
@@ -61,6 +67,33 @@ module Property {
 
         public abortVerification(): void {
             this.worker.terminate();
+        }
+
+        public toTableRow() : any[] {
+            var row = $("<tr id='"+this.getId()+"'></tr>");
+            var del = $("<i class=\"fa fa-trash\"></i>");
+            var verify = $("<i class=\"fa fa-play\"></i>");
+            var toolmenu = $("<i class='fa fa-ellipsis-v'></i>");
+
+            var tdStatus = $("<td id='property-status' class=\"text-center\"></td>").append(this.getStatusIcon());
+            var tdDescription = $("<td id='property-description'></td>").append(this.getDescription());
+            var tdToolMenu = $("<td id='property-toolmenu' class=\"text-center\"></td>").append(toolmenu);
+            var tdVerify = $("<td id='property-verify' class=\"text-center\"></td>").append(verify);
+            row.append(tdStatus, tdDescription, tdVerify, tdToolMenu);
+
+            if (this.onStatusHover) {
+                tdStatus.tooltip({
+                    title: this.onStatusHover(this),
+                    selector: '.fa-check'
+                });
+            }
+            
+            tdStatus.on("click",    {property: this},  (e) => this.onStatusClick(e));
+            row.on("click",         {property: this},  (e) => this.onEdit(e));
+            tdToolMenu.on("click",    {property: this},  (e) => this.onDelete(e)); //TODO change this to menu
+            tdVerify.on("click",    {property: this},  (e) => this.onVerify(e));
+
+            return [row];
         }
 
         public getDescription(): string {throw "Not implemented by subclass"}
@@ -361,6 +394,132 @@ module Property {
                 console.log("something is wrong, please check the property");
                 callback(this.status); /*verification ended*/
             }
+        }
+    }
+
+    export class DistinguishingFormula extends Property {
+        public firstHMLPropety: Property.HML;
+        public secondHMLProperty: Property.HML;
+        public distinguishingFormula : string;
+        private isexpanded : boolean = true;
+
+
+        public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
+            super(status);
+            this.firstHMLPropety = new HML({process:options.firstProcess, formula:""});
+            this.secondHMLProperty = new HML({process:options.secondProcess, formula:""});
+        }
+
+        public isExpanded(){
+            return this.isexpanded;
+        }
+
+        public setExpanded(isExpanded : boolean){
+            this.isexpanded = isExpanded
+            console.log(isExpanded, this.isexpanded);
+        }
+
+        public getFirstProcess(): string {
+            return this.firstHMLPropety.getProcess();
+        }
+
+        public setFirstProcess(firstProcess: string): void {
+            this.firstHMLPropety.setProcess(firstProcess)
+        }
+
+        public getSecondProcess(): string {
+            return this.secondHMLProperty.getProcess();
+        }
+
+        public setSecondProcess(secondProcess: string): void {
+            this.secondHMLProperty.setProcess(secondProcess)
+        }
+
+        public getFirstHML() : Property.HML {
+            return this.firstHMLPropety;
+        }
+
+        public getSecondHML() : Property.HML {
+            return this.secondHMLProperty;
+        }
+
+        public getDescription(): string {
+            return "Distinguishing formula for: " + this.firstHMLPropety.getProcess() + " and " + this.secondHMLProperty.getProcess();
+        }
+
+        public collapse() {
+
+        }
+
+        public expand(){
+
+        }
+
+        public toTableRow() : any {
+            var result = [];
+            var rowHeader = $("<tr id='"+this.getId()+"' class='distinguishing-header'></tr>");
+
+            var del = $("<i class='fa fa-trash'></i>");
+            var toolmenu = $("<i class='fa fa-ellipsis-v'></i>");
+            var verify = $("<i class='fa fa-play'></i>");
+            var plusSquare = $("<i class='fa fa-plus-square'></i>");
+            var plusMinus = $("<i class='fa fa-minus-square'></i>");
+
+            var tdStatus = $("<td id='property-status' class=\"text-center\"></td>").append(plusSquare);
+            var tdDescription = $("<td id='property-description'></td>").append(this.getDescription());
+            var tdToolMenu = $("<td id='property-toolmenu' class=\"text-center\"></td>").append(toolmenu);
+            var tdVerify = $("<td id='property-verify' class=\"text-center\"></td>").append(verify);
+            rowHeader.append(tdStatus, tdDescription, tdVerify, tdToolMenu);
+            result.push(rowHeader);
+
+            if(this.isExpanded()) {
+                var rowfirstrow = this.firstHMLPropety.toTableRow();
+                var rowsecondrow = this.secondHMLProperty.toTableRow();
+                result.push(rowfirstrow);
+                result.push(rowsecondrow);
+            }
+
+            tdStatus.tooltip({
+                title: this.onStatusHover(this),
+                selector: '.fa-check'
+            });
+            
+            tdStatus.on("click",    {property: this},   this.onStatusClick);
+            rowHeader.on("click",   {property: this},   this.onEdit);
+            tdToolMenu.on("click",    {property: this},   this.onDelete); //TODO change this
+            tdVerify.on("click",    {Property: this},   this.onVerify);
+
+            return result;
+        }
+
+        /**
+         * Check whether both process(first and second) is defined, and it exists in the CCS program.
+         * And property status must not be invalid.
+         * @return {boolean} if true, everything is defined.
+         */
+        protected isReadyForVerification() : boolean {
+            var isReady = true;
+            
+            // if there are no valid process defined
+            if(!this.getFirstProcess() && !this.getSecondProcess()) {
+                isReady = false;
+            } 
+            else {
+                // if they are defined check whether they are defined in the CCS-program
+                var processList = Main.getGraph().getNamedProcesses();
+
+                if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
+                    this.setInvalidateStatus();
+                    isReady = false;
+                }
+            }
+
+            // if it is already invalid it is not ready.
+            if(this.status === PropertyStatus.invalid) { 
+                isReady = false;
+            }
+
+            return isReady
         }
     }
 }

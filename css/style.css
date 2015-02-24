@@ -289,7 +289,7 @@ p.small {
     font: normal 14px "Inconsolata";
 }
 
-#equivalence, #model-checking {
+#equivalence, #model-checking, #distinguishing-formula {
     display: none;
 }
 

@@ -213,8 +213,8 @@
                   <tr>
                     <th class="col-md-1 text-center">Status</th>
                     <th class="col-md-9">Property</th>
-                    <th class="col-md-1 text-center">Delete</th>
                     <th class="col-md-1 text-center">Verify</th>
+                    
                   </tr>
                 </thead>
                   <tbody>
@@ -233,6 +233,7 @@
                 <li class="divider"></li>
                 <li class="dropdown-header" role="presentation">Model Checking</li>
                 <li id="hml"><a>HML</a></li>
+                <li id="distinguishing"><a>Distinguishing formula</a></li>
               </ul>
             </div>
             <div class="btn-group pull-right">
@@ -260,6 +261,16 @@
                     <div class="editor-border">
                       <div id="hml-editor"></div>
                     </div>
+                  </div>
+                </div>
+                <div id="distinguishing-formula">
+                  <div class="form-group">
+                    <label for="distinguishing-first-process" class="control-label">First Process</label>
+                    <select id="distinguishing-first-process" class="form-control"></select>
+                  </div>
+                  <div class="form-group">
+                    <label for="distinguishing-second-process" class="control-label">Second Process</label>
+                    <select id="distinguishing-second-process" class="form-control"></select>
                   </div>
                 </div>
               </div>
