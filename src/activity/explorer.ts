@@ -152,6 +152,8 @@ module Activity {
             this.uiGraph.setHoverOutListener(() => {
                 this.uiGraph.clearHover();
             });
+
+            this.uiGraph.unfreeze();
         }
 
         public onHide(): void {
@@ -170,6 +172,7 @@ module Activity {
             this.uiGraph.clearOnSelectListener();
             this.uiGraph.clearHoverOnListener();
             this.uiGraph.clearHoverOutListener();
+            this.uiGraph.freeze(); // freeze the physics, when leaving the tab
         }
 
         private getOptions(): any {
