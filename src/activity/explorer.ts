@@ -141,6 +141,8 @@ module Activity {
                 this.draw();
             }
 
+            this.uiGraph.bindCanvasEvents();
+
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId), this.expandDepth);
             });
@@ -169,6 +171,7 @@ module Activity {
             $(document).off("mozfullscreenerror");
             $(document).off("MSFullscreenError");
 
+            this.uiGraph.unbindCanvasEvents();
             this.uiGraph.clearOnSelectListener();
             this.uiGraph.clearHoverOnListener();
             this.uiGraph.clearHoverOutListener();

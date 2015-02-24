@@ -9,17 +9,26 @@ class Handler {
     public hoverNode : refNode = null;
     public mouseP : Point = null;
     public onClick : Function = null;
-    public hoverOn : Function = null;
-    public hoverOut : Function = null;
-    private isDragging = false;
-    private mouseDownPos;
+    public onHover : Function = null;
+    public onHoverOut : Function = null;
+    private isDragging : boolean = false;
+    private mouseDownPos : Point;
     public clickDistance = 50;
     public hoverDistance = 30;
     public renderer : Renderer = null;
     constructor(renderer : Renderer) {
         this.renderer = renderer;
+        //this.bindCanvasEvents();
+    }
+
+    public bindCanvasEvents() {
         $(this.renderer.canvas).bind('mousedown', this.mousedown);
-        $(this.renderer.canvas).bind('mousemove', this.hover); // event for hovering over a node
+        $(this.renderer.canvas).bind('mousemove', this.hover); // event for hovering over a node (bind)
+    }
+
+    public unbindCanvasEvents() {
+        $(this.renderer.canvas).unbind('mousedown', this.mousedown);
+        $(this.renderer.canvas).unbind('mousemove', this.hover); // event for hovering over a node (unbind)
     }
 
     public mousedown = (e) => {
@@ -34,14 +43,15 @@ class Handler {
         this.mouseP = this.mouseDownPos;
         this.draggedObject = this.renderer.particleSystem.nearest(this.mouseP);
         this.selectedNode = this.draggedObject.node;
-
+        
         if (this.selectedNode && this.draggedObject.distance <= this.clickDistance) {
+            // only register the mousedown, if they press within the this.clickDistance
             this.selectedNode.fixed = true;
             this.selectedNode.tempMass = 50;
 
-            $(this.renderer.canvas).unbind('mousemove', this.hover);
-            $(this.renderer.canvas).bind('mousemove', this.dragged);
-            $(window).bind('mouseup', this.dropped);
+            $(this.renderer.canvas).unbind('mousemove', this.hover); // unbind hover
+            $(this.renderer.canvas).bind('mousemove', this.dragged); // bind drag
+            $(window).bind('mouseup', this.dropped); // bind mouse dropped
         }
         return false;
     }
@@ -55,14 +65,14 @@ class Handler {
         // On hover event
         if (newHoverNode !== null) {
             if (this.hoverNode == null && newHoverNode.distance <= this.hoverDistance) {
-                if (this.hoverOn) {
-                    this.hoverNode = newHoverNode;
-                    this.hoverOn(this.hoverNode.node.name);
+                if (this.onHover) {
+                    this.hoverNode = newHoverNode; // call the onHover function given by the user of the arbor-graph
+                    this.onHover(this.hoverNode.node.name);
                 }
             } 
             else if (this.hoverNode !== null && newHoverNode.distance > this.hoverDistance) {
-                if (this.hoverOut){   
-                    this.hoverOut(this.hoverNode.node.name);
+                if (this.onHoverOut) {   
+                    this.onHoverOut(this.hoverNode.node.name); // call the onHoverOut function given by the user of the arbor-graph
                     this.hoverNode = null;      
                 }
             }
@@ -84,8 +94,6 @@ class Handler {
         if (this.isDragging) {
             var p = this.renderer.particleSystem.fromScreen(s);
             this.selectedNode.p = p;
-
-            //this.selectedNode.tempMass = 10;
         }
 
         return false;
@@ -96,15 +104,15 @@ class Handler {
         this.selectedNode.tempMass = 50;
         
         if (this.selectedNode && !this.isDragging && this.onClick) {
-            this.onClick(this.selectedNode.name);
+            this.onClick(this.selectedNode.name); // call the click function given by the user of the arbor-graph
         }
         
         this.selectedNode = null;
         this.draggedObject = null;
         
+        $(window).unbind('mouseup', this.dropped);
         $(this.renderer.canvas).unbind('mousemove', this.dragged);
         $(this.renderer.canvas).bind('mousemove', this.hover); // event for hovering over a node
-        $(window).unbind('mouseup', this.dropped);
         
         this.mouseP = null;
 

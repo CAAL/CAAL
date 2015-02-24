@@ -187,6 +187,8 @@ module Activity {
                 this.newGame(true, true, configuration);
             }
 
+            this.leftGraph.bindCanvasEvents();
+            this.rightGraph.bindCanvasEvents();
             this.rightGraph.unfreeze();
             this.leftGraph.unfreeze();
         }
@@ -204,6 +206,8 @@ module Activity {
             $(document).off("mozfullscreenerror");
             $(document).off("MSFullscreenError");
 
+            this.leftGraph.unbindCanvasEvents();
+            this.rightGraph.unbindCanvasEvents();
             this.rightGraph.freeze();
             this.leftGraph.freeze();
         }
