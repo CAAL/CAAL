@@ -386,8 +386,6 @@ module Activity {
         }
 
         private verifactionEnded(result? : PropertyStatus) {
-            this.currentVerifyingProperty.statistics.elapsedTime = (this.startTime) ? new Date().getTime() - this.startTime : 0;
-            clearInterval(this.clockInterval);
             this.verifyStopButton.prop("disabled", true);
             this.currentVerifyingProperty = null;
             this.displayProperties();

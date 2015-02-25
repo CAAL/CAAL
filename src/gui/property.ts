@@ -22,12 +22,13 @@ module Property {
         public worker;
         public statistics = {elapsedTime: null};
         public onStatusClick : Function;
-        public onEdit : Function;
-        public onDelete : Function;
         public onVerify : Function;
         public onStatusHover : Function = () => {return""}; /*it is not allowed to be null?*/
         public onToolMenuClick : Function;
-        
+        public onPlayGame : Function;
+        protected tdStatus;
+        protected clockInterval;
+        protected startTime;
 
         public toolMenuOptions = {
                 "Edit":{
@@ -84,6 +85,21 @@ module Property {
             }
         }
 
+        public startTimer() { 
+            this.startTime = new Date().getTime();
+            var updateTimer = () => {
+                var elapsedTime = new Date().getTime() - this.startTime;
+                this.tdStatus.text(elapsedTime + "ms");
+            }
+
+            this.clockInterval = setInterval(updateTimer, 100);
+        }
+
+        public stopTimer() {
+            this.statistics.elapsedTime = (this.startTime) ? new Date().getTime() - this.startTime : 0;
+            clearInterval(this.clockInterval);
+        }
+
         public getStatusIcon(): string {
             if (this.status === PropertyStatus.unknown) {
                 return "<i class=\"fa fa-question\"></i>"
@@ -117,13 +133,13 @@ module Property {
             var verify = $("<i class=\"fa fa-play\"></i>");
             var toolmenu = this.getToolMenu()
 
-            var tdStatus = $("<td id='property-status' class=\"text-center\"></td>").append(this.getStatusIcon());
+            this.tdStatus = $("<td id='property-status' class=\"text-center\"></td>").append(this.getStatusIcon());
             var tdDescription = $("<td id='property-description'></td>").append(this.getDescription());
             var tdVerify = $("<td id='property-verify' class=\"text-center\"></td>").append(verify);
             var tdToolMenu = $("<td id='property-toolmenu' class=\"text-center\"></td>").append(toolmenu);
-            row.append(tdStatus, tdDescription, tdVerify, tdToolMenu);
+            row.append(this.tdStatus, tdDescription, tdVerify, tdToolMenu);
 
-            tdStatus.tooltip({
+            this.tdStatus.tooltip({
                 title: this.onStatusHover(this),
                 selector: '.fa-check'
             });
@@ -132,7 +148,7 @@ module Property {
             var toolmenuEdit = row.find("a#property-edit");
             var toolmenuDelete = row.find("a#property-delete");
 
-            tdStatus.on("click",        {property: this},  (e) => this.toolMenuOptions["Play"].click(e));
+            this.tdStatus.on("click",        {property: this},  (e) => this.toolMenuOptions["Play"].click(e));
             tdDescription.on("click",   {property: this}, (e) =>  this.toolMenuOptions["Edit"].click(e));
             tdVerify.on("click",        {property: this}, (e) => this.onVerify(e));
 
@@ -227,6 +243,7 @@ module Property {
         public verify(callback : Function): void {
             var isReady = this.isReadyForVerification() 
             if (isReady) {
+                this.startTimer()
                 var program = Main.getProgram();
                 this.worker = getWorker(callback); /*on error*/
                 this.worker.postMessage({
@@ -241,6 +258,7 @@ module Property {
                 this.worker.addEventListener("error", (error) => {
                     /*display tooltip with error*/
                     this.setInvalidateStatus();
+                    this.stopTimer();
                     callback(this.status)
                 }, false);
                 this.worker.addEventListener("message", event => {
@@ -255,12 +273,14 @@ module Property {
                         this.status = res;
                     }
                     this.worker.terminate();
-                    this.worker = null;
+                    this.worker = null; 
+                    this.stopTimer()
                     callback(this.status); /* verification ended */
                 });
             } else {
                 // something is not defined or syntax error
                 console.log("something is wrong, please check the property");
+                this.stopTimer()
                 callback(this.status); /*verification ended*/
             }
         }
@@ -289,6 +309,7 @@ module Property {
         public verify(callback : Function): void {
             var isReady = this.isReadyForVerification();
             if (isReady) {
+                this.startTimer()
                 var program = Main.getProgram();
                 this.worker = getWorker(callback);
                 this.worker.postMessage({
@@ -303,6 +324,7 @@ module Property {
                 this.worker.addEventListener("error", (error) => {
                     /*display tooltip with error*/
                     this.setInvalidateStatus();
+                    this.stopTimer()
                     callback(this.status)
                 }, false);
                 this.worker.addEventListener("message", event => {
@@ -318,11 +340,13 @@ module Property {
                     }
                     this.worker.terminate();
                     this.worker = null;
+                    this.stopTimer()
                     callback(this.status); /* verification ended */
                 });
             } else {
                 // something is not defined or syntax error
                 console.log("something is wrong, please check the property");
+                this.stopTimer()
                 callback(this.status); /*verification ended*/
             }
         }
@@ -403,6 +427,7 @@ module Property {
         public verify(callback : Function): void {
             var isReady = this.isReadyForVerification() 
             if (isReady) {
+                this.startTimer();
                 var program = Main.getProgram();
                 this.worker = getWorker(callback);
                 this.worker.postMessage({
@@ -418,6 +443,7 @@ module Property {
                 this.worker.addEventListener("error", (error) => {
                     /* HML syntax error */
                     this.setInvalidateStatus();
+                    this.stopTimer();
                     callback(this.status) 
                 }, false);
                 this.worker.addEventListener("message", event => {
@@ -433,10 +459,12 @@ module Property {
                     }
                     this.worker.terminate();
                     this.worker = null;
+                    this.stopTimer()
                     callback(this.status); /* verification ended */
                 });
             } else {
                 // something is not defined or syntax error
+                this.stopTimer()
                 callback(this.status); /* verification ended */
                 throw "something is wrong, please check the property";
             }
@@ -448,7 +476,7 @@ module Property {
         public secondHMLProperty: Property.HML;
         public distinguishingFormula : string;
         private isexpanded : boolean = true;
-        public onPlayGame : Function;
+        
 
 
         public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
@@ -504,7 +532,6 @@ module Property {
             };
         }
 
-
         public getStatusIcon(): string {
             if (this.isExpanded()) {
                 return "<i class='fa fa-minus-square'></i>"
@@ -522,11 +549,11 @@ module Property {
             var toolmenu = this.getToolMenu();
             var verify = $("<i class=\"fa fa-play\"></i>");
 
-            var tdStatus = $("<td id=\"property-status\" class=\"text-center\"></td>").append(this.getStatusIcon());
+            this.tdStatus = $("<td id=\"property-status\" class=\"text-center\"></td>").append(this.getStatusIcon());
             var tdDescription = $("<td id=\"property-description\"></td>").append(this.getDescription());
             var tdVerify = $("<td id=\"property-verify\" class=\"text-center\"></td>").append(verify);
             var tdToolMenu = $("<td id=\"property-toolmenu\" class=\"text-center\"></td>").append(toolmenu);
-            rowHeader.append(tdStatus, tdDescription, tdVerify, tdToolMenu);
+            rowHeader.append(this.tdStatus, tdDescription, tdVerify, tdToolMenu);
             result.push(rowHeader);
 
             if(this.isExpanded()) {
@@ -541,7 +568,7 @@ module Property {
                 result.push(secondRow);
             }
 
-            tdStatus.tooltip({
+            this.tdStatus.tooltip({
                 title: this.onStatusHover(this),
                 selector: '.fa-check'
             });
@@ -550,7 +577,7 @@ module Property {
             var toolmenuEdit = rowHeader.find("a#property-edit");
             var toolmenuDelete = rowHeader.find("a#property-delete");
             
-            tdStatus.on("click",    {property: this},  (e) => this.onStatusClick(e));
+            this.tdStatus.on("click",    {property: this},  (e) => this.onStatusClick(e));
             tdDescription.on("click",   {property: this}, (e) =>  this.toolMenuOptions["Edit"].click(e));
             tdVerify.on("click",    {property: this},  (e) => this.onVerify(e));
 
@@ -575,6 +602,7 @@ module Property {
         public verify(callback : Function, queProperties : Function): void {
             var isReady = this.isReadyForVerification() 
             if (isReady) {
+                this.startTimer()
                 var program = Main.getProgram();
                 this.worker = getWorker(callback); /*on error*/
                 this.worker.postMessage({
@@ -589,6 +617,7 @@ module Property {
                 this.worker.addEventListener("error", (error) => {
                     /*display tooltip with error*/
                     this.setInvalidateStatus();
+                    this.stopTimer()
                     callback(this.status)
                 }, false);
                 this.worker.addEventListener("message", event => {
@@ -604,16 +633,12 @@ module Property {
                     this.worker = null;
 
                     this.stopTimer()
-                    if (callback) {
-                        callback(this.status); /* verification ended */
-                    }
+                    callback(this.status); /* verification ended */
                 });
             } else {
                 // something is not defined or syntax error
                 console.log("something is wrong, please check the property");
-                if (callback){
-                    callback(this.status); /*verification ended*/
-                }
+                callback(this.status); /*verification ended*/
             }
         }
     }
