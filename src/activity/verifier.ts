@@ -136,9 +136,7 @@ module Activity {
         public displayProperties(): void {
             var properties = this.project.getProperties();
             this.propertyTableBody.empty();
-
-            console.log(properties);
-
+            
             for (var i = 0; i < properties.length; i++) {
                 var propertyRows = null;
                 if (properties[i] instanceof Property.Equivalence || properties[i] instanceof Property.HML) {
@@ -188,6 +186,8 @@ module Activity {
                 var secondHMLid = secondProperty.getId();
                 var secondHMLRow = this.propertyTableBody.find("#" + secondHMLid);
                 secondHMLRow.hide();
+            } else {
+                throw "Cannot collapse this property"
             }
         }
 
@@ -200,6 +200,8 @@ module Activity {
                 var secondHMLid = e.data.property.getSecondHML().getId();
                 var secondHMLRow = this.propertyTableBody.find("#" + secondHMLid);
                 secondHMLRow.show();
+            } else {
+                throw "Cannot expand this property"
             }
         }
 
@@ -374,10 +376,18 @@ module Activity {
         public verify(e): void {
             // TODO some checking before running verify
             var property = (e.data.property instanceof Property.Property) ? e.data.property : null;
+            
+            if(property instanceof Property.DistinguishingFormula){
+                /* Do not run a distinguishing property, both run its children. */
+                this.propsToVerify.push(property.getFirstHML())
+                this.propsToVerify.push(property.getSecondHML())
+                this.doNextVerification();
+                return;
+            }
 
-            this.verifyStopButton.prop("disabled", false);
-
+            /* Start to verify a property row*/
             var row = this.propertyTableBody.find("#" + property.getId());
+            this.verifyStopButton.prop("disabled", false);
             var statusTd = row.find("#property-status");
             
             this.startTime = new Date().getTime();
