@@ -63,8 +63,8 @@ module Property {
         }
 
         protected getToolMenu(){
-            var toolmenu = $("<div class=\"btn-group\"><button type=\"button\" data-toggle=\"dropdown\" class=\"btn btn-default dropdown-toggle\"><span class=\"fa fa-ellipsis-v\"></span></button></div>");
-            var list = $("<ul id=toolmenu class=\"dropdown-menu\"></ul>")
+            var toolmenu = $("<div class=\"btn-group\"><button type=\"button\" data-toggle=\"dropdown\" class=\"btn btn-default btn-xs dropdown-toggle\"><span class=\"fa fa-ellipsis-v\"></span></button></div>");
+            var list = $("<ul id=\"toolmenu\" class=\"dropdown-menu\"></ul>")
 
             for (var key in this.toolMenuOptions) {
                 if(this.toolMenuOptions[key].click){
