@@ -272,6 +272,79 @@ module DependencyGraph {
                 }
             }
         }
+
+        findDistinguishingFormula(marking : LevelMarking) : hml.Formula {
+            var that = this,
+                formulaSet = new hml.FormulaSet(),
+                trace;
+            if (marking.getMarking(0) !== marking.ONE) throw "Error: Processes are bisimilar";
+
+            function selectMinimaxLevel(node) {
+                var hyperEdges = that.getHyperEdges(node),
+                    bestHyperEdge, bestNode;
+
+                //Why JavaScript... why????
+                function wrapMax(a, b) {
+                    return Math.max(a, b);
+                }
+
+                function selectBest(array, isBetter) {
+                    return array.reduce((cur, check) => {
+                        return isBetter(check, cur) ? check : cur;
+                    });
+                }
+
+                if (hyperEdges.length === 0) return null;
+                var bestHyperEdge = selectBest(hyperEdges, (tNodesLeft, tNodesRight) => {
+                    var maxLevelLeft = tNodesLeft.map(marking.getLevel).reduce(wrapMax, 1),
+                        maxLevelRight = tNodesRight.map(marking.getLevel).reduce(wrapMax, 1);
+                    if (maxLevelLeft < maxLevelRight) return true;
+                    if (maxLevelLeft > maxLevelRight) return false;
+                    return tNodesLeft.length < tNodesRight.length;
+                });
+
+                if (bestHyperEdge.length === 0) return null;
+
+                bestNode = selectBest(bestHyperEdge, (nodeLeft, nodeRight) => {
+                    return marking.getLevel(nodeLeft) < marking.getLevel(nodeRight);
+                });
+
+                return bestNode;
+            }
+
+            //We use the internal implementation details
+            //Hyperedges of type 0, have hyperedges of: [ [X], [Y], [Z] ]
+            //Hyperedges of type 1/2, have the form: [ [P, Q, R, S, T] ]
+
+            var selectSuccessor = selectMinimaxLevel;
+
+            function formulaForBranch(node) : hml.Formula {
+                var cData = that.constructData[node];
+                if (cData[0] === 0) {
+                    var selectedNode = selectSuccessor(node);
+                    return formulaForBranch(selectedNode);
+                } else if (cData[0] === 1) {
+                    var targetPairNodes = that.getHyperEdges(node)[0];
+                    var actionMatcher = new hml.SingleActionMatcher(cData[1]);
+                    if (targetPairNodes.length > 0) {
+                        var subFormulas = targetPairNodes.map(formulaForBranch);
+                        return formulaSet.newStrongExists(actionMatcher, formulaSet.newConj(subFormulas));
+                    } else {
+                        return formulaSet.newStrongExists(actionMatcher, formulaSet.newTrue());
+                    }
+                } else {
+                    var targetPairNodes = that.getHyperEdges(node)[0];
+                    var actionMatcher = new hml.SingleActionMatcher(cData[1]);
+                    if (targetPairNodes.length > 0) {
+                        var subFormulas = targetPairNodes.map(formulaForBranch);
+                        return formulaSet.newStrongForAll(actionMatcher, formulaSet.newDisj(subFormulas));
+                    } else {
+                        return formulaSet.newStrongForAll(actionMatcher, formulaSet.newFalse());
+                    }
+                }
+            }
+            return formulaForBranch(0);
+        }
     }
 
     export interface PartialDependencyGraph {

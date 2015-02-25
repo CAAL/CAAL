@@ -1,8 +1,10 @@
 /// <reference path="ccs.ts" />
+/// <reference path="hml.ts" />
 
 module Traverse {
 
     import ccs = CCS;
+    import hml = HML;
 
     // http://ironcreek.net/phpsyntaxtree/?
     export class LabelledBracketNotation implements ccs.ProcessVisitor<string>, ccs.ProcessDispatchHandler<void> {
@@ -124,9 +126,9 @@ module Traverse {
         }
     }
 
-    function wrapIfInstanceOf(stringRepr : string, process : ccs.Process, classes) {
+    function wrapIfInstanceOf(stringRepr : string, object : any, classes) {
         for (var i = 0; i < classes.length; i++) {
-            if (process instanceof classes[i]) {
+            if (object instanceof classes[i]) {
                 return "(" + stringRepr + ")";
             }
         }
@@ -332,6 +334,129 @@ module Traverse {
                     relabels.push(to + "/" + from);
                 });
                 result = this.cache[process.id] = subStr + " [" + safeHtml(relabels.join(",")) + "]";
+            }
+            return result;
+        }
+    }
+
+    export class HMLNotationVisitor implements hml.FormulaVisitor<string>, hml.FormulaDispatchHandler<string> {
+        private cache;
+
+        constructor() {
+            this.clearCache();
+        }
+
+        clearCache() {
+            this.cache = {};
+        }
+
+        visit(formula : hml.Formula) {
+            return formula.dispatchOn(this);
+        }
+
+        dispatchDisjFormula(formula : hml.DisjFormula) {
+            var result = this.cache[formula.id];
+            if (!result) {
+                var subStrs = formula.subFormulas.map(subF => subF.dispatchOn(this));
+                result = this.cache[formula.id] = subStrs.join(" or ");
+            }
+            return result;
+        }
+
+        dispatchConjFormula(formula : hml.ConjFormula) {
+            var result = this.cache[formula.id];
+            if (!result) {
+                var subStrs = formula.subFormulas.map(subF => {
+                    var unwrapped = subF.dispatchOn(this)
+                    return wrapIfInstanceOf(unwrapped, subF, [hml.DisjFormula]);
+                });
+                result = this.cache[formula.id] = subStrs.join(" and ");
+            }
+            return result;
+        }
+
+        dispatchTrueFormula(formula : hml.TrueFormula) {
+            var result = this.cache[formula.id];
+            if (!result) {
+                result = this.cache[formula.id] = "T";
+            }
+            return result;
+        }
+
+        dispatchFalseFormula(formula : hml.FalseFormula) {
+            var result = this.cache[formula.id];
+            if (!result) {
+                result = this.cache[formula.id] = "F";
+            }
+            return result;
+        }
+
+        dispatchStrongExistsFormula(formula : hml.StrongExistsFormula) {
+            var result = this.cache[formula.id];
+            if (!result) {
+                var subStr = formula.subFormula.dispatchOn(this);
+                result = this.cache[formula.id] = "<" + 
+                    formula.actionMatcher.actionMatchingString() + ">" +
+                    wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
+            }
+            return result;
+        }
+
+        dispatchStrongForAllFormula(formula : hml.StrongForAllFormula) {
+            var result = this.cache[formula.id];
+            if (!result) {
+                var subStr = formula.subFormula.dispatchOn(this);
+                result = this.cache[formula.id] = "[" + 
+                    formula.actionMatcher.actionMatchingString() + "]" +
+                    wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
+            }
+            return result;
+        }
+
+        dispatchWeakExistsFormula(formula : hml.WeakExistsFormula) {
+            var result = this.cache[formula.id];
+            if (!result) {
+                var subStr = formula.subFormula.dispatchOn(this);
+                result = this.cache[formula.id] = "<<" + 
+                    formula.actionMatcher.actionMatchingString() + ">>"
+                    wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
+            }
+            return result;
+        }
+
+        dispatchWeakForAllFormula(formula : hml.WeakForAllFormula) {
+            var result = this.cache[formula.id];
+            if (!result) {
+                var subStr = formula.subFormula.dispatchOn(this);
+                result = this.cache[formula.id] = "[[" + 
+                    formula.actionMatcher.actionMatchingString() + "]]"
+                    wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
+            }
+            return result;
+        }
+
+        dispatchMinFixedPointFormula(formula : hml.MinFixedPointFormula) {
+            var result = this.cache[formula.id];
+            if (!result) {
+                var subStr = formula.subFormula.dispatchOn(this);
+                result = this.cache[formula.id] = formula.variable + " min= " + subStr;
+            }
+            return result;
+        }
+
+        dispatchMaxFixedPointFormula(formula : hml.MaxFixedPointFormula) {
+            var result = this.cache[formula.id];
+            if (!result) {
+                var subStr = formula.subFormula.dispatchOn(this);
+                result = this.cache[formula.id] = formula.variable + " max= " + subStr;
+            }
+            return result;
+        }
+
+        dispatchVariableFormula(formula : hml.VariableFormula) {
+            var result = this.cache[formula.id];
+            if (!result) {
+                result = this.cache[formula.id] = formula.variable;
             }
             return result;
         }
