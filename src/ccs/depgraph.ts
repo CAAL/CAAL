@@ -298,7 +298,9 @@ module DependencyGraph {
                 var bestHyperEdge = selectBest(hyperEdges, (tNodesLeft, tNodesRight) => {
                     var maxLevelLeft = tNodesLeft.map(marking.getLevel).reduce(wrapMax, 1),
                         maxLevelRight = tNodesRight.map(marking.getLevel).reduce(wrapMax, 1);
-                    return maxLevelLeft < maxLevelRight;
+                    if (maxLevelLeft < maxLevelRight) return true;
+                    if (maxLevelLeft > maxLevelRight) return false;
+                    return tNodesLeft.length < tNodesRight.length;
                 });
 
                 if (bestHyperEdge.length === 0) return null;
