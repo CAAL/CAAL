@@ -44,7 +44,7 @@ class Load extends MenuItem {
     private loadFromStorage(e) : void {
         var projects = this.storage.getObj("projects");
         var id = e.data.id;
-
+        console.log(projects);
         for (var i = 0; i < projects.length; i++) {
             if (projects[i].id === id) {
                 this.project.update(id, projects[i].title, projects[i].ccs, projects[i].properties);

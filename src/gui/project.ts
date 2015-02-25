@@ -99,6 +99,7 @@ class Project {
     }
 
     public addProperty(property: Property.Property): void {
+        console.log(property);
         this.properties.push(property);
     }
 
@@ -134,10 +135,10 @@ class Project {
 
     public toJSON(): any {
         var properties = Array();
-
         for (var i = 0; i < this.properties.length; i++) {
             properties.push(this.properties[i].toJSON());
         }
+        console.log(properties);
 
         return {
             id: this.getId(),

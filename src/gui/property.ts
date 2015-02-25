@@ -145,8 +145,7 @@ module Property {
 
         public getDescription(): string {throw "Not implemented by subclass"}
         public toJSON(): any {throw "Not implemented by subclass"}
-        public verify(callback: () => any): void {throw "Not implemented by subclass"}
-
+        public verify(callback: () => any, queProperties? :() => any): void {throw "Not implemented by subclass"}
         protected isReadyForVerification() : boolean {throw "Not implemented by subclass"}
     }
 
@@ -454,8 +453,8 @@ module Property {
 
         public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
             super(status);
-            this.firstHMLProperty = new HML({process:options.firstProcess, formula:""});
-            this.secondHMLProperty = new HML({process:options.secondProcess, formula:""});
+            this.firstHMLProperty = new HML(options.firstHMLProperty);
+            this.secondHMLProperty = new HML(options.secondHMLProperty);
         }
 
         public isExpanded(){
@@ -494,6 +493,18 @@ module Property {
             return "Distinguishing formula for: " + this.firstHMLProperty.getProcess() + " and " + this.secondHMLProperty.getProcess();
         }
 
+        public toJSON(): any {
+            return {
+                type: "DistinguishingFormula",
+                status: this.status,
+                options: {
+                    firstHMLProperty: this.firstHMLProperty.toJSON().options,
+                    secondHMLProperty: this.secondHMLProperty.toJSON().options
+                }
+            };
+        }
+
+
         public getStatusIcon(): string {
             if (this.isExpanded()) {
                 return "<i class='fa fa-minus-square'></i>"
@@ -520,14 +531,14 @@ module Property {
 
             if(this.isExpanded()) {
                 this.firstHMLProperty.onVerify = this.onVerify;
-                this.firstHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
-                var rowfirstrow = this.firstHMLProperty.toTableRow();
-                result.push(rowfirstrow);
+                //this.firstHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
+                var firstRow = this.firstHMLProperty.toTableRow();
+                result.push(firstRow);
                 
-                this.secondHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
                 this.secondHMLProperty.onVerify = this.onVerify;
-                var rowsecondrow = this.secondHMLProperty.toTableRow();
-                result.push(rowsecondrow);
+                //this.secondHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
+                var secondRow = this.secondHMLProperty.toTableRow();
+                result.push(secondRow);
             }
 
             tdStatus.tooltip({
@@ -561,7 +572,7 @@ module Property {
             return true;
         }
 
-        public verify(callback : Function): void {
+        public verify(callback : Function, queProperties : Function): void {
             var isReady = this.isReadyForVerification() 
             if (isReady) {
                 var program = Main.getProgram();
@@ -587,15 +598,22 @@ module Property {
                         var formula = event.data.result.formula;
                         this.firstHMLProperty.setFormula(formula);
                         this.secondHMLProperty.setFormula(formula);
+                        queProperties([this.firstHMLProperty, this.secondHMLProperty]);
                     }
                     this.worker.terminate();
                     this.worker = null;
-                    callback(this.status); /* verification ended */
+
+                    this.stopTimer()
+                    if (callback) {
+                        callback(this.status); /* verification ended */
+                    }
                 });
             } else {
                 // something is not defined or syntax error
                 console.log("something is wrong, please check the property");
-                callback(this.status); /*verification ended*/
+                if (callback){
+                    callback(this.status); /*verification ended*/
+                }
             }
         }
     }

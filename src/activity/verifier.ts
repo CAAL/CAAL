@@ -237,7 +237,11 @@ module Activity {
                     property = new Property.HML({process: "", formula: ""});
                     break;
                 case "distinguishing":
-                    property = new Property.DistinguishingFormula({firstProcess: "", secondProcess: ""});
+                    property = new Property.DistinguishingFormula(
+                        {
+                            firstHMLProperty: {process: "", formula: ""}, 
+                            secondHMLProperty: {process: "", formula: ""}
+                        });
                     break;
             }
 
@@ -377,6 +381,10 @@ module Activity {
             this.displayProperties();
         }
 
+        public quePropertiesToVerification(properties : Property.Property[]) {
+            properties.forEach((property) => this.propsToVerify.push(property));
+        }
+
         private verifactionEnded(result? : PropertyStatus) {
             this.currentVerifyingProperty.statistics.elapsedTime = (this.startTime) ? new Date().getTime() - this.startTime : 0;
             clearInterval(this.clockInterval);
@@ -398,21 +406,13 @@ module Activity {
             var property = (e.data.property instanceof Property.Property) ? e.data.property : null;
 
             /* Start to verify a property row*/
-            var row = this.propertyTableBody.find("#" + property.getId());
-            this.verifyStopButton.prop("disabled", false);
-            var statusTd = row.find("#property-status");
-            
-            this.startTime = new Date().getTime();
-            var updateTimer = () => {
-                var elapsedTime = new Date().getTime() - this.startTime;
-                statusTd.text(elapsedTime + "ms");
+            this.verifyStopButton.prop("disabled", false); // enable the stop button
+            this.currentVerifyingProperty = property; // the current verifying property
+            if (property instanceof Property.DistinguishingFormula){
+                property.verify(this.verifactionEnded.bind(this), this.quePropertiesToVerification.bind(this));
+            } else{
+                property.verify(this.verifactionEnded.bind(this));
             }
-
-            this.clockInterval = setInterval(updateTimer, 100);
-            this.currentVerifyingProperty = property;
-
-
-            property.verify(this.verifactionEnded.bind(this));
         }
 
         public verifyAll(): void {
