@@ -28,6 +28,10 @@ module GUI {
 
         freeze() : void;
         unfreeze() : void;
+
+        bindCanvasEvents() : void;
+        unbindCanvasEvents() : void;
+
     }
 
 

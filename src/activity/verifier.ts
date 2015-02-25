@@ -72,13 +72,14 @@ module Activity {
         }
 
         public onShow(configuration?: any): void {
-
             if (this.changed) {
+                this.changed = false;
                 // If project has changed check whether the properties are still valid? Meaning that their processes are still defined,
                 // Also check wether the actions exists in used in the ccs program. (low prio)
                 var properties = this.project.getProperties();
                 var processList = Main.getGraph().getNamedProcesses()
-                this.changed = false;
+                //$("#equivalence").hide(); // hide the equivalence box(process selector), since it might have the wrong data 
+                //$("#model-checking").hide(); // hide the model-checking(HMl process selector) box, since it might have the wrong data
 
                 properties.forEach((property) => {
                     if (property instanceof Property.StrongBisimulation || 
@@ -88,8 +89,7 @@ module Activity {
                             property.setInvalidateStatus()
                         }
                         else {
-                            // Otherwise set the unknown status
-                            property.setUnknownStatus();
+                            property.setUnknownStatus(); // Otherwise set the unknown status
                         }
                     }
                     else if (property instanceof Property.HML) {
@@ -98,14 +98,21 @@ module Activity {
                             property.setInvalidateStatus()
                         }
                         else {
-                            property.setUnknownStatus();
-
+                            property.setUnknownStatus(); // Otherwise set the unknown status
                         }
                     }   
                 });
             }
 
             this.displayProperties(); // update the properties table
+        }
+
+        public onHide() : void {
+            $("#equivalence-first-process").empty(); // empty the process selector (HML)
+            $("#equivalence-second-process").empty(); // empty the process selector (HML)
+            $("#hml-process").empty(); // empty the process selector (HML)
+            $("#equivalence").hide(); // hide the equivalence box(process selector), since it might have the wrong data 
+            $("#model-checking").hide(); // hide the model-checking(HMl process selector) box, since it might have the wrong data
         }
 
         public displayProcessList(processes: string[], list: JQuery, selected: string): void {
@@ -206,6 +213,7 @@ module Activity {
                 var secondProcessList = $("#equivalence-second-process");
 
                 var processes = Main.getGraph().getNamedProcesses();
+                processes.reverse() // reverse the list since the most used processes are at the buttom.
                 this.displayProcessList(processes, firstProcessList, property.getFirstProcess());
                 this.displayProcessList(processes, secondProcessList, property.getSecondProcess());
 

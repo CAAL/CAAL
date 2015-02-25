@@ -186,6 +186,11 @@ module Activity {
                 this.displayOptions();
                 this.newGame(true, true, configuration);
             }
+
+            this.leftGraph.bindCanvasEvents();
+            this.rightGraph.bindCanvasEvents();
+            this.rightGraph.unfreeze();
+            this.leftGraph.unfreeze();
         }
 
         public onHide() : void {
@@ -200,6 +205,11 @@ module Activity {
             $(document).off("webkitfullscreenerror");
             $(document).off("mozfullscreenerror");
             $(document).off("MSFullscreenError");
+
+            this.leftGraph.unbindCanvasEvents();
+            this.rightGraph.unbindCanvasEvents();
+            this.rightGraph.freeze();
+            this.leftGraph.freeze();
         }
 
         private displayOptions() : void {
