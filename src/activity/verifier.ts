@@ -137,19 +137,37 @@ module Activity {
             var properties = this.project.getProperties();
             this.propertyTableBody.empty();
             
+
             for (var i = 0; i < properties.length; i++) {
+                var toolMenuOptions = {
+                    "Edit":{
+                        id:"property-edit",
+                        label: "Edit",
+                        click: (e) => this.editProperty(e)
+                    }, 
+                    "Delete":{
+                        id: "property-delete",
+                        label: "Delete",
+                        click: (e) => this.deleteProperty(e)
+                    }
+                };
+
                 var propertyRows = null;
                 if (properties[i] instanceof Property.Equivalence || properties[i] instanceof Property.HML) {
                     /* Strong/Weak bisim and HML*/
-                    properties[i].onStatusClick = (e) => this.onStatusClick(e);
                     properties[i].onStatusHover = (e) => this.onStatusHover(e);
-                    properties[i].onEdit = (e) => this.editProperty(e);
-                    properties[i].onDelete = (e) => this.deleteProperty(e);
                     properties[i].onVerify = (e) => this.verify(e);
 
+                    toolMenuOptions["Play"] = {
+                            id: "property-playgame",
+                            label: "Play",
+                            click: (e) => this.playGame(e)
+                    };
+                    properties[i].setToolMenuOptions(toolMenuOptions)
                     propertyRows = properties[i].toTableRow();
                 } else {
                     /* distinguishing formula */
+
                     properties[i].onStatusClick = (e) => {
                         if(e.data.property.isExpanded()){
                             this.onCollapse(e);
@@ -159,19 +177,17 @@ module Activity {
                             e.data.property.setExpanded(true);
                         }
                     };
-                    properties[i].onStatusHover = (e) => this.onStatusHover(e);
-                    properties[i].onEdit = (e) => this.editProperty(e);
-                    properties[i].onDelete = (e) => this.deleteProperty(e);
-                    properties[i].onVerify = (e) => this.verify(e);
                     
+                    //properties[i].onStatusHover = (e) => this.onStatusHover(e);
+                    properties[i].onVerify = (e) => this.verify(e);
+                    properties[i].onPlayGame = (e) => this.verify(e);
+                    properties[i].setToolMenuOptions(toolMenuOptions);
                     propertyRows = properties[i].toTableRow();
                 }
 
                 propertyRows.forEach((row) => {
                     this.propertyTableBody.append(row);
-                });
-
-                
+                });                
             }
         }
 
@@ -234,7 +250,7 @@ module Activity {
             return property.statistics.elapsedTime + " ms";
         }
 
-        private onStatusClick(e) {
+        private playGame(e){
             var property = e.data.property;
             if (property instanceof Property.Equivalence) {
                 var equivalence = <Property.Equivalence> property,
@@ -248,6 +264,10 @@ module Activity {
                     };
                 Main.activityHandler.selectActivity("game", configuration);
             }
+        }
+
+        private onStatusClick(e) {
+            this.playGame(e);
         }
 
         public editProperty(e): void {

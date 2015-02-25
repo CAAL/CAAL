@@ -21,12 +21,31 @@ module Property {
         public status: PropertyStatus;
         public worker;
         public statistics = {elapsedTime: null};
-        public onStatusClick : Function = null;
-        public onEdit : Function = null;
-        public onDelete : Function = null;
-        public onVerify : Function = null;
+        public onStatusClick : Function;
+        public onEdit : Function;
+        public onDelete : Function;
+        public onVerify : Function;
         public onStatusHover : Function = () => {return""}; /*it is not allowed to be null?*/
-        public onToolMenuClick : Function = null;
+        public onToolMenuClick : Function;
+        
+
+        public toolMenuOptions = {
+                "Edit":{
+                    id:"property-edit",
+                    label: "Edit",
+                    click: null
+                }, 
+                "Delete":{
+                    id: "property-delete",
+                    label: "Delete",
+                    click: null
+                },
+                "Play":{
+                    id: "property-playgame",
+                    label: "Play",
+                    click: null
+                }
+            };
 
 
         public constructor(status: PropertyStatus = PropertyStatus.unknown) {
@@ -41,6 +60,28 @@ module Property {
 
         public getStatus(): PropertyStatus {
             return this.status;
+        }
+
+        protected getToolMenu(){
+            var toolmenu = $("<div class=\"btn-group\"><button type=\"button\" data-toggle=\"dropdown\" class=\"btn btn-default dropdown-toggle\"><span class=\"fa fa-ellipsis-v\"></span></button></div>");
+            var list = $("<ul id=toolmenu class=\"dropdown-menu\"></ul>")
+
+            for (var key in this.toolMenuOptions) {
+                if(this.toolMenuOptions[key].click){
+                    list.append("<li><a id=\""+this.toolMenuOptions[key].id+"\">"+this.toolMenuOptions[key].label+"</a></li>")
+                } else {
+                    list.append("<li class=\"disabled\"><a id=\""+this.toolMenuOptions[key].id+"\">"+this.toolMenuOptions[key].label+"</a></li>")
+                }
+            }
+
+            toolmenu.append(list);
+            return toolmenu;
+        }
+
+        public setToolMenuOptions(menuOptions : Object){
+            for (var key in menuOptions) {
+                this.toolMenuOptions[key] = menuOptions[key];
+            }
         }
 
         public getStatusIcon(): string {
@@ -74,12 +115,12 @@ module Property {
             var row = $("<tr id='"+this.getId()+"'></tr>");
             var del = $("<i class=\"fa fa-trash\"></i>");
             var verify = $("<i class=\"fa fa-play\"></i>");
-            var toolmenu = $("<i class='fa fa-ellipsis-v'></i>");
+            var toolmenu = this.getToolMenu()
 
             var tdStatus = $("<td id='property-status' class=\"text-center\"></td>").append(this.getStatusIcon());
             var tdDescription = $("<td id='property-description'></td>").append(this.getDescription());
-            var tdToolMenu = $("<td id='property-toolmenu' class=\"text-center\"></td>").append(toolmenu);
             var tdVerify = $("<td id='property-verify' class=\"text-center\"></td>").append(verify);
+            var tdToolMenu = $("<td id='property-toolmenu' class=\"text-center\"></td>").append(toolmenu);
             row.append(tdStatus, tdDescription, tdVerify, tdToolMenu);
 
             tdStatus.tooltip({
@@ -87,11 +128,18 @@ module Property {
                 selector: '.fa-check'
             });
             
-            tdStatus.on("click",        {property: this},  (e) => this.onStatusClick(e));
-            row.on("click",             {property: this},  (e) => this.onEdit(e));
-            tdToolMenu.on("click",      {property: this},  (e) => this.onDelete(e)); //TODO change this to menu
-            tdVerify.on("click",        {property: this},  (e) => this.onVerify(e));
+            var toolmenuPlay = row.find("a#property-playgame");
+            var toolmenuEdit = row.find("a#property-edit");
+            var toolmenuDelete = row.find("a#property-delete");
 
+            tdStatus.on("click",        {property: this},  (e) => this.toolMenuOptions["Play"].click(e));
+            tdDescription.on("click",   {property: this}, (e) =>  this.toolMenuOptions["Edit"].click(e));
+            tdVerify.on("click",        {property: this}, (e) => this.onVerify(e));
+
+            /*Tool menu options*/
+            toolmenuPlay.on("click",    {property: this},  (e) => this.toolMenuOptions["Play"].click(e));
+            toolmenuEdit.on("click",    {property: this}, (e) => this.toolMenuOptions["Edit"].click(e));
+            toolmenuDelete.on("click",  {property: this},  (e) => this.toolMenuOptions["Delete"].click(e));
             return [row];
         }
 
@@ -401,6 +449,7 @@ module Property {
         public secondHMLProperty: Property.HML;
         public distinguishingFormula : string;
         private isexpanded : boolean = true;
+        public onPlayGame : Function;
 
 
         public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
@@ -456,27 +505,27 @@ module Property {
 
         public toTableRow() : any {
             var result = [];
-            var rowHeader = $("<tr id='"+this.getId()+"' class='distinguishing-header'></tr>");
+            var rowHeader = $("<tr id=\""+this.getId()+"\" class=\"distinguishing-header\"></tr>");
 
             var del = $("<i class='fa fa-trash'></i>");
-            var toolmenu = $("<i class='fa fa-ellipsis-v'></i>");
-            var verify = $("<i class='fa fa-play'></i>");
+            var toolmenu = this.getToolMenu();
+            var verify = $("<i class=\"fa fa-play\"></i>");
 
-            var tdStatus = $("<td id='property-status' class=\"text-center\"></td>").append(this.getStatusIcon());
-            var tdDescription = $("<td id='property-description'></td>").append(this.getDescription());
-            var tdToolMenu = $("<td id='property-toolmenu' class=\"text-center\"></td>").append(toolmenu);
-            var tdVerify = $("<td id='property-verify' class=\"text-center\"></td>").append(verify);
+            var tdStatus = $("<td id=\"property-status\" class=\"text-center\"></td>").append(this.getStatusIcon());
+            var tdDescription = $("<td id=\"property-description\"></td>").append(this.getDescription());
+            var tdVerify = $("<td id=\"property-verify\" class=\"text-center\"></td>").append(verify);
+            var tdToolMenu = $("<td id=\"property-toolmenu\" class=\"text-center\"></td>").append(toolmenu);
             rowHeader.append(tdStatus, tdDescription, tdVerify, tdToolMenu);
             result.push(rowHeader);
 
             if(this.isExpanded()) {
                 this.firstHMLProperty.onVerify = this.onVerify;
-                //this.firstHMLProperty.onToolMenuClick = null; // TODO make this functionality
+                this.firstHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
                 var rowfirstrow = this.firstHMLProperty.toTableRow();
                 result.push(rowfirstrow);
                 
+                this.secondHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
                 this.secondHMLProperty.onVerify = this.onVerify;
-                //this.secondHMLProperty.onToolMenuClick = null; // TODO make this functionality
                 var rowsecondrow = this.secondHMLProperty.toTableRow();
                 result.push(rowsecondrow);
             }
@@ -485,11 +534,19 @@ module Property {
                 title: this.onStatusHover(this),
                 selector: '.fa-check'
             });
+
+            var toolmenuPlay = rowHeader.find("a#property-playgame");
+            var toolmenuEdit = rowHeader.find("a#property-edit");
+            var toolmenuDelete = rowHeader.find("a#property-delete");
             
-            tdStatus.on("click",    {property: this},   this.onStatusClick);
-            rowHeader.on("click",   {property: this},   this.onEdit);
-            tdToolMenu.on("click",    {property: this},   this.onDelete); //TODO change this
-            tdVerify.on("click",    {property: this},   this.onVerify);
+            tdStatus.on("click",    {property: this},  (e) => this.onStatusClick(e));
+            tdDescription.on("click",   {property: this}, (e) =>  this.toolMenuOptions["Edit"].click(e));
+            tdVerify.on("click",    {property: this},  (e) => this.onVerify(e));
+
+            /*Tool menu options*/
+            toolmenuPlay.on("click",    {property: this},  (e) => this.toolMenuOptions["Play"].click(e));
+            toolmenuEdit.on("click",    {property: this}, (e) => this.toolMenuOptions["Edit"].click(e));
+            toolmenuDelete.on("click",  {property: this},  (e) => this.toolMenuOptions["Delete"].click(e));
 
             return result;
         }
@@ -500,30 +557,7 @@ module Property {
          * @return {boolean} if true, everything is defined.
          */
         protected isReadyForVerification() : boolean {
-            var isReady = true;
-            
-            // if there are no valid process defined
-            if(!this.getFirstProcess() && !this.getSecondProcess()) {
-                isReady = false;
-            } else {
-                // if they are defined check whether they are defined in the CCS-program
-                var processList = Main.getGraph().getNamedProcesses();
-
-                if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
-                    this.setInvalidateStatus();
-                    isReady = false;
-                }
-            }
-
-            // if it is already invalid it is not ready.
-            if(this.status === PropertyStatus.invalid) { 
-                isReady = false;
-            }
-
-            return isReady
-        }
-
-        public verify(callback : Function): void {
+            throw "not yet implemented"
         }
     }
 }

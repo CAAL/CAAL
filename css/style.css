@@ -63,6 +63,15 @@ textarea {
     min-width: 0px;
 }
 
+#toolmenu.dropdown-menu {
+    right: 0;
+    left: inherit;
+}
+
+.dropdown-menu #toolmenu.dropdown-menu > li {
+    z-index: 10001;
+}
+
 .table-hover td {
     cursor: pointer;
 }
@@ -312,6 +321,8 @@ p.small {
 #property-table .fa-exclamation-triangle {
     color: #c00;
 }
+
+
 
 
 /*
