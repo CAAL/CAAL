@@ -23,7 +23,7 @@ module Property {
         public statistics = {elapsedTime: null};
         public onStatusClick : Function;
         public onVerify : Function;
-        public onStatusHover : Function = () => {return""}; /*it is not allowed to be null?*/
+        //public onStatusHover : Function = () => {return""}; /*it is not allowed to be null?*/
         public onToolMenuClick : Function;
         public onPlayGame : Function;
         protected tdStatus;
@@ -98,6 +98,10 @@ module Property {
         public stopTimer() {
             this.statistics.elapsedTime = (this.startTime) ? new Date().getTime() - this.startTime : 0;
             clearInterval(this.clockInterval);
+        }
+
+        public onStatusHover(property) {
+            return property.statistics.elapsedTime + " ms";
         }
 
         public getStatusIcon(): string {
@@ -604,7 +608,7 @@ module Property {
             if (isReady) {
                 this.startTimer()
                 var program = Main.getProgram();
-                this.worker = getWorker(callback); /*on error*/
+                this.worker = getWorker(callback);
                 this.worker.postMessage({
                     type: "program",
                     program: program

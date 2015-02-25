@@ -155,14 +155,13 @@ module Activity {
                 var propertyRows = null;
                 if (properties[i] instanceof Property.Equivalence || properties[i] instanceof Property.HML) {
                     /* Strong/Weak bisim and HML*/
-                    properties[i].onStatusHover = (e) => this.onStatusHover(e);
-                    properties[i].onVerify = (e) => this.verify(e);
-
                     toolMenuOptions["Play"] = {
                             id: "property-playgame",
                             label: "Play",
                             click: (e) => this.playGame(e)
                     };
+
+                    properties[i].onVerify = (e) => this.verify(e);
                     properties[i].setToolMenuOptions(toolMenuOptions)
                     propertyRows = properties[i].toTableRow();
                 } else {
@@ -177,8 +176,7 @@ module Activity {
                             e.data.property.setExpanded(true);
                         }
                     };
-                    
-                    //properties[i].onStatusHover = (e) => this.onStatusHover(e);
+
                     properties[i].onVerify = (e) => this.verify(e);
                     properties[i].onPlayGame = (e) => this.verify(e);
                     properties[i].setToolMenuOptions(toolMenuOptions);
@@ -250,10 +248,6 @@ module Activity {
             this.editProperty({data: {property: property}});
         }
 
-        private onStatusHover(property) {
-            return property.statistics.elapsedTime + " ms";
-        }
-
         private playGame(e){
             var property = e.data.property;
             if (property instanceof Property.Equivalence) {
@@ -271,6 +265,7 @@ module Activity {
         }
 
         private onStatusClick(e) {
+            // TODO remove this
             this.playGame(e);
         }
 
@@ -400,7 +395,6 @@ module Activity {
         }
 
         public verify(e): void {
-            // TODO some checking before running verify
             var property = (e.data.property instanceof Property.Property) ? e.data.property : null;
 
             /* Start to verify a property row*/
