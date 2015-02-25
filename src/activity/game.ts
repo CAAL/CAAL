@@ -100,7 +100,6 @@ module Activity {
         
         private isInternetExplorer() : boolean {
             var msie = window.navigator.userAgent.indexOf("MSIE ");
-            console.log(msie);
             return msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./);
         }
         
@@ -282,9 +281,9 @@ module Activity {
             
             if (options.playerType === "defender") {
                 attacker = new Computer(PlayType.Attacker);
-                defender = new Human(PlayType.Defender);
+                defender = new Human(PlayType.Defender, this);
             } else {
-                attacker = new Human(PlayType.Attacker);
+                attacker = new Human(PlayType.Attacker, this);
                 defender = new Computer(PlayType.Defender);
             }
             
@@ -351,7 +350,7 @@ module Activity {
             this.rightGraph.setSelected(conf.right.id.toString());
         }
 
-        public hightlightChoices(isLeft : boolean, targetId : string) : void {
+        public highlightChoices(isLeft : boolean, targetId : string) : void {
             if (isLeft) {
                 this.leftGraph.setHover(targetId); 
             } else {
@@ -359,7 +358,7 @@ module Activity {
             }
         }
 
-        public removeHightlightChoices(isLeft : boolean){
+        public removeHighlightChoices(isLeft : boolean){
             if(isLeft) {
                 this.leftGraph.clearHover();
             } else {
@@ -451,11 +450,16 @@ module Activity {
         }
     }
     
-    
     export enum PlayType { Attacker, Defender }
     export enum Move { Right, Left }
-
-    class DgGame {
+    
+    class Abstract {
+        protected abstract() : any {
+            throw "Abstract method not implemented, in this " + this.toString();
+        }
+    }
+    
+    class DgGame extends Abstract {
         
         protected dependencyGraph : dg.DependencyGraph;
         protected marking : dg.LevelMarking;
@@ -477,6 +481,7 @@ module Activity {
         constructor(private gameActivity : Game, protected graph : CCS.Graph,
             attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator,
             protected currentLeft : any, protected currentRight : any) {
+            super();
             
             this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
             
@@ -489,16 +494,6 @@ module Activity {
         
         public getRound() : number {
             return this.step / 2 + 1;
-        }
-        
-        public getUniversalWinner() : Player {
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
-        public getCurrentWinner() : Player {
-            throw "Abstract method. Not implemented.";
-            return undefined;
         }
         
         public isUniversalWinner(player : Player) : boolean {
@@ -520,35 +515,6 @@ module Activity {
         
         public getCurrentConfiguration() : any {
             return { left: this.currentLeft, right: this.currentRight };
-        }
-        
-        public getBestWinningAttack(choices : any) : any {
-            // consider adding this method to DepedencyGraph interface
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
-        public getTryHardAttack(choices : any) : any {
-            // consider adding this method to DepedencyGraph interface
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
-        public getWinningDefend(choices : any) : any {
-            // consider adding this method to DepedencyGraph interface
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
-        public getTryHardDefend(choices : any) : any {
-            // consider adding this method to DepedencyGraph interface
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
-        public getCurrentChoices(playType : PlayType) : any {
-            throw "Abstract method. Not implemented.";
-            return undefined;
         }
         
         public startGame() : void {
@@ -583,16 +549,6 @@ module Activity {
             
             this.attacker = attacker;
             this.defender = defender;
-        }
-        
-        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph { // abstract
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
-        protected createMarking() : dg.LevelMarking { // abstract
-            throw "Abstract method. Not implemented.";
-            return undefined;
         }
         
         private saveCurrentProcess(process : any, move : Move) : void {
@@ -635,14 +591,6 @@ module Activity {
 
             this.gameActivity.highlightNodes();
             this.gameActivity.centerNode(destinationProcess, this.lastMove);
-        }
-
-        public highlightChoices(isLeft : boolean, targetId : string) : void {
-            this.gameActivity.hightlightChoices(isLeft, targetId);
-        }
-
-        public removeHightlightChoices(isLeft : boolean) : void {
-            this.gameActivity.removeHightlightChoices(isLeft);
         }
         
         private preparePlayer(player : Player) {
@@ -690,6 +638,17 @@ module Activity {
 
             return result;
         }
+        
+        /* Abstract methods */
+        public getUniversalWinner() : Player { return this.abstract(); }
+        public getCurrentWinner() : Player { return this.abstract(); }
+        public getBestWinningAttack(choices : any) : any { this.abstract(); }
+        public getTryHardAttack(choices : any) : any { this.abstract(); }
+        public getWinningDefend(choices : any) : any { this.abstract(); }
+        public getTryHardDefend(choices : any) : any { this.abstract(); }
+        public getCurrentChoices(playType : PlayType) : any { this.abstract(); }
+        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph { return this.abstract(); }
+        protected createMarking() : dg.LevelMarking { return this.abstract(); }
     }
 
     class BisimulationGame extends DgGame {
@@ -721,9 +680,9 @@ module Activity {
         public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) : void {
             
             var winner = this.marking.getMarking(nextNode) === this.marking.ONE ? this.attacker : this.defender;
-            if (this.currentWinner !== winner) {
-                // TODO winner changed, do something?
-            }
+            
+            if (this.currentWinner !== winner)
+                this.gameLog.printWinnerChanged(winner);
             this.currentWinner = winner;
             
             super.play(player, destinationProcess, nextNode, action, move);
@@ -863,12 +822,12 @@ module Activity {
         }
     }
 
-    class Player { // abstract
+    class Player extends Abstract {
 
         protected gameLog : GameLog = new GameLog();
         
         constructor(private playType : PlayType) {
-            
+            super();
         }
         
         public prepareTurn(choices : any, game : DgGame) : void {
@@ -896,21 +855,17 @@ module Activity {
             return this.playType;
         }
         
-        protected prepareAttack(choices : any, game : DgGame) : void {
-            throw "Abstract method. Not implemented.";
-        }
-        
-        protected prepareDefend(choices : any, game : DgGame) : void {
-            throw "Abstract method. Not implemented.";
-        }
-        
-        public abortPlay() : void {
-            // empty, override
-        }
-        
         public playTypeStr() : string {
             return this.playType == PlayType.Attacker ? "Attacker" : this.playType == PlayType.Defender ? "Defender" : "unknown";
         }
+        
+        public abortPlay() : void {
+            // virtual, override
+        }
+        
+        /* Abstract methods */
+        protected prepareAttack(choices : any, game : DgGame) : void { this.abstract(); }
+        protected prepareDefend(choices : any, game : DgGame) : void { this.abstract(); }
     }
     
     class Human extends Player {
@@ -918,7 +873,7 @@ module Activity {
         private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
         private $table;
         
-        constructor(playType : PlayType) {
+        constructor(playType : PlayType, private gameActivity : Game) {
             super(playType);
             
             this.$table = $("#game-transitions-table").find("tbody");
@@ -999,16 +954,16 @@ module Activity {
             if (entering) {
                 var targetId = $(event.currentTarget).data("targetId");
                 if(move === Move.Left) {
-                    game.highlightChoices(true, targetId); // hightlight the left graph
+                    this.gameActivity.highlightChoices(true, targetId); // hightlight the left graph
                 } else{
-                    game.highlightChoices(false, targetId) // hightlight the right graph
+                    this.gameActivity.highlightChoices(false, targetId) // hightlight the right graph
                 }
                 $(event.currentTarget).css("background", "rgba(0, 0, 0, 0.07)"); // color the row
             } else {
                 if(move === Move.Left) {
-                    game.removeHightlightChoices(true);
+                    this.gameActivity.removeHighlightChoices(true);
                 } else{
-                    game.removeHightlightChoices(false);
+                    this.gameActivity.removeHighlightChoices(false);
                 }
                 $(event.currentTarget).css("background", ""); // remove highlight
             }
@@ -1023,15 +978,16 @@ module Activity {
             else {
                 game.play(this, choice.targetProcess, choice.nextNode);
             }
-            game.removeHightlightChoices(true); // remove highlight from both graphs
-            game.removeHightlightChoices(false); // remove highlight from both graphs
+            this.gameActivity.removeHighlightChoices(true); // remove highlight from both graphs
+            this.gameActivity.removeHighlightChoices(false); // remove highlight from both graphs
         }
         
         public abortPlay() : void {
             this.$table.empty();
         }
     }
-
+    
+    // such ai
     class Computer extends Player {
         
         static Delay : number = 1500;
@@ -1063,10 +1019,6 @@ module Activity {
         }
         
         private losingAttack(choices : any, game : DgGame) : void {
-            // var random : number = this.random(choices.length - 1);
-            // var move : Move = choices[random].move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
-            // game.play(this, choices[random].targetProcess, choices[random].nextNode, choices[random].action, move);
-            
             var tryHardChoice = game.getTryHardAttack(choices);
             var move : Move = tryHardChoice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
             game.play(this, tryHardChoice.targetProcess, tryHardChoice.nextNode, tryHardChoice.action, move);
@@ -1080,9 +1032,6 @@ module Activity {
         }
         
         private losingDefend(choices : any, game : DgGame) : void {
-            // var random : number = this.random(choices.length - 1);
-            // game.play(this, choices[random].targetProcess, choices[random].nextNode);
-            
             var tryHardChoice = game.getTryHardDefend(choices);
             game.play(this, tryHardChoice.targetProcess, tryHardChoice.nextNode);
         }
@@ -1144,6 +1093,10 @@ module Activity {
                 var loser = (winner.getPlayType() === PlayType.Attacker) ? "Defender" : "Attacker";
                 this.print('<p class="outro">' + loser + " has no available transitions. You win!</p>");
             }
+        }
+        
+        public printWinnerChanged(winner : Player) : void {
+            this.println("You made bad move. " + winner.playTypeStr() + " now has a winning strategy.");
         }
         
         public printCycleWinner(configuration : any, defender : Player) : void {
