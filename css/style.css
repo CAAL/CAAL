@@ -3,7 +3,9 @@ html, body {
     padding: 0;
     font: normal 14px "Open Sans", "Arial";
 }
-
+.table-responsive{
+    overflow-x: visible; 
+}
 a {
     cursor: pointer;
 }
