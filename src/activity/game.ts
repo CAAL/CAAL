@@ -76,8 +76,14 @@ module Activity {
             this.$fullscreenBtn.on("click", () => this.toggleFullscreen());
             
             this.$leftContainer.add(this.$rightContainer).on("scroll", () => this.positionSliders());
-            this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
-            this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
+            
+            if (this.isInternetExplorer()) {
+                this.$leftZoom.on("change", () => this.zoom(this.$leftZoom.val(), "left"));
+                this.$rightZoom.on("change", () => this.zoom(this.$rightZoom.val(), "right"));
+            } else {
+                this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
+                this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
+            }
 
             $(document).on("ccs-changed", () => this.changed = true);
             
@@ -90,6 +96,12 @@ module Activity {
                 },
                 selector: "span.ccs-tooltip-constant"
             });
+        }
+        
+        private isInternetExplorer() : boolean {
+            var msie = window.navigator.userAgent.indexOf("MSIE ");
+            console.log(msie);
+            return msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./);
         }
         
         private isFullscreen(): boolean {
