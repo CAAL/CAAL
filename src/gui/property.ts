@@ -557,7 +557,46 @@ module Property {
          * @return {boolean} if true, everything is defined.
          */
         protected isReadyForVerification() : boolean {
-            throw "not yet implemented"
+            ///TODO: Fix this
+            return true;
+        }
+
+        public verify(callback : Function): void {
+            var isReady = this.isReadyForVerification() 
+            if (isReady) {
+                var program = Main.getProgram();
+                this.worker = getWorker(callback); /*on error*/
+                this.worker.postMessage({
+                    type: "program",
+                    program: program
+                });
+                this.worker.postMessage({
+                    type: "findDistinguishingFormula",
+                    leftProcess: this.firstHMLProperty.getProcess(),
+                    rightProcess: this.secondHMLProperty.getProcess()
+                });
+                this.worker.addEventListener("error", (error) => {
+                    /*display tooltip with error*/
+                    this.setInvalidateStatus();
+                    callback(this.status)
+                }, false);
+                this.worker.addEventListener("message", event => {
+                    var goodResult = !event.data.result.isBisimilar;
+                    this.status = goodResult ? PropertyStatus.unknown : PropertyStatus.invalid;
+                    if (goodResult) {
+                        var formula = event.data.result.formula;
+                        this.firstHMLProperty.setFormula(formula);
+                        this.secondHMLProperty.setFormula(formula);
+                    }
+                    this.worker.terminate();
+                    this.worker = null;
+                    callback(this.status); /* verification ended */
+                });
+            } else {
+                // something is not defined or syntax error
+                console.log("something is wrong, please check the property");
+                callback(this.status); /*verification ended*/
+            }
         }
     }
 }

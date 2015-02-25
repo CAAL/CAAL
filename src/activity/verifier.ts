@@ -396,14 +396,6 @@ module Activity {
         public verify(e): void {
             // TODO some checking before running verify
             var property = (e.data.property instanceof Property.Property) ? e.data.property : null;
-            
-            if(property instanceof Property.DistinguishingFormula){
-                /* Do not run a distinguishing property, both run its children. */
-                this.propsToVerify.push(property.getFirstHML())
-                this.propsToVerify.push(property.getSecondHML())
-                this.doNextVerification();
-                return;
-            }
 
             /* Start to verify a property row*/
             var row = this.propertyTableBody.find("#" + property.getId());
