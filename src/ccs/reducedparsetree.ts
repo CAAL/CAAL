@@ -124,11 +124,11 @@ module Traverse {
             this.cache = cache || {};
         }
 
-        getProcessById(processId : number) : ccs.Process { 
+        getProcessById(processId : ccs.ProcessId) : ccs.Process { 
             return this.strictSuccGenerator.getProcessById(processId);
         }
 
-        getSuccessors(processId : number) : ccs.TransitionSet {
+        getSuccessors(processId : ccs.ProcessId) : ccs.TransitionSet {
             if (this.cache[processId]) return this.cache[processId];
 
             var result = new ccs.TransitionSet(),
@@ -193,11 +193,11 @@ module Traverse {
         
         constructor(public succGenerator : ccs.SuccessorGenerator, public reducer : ProcessTreeReducer) { }
 
-        getProcessById(processId) : ccs.Process {
+        getProcessById(processId : ccs.ProcessId) : ccs.Process {
             return this.succGenerator.getProcessById(processId);
         }
 
-        getSuccessors(processId) : ccs.TransitionSet {
+        getSuccessors(processId : ccs.ProcessId) : ccs.TransitionSet {
             var transitionSet = this.succGenerator.getSuccessors(processId);
             return this.reduceSuccessors(transitionSet);
         }

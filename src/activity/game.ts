@@ -150,7 +150,7 @@ module Activity {
         }
         
         private ccsNotationForProcessId(id : string): string {
-            var process = this.graph.processById(id) || this.graph.processByName(id),
+            var process = this.graph.processByName(id) || this.graph.processById(parseInt(id, 10)),
                 text = "Unknown definition";
                 
             if (process) {
@@ -324,11 +324,12 @@ module Activity {
                 this.showProcess(fromProcess, graph);
                 var groupedByTargetProcessId = groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
 
-                Object.keys(groupedByTargetProcessId).forEach(tProcId => {
-                    var group = groupedByTargetProcessId[tProcId],
-                        data = group.map(t => { return {label: t.action.toString()}; });
-                    this.showProcess(this.graph.processById(tProcId), graph);
-                    graph.showTransitions(fromProcess.id, tProcId, data);
+                Object.keys(groupedByTargetProcessId).forEach(strProcId => {
+                    var group = groupedByTargetProcessId[strProcId],
+                        data = group.map(t => { return {label: t.action.toString()}; }),
+                        numId = parseInt(strProcId, 10);
+                    this.showProcess(this.graph.processById(numId), graph);
+                    graph.showTransitions(fromProcess.id, numId, data);
                 });
             }
 
