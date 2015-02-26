@@ -560,7 +560,7 @@ module Property {
             rowHeader.append(this.tdStatus, tdDescription, tdVerify, tdToolMenu);
             result.push(rowHeader);
 
-            if(this.isExpanded()) {
+            if(this.isExpanded() /*&& this.firstHMLProperty.getFormula() !== "" && this.secondHMLProperty.getFormula() !== ""*/) {
                 this.firstHMLProperty.onVerify = this.onVerify;
                 //this.firstHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
                 var firstRow = this.firstHMLProperty.toTableRow();
@@ -627,7 +627,7 @@ module Property {
                 this.worker.addEventListener("message", event => {
                     var goodResult = !event.data.result.isBisimilar;
                     this.status = goodResult ? PropertyStatus.unknown : PropertyStatus.invalid;
-                    if (goodResult) {
+                    if (goodResult ) {
                         var formula = event.data.result.formula;
                         this.firstHMLProperty.setFormula(formula);
                         this.secondHMLProperty.setFormula(formula);
