@@ -175,6 +175,7 @@ module Activity {
                             this.onExpand(e);
                             e.data.property.setExpanded(true);
                         }
+                        this.displayProperties()
                     };
 
                     properties[i].onVerify = (e) => this.verify(e);
@@ -200,6 +201,8 @@ module Activity {
                 var secondHMLid = secondProperty.getId();
                 var secondHMLRow = this.propertyTableBody.find("#" + secondHMLid);
                 secondHMLRow.hide();
+
+                
             } else {
                 throw "Cannot collapse this property"
             }
@@ -214,6 +217,7 @@ module Activity {
                 var secondHMLid = e.data.property.getSecondHML().getId();
                 var secondHMLRow = this.propertyTableBody.find("#" + secondHMLid);
                 secondHMLRow.show();
+
             } else {
                 throw "Cannot expand this property"
             }
