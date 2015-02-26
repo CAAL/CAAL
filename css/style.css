@@ -255,6 +255,19 @@ textarea {
     border-radius: 6px;
 }
 
+#about-dialog .modal-footer {
+    padding: 15px;
+    border-top: 1px solid #e5e5e5;
+    text-align: initial;
+}
+#aboutok {
+    float: right;
+}
+#version {
+    float: left;
+    font-family: normal 14px "Inconsolata";
+}
+
 .modal-footer > #game-btn-group {
     width: 100%;
 }
