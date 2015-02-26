@@ -18,6 +18,7 @@ module Activity {
         private clockInterval;
         private propsToVerify = [];
         private startTime;
+        private propertyForms = {};
 
         constructor(container: string, button: string) {
             super(container, button);
@@ -55,6 +56,7 @@ module Activity {
                 fontSize: 14,
                 fontFamily: "Inconsolata",
             });
+            this.propertyForms = {hml: $("#model-checking"), distinguishing: $("#distinguishing-formula"), equivalence: $("#equivalence")}
         }
 
         protected checkPreconditions(): boolean {
@@ -273,13 +275,23 @@ module Activity {
             this.playGame(e);
         }
 
+        private showPropertyForm(processFormName : string) {
+            for (var this.propertyProcessForms){
+                if(key === processFormName){
+                    this.propertyProcs[key].show();
+                    console.log(key, processFormName)
+                }else {
+                    this.propertyProcs[key].hide();
+                    console.log(key, processFormName)
+                }
+            }
+        }
+
         public editProperty(e): void {
             var property = e.data.property;
 
             if (property instanceof Property.Equivalence) {
-                $("#model-checking").hide();
-                $("#distinguishing-formula").hide()
-                $("#equivalence").show();
+                this.showPropertyForm("equivalence");
 
                 var firstProcessList = $("#equivalence-first-process");
                 var secondProcessList = $("#equivalence-second-process");
@@ -311,9 +323,7 @@ module Activity {
                     this.displayProperties();
                 });
             } else if (property instanceof Property.HML) {
-                $("#equivalence").hide();
-                $("#distinguishing-formula").hide()
-                $("#model-checking").show();
+                this.showPropertyForm("hml");
 
                 var processList = $("#hml-process");
                 this.displayProcessList(Main.getGraph().getNamedProcesses(), processList, property.getProcess());
@@ -337,9 +347,7 @@ module Activity {
                     this.displayProperties();
                 });
             } else if (property instanceof Property.DistinguishingFormula){
-                $("#equivalence").hide();
-                $("#model-checking").hide();
-                $("#distinguishing-formula").show();
+                this.showPropertyForm("distinguishing");
 
                 var firstProcessList = $('#distinguishing-first-process');
                 var secondProcessList = $('#distinguishing-second-process');
