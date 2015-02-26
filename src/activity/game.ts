@@ -455,7 +455,7 @@ module Activity {
     
     class Abstract {
         protected abstract() : any {
-            throw "Abstract method not implemented, in this " + this.toString();
+            throw new Error("Abstract method not implemented.");
         }
     }
     
