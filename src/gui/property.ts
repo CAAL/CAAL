@@ -48,6 +48,17 @@ module Property {
                 }
             };
 
+        public icons = {
+            "play" : $("<i class=\"fa fa-play\"></i>"),
+            "trash" : $("<i class=\"fa fa-trash\"></i>"),
+            "checkmark": $("<i class=\"fa fa-check\"></i>"),
+            "cross": $("<i class=\"fa fa-times\"></i>"),
+            "triangle": $("<i class=\"fa fa-exclamation-triangle\"></i>"),
+            "questionmark" : $("<i class=\"fa fa-question\"></i>"),
+            "plus" : $("<i class=\"fa fa-plus-square\"></i>"),
+            "minus" : $("<i class='fa fa-minus-square'></i>")
+        }
+
 
         public constructor(status: PropertyStatus = PropertyStatus.unknown) {
             this.status = status;
@@ -64,7 +75,9 @@ module Property {
         }
 
         protected getToolMenu(){
-            var toolmenu = $("<div class=\"btn-group\"><button type=\"button\" data-toggle=\"dropdown\" class=\"btn btn-default btn-xs dropdown-toggle\"><span class=\"fa fa-ellipsis-v\"></span></button></div>");
+            var toolmenu = $("<div class=\"btn-group\"></div>");
+            var btn = $("<button type=\"button\" data-toggle=\"dropdown\" class=\"btn btn-default btn-xs dropdown-toggle\"></button>");
+            var dots = $("<span class=\"fa fa-ellipsis-v\"></span>")
             var list = $("<ul id=\"toolmenu\" class=\"dropdown-menu\"></ul>")
 
             for (var key in this.toolMenuOptions) {
@@ -74,7 +87,8 @@ module Property {
                     list.append("<li class=\"disabled\"><a id=\""+this.toolMenuOptions[key].id+"\">"+this.toolMenuOptions[key].label+"</a></li>")
                 }
             }
-
+            btn.append(dots);
+            toolmenu.append(btn);
             toolmenu.append(list);
             return toolmenu;
         }
@@ -104,18 +118,18 @@ module Property {
             return property.statistics.elapsedTime + " ms";
         }
 
-        public getStatusIcon(): string {
+        public getStatusIcon(): JQuery {
             if (this.status === PropertyStatus.unknown) {
-                return "<i class=\"fa fa-question\"></i>"
+                return this.icons.questionmark;
             }
             else if (this.status === PropertyStatus.satisfied) {
-                return "<i class=\"fa fa-check\"></i>"
+                return this.icons.checkmark;
             }
             else if (this.status === PropertyStatus.unsatisfied) {
-                return "<i class=\"fa fa-times\"></i>"
+                return this.icons.cross;
             }
             else if (this.status === PropertyStatus.invalid) {
-                return "<i class=\"fa fa-exclamation-triangle\"></i>"
+                return this.icons.triangle;
             }
         }
 
@@ -148,18 +162,18 @@ module Property {
                 selector: '.fa-check'
             });
             
-            var toolmenuPlay = row.find("a#property-playgame");
-            var toolmenuEdit = row.find("a#property-edit");
-            var toolmenuDelete = row.find("a#property-delete");
-
             this.tdStatus.on("click",        {property: this},  (e) => this.toolMenuOptions["Play"].click(e));
             tdDescription.on("click",   {property: this}, (e) =>  this.toolMenuOptions["Edit"].click(e));
             tdVerify.on("click",        {property: this}, (e) => this.onVerify(e));
 
             /*Tool menu options*/
-            toolmenuPlay.on("click",    {property: this},  (e) => this.toolMenuOptions["Play"].click(e));
-            toolmenuEdit.on("click",    {property: this}, (e) => this.toolMenuOptions["Edit"].click(e));
-            toolmenuDelete.on("click",  {property: this},  (e) => this.toolMenuOptions["Delete"].click(e));
+            for (var tooloption in this.toolMenuOptions){
+                var toolMenuOption = toolmenu.find("#" + this.toolMenuOptions[tooloption].id);
+                if(this.toolMenuOptions[tooloption].click) {
+                    toolMenuOption.on("click", {property:this}, this.toolMenuOptions[tooloption].click);
+                }
+            }
+
             return [row];
         }
 
@@ -543,12 +557,12 @@ module Property {
             };
         }
 
-        public getStatusIcon(): string {
+        public getStatusIcon(): JQuery {
             if (this.isExpanded()) {
-                return "<i class='fa fa-minus-square'></i>"
+                return this.icons.minus;
             }
             else {
-                return "<i class='fa fa-plus-square'></i>";
+                return this.icons.plus;
             }
         }
 
@@ -556,13 +570,12 @@ module Property {
             var result = [];
             var rowHeader = $("<tr id=\""+this.getId()+"\" class=\"distinguishing-header\"></tr>");
 
-            var del = $("<i class='fa fa-trash'></i>");
             var toolmenu = this.getToolMenu();
-            var verify = $("<i class=\"fa fa-play\"></i>");
+            var verifyIcon = this.icons.play;
 
             this.tdStatus = $("<td id=\"property-status\" class=\"text-center\"></td>").append(this.getStatusIcon());
             var tdDescription = $("<td id=\"property-description\"></td>").append(this.getDescription());
-            var tdVerify = $("<td id=\"property-verify\" class=\"text-center\"></td>").append(verify);
+            var tdVerify = $("<td id=\"property-verify\" class=\"text-center\"></td>").append(verifyIcon);
             var tdToolMenu = $("<td id=\"property-toolmenu\" class=\"text-center\"></td>").append(toolmenu);
             rowHeader.append(this.tdStatus, tdDescription, tdVerify, tdToolMenu);
             result.push(rowHeader);
@@ -584,18 +597,18 @@ module Property {
                 selector: '.fa-check'
             });
 
-            var toolmenuPlay = rowHeader.find("a#property-playgame");
-            var toolmenuEdit = rowHeader.find("a#property-edit");
-            var toolmenuDelete = rowHeader.find("a#property-delete");
-            
             this.tdStatus.on("click",    {property: this},  (e) => this.onStatusClick(e));
             tdDescription.on("click",   {property: this}, (e) =>  this.toolMenuOptions["Edit"].click(e));
             tdVerify.on("click",    {property: this},  (e) => this.onVerify(e));
 
             /*Tool menu options*/
-            toolmenuPlay.on("click",    {property: this},  (e) => this.toolMenuOptions["Play"].click(e));
-            toolmenuEdit.on("click",    {property: this}, (e) => this.toolMenuOptions["Edit"].click(e));
-            toolmenuDelete.on("click",  {property: this},  (e) => this.toolMenuOptions["Delete"].click(e));
+            for (var tooloption in this.toolMenuOptions){
+                var toolMenuOptions = toolmenu.find("#" + this.toolMenuOptions[tooloption].id);
+                if(this.toolMenuOptions[tooloption].click) {
+                    toolMenuOptions.on("click", {property:this}, this.toolMenuOptions[tooloption].click;
+                }
+            }
+
 
             return result;
         }
