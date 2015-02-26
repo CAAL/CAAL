@@ -8,7 +8,9 @@ module DependencyGraph {
     import ccs = CCS;
     import hml = HML;
 
-    function copyHyperEdges(hyperEdges) {
+    export type Hyperedge = Array<number>;
+
+    function copyHyperEdges(hyperEdges : Hyperedge[]) : Hyperedge[] {
         var result = [];
         for (var i=0; i < hyperEdges.length; i++) {
             result.push(hyperEdges[i].slice(0));
@@ -36,7 +38,7 @@ module DependencyGraph {
             this.nextIdx = 1;
         }
 
-        getHyperEdges(identifier) {
+        getHyperEdges(identifier) : Hyperedge[] {
             var type, result;
             //Have we already built this? Then return copy of the edges.
             if (this.nodes[identifier]) {
@@ -61,7 +63,7 @@ module DependencyGraph {
             return result;
         }
 
-        getAllHyperEdges() : [any][] {
+        getAllHyperEdges() : [number, Hyperedge][] {
             if (!this.isFullyConstructed) {
                 this.isFullyConstructed = true;
                 //All nodes have ids in order of creation, thus there are no gaps.
@@ -140,8 +142,8 @@ module DependencyGraph {
             return [result];
         }
 
-        private getProcessPairStates(leftProcessId, rightProcessId) {
-            var hyperedges = [];
+        private getProcessPairStates(leftProcessId, rightProcessId) : Hyperedge[] {
+            var hyperedges : Hyperedge[] = [];
             var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
             var rightTransitions = this.attackSuccGen.getSuccessors(rightProcessId);
             leftTransitions.forEach(leftTransition => {
@@ -157,7 +159,7 @@ module DependencyGraph {
             return hyperedges;
         }
 
-        public getAttackerOptions(currentDgNode : any) {
+        public getAttackerOptions(currentDgNode : any) : Hyperedge[] {
             if (this.constructData[currentDgNode][0] !== 0)
                 throw "Bad node for attacker options";
             
@@ -348,13 +350,13 @@ module DependencyGraph {
     }
 
     export interface PartialDependencyGraph {
-        getHyperEdges(identifier) : any[][];
+        getHyperEdges(identifier) : Hyperedge[];
     }
 
     export interface DependencyGraph extends PartialDependencyGraph {
-        getHyperEdges(identifier) : any[][];
-        getAllHyperEdges() : any[];
-    }
+        getHyperEdges(identifier) : Hyperedge[];
+        getAllHyperEdges() : [number, Hyperedge][];
+    }1
 
     class MuCalculusMinModelCheckingDG implements PartialDependencyGraph, hml.FormulaDispatchHandler<any> {
         private TRUE_ID = 1;
@@ -376,7 +378,7 @@ module DependencyGraph {
             this.nextIdx = 3;
         }
 
-        getHyperEdges(identifier) {
+        getHyperEdges(identifier) : Hyperedge[] {
             var data, nodeId, formula, result;
             if (this.nodes[identifier]) {
                 result = this.nodes[identifier];
@@ -502,7 +504,7 @@ module DependencyGraph {
             this.nextIdx = 3;
         }
 
-        getHyperEdges(identifier) {
+        getHyperEdges(identifier) : Hyperedge[] {
             var data, nodeId, formula, result;
             if (this.nodes[identifier]) {
                 result = this.nodes[identifier];
