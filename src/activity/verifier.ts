@@ -56,7 +56,26 @@ module Activity {
                 fontSize: 14,
                 fontFamily: "Inconsolata",
             });
-            this.propertyForms = {hml: $("#model-checking"), distinguishing: $("#distinguishing-formula"), equivalence: $("#equivalence")}
+            this.propertyForms = 
+            {
+                hml :
+                    {
+                        container : $("#model-checking"),
+                        processList : $("#hml-process"),
+                    }, 
+                distinguishing :
+                    {
+                        container : $("#distinguishing-formula"),
+                        firstProcessList : $('#distinguishing-first-process'),
+                        secondProcessList : $('#distinguishing-second-process'),
+                    }, 
+                equivalence : 
+                    {
+                        container : $("#equivalence"),
+                        firstProcessList : $("#equivalence-first-process"),
+                        secondProcessList : $("#equivalence-second-process"),
+                    }
+            };
         }
 
         protected checkPreconditions(): boolean {
@@ -168,7 +187,6 @@ module Activity {
                     propertyRows = properties[i].toTableRow();
                 } else {
                     /* distinguishing formula */
-
                     properties[i].onStatusClick = (e) => {
                         if(e.data.property.isExpanded()){
                             this.onCollapse(e);
@@ -203,8 +221,6 @@ module Activity {
                 var secondHMLid = secondProperty.getId();
                 var secondHMLRow = this.propertyTableBody.find("#" + secondHMLid);
                 secondHMLRow.hide();
-
-                
             } else {
                 throw "Cannot collapse this property"
             }
@@ -270,72 +286,65 @@ module Activity {
             }
         }
 
-        private onStatusClick(e) {
-            // TODO remove this
-            this.playGame(e);
-        }
-
         private showPropertyForm(processFormName : string) {
-            for (var this.propertyProcessForms){
-                if(key === processFormName){
-                    this.propertyProcs[key].show();
-                    console.log(key, processFormName)
-                }else {
-                    this.propertyProcs[key].hide();
-                    console.log(key, processFormName)
+            var result = null;
+            for (var key in this.propertyForms){
+                if (key === processFormName){
+                    result = this.propertyForms[key];
+                    result.container.show();
+                } else {
+                    this.propertyForms[key].container.hide();
                 }
             }
+
+            return result;
         }
 
         public editProperty(e): void {
             var property = e.data.property;
 
             if (property instanceof Property.Equivalence) {
-                this.showPropertyForm("equivalence");
-
-                var firstProcessList = $("#equivalence-first-process");
-                var secondProcessList = $("#equivalence-second-process");
+                var equivalenceForm = this.showPropertyForm("equivalence");
 
                 var processes = Main.getGraph().getNamedProcesses();
                 processes.reverse() // reverse the list since the most used processes are at the buttom.
-                this.displayProcessList(processes, firstProcessList, property.getFirstProcess());
-                this.displayProcessList(processes, secondProcessList, property.getSecondProcess());
+                this.displayProcessList(processes, equivalenceForm.firstProcessList, property.getFirstProcess());
+                this.displayProcessList(processes, equivalenceForm.secondProcessList, property.getSecondProcess());
 
-                if (property.getFirstProcess() !== firstProcessList.val()){
-                    property.setFirstProcess(firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
+                if (property.getFirstProcess() !== equivalenceForm.firstProcessList.val()){
+                    property.setFirstProcess(equivalenceForm.firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
                 }
-                if (property.getSecondProcess() !== secondProcessList.val()){
-                    property.setSecondProcess(secondProcessList.val()); // Re-set the chosen process, since the process might have been deleted
+                if (property.getSecondProcess() !== equivalenceForm.secondProcessList.val()){
+                    property.setSecondProcess(equivalenceForm.secondProcessList.val()); // Re-set the chosen process, since the process might have been deleted
                 }
                 this.displayProperties(); // update the process table
 
-                firstProcessList.off("change");
-                firstProcessList.on("change", () => {
+                equivalenceForm.firstProcessList.off("change");
+                equivalenceForm.firstProcessList.on("change", () => {
                     // On change, set the process.
-                    property.setFirstProcess(firstProcessList.val());
+                    property.setFirstProcess(equivalenceForm.firstProcessList.val());
                     this.displayProperties();
                 });
 
-                secondProcessList.off("change");
-                secondProcessList.on("change", () => {
+                equivalenceForm.secondProcessList.off("change");
+                equivalenceForm.secondProcessList.on("change", () => {
                     // On change, set the process.
-                    property.setSecondProcess(secondProcessList.val());
+                    property.setSecondProcess(equivalenceForm.secondProcessList.val());
                     this.displayProperties();
                 });
             } else if (property instanceof Property.HML) {
-                this.showPropertyForm("hml");
+                var hmlForm = this.showPropertyForm("hml");
 
-                var processList = $("#hml-process");
-                this.displayProcessList(Main.getGraph().getNamedProcesses(), processList, property.getProcess());
+                this.displayProcessList(Main.getGraph().getNamedProcesses(), hmlForm.processList, property.getProcess());
 
-                if (property.getProcess() !== processList.val()) {
-                    property.setProcess(processList.val()); // Re-set the chosen process, since the process might have been deleted
+                if (property.getProcess() !== hmlForm.processList.val()) {
+                    property.setProcess(hmlForm.processList.val()); // Re-set the chosen process, since the process might have been deleted
                     this.displayProperties(); // update the process table
                 }
 
-                processList.off("change");
-                processList.on("change", () => {
-                    property.setProcess(processList.val());
+                hmlForm.processList.off("change");
+                hmlForm.processList.on("change", () => {
+                    property.setProcess(hmlForm.processList.val());
                     this.displayProperties();
                 });
 
@@ -347,36 +356,34 @@ module Activity {
                     this.displayProperties();
                 });
             } else if (property instanceof Property.DistinguishingFormula){
-                this.showPropertyForm("distinguishing");
+                var distinguishingForm = this.showPropertyForm("distinguishing");
 
-                var firstProcessList = $('#distinguishing-first-process');
-                var secondProcessList = $('#distinguishing-second-process');
                 var CCSProcessList = Main.getGraph().getNamedProcesses();
                 CCSProcessList.reverse();
 
-                this.displayProcessList(CCSProcessList, firstProcessList, property.getFirstProcess());
-                this.displayProcessList(CCSProcessList, secondProcessList, property.getSecondProcess());
+                this.displayProcessList(CCSProcessList, distinguishingForm.firstProcessList, property.getFirstProcess());
+                this.displayProcessList(CCSProcessList, distinguishingForm.secondProcessList, property.getSecondProcess());
 
-                if (property.getFirstProcess() !== firstProcessList.val()){
-                    property.setFirstProcess(firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
+                if (property.getFirstProcess() !== distinguishingForm.firstProcessList.val()){
+                    property.setFirstProcess(distinguishingForm.firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
                 }
-                if (property.getSecondProcess() !== secondProcessList.val()){
-                    property.setSecondProcess(secondProcessList.val()); // Re-set the chosen process, since the process might have been deleted
+                if (property.getSecondProcess() !== distinguishingForm.secondProcessList.val()){
+                    property.setSecondProcess(distinguishingForm.secondProcessList.val()); // Re-set the chosen process, since the process might have been deleted
                 }
 
                 this.displayProperties(); // update the process table
 
-                firstProcessList.off("change");
-                firstProcessList.on("change", () => {
+                distinguishingForm.firstProcessList.off("change");
+                distinguishingForm.firstProcessList.on("change", () => {
                     // On change, set the process.
-                    property.setFirstProcess(firstProcessList.val());
+                    property.setFirstProcess(distinguishingForm.firstProcessList.val());
                     this.displayProperties();
                 });
 
-                secondProcessList.off("change");
-                secondProcessList.on("change", () => {
+                distinguishingForm.secondProcessList.off("change");
+                distinguishingForm.secondProcessList.on("change", () => {
                     // On change, set the process.
-                    property.setSecondProcess(secondProcessList.val());
+                    property.setSecondProcess(distinguishingForm.secondProcessList.val());
                     this.displayProperties();
                 });
             }
@@ -386,10 +393,6 @@ module Activity {
             e.stopPropagation();
             this.project.deleteProperty(e.data.property);
             this.displayProperties();
-        }
-
-        public quePropertiesToVerification(properties : Property.Property[]) {
-            properties.forEach((property) => this.propsToVerify.push(property));
         }
 
         private verifactionEnded(result? : PropertyStatus) {
@@ -421,8 +424,12 @@ module Activity {
 
         public verifyAll(): void {
             var numProperties = this.project.getProperties();
-            numProperties.forEach((property : Property.Property) => this.propsToVerify.push(property));
+            this.quePropertiesToVerification(numProperties);
             this.doNextVerification();
+        }
+
+        public quePropertiesToVerification(properties : Property.Property[]) {
+            properties.forEach((property) => this.propsToVerify.push(property));
         }
     }
 }
