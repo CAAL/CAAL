@@ -605,7 +605,7 @@ module Property {
             for (var tooloption in this.toolMenuOptions){
                 var toolMenuOptions = toolmenu.find("#" + this.toolMenuOptions[tooloption].id);
                 if(this.toolMenuOptions[tooloption].click) {
-                    toolMenuOptions.on("click", {property:this}, this.toolMenuOptions[tooloption].click;
+                    toolMenuOptions.on("click", {property:this}, this.toolMenuOptions[tooloption].click);
                 }
             }
 
