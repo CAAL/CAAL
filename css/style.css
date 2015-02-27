@@ -4,6 +4,10 @@ html, body {
     font: normal 14px "Open Sans", "Arial";
 }
 
+.table-responsive{
+    overflow-x: visible; 
+}
+
 a {
     cursor: pointer;
 }
@@ -65,6 +69,15 @@ textarea {
 
 .dropdown-menu {
     min-width: 0px;
+}
+
+#toolmenu.dropdown-menu {
+    right: 0;
+    left: inherit;
+}
+
+.dropdown-menu #toolmenu.dropdown-menu > li {
+    z-index: 10001;
 }
 
 .table-hover td {
@@ -246,6 +259,19 @@ textarea {
     border-radius: 6px;
 }
 
+#about-dialog .modal-footer {
+    padding: 15px;
+    border-top: 1px solid #e5e5e5;
+    text-align: initial;
+}
+#aboutok {
+    float: right;
+}
+#version {
+    float: left;
+    font-family: normal 14px "Inconsolata";
+}
+
 .modal-footer > #game-btn-group {
     width: 100%;
 }
@@ -289,11 +315,11 @@ p.small {
  * Verifier activity styles
  */
 
-#property-table tbody {
-    font: normal 14px "Inconsolata";
+#property-table td {
+    vertical-align: middle;
 }
 
-#equivalence, #model-checking {
+#equivalence, #model-checking, #distinguishing-formula {
     display: none;
 }
 
@@ -316,6 +342,8 @@ p.small {
 #property-table .fa-exclamation-triangle {
     color: #c00;
 }
+
+
 
 
 /*

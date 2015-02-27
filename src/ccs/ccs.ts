@@ -1,9 +1,12 @@
 /// <reference path="unguarded_recursion.ts" />
+/// <reference path="../util/array.ts" />
 
 module CCS {
 
+    export type ProcessId = number;
+
     export interface Process {
-        id : number;
+        id : ProcessId;
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T;
     }
 
@@ -22,12 +25,12 @@ module CCS {
     }
 
     export interface SuccessorGenerator {
-        getProcessById(processId : number) : Process;
-        getSuccessors(processId) : TransitionSet;
+        getProcessById(processId : ProcessId) : Process;
+        getSuccessors(processId : ProcessId) : TransitionSet;
     }
 
     export class NullProcess implements Process {
-        constructor(public id : number) {
+        constructor(public id : ProcessId) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchNullProcess(this);
@@ -38,7 +41,7 @@ module CCS {
     }
 
     export class NamedProcess implements Process {
-        constructor(public id : number, public name : string, public subProcess : Process) {
+        constructor(public id : ProcessId, public name : string, public subProcess : Process) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchNamedProcess(this);
@@ -49,7 +52,7 @@ module CCS {
     }
 
     export class SummationProcess implements Process {
-        constructor(public id : number, public subProcesses : Process[]) {
+        constructor(public id : ProcessId, public subProcesses : Process[]) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchSummationProcess(this);
@@ -60,7 +63,7 @@ module CCS {
     }
 
     export class CompositionProcess implements Process {
-        constructor(public id : number, public subProcesses : Process[]) {
+        constructor(public id : ProcessId, public subProcesses : Process[]) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchCompositionProcess(this);
@@ -71,7 +74,7 @@ module CCS {
     }
 
     export class ActionPrefixProcess implements Process {
-        constructor(public id : number, public action : Action, public nextProcess : Process) {
+        constructor(public id : ProcessId, public action : Action, public nextProcess : Process) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchActionPrefixProcess(this);
@@ -82,7 +85,7 @@ module CCS {
     }
 
     export class RestrictionProcess implements Process {
-        constructor(public id : number, public subProcess : Process, public restrictedLabels : LabelSet) {
+        constructor(public id : ProcessId, public subProcess : Process, public restrictedLabels : LabelSet) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchRestrictionProcess(this);
@@ -93,7 +96,7 @@ module CCS {
     }
 
     export class RelabellingProcess implements Process {
-        constructor(public id : number, public subProcess : Process, public relabellings : RelabellingSet) {
+        constructor(public id : ProcessId, public subProcess : Process, public relabellings : RelabellingSet) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchRelabellingProcess(this);
@@ -263,18 +266,12 @@ module CCS {
             this.definedSets[name] = this.allRestrictedSets.getOrAdd(labelSet);
         }
 
-        processById(id) : Process{
+        processById(id : ProcessId) : Process{
             return this.processes[id] || null;
         }
 
         processByName(name : string) {
-            var proc = this.namedProcesses[name] || null;
-            
-            if(proc == null){
-                proc = this.processes[name.slice(1)]
-            }
-
-            return proc;
+            return this.namedProcesses[name] || null;
         }
 
         getNamedProcesses() {
@@ -370,22 +367,7 @@ module CCS {
         private labels : string[] = [];
 
         constructor(labels : string[]) {
-            var temp = labels.slice(0),
-                cur, next;
-            if (temp.length > 0) {
-                temp.sort();
-                //Don't add the first of duplicates
-                cur = temp[0];
-                for (var i=1; i < temp.length; i++) {
-                    next = temp[i];
-                    if (cur !== next) {
-                        this.labels.push(cur);
-                    }
-                    cur = next;
-                }
-                //Add the last
-                this.labels.push(cur);
-            }
+            this.labels = ArrayUtil.sortAndRemoveDuplicates(labels);
             if (this.contains("tau")) {
                 throw new Error("tau not allowed in label set");
             }
@@ -581,14 +563,14 @@ module CCS {
             this.cache = cache || {};
         }
 
-        getSuccessors(processId) : TransitionSet {
+        getSuccessors(processId : ProcessId) : TransitionSet {
             //Move recursive calling into loop with stack here
             //if overflow becomes an issue.
             var process = this.graph.processById(processId);
             return this.cache[process.id] = process.dispatchOn(this);
         }
 
-        getProcessById(processId : number) : Process {
+        getProcessById(processId : ProcessId) : Process {
             return this.graph.processById(processId);
         }
 

@@ -61,6 +61,29 @@ messageHandlers.checkFormulaForVariable = data => {
     self.postMessage(data);
 };
 
+messageHandlers.findDistinguishingFormula = data => {
+    var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        leftProcess = graph.processByName(data.leftProcess),
+        rightProcess = graph.processByName(data.rightProcess),
+        bisimilarDg = new DependencyGraph.BisimulationDG(strongSuccGen, strongSuccGen, leftProcess.id, rightProcess.id),
+        marking = DependencyGraph.solveDgGlobalLevel(bisimilarDg),
+        formula, hmlNotation;
+    if (marking.getMarking(0) === marking.ZERO) {
+        data.result = {
+            isBisimilar: true,
+            formula: ""
+        };
+    } else {
+        formula = bisimilarDg.findDistinguishingFormula(marking),
+        hmlNotation = new Traverse.HMLNotationVisitor();
+        data.result = {
+            isBisimilar: false,
+            formula: hmlNotation.visit(formula)
+        }
+    }
+    self.postMessage(data);
+};
+
 messageHandlers.stop = data => {
     self.close();
 };

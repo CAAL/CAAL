@@ -213,8 +213,8 @@
                   <tr>
                     <th class="col-md-1 text-center">Status</th>
                     <th class="col-md-9">Property</th>
-                    <th class="col-md-1 text-center">Delete</th>
                     <th class="col-md-1 text-center">Verify</th>
+                    <th class="col-md-1 text-center"></th>
                   </tr>
                 </thead>
                   <tbody>
@@ -233,6 +233,7 @@
                 <li class="divider"></li>
                 <li class="dropdown-header" role="presentation">Model Checking</li>
                 <li id="hml"><a>HML</a></li>
+                <li id="distinguishing"><a>Distinguishing formula</a></li>
               </ul>
             </div>
             <div class="btn-group pull-right">
@@ -260,6 +261,16 @@
                     <div class="editor-border">
                       <div id="hml-editor"></div>
                     </div>
+                  </div>
+                </div>
+                <div id="distinguishing-formula">
+                  <div class="form-group">
+                    <label for="distinguishing-first-process" class="control-label">First Process</label>
+                    <select id="distinguishing-first-process" class="form-control"></select>
+                  </div>
+                  <div class="form-group">
+                    <label for="distinguishing-second-process" class="control-label">Second Process</label>
+                    <select id="distinguishing-second-process" class="form-control"></select>
                   </div>
                 </div>
               </div>
@@ -454,7 +465,7 @@
           </div>
           <div class="modal-body">
             <p>
-              <span class="small">Caal</span> is a model checking tool developed at Aalborg University. It has support for the process algebra CCS.
+              <span class="small">Caal</span> is a web-based tool for modelling and verification of concurrent systems developed at Aalborg University. Concurrent systems are modelled using the CCS language.
               <br/><br/>
               It can visualise CCS processes in the explorer and check for strong and weak bisimulation and HML properties in the verifier. 
               <br/><br/>
@@ -462,7 +473,8 @@
             </p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+            <span id="version"></span>
+            <button id="aboutok" type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
           </div>
         </div>
       </div>

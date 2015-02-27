@@ -1,4 +1,5 @@
 /// <reference path="ccs.ts" />
+/// <reference path="../util/array.ts" />
 
 module Traverse {
 
@@ -37,18 +38,8 @@ module Traverse {
                 //Remove null processes
                 subProcesses = subProcesses.filter( subProc => !(subProc instanceof ccs.NullProcess));
                 //Resort the processes
-                subProcesses.sort( (procA, procB) => procA.id - procB.id);
-                //Remove duplicates - already sorted on id.
-                if (subProcesses.length > 1) {
-                    var uniques = [subProcesses[0]];
-                    for (var i=1; i < subProcesses.length; i++) {
-                        var subProcess = subProcesses[i];
-                        if (subProcess.id !== uniques[uniques.length - 1].id) {
-                            uniques.push(subProcess);
-                        }
-                    }
-                    subProcesses = uniques;
-                }
+                subProcesses = ArrayUtil.sortAndRemoveDuplicates(subProcesses, p => p.id);
+
                 if (subProcesses.length === 0) {
                     return this.graph.getNullProcess();
                 }
@@ -124,11 +115,11 @@ module Traverse {
             this.cache = cache || {};
         }
 
-        getProcessById(processId : number) : ccs.Process { 
+        getProcessById(processId : ccs.ProcessId) : ccs.Process { 
             return this.strictSuccGenerator.getProcessById(processId);
         }
 
-        getSuccessors(processId : number) : ccs.TransitionSet {
+        getSuccessors(processId : ccs.ProcessId) : ccs.TransitionSet {
             if (this.cache[processId]) return this.cache[processId];
 
             var result = new ccs.TransitionSet(),
@@ -193,11 +184,11 @@ module Traverse {
         
         constructor(public succGenerator : ccs.SuccessorGenerator, public reducer : ProcessTreeReducer) { }
 
-        getProcessById(processId) : ccs.Process {
+        getProcessById(processId : ccs.ProcessId) : ccs.Process {
             return this.succGenerator.getProcessById(processId);
         }
 
-        getSuccessors(processId) : ccs.TransitionSet {
+        getSuccessors(processId : ccs.ProcessId) : ccs.TransitionSet {
             var transitionSet = this.succGenerator.getSuccessors(processId);
             return this.reduceSuccessors(transitionSet);
         }

@@ -18,6 +18,7 @@ module Activity {
         private clockInterval;
         private propsToVerify = [];
         private startTime;
+        private propertyForms = {};
 
         constructor(container: string, button: string) {
             super(container, button);
@@ -55,6 +56,26 @@ module Activity {
                 fontSize: 14,
                 fontFamily: "Inconsolata",
             });
+            this.propertyForms = 
+            {
+                hml :
+                    {
+                        container : $("#model-checking"),
+                        processList : $("#hml-process"),
+                    }, 
+                distinguishing :
+                    {
+                        container : $("#distinguishing-formula"),
+                        firstProcessList : $('#distinguishing-first-process'),
+                        secondProcessList : $('#distinguishing-second-process'),
+                    }, 
+                equivalence : 
+                    {
+                        container : $("#equivalence"),
+                        firstProcessList : $("#equivalence-first-process"),
+                        secondProcessList : $("#equivalence-second-process"),
+                    }
+            };
         }
 
         protected checkPreconditions(): boolean {
@@ -108,9 +129,10 @@ module Activity {
         }
 
         public onHide() : void {
-            $("#equivalence-first-process").empty(); // empty the process selector (HML)
-            $("#equivalence-second-process").empty(); // empty the process selector (HML)
+            $("#equivalence-first-process").empty(); // empty the process selector (Equivalence)
+            $("#equivalence-second-process").empty(); // empty the process selector (Equivalence)
             $("#hml-process").empty(); // empty the process selector (HML)
+            
             $("#equivalence").hide(); // hide the equivalence box(process selector), since it might have the wrong data 
             $("#model-checking").hide(); // hide the model-checking(HMl process selector) box, since it might have the wrong data
         }
@@ -135,31 +157,90 @@ module Activity {
         public displayProperties(): void {
             var properties = this.project.getProperties();
             this.propertyTableBody.empty();
+            
 
             for (var i = 0; i < properties.length; i++) {
-                var row = $("<tr></tr>");
-                var del = $("<i class=\"fa fa-trash\"></i>");
-                var verify = $("<i class=\"fa fa-play\"></i>");
+                var toolMenuOptions = {
+                    "Edit":{
+                        id:"property-edit",
+                        label: "Edit",
+                        click: (e) => this.editProperty(e)
+                    }, 
+                    "Delete":{
+                        id: "property-delete",
+                        label: "Delete",
+                        click: (e) => this.deleteProperty(e)
+                    }
+                };
 
-                var tdStatus = $("<td class=\"text-center\"></td>").append(properties[i].getStatusIcon());
-                var tdDescription = $("<td></td>").append(properties[i].getDescription());
-                var tdDelete = $("<td class=\"text-center\"></td>").append(del);
-                var tdVerify = $("<td class=\"text-center\"></td>").append(verify);
-                row.append(tdStatus, tdDescription, tdDelete, tdVerify);
+                var propertyRows = null;
+                if (properties[i] instanceof Property.Equivalence || properties[i] instanceof Property.HML) {
+                    /* Strong/Weak bisim and HML*/
+                    toolMenuOptions["Play"] = {
+                            id: "property-playgame",
+                            label: "Play",
+                            click: (e) => this.playGame(e)
+                    };
 
-                this.propertyTableBody.append(row);
+                    properties[i].onVerify = (e) => this.verify(e);
+                    properties[i].setToolMenuOptions(toolMenuOptions)
+                    propertyRows = properties[i].toTableRow();
+                } else {
+                    /* distinguishing formula */
+                    properties[i].onStatusClick = (e) => {
+                        if(e.data.property.isExpanded()){
+                            this.onCollapse(e);
+                            e.data.property.setExpanded(false);
+                        } else {
+                            this.onExpand(e);
+                            e.data.property.setExpanded(true);
+                        }
+                        this.displayProperties()
+                    };
 
-                tdStatus.tooltip({
-                    title: this.onStatusHover(properties[i]),
-                    selector: '.fa-check'
-                });
-                
-                tdStatus.on("click", {property: properties[i]}, (e) => this.onStatusClick(e));
-                row.on("click", {property: properties[i]}, (e) => this.editProperty(e));
-                tdDelete.on("click", {property: properties[i]}, (e) => this.deleteProperty(e));
-                tdVerify.on("click", {idx: i}, (e) => this.verify(e.data.idx));
+                    properties[i].onVerify = (e) => this.verify(e);
+                    properties[i].onPlayGame = (e) => this.verify(e);
+                    properties[i].setToolMenuOptions(toolMenuOptions);
+                    propertyRows = properties[i].toTableRow();
+                }
+
+                propertyRows.forEach((row) => {
+                    this.propertyTableBody.append(row);
+                });                
             }
         }
+
+        public onCollapse(e) {
+            if (e.data.property instanceof Property.DistinguishingFormula) {
+                var firstProperty = e.data.property.getFirstHML();
+                var firstHMLid = firstProperty.getId();
+                var firstHMLRow = this.propertyTableBody.find("#" + firstHMLid);
+                firstHMLRow.hide();
+                
+                var secondProperty = e.data.property.getSecondHML();
+                var secondHMLid = secondProperty.getId();
+                var secondHMLRow = this.propertyTableBody.find("#" + secondHMLid);
+                secondHMLRow.hide();
+            } else {
+                throw "Cannot collapse this property"
+            }
+        }
+
+        public onExpand(e) {
+            if (e.data.property instanceof Property.DistinguishingFormula) {
+                var firstHMLid = e.data.property.getFirstHML().getId();
+                var firstHMLRow = this.propertyTableBody.find("#" + firstHMLid);
+                firstHMLRow.show();
+                
+                var secondHMLid = e.data.property.getSecondHML().getId();
+                var secondHMLRow = this.propertyTableBody.find("#" + secondHMLid);
+                secondHMLRow.show();
+
+            } else {
+                throw "Cannot expand this property"
+            }
+        }
+
 
         public addProperty(e): void {
             var type = e.currentTarget.id;
@@ -175,6 +256,13 @@ module Activity {
                 case "hml":
                     property = new Property.HML({process: "", formula: ""});
                     break;
+                case "distinguishing":
+                    property = new Property.DistinguishingFormula(
+                        {
+                            firstHMLProperty: {process: "", formula: ""}, 
+                            secondHMLProperty: {process: "", formula: ""}
+                        });
+                    break;
             }
 
             this.project.addProperty(property);
@@ -182,11 +270,7 @@ module Activity {
             this.editProperty({data: {property: property}});
         }
 
-        private onStatusHover(property) {
-            return property.statistics.elapsedTime + " ms";
-        }
-
-        private onStatusClick(e) {
+        private playGame(e){
             var property = e.data.property;
             if (property instanceof Property.Equivalence) {
                 var equivalence = <Property.Equivalence> property,
@@ -202,55 +286,65 @@ module Activity {
             }
         }
 
+        private showPropertyForm(processFormName : string) {
+            var result = null;
+            for (var key in this.propertyForms){
+                if (key === processFormName){
+                    result = this.propertyForms[key];
+                    result.container.show();
+                } else {
+                    this.propertyForms[key].container.hide();
+                }
+            }
+
+            return result;
+        }
+
         public editProperty(e): void {
             var property = e.data.property;
 
             if (property instanceof Property.Equivalence) {
-                $("#equivalence").show();
-                $("#model-checking").hide();
-
-                var firstProcessList = $("#equivalence-first-process");
-                var secondProcessList = $("#equivalence-second-process");
+                var equivalenceForm = this.showPropertyForm("equivalence");
 
                 var processes = Main.getGraph().getNamedProcesses();
                 processes.reverse() // reverse the list since the most used processes are at the buttom.
-                this.displayProcessList(processes, firstProcessList, property.getFirstProcess());
-                this.displayProcessList(processes, secondProcessList, property.getSecondProcess());
+                this.displayProcessList(processes, equivalenceForm.firstProcessList, property.getFirstProcess());
+                this.displayProcessList(processes, equivalenceForm.secondProcessList, property.getSecondProcess());
 
-                if (property.getFirstProcess() !== firstProcessList.val() && property.getSecondProcess() !== secondProcessList.val()) {
-                    property.setFirstProcess(firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
-                    property.setSecondProcess(secondProcessList.val()); // Re-set the chosen process, since the process might have been deleted
-                    this.displayProperties(); // update the process table
+                if (property.getFirstProcess() !== equivalenceForm.firstProcessList.val()){
+                    property.setFirstProcess(equivalenceForm.firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
                 }
+                if (property.getSecondProcess() !== equivalenceForm.secondProcessList.val()){
+                    property.setSecondProcess(equivalenceForm.secondProcessList.val()); // Re-set the chosen process, since the process might have been deleted
+                }
+                this.displayProperties(); // update the process table
 
-                firstProcessList.off("change");
-                firstProcessList.on("change", () => {
+                equivalenceForm.firstProcessList.off("change");
+                equivalenceForm.firstProcessList.on("change", () => {
                     // On change, set the process.
-                    property.setFirstProcess(firstProcessList.val());
+                    property.setFirstProcess(equivalenceForm.firstProcessList.val());
                     this.displayProperties();
                 });
 
-                secondProcessList.off("change");
-                secondProcessList.on("change", () => {
+                equivalenceForm.secondProcessList.off("change");
+                equivalenceForm.secondProcessList.on("change", () => {
                     // On change, set the process.
-                    property.setSecondProcess(secondProcessList.val());
+                    property.setSecondProcess(equivalenceForm.secondProcessList.val());
                     this.displayProperties();
                 });
             } else if (property instanceof Property.HML) {
-                $("#equivalence").hide();
-                $("#model-checking").show();
+                var hmlForm = this.showPropertyForm("hml");
 
-                var processList = $("#hml-process");
-                this.displayProcessList(Main.getGraph().getNamedProcesses(), processList, property.getProcess());
+                this.displayProcessList(Main.getGraph().getNamedProcesses(), hmlForm.processList, property.getProcess());
 
-                if (property.getProcess() !== processList.val()) {
-                    property.setProcess(processList.val()); // Re-set the chosen process, since the process might have been deleted
+                if (property.getProcess() !== hmlForm.processList.val()) {
+                    property.setProcess(hmlForm.processList.val()); // Re-set the chosen process, since the process might have been deleted
                     this.displayProperties(); // update the process table
                 }
 
-                processList.off("change");
-                processList.on("change", () => {
-                    property.setProcess(processList.val());
+                hmlForm.processList.off("change");
+                hmlForm.processList.on("change", () => {
+                    property.setProcess(hmlForm.processList.val());
                     this.displayProperties();
                 });
 
@@ -259,6 +353,37 @@ module Activity {
                 this.editor.focus();
                 this.editor.on("change", () => {
                     property.setFormula(this.editor.getValue());
+                    this.displayProperties();
+                });
+            } else if (property instanceof Property.DistinguishingFormula){
+                var distinguishingForm = this.showPropertyForm("distinguishing");
+
+                var CCSProcessList = Main.getGraph().getNamedProcesses();
+                CCSProcessList.reverse();
+
+                this.displayProcessList(CCSProcessList, distinguishingForm.firstProcessList, property.getFirstProcess());
+                this.displayProcessList(CCSProcessList, distinguishingForm.secondProcessList, property.getSecondProcess());
+
+                if (property.getFirstProcess() !== distinguishingForm.firstProcessList.val()){
+                    property.setFirstProcess(distinguishingForm.firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
+                }
+                if (property.getSecondProcess() !== distinguishingForm.secondProcessList.val()){
+                    property.setSecondProcess(distinguishingForm.secondProcessList.val()); // Re-set the chosen process, since the process might have been deleted
+                }
+
+                this.displayProperties(); // update the process table
+
+                distinguishingForm.firstProcessList.off("change");
+                distinguishingForm.firstProcessList.on("change", () => {
+                    // On change, set the process.
+                    property.setFirstProcess(distinguishingForm.firstProcessList.val());
+                    this.displayProperties();
+                });
+
+                distinguishingForm.secondProcessList.off("change");
+                distinguishingForm.secondProcessList.on("change", () => {
+                    // On change, set the process.
+                    property.setSecondProcess(distinguishingForm.secondProcessList.val());
                     this.displayProperties();
                 });
             }
@@ -271,8 +396,6 @@ module Activity {
         }
 
         private verifactionEnded(result? : PropertyStatus) {
-            this.currentVerifyingProperty.statistics.elapsedTime = (this.startTime) ? new Date().getTime() - this.startTime : 0;
-            clearInterval(this.clockInterval);
             this.verifyStopButton.prop("disabled", true);
             this.currentVerifyingProperty = null;
             this.displayProperties();
@@ -281,36 +404,32 @@ module Activity {
 
         private doNextVerification() {
             if (!this.currentVerifyingProperty && this.propsToVerify.length > 0) {
-                var propIndex = this.propsToVerify.shift();
-                this.verify(propIndex);
+                var property = this.propsToVerify.shift();
+                this.verify({data: {property: property}});
             }
         }
 
-        public verify(index): void {
-            // TODO some checking before running verify
-            var property = this.project.getProperties()[index];
-            this.verifyStopButton.prop("disabled", false);
+        public verify(e): void {
+            var property = (e.data.property instanceof Property.Property) ? e.data.property : null;
 
-            var row = this.propertyTableBody.find("tr").eq(index);
-            var statusTd = row.find("td").eq(0);
-            this.startTime = new Date().getTime();
-            
-            var updateTimer = () => {
-                var elapsedTime = new Date().getTime() - this.startTime;
-                statusTd.text(elapsedTime + "ms");
+            /* Start to verify a property row*/
+            this.verifyStopButton.prop("disabled", false); // enable the stop button
+            this.currentVerifyingProperty = property; // the current verifying property
+            if (property instanceof Property.DistinguishingFormula){
+                property.verify(this.verifactionEnded.bind(this), this.quePropertiesToVerification.bind(this));
+            } else{
+                property.verify(this.verifactionEnded.bind(this));
             }
-
-            this.clockInterval = setInterval(updateTimer, 100);
-            this.currentVerifyingProperty = property;
-
-
-            property.verify(this.verifactionEnded.bind(this));
         }
 
         public verifyAll(): void {
             var numProperties = this.project.getProperties();
-            numProperties.forEach( (p, i) => this.propsToVerify.push(i));
+            this.quePropertiesToVerification(numProperties);
             this.doNextVerification();
+        }
+
+        public quePropertiesToVerification(properties : Property.Property[]) {
+            properties.forEach((property) => this.propsToVerify.push(property));
         }
     }
 }
