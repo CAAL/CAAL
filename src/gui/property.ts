@@ -567,18 +567,7 @@ module Property {
         }
 
         public toTableRow() : any {
-            var result = [];
-            var rowHeader = $("<tr id=\""+this.getId()+"\" class=\"distinguishing-header\"></tr>");
-
-            var toolmenu = this.getToolMenu();
-            var verifyIcon = this.icons.play;
-
-            this.tdStatus = $("<td id=\"property-status\" class=\"text-center\"></td>").append(this.getStatusIcon());
-            var tdDescription = $("<td id=\"property-description\"></td>").append(this.getDescription());
-            var tdVerify = $("<td id=\"property-verify\" class=\"text-center\"></td>").append(verifyIcon);
-            var tdToolMenu = $("<td id=\"property-toolmenu\" class=\"text-center\"></td>").append(toolmenu);
-            rowHeader.append(this.tdStatus, tdDescription, tdVerify, tdToolMenu);
-            result.push(rowHeader);
+            var result = super.toTableRow();
 
             if(this.isExpanded() /*&& this.firstHMLProperty.getFormula() !== "" && this.secondHMLProperty.getFormula() !== ""*/) {
                 this.firstHMLProperty.onVerify = this.onVerify;
@@ -591,24 +580,6 @@ module Property {
                 var secondRow = this.secondHMLProperty.toTableRow();
                 result.push(secondRow);
             }
-
-            this.tdStatus.tooltip({
-                title: this.onStatusHover(this),
-                selector: '.fa-check'
-            });
-
-            this.tdStatus.on("click",    {property: this},  (e) => this.onStatusClick(e));
-            tdDescription.on("click",   {property: this}, (e) =>  this.toolMenuOptions["Edit"].click(e));
-            tdVerify.on("click",    {property: this},  (e) => this.onVerify(e));
-
-            /*Tool menu options*/
-            for (var tooloption in this.toolMenuOptions){
-                var toolMenuOptions = toolmenu.find("#" + this.toolMenuOptions[tooloption].id);
-                if(this.toolMenuOptions[tooloption].click) {
-                    toolMenuOptions.on("click", {property:this}, this.toolMenuOptions[tooloption].click);
-                }
-            }
-
 
             return result;
         }
