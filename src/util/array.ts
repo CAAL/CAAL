@@ -35,4 +35,9 @@ module ArrayUtil {
     	}
     }
 
+    export function selectBest<T>(array : Array<T>, isBetter: (a : T, b :T) => boolean) {
+        return array.reduce((cur, check) => {
+            return isBetter(check, cur) ? check : cur;
+        });
+    }
 }

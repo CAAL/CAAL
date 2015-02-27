@@ -2,6 +2,7 @@
 /// <reference path="hml.ts" />
 /// <reference path="util.ts" />
 /// <reference path="collapse.ts" />
+/// <reference path="../util/array.ts" />
 
 module DependencyGraph {
 
@@ -209,7 +210,7 @@ module DependencyGraph {
             return result;
         }
         
-        getBisimulationCollapse(marking) : Traverse.Collapse {
+        getBisimulationCollapse(marking : LevelMarking) : Traverse.Collapse {
 
             var sets = Object.create(null);
 
@@ -282,23 +283,18 @@ module DependencyGraph {
                 trace;
             if (marking.getMarking(0) !== marking.ONE) throw "Error: Processes are bisimilar";
 
-            function selectMinimaxLevel(node) {
+            function selectMinimaxLevel(node : DgNodeId) {
                 var hyperEdges = that.getHyperEdges(node),
-                    bestHyperEdge, bestNode;
+                    bestHyperEdge : Hyperedge,
+                    bestNode : DgNodeId;
 
                 //Why JavaScript... why????
                 function wrapMax(a, b) {
                     return Math.max(a, b);
                 }
 
-                function selectBest(array, isBetter) {
-                    return array.reduce((cur, check) => {
-                        return isBetter(check, cur) ? check : cur;
-                    });
-                }
-
                 if (hyperEdges.length === 0) return null;
-                var bestHyperEdge = selectBest(hyperEdges, (tNodesLeft, tNodesRight) => {
+                var bestHyperEdge = ArrayUtil.selectBest(hyperEdges, (tNodesLeft, tNodesRight) => {
                     var maxLevelLeft = tNodesLeft.map(marking.getLevel).reduce(wrapMax, 1),
                         maxLevelRight = tNodesRight.map(marking.getLevel).reduce(wrapMax, 1);
                     if (maxLevelLeft < maxLevelRight) return true;
@@ -308,7 +304,7 @@ module DependencyGraph {
 
                 if (bestHyperEdge.length === 0) return null;
 
-                bestNode = selectBest(bestHyperEdge, (nodeLeft, nodeRight) => {
+                bestNode = ArrayUtil.selectBest(bestHyperEdge, (nodeLeft, nodeRight) => {
                     return marking.getLevel(nodeLeft) < marking.getLevel(nodeRight);
                 });
 
@@ -321,7 +317,7 @@ module DependencyGraph {
 
             var selectSuccessor = selectMinimaxLevel;
 
-            function formulaForBranch(node) : hml.Formula {
+            function formulaForBranch(node : DgNodeId) : hml.Formula {
                 var cData = that.constructData[node];
                 if (cData[0] === 0) {
                     var selectedNode = selectSuccessor(node);
@@ -351,11 +347,11 @@ module DependencyGraph {
     }
 
     export interface PartialDependencyGraph {
-        getHyperEdges(identifier) : Hyperedge[];
+        getHyperEdges(identifier : DgNodeId) : Hyperedge[];
     }
 
     export interface DependencyGraph extends PartialDependencyGraph {
-        getHyperEdges(identifier) : Hyperedge[];
+        getHyperEdges(identifier : DgNodeId) : Hyperedge[];
         getAllHyperEdges() : [number, Hyperedge][];
     }1
 
@@ -379,7 +375,7 @@ module DependencyGraph {
             this.nextIdx = 3;
         }
 
-        getHyperEdges(identifier) : Hyperedge[] {
+        getHyperEdges(identifier : DgNodeId) : Hyperedge[] {
             var data, nodeId, formula, result;
             if (this.nodes[identifier]) {
                 result = this.nodes[identifier];
@@ -423,7 +419,7 @@ module DependencyGraph {
             return this.nodes[this.FALSE_ID];
         }
 
-        private existsFormula(formula : any, succGen : ccs.SuccessorGenerator) {
+        private existsFormula(formula, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
                 transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
@@ -436,7 +432,7 @@ module DependencyGraph {
             return hyperedges;            
         }
 
-        private forallFormula(formula : any, succGen : ccs.SuccessorGenerator) {
+        private forallFormula(formula, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
                 transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
@@ -505,7 +501,7 @@ module DependencyGraph {
             this.nextIdx = 3;
         }
 
-        getHyperEdges(identifier) : Hyperedge[] {
+        getHyperEdges(identifier : DgNodeId) : Hyperedge[] {
             var data, nodeId, formula, result;
             if (this.nodes[identifier]) {
                 result = this.nodes[identifier];
@@ -673,7 +669,7 @@ module DependencyGraph {
         getLevel(any) : number;
     }
 
-    function liuSmolkaLocal2(m, graph : PartialDependencyGraph) : any {
+    function liuSmolkaLocal2(m : DgNodeId, graph : PartialDependencyGraph) : any {
         var S_ZERO = 1, S_ONE = 2, S_BOTTOM = 3;
 
         // A[k]
@@ -755,7 +751,7 @@ module DependencyGraph {
             }
         }
         return {
-            getMarking: function(dgNodeId) {
+            getMarking: function(dgNodeId : DgNodeId) {
                 return A.get(dgNodeId);
             },
             ZERO: S_ZERO,
@@ -827,7 +823,7 @@ module DependencyGraph {
         }
 
         return {
-            getMarking: function(dgNodeId) {
+            getMarking: function(dgNodeId : DgNodeId) {
                 return A.get(dgNodeId);
             },
             ZERO: S_ZERO,
@@ -909,10 +905,10 @@ module DependencyGraph {
             }
         }
         return {
-            getMarking: function(dgNodeId) {
+            getMarking: function(dgNodeId : DgNodeId) {
                 return Level.get(dgNodeId) === Infinity ? S_ZERO : S_ONE;
             },
-            getLevel: function(dgNodeId) {
+            getLevel: function(dgNodeId : DgNodeId) {
                 return Level.get(dgNodeId);
             },
             ZERO: S_ZERO,
