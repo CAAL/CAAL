@@ -1,4 +1,5 @@
 /// <reference path="unguarded_recursion.ts" />
+/// <reference path="../util/array.ts" />
 
 module CCS {
 
@@ -140,33 +141,6 @@ module CCS {
     interface Error {
         name : string;
         message : string;
-    }
-
-    //Check performance before using in Graph
-    export function removeSortedDuplicates(array, byKeyFn?) {
-        byKeyFn = byKeyFn || (x => x);
-        if (array.length === 0) return [];
-        var result = [array[0]];
-        for (var fI=1, rI=0, len = array.length; fI < len; fI++) {
-            var arrayElem = array[fI];
-            if (byKeyFn(arrayElem) !== byKeyFn(result[rI])) {
-                result.push(arrayElem);
-                ++rI;
-            }
-        }
-        return result;
-    }
-
-    export function sortAndRemoveDuplicatesByKey(array, byKeyFn?) {
-        byKeyFn = byKeyFn || (x => x);
-        var comparer = ((a, b) => {
-            var keyA = byKeyFn(a),
-                keyB = byKeyFn(b);
-            return keyA < keyB ? -1 : (keyB < keyA ? 1 : 0);
-        });
-        var sorted = array.slice();
-        sorted.sort(comparer);
-        return removeSortedDuplicates(sorted, byKeyFn);
     }
 
     export class Graph {
@@ -393,22 +367,7 @@ module CCS {
         private labels : string[] = [];
 
         constructor(labels : string[]) {
-            var temp = labels.slice(0),
-                cur, next;
-            if (temp.length > 0) {
-                temp.sort();
-                //Don't add the first of duplicates
-                cur = temp[0];
-                for (var i=1; i < temp.length; i++) {
-                    next = temp[i];
-                    if (cur !== next) {
-                        this.labels.push(cur);
-                    }
-                    cur = next;
-                }
-                //Add the last
-                this.labels.push(cur);
-            }
+            this.labels = ArrayUtil.sortAndRemoveDuplicates(labels);
             if (this.contains("tau")) {
                 throw new Error("tau not allowed in label set");
             }

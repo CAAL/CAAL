@@ -1,9 +1,11 @@
 /// <reference path="ccs.ts" />
+/// <reference path="../util/array.ts" />
 
 module HML {
     
     import ccs = CCS;
     import DGMod = DependencyGraph;
+    import AU = ArrayUtil;
 
     export interface Formula {
         id : number;
@@ -164,7 +166,7 @@ module HML {
         }
 
         newDisj(formulas : Formula[]) {
-            var newFormulas = ccs.sortAndRemoveDuplicatesByKey(formulas, f => f.id),
+            var newFormulas = AU.sortAndRemoveDuplicates(formulas, f => f.id),
                 key = "or," + newFormulas.map(f => f.id).join(","),
                 existing = this.structural[key];
             if (newFormulas.length === 1) return newFormulas[0];
@@ -175,7 +177,7 @@ module HML {
         }
 
         newConj(formulas : Formula[]) {
-            var newFormulas = ccs.sortAndRemoveDuplicatesByKey(formulas, f => f.id),
+            var newFormulas = AU.sortAndRemoveDuplicates(formulas, f => f.id),
                 key = "and," + newFormulas.map(f => f.id).join(","),
                 existing = this.structural[key];
             if (newFormulas.length === 1) return newFormulas[0];

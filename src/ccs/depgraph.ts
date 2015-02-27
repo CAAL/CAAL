@@ -9,6 +9,7 @@ module DependencyGraph {
     import hml = HML;
 
     export type Hyperedge = Array<number>;
+    export type DgNodeId = number;
 
     function copyHyperEdges(hyperEdges : Hyperedge[]) : Hyperedge[] {
         var result = [];
@@ -38,7 +39,7 @@ module DependencyGraph {
             this.nextIdx = 1;
         }
 
-        getHyperEdges(identifier) : Hyperedge[] {
+        getHyperEdges(identifier : DgNodeId) : Hyperedge[] {
             var type, result;
             //Have we already built this? Then return copy of the edges.
             if (this.nodes[identifier]) {
@@ -49,7 +50,7 @@ module DependencyGraph {
             return copyHyperEdges(result);
         }
 
-        private constructNode(identifier) {
+        private constructNode(identifier : DgNodeId) {
             var result,
                 data = this.constructData[identifier],
                 type = data[0];
@@ -63,7 +64,7 @@ module DependencyGraph {
             return result;
         }
 
-        getAllHyperEdges() : [number, Hyperedge][] {
+        getAllHyperEdges() : [DgNodeId, Hyperedge][] {
             if (!this.isFullyConstructed) {
                 this.isFullyConstructed = true;
                 //All nodes have ids in order of creation, thus there are no gaps.
@@ -142,7 +143,7 @@ module DependencyGraph {
             return [result];
         }
 
-        private getProcessPairStates(leftProcessId, rightProcessId) : Hyperedge[] {
+        private getProcessPairStates(leftProcessId : ccs.ProcessId, rightProcessId : ccs.ProcessId) : Hyperedge[] {
             var hyperedges : Hyperedge[] = [];
             var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
             var rightTransitions = this.attackSuccGen.getSuccessors(rightProcessId);
@@ -159,11 +160,11 @@ module DependencyGraph {
             return hyperedges;
         }
 
-        public getAttackerOptions(currentDgNode : any) : Hyperedge[] {
-            if (this.constructData[currentDgNode][0] !== 0)
+        public getAttackerOptions(dgNodeId : DgNodeId) : Hyperedge[] {
+            if (this.constructData[dgNodeId][0] !== 0)
                 throw "Bad node for attacker options";
             
-            var hyperedges = this.getHyperEdges(currentDgNode);
+            var hyperedges = this.getHyperEdges(dgNodeId);
             
             var result = [];
             
@@ -185,15 +186,15 @@ module DependencyGraph {
             return result;
         }
         
-        public getDefenderOptions(currentDgNode : any) {
-            if (this.constructData[currentDgNode][0] === 0)
+        public getDefenderOptions(dgNodeId : DgNodeId) {
+            if (this.constructData[dgNodeId][0] === 0)
                 throw "Bad node for defender options";
             
-            var hyperedge = this.getHyperEdges(currentDgNode)[0];
+            var hyperedge = this.getHyperEdges(dgNodeId)[0];
             
             var result = [];
             
-            var tcpi = this.constructData[currentDgNode][0] === 1 ? 2 : 1;
+            var tcpi = this.constructData[dgNodeId][0] === 1 ? 2 : 1;
             
             hyperedge.forEach(targetNode => {
                 var data = this.constructData[targetNode];
