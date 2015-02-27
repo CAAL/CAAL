@@ -50,7 +50,7 @@ echo "Building $MAIN_DEST"
 
 # write version string to main.js
 TAG=`git describe --tags --long`
-echo -e "\nvar Version = \"$TAG\";" >> lib/main.js
+echo $'\nvar Version = "'$TAG'";' >> lib/main.js
 
 # If tsc gives errors we don't need bash to tell us something was wrong.
 true
