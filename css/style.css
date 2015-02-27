@@ -24,6 +24,10 @@ textarea {
     resize: none;
 }
 
+.monospace {
+    font: normal 14px "Inconsolata";
+}
+
 
 /*
  * Custom Bootstrap styles
@@ -378,7 +382,7 @@ p.small {
 }
 
 #game-status {
-    height: 205px;
+    height: 225px;
 }
 
 #game-log {
@@ -390,7 +394,11 @@ p.small {
 }
 
 #game-log p {
-    margin-left: 20px;
+    margin: 0 0 10px 20px;
+}
+
+#game-log p:last-child {
+    margin-bottom: 0;
 }
 
 #game-log p.intro, #game-log p.outro {
@@ -402,10 +410,10 @@ p.small {
 }
 
 #game-log h4 {
-    margin-top: 20px;
+    margin: 20px 0 10px 0;
 }
 
-span.transition {
+#game-log .tooltip {
     font: normal 14px "Inconsolata";
 }
 
@@ -445,6 +453,7 @@ span.transition {
     border-radius: 5px;
     padding: 0px 2px 0px 2px;
     cursor: pointer;
+    font: normal 14px "Inconsolata";
 }
 
 .tooltip {
@@ -465,18 +474,4 @@ span.transition {
 
 .tooltip-arrow {
     border-top-color: #bbb !important;
-}
-
-#tip {
-    display: none;
-    position: absolute;
-    border: 1px solid #bbb;
-    background-color: #eee;
-    border-radius: 5px;
-    padding: 3px;
-    z-index: 1000;
-    margin-left: 6px;
-    margin-top: 6px;
-    /* set this to create word wrap */
-    max-width: 500px;
 }
