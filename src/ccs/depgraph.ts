@@ -16,6 +16,95 @@ module DependencyGraph {
         return result;
     }
 
+    export class TraceDG implements DependencyGraph {
+
+        private nextIdx;
+        private constructData = [];
+        private nodes = [];
+        private leftPairs = {};
+
+        constructor(leftNode, rightNode) {
+            this.constructData[0] = [0, leftNode, rightNode];
+            this.nextIdx = 1;
+        }
+
+        public getHyperEdges(identifier) : any[][] {
+            var type, result;
+            //Have we already built this? Then return copy of the edges.
+            if (this.nodes[identifier]) {
+                result = this.nodes[identifier];
+            } else {
+                result = this.constructNode(identifier);
+            }
+            return copyHyperEdges(result);
+        }
+
+        public getAllHyperEdges() : any[] {
+            
+        }
+
+        private constructNode(identifier) : any {
+            var data = this.constructData[identifier],
+
+            return this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
+        }
+
+        private getProcessPairStates(leftProcessId, rightProcessIds) {
+            var hyperedges = [];
+            var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
+            var rightTransitions [];
+
+            rightProcessIds.forEach(rightProcessId => {
+                rightTransitions.push(this.attackSuccGen.getSuccessors(rightProcessId));
+            });
+            
+            leftTransitions.forEach(leftTransition => {
+                var rightTargets = [];
+                
+                rightTransitions.forEach(rightTransition => {
+                    if (rightTransition.action.equals(leftTransition.action)) {
+                        rightTargets.push(rightTransition.targetProcess.id);
+
+                    }
+
+                });
+
+                rightTargets.sort();
+
+                
+                var rightSets = this.leftPairs[leftTransition.targetProcess.id][rightTargets.length];
+
+                if (rightSets) {
+                    rightSets.forEach(rightSet => {
+                        existing = (rightTargets.every((v,i)=> v === rightSet.set[i])) ? rightSet.index : null;
+                    });
+                    
+                }
+
+                if (existing) {
+                    hyperedges.push(existing);                    
+                } else {
+                    var newNodeIdx = this.nextIdx++;
+
+                    var rightSet = {set: rightTargets, index = newNodeIdx};
+                    if (!rightSets) this.leftPairs[leftTransition.targetProcess.id][rightTargets.length].push(rightSet);
+
+                    this.constructData[newNodeIdx] = [0, leftTransition.action, leftTransition.targetProcess.id, rightTargets];
+                
+                    hyperedges.push(newNodeIdx);
+                    
+                }
+
+                
+            });
+            
+            return [hyperedges];
+        }
+        
+    }
+
+
+
     export class BisimulationDG implements DependencyGraph {
 
         /** The dependency graph is constructed with disjunction
@@ -49,8 +138,8 @@ module DependencyGraph {
 
         private constructNode(identifier) {
             var result,
-                data = this.constructData[identifier],
-                type = data[0];
+            data = this.constructData[identifier],
+            type = data[0];
             if (type === 0) { //It it a pair?
                 result = this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
             } else if (type === 1) { // The left action and destination is fixed?
@@ -79,9 +168,9 @@ module DependencyGraph {
 
         private getNodeForLeftTransition(data) {
             var action = data[1],
-                toLeftId = data[2],
-                fromRightId = data[3],
-                result = [];
+            toLeftId = data[2],
+            fromRightId = data[3],
+            result = [];
             // for (s, fromRightId), s ----action---> toLeftId.
             // fromRightId must be able to match.
             var rightTransitions = this.defendSuccGen.getSuccessors(fromRightId);
@@ -112,9 +201,9 @@ module DependencyGraph {
 
         private getNodeForRightTransition(data) {
             var action = data[1],
-                toRightId = data[2],
-                fromLeftId = data[3],
-                result = [];
+            toRightId = data[2],
+            fromLeftId = data[3],
+            result = [];
             var leftTransitions = this.defendSuccGen.getSuccessors(fromLeftId);
             leftTransitions.forEach(leftTransition => {
                 var existing, toLeftId;
@@ -230,7 +319,7 @@ module DependencyGraph {
 
             function union(pId, qId) {
                 var pRoot = findRoot(pId),
-                    qRoot = findRoot(qId);
+                qRoot = findRoot(qId);
                 if (pRoot === qRoot) return;
                 if (pRoot.rank < qRoot.rank) pRoot.parent = qRoot;
                 else if (pRoot.rank > qRoot.rank) qRoot.parent = pRoot;
@@ -349,7 +438,7 @@ module DependencyGraph {
 
         private existsFormula(formula : any, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = succGen.getSuccessors(this.getForNodeId);
+            transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -362,7 +451,7 @@ module DependencyGraph {
 
         private forallFormula(formula : any, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = succGen.getSuccessors(this.getForNodeId);
+            transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -477,7 +566,7 @@ module DependencyGraph {
 
         private existsFormula(formula : any, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = succGen.getSuccessors(this.getForNodeId);
+            transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -490,7 +579,7 @@ module DependencyGraph {
 
         private forallFormula(formula : any, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = succGen.getSuccessors(this.getForNodeId);
+            transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -545,13 +634,13 @@ module DependencyGraph {
 
     export function solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, processId) : boolean {
         var dg = new MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, processId, formulaSet, formula),
-            marking = solveMuCalculusInternal(dg);
+        marking = solveMuCalculusInternal(dg);
         return marking.getMarking(0) === marking.ONE;
     }
 
     export function isBisimilar(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
         var dg = new BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
-            marking = liuSmolkaLocal2(0, dg);
+        marking = liuSmolkaLocal2(0, dg);
 
         //Bisimulation is maximal fixed point, the marking is reversed.
         // if (marking.getMarking(0) === marking.ONE && graph) {
@@ -568,18 +657,18 @@ module DependencyGraph {
     }
 
     export function getBisimulationCollapse(
-                attackSuccGen : ccs.SuccessorGenerator,
-                defendSuccGen : ccs.SuccessorGenerator,
-                leftProcessId,
-                rightProcessId) : Traverse.Collapse {
-        var dg = new BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
+        attackSuccGen : ccs.SuccessorGenerator,
+        defendSuccGen : ccs.SuccessorGenerator,
+        leftProcessId,
+        rightProcessId) : Traverse.Collapse {
+            var dg = new BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
             marking = liuSmolkaGlobal(dg);
-        return dg.getBisimulationCollapse(marking);
-    }
+            return dg.getBisimulationCollapse(marking);
+        }
 
     function prettyPrintTrace(graph, trace) {
         var notation = new Traverse.CCSNotationVisitor(),
-            stringParts = [];
+        stringParts = [];
         for (var i=0; i < trace.length; i++) {
             if (i % 2 == 1) stringParts.push("---- " + trace[i].toString() + " ---->");
             else stringParts.push(notation.visit(graph.processById(trace[i])));
