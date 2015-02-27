@@ -5,6 +5,7 @@ interface ParticleSystem {
     /*Constructor*/
     (repulsion : number, stiffness : number, friction : number) : ParticleSystem;
     (repulsion : number, stiffness : number, friction : number, gravity : boolean, fps : number, dt : number, precision : number) : ParticleSystem;
+    (particleSettings : Object) : ParticleSystem;
 
     /*Functions*/
     screenSize(width : number, height : number) : void;

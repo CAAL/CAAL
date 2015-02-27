@@ -6,7 +6,12 @@ module HML {
     import DGMod = DependencyGraph;
 
     export interface Formula {
+        id : number;
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T;
+    }
+
+    export interface FormulaVisitor<T> {
+        visit(formula : Formula) : T;
     }
 
     export interface FormulaDispatchHandler<T> {
@@ -24,7 +29,7 @@ module HML {
     }
 
     export class DisjFormula implements Formula {
-        constructor(public subFormulas : Formula[]) {
+        constructor(public id : number, public subFormulas : Formula[]) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchDisjFormula(this);
@@ -35,7 +40,7 @@ module HML {
     }
 
     export class ConjFormula implements Formula {
-        constructor(public subFormulas : Formula[]) {
+        constructor(public id : number, public subFormulas : Formula[]) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchConjFormula(this);
@@ -46,7 +51,7 @@ module HML {
     }
 
     export class TrueFormula implements Formula {
-        constructor() {
+        constructor(public id : number) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchTrueFormula(this);
@@ -57,7 +62,7 @@ module HML {
     }
 
     export class FalseFormula implements Formula {
-        constructor() {
+        constructor(public id : number) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchFalseFormula(this);
@@ -68,7 +73,7 @@ module HML {
     }
 
     export class StrongExistsFormula implements Formula {
-        constructor(public actionMatcher : ActionMatcher, public subFormula : Formula) {
+        constructor(public id : number, public actionMatcher : ActionMatcher, public subFormula : Formula) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchStrongExistsFormula(this);
@@ -79,7 +84,7 @@ module HML {
     }
 
     export class StrongForAllFormula implements Formula {
-        constructor(public actionMatcher : ActionMatcher, public subFormula : Formula) {
+        constructor(public id : number, public actionMatcher : ActionMatcher, public subFormula : Formula) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchStrongForAllFormula(this);
@@ -90,7 +95,7 @@ module HML {
     }
 
     export class WeakExistsFormula implements Formula {
-        constructor(public actionMatcher : ActionMatcher, public subFormula : Formula) {
+        constructor(public id : number, public actionMatcher : ActionMatcher, public subFormula : Formula) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchWeakExistsFormula(this);
@@ -101,7 +106,7 @@ module HML {
     }
 
     export class WeakForAllFormula implements Formula {
-        constructor(public actionMatcher : ActionMatcher, public subFormula : Formula) {
+        constructor(public id : number, public actionMatcher : ActionMatcher, public subFormula : Formula) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchWeakForAllFormula(this);
@@ -112,7 +117,7 @@ module HML {
     }
 
     export class MinFixedPointFormula implements Formula {
-        constructor(public variable : string, public subFormula : Formula) {
+        constructor(public id : number, public variable : string, public subFormula : Formula) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchMinFixedPointFormula(this);
@@ -123,7 +128,7 @@ module HML {
     }
 
     export class MaxFixedPointFormula implements Formula {
-        constructor(public variable : string, public subFormula : Formula) {
+        constructor(public id : number, public variable : string, public subFormula : Formula) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchMaxFixedPointFormula(this);
@@ -134,7 +139,7 @@ module HML {
     }
 
     export class VariableFormula implements Formula {
-        constructor(public variable : string) {
+        constructor(public id : number, public variable : string) {
         }
         dispatchOn<T>(dispatcher : FormulaDispatchHandler<T>) : T {
             return dispatcher.dispatchVariableFormula(this);
@@ -149,43 +154,72 @@ module HML {
         private namedFormulas = Object.create(null);
         private undefinedVariables = [];
         private errors = [];
+        private falseFormula = new FalseFormula(0);
+        private trueFormula = new TrueFormula(1);
+        private nextId = 2;
+        private structural = {};
+        private actionMatchers = new ccs.GrowingIndexedArraySet<ActionMatcher>();
+
         constructor() {
         }
 
         newDisj(formulas : Formula[]) {
-            return new DisjFormula(formulas);
+            var newFormulas = formulas.slice().sort((fA, fB) => fA.id - fB.id),
+                key = "or," + newFormulas.map(f => f.id).join(","),
+                existing = this.structural[key];
+            if (!existing) {
+                existing = this.structural[key] = new DisjFormula(this.nextId++, newFormulas);
+            }
+            return existing;
         }
 
         newConj(formulas : Formula[]) {
-            return new ConjFormula(formulas);
+            var newFormulas = formulas.slice().sort((fA, fB) => fA.id - fB.id),
+                key = "and," + newFormulas.map(f => f.id).join(","),
+                existing = this.structural[key];
+            if (!existing) {
+                existing = this.structural[key] = new ConjFormula(this.nextId++, newFormulas);
+            }
+            return existing;
         }
 
         newTrue() {
-            return new TrueFormula();
+            return this.trueFormula;
         }
 
         newFalse() {
-            return new FalseFormula();
+            return this.falseFormula;
+        }
+
+        private newExistOrForAll(structuralPrefix, constructor, actionMatcher, subFormula) {
+            var uniqActionMatcher = this.actionMatchers.getOrAdd(actionMatcher),
+                actionMatcherId = this.actionMatchers.indexOf(uniqActionMatcher),
+                key = structuralPrefix + "," + actionMatcherId + "," + subFormula.id,
+                existing = this.structural[key];
+            if (!existing) {
+                existing = this.structural[key] = new constructor(this.nextId++, uniqActionMatcher, subFormula);
+            }
+            return existing;            
         }
 
         newStrongExists(actionMatcher : ActionMatcher, subFormula : Formula) {
-            return new StrongExistsFormula(actionMatcher, subFormula);
+            return this.newExistOrForAll("SE", StrongExistsFormula, actionMatcher, subFormula);
         }
 
         newStrongForAll(actionMatcher : ActionMatcher, subFormula : Formula) {
-            return new StrongForAllFormula(actionMatcher, subFormula);
+            return this.newExistOrForAll("SFA", StrongForAllFormula, actionMatcher, subFormula);
         }
 
         newWeakExists(actionMatcher : ActionMatcher, subFormula : Formula) {
-            return new WeakExistsFormula(actionMatcher, subFormula);
+            return this.newExistOrForAll("WE", WeakExistsFormula, actionMatcher, subFormula);
         }
 
         newWeakForAll(actionMatcher : ActionMatcher, subFormula : Formula) {
-            return new WeakForAllFormula(actionMatcher, subFormula);
+            return this.newExistOrForAll("WFA", WeakForAllFormula, actionMatcher, subFormula);
         }
 
         newMinFixedPoint(variable : string, subFormula : Formula) {
-            var result = new MinFixedPointFormula(variable, subFormula);
+            var result = new MinFixedPointFormula(this.nextId++, variable, subFormula);
             if (this.namedFormulas[variable]) {
                 this.errors.push({name: "DuplicateDefinition", message: "The variable '" + variable + "' is defined multiple times."});
             } else {
@@ -200,7 +234,7 @@ module HML {
         }
 
         newMaxFixedPoint(variable : string, subFormula : Formula) {
-            var result = new MaxFixedPointFormula(variable, subFormula);
+            var result = new MaxFixedPointFormula(this.nextId++, variable, subFormula);
             if (this.namedFormulas[variable]) {
                 this.errors.push({name: "DuplicateDefinition", message: "The variable '" + variable + "' is defined multiple times."});
             } else {
@@ -223,7 +257,11 @@ module HML {
             if (!this.namedFormulas[variable] && this.undefinedVariables.indexOf(variable) === -1) {
                 this.undefinedVariables.push(variable);
             }
-            return new VariableFormula(variable);
+            return new VariableFormula(this.nextId++, variable);
+        }
+
+        addFormula(formula : Formula) {
+            this.allFormulas.push(formula);
         }
 
         getErrors() {
@@ -346,29 +384,48 @@ module HML {
 
     export interface ActionMatcher {
         matches(action : ccs.Action) : boolean;
+        actionMatchingString() : string //Returns string representing matching actions
     }
 
     export class SingleActionMatcher {
-        constructor(private sAction : ccs.Action) {
+        constructor(private action : ccs.Action) {
         }
 
         matches(action : ccs.Action) : boolean {
-            return this.sAction.equals(action);
+            return this.action.equals(action);
         }
 
         add(action : ccs.Action) : ActionMatcher {
-            return new ArrayActionMatcher([this.sAction, action]);
+            return new ArrayActionMatcher([this.action, action]);
+        }
+        equals(other) {
+            if (!(other instanceof SingleActionMatcher)) return false;
+            return this.action.equals(other.action);
+        }
+        actionMatchingString() : string {
+            return this.action.toString();
         }
     }
 
     export class ArrayActionMatcher {
         private actions = [];
         constructor(actions : ccs.Action[]) {
-            actions.forEach(action => {
+            this.actions = actions.slice();
+            this.actions.forEach(action => {
                 if (!this.matches(action)) {
                     this.actions.push(action);
                 }
             });
+            this.sortActions();
+        }
+
+        private sortActions() {
+            function compareActions(actLeft, actRight) {
+                if (actLeft.complement !== actRight.complement) return !actLeft.complement ? -1 : 1;
+                if (actLeft.label !== actRight.label) return actLeft.label < actRight.label ? -1 : 1;
+                return 0;
+            }
+            this.actions.sort(compareActions)
         }
 
         matches(action : ccs.Action) : boolean {
@@ -385,14 +442,32 @@ module HML {
             matcher.actions = this.actions.slice(0);
             if (!matcher.matches(action)) {
                 matcher.actions.push(action);
+                matcher.sortActions();
             }
             return matcher;
+        }
+        equals(other) {
+            if (!(other instanceof ArrayActionMatcher)) return false;
+            if (this.actions.length !== other.actions.length) return false;
+            for (var i=0, len = this.actions.length; i < len; i++) {
+                if (!this.actions[i].equals(other.actions[i])) return false;
+            }
+            return true;
+        }
+        actionMatchingString() : string {
+            return this.actions.map(action => action.toString()).join(",");
         }
     }
 
     export class AllActionMatcher {
         matches(action : ccs.Action) : boolean {
             return true;
+        }
+        equals(other) {
+            return other instanceof AllActionMatcher;
+        }
+        actionMatchingString() : string {
+            return "-";
         }
     }
 

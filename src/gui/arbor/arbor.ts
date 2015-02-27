@@ -13,10 +13,10 @@ module GUI {
         private handler : Handler;
         private highlightedEdges : Edge[] = [];
 
-        constructor(renderer, particleSystemOptions = {repulsion: 400, stiffness: 800, friction: 0.5}) {
+        constructor(renderer, particleSystemOptions = {repulsion: 400, stiffness: 800, friction: 0.5, integrator:'verlet'}) {
             //this.sys = arbor.ParticleSystem(500, 3000, 0.95);
             /* Repulsion, stiffness, friction, gravity, fps, dt, precision. */
-            this.sys = arbor.ParticleSystem(particleSystemOptions.repulsion, particleSystemOptions.stiffness, particleSystemOptions.friction);
+            this.sys = arbor.ParticleSystem(particleSystemOptions);
             this.sys.parameters({gravity:true});
             this.renderer = renderer;
             this.sys.renderer = renderer;
@@ -137,23 +137,19 @@ module GUI {
         }
 
         public setHoverOnListener(f : (identifier : string) => void) : void {
-            this.handler.hoverOn = (nodeId) => {
-                f(nodeId);
-            }
+            this.handler.onHover = f
         }
 
         public clearHoverOutListener() : void {
-            this.handler.hoverOn = null;
+            this.handler.onHover = null;
         }
 
         public setHoverOutListener(f : (identifier : string) => void) : void {
-            this.handler.hoverOut = (nodeId) => {
-                f(nodeId);
-            }
+            this.handler.onHoverOut = f
         }
 
         public clearHoverOnListener() : void {
-            this.handler.hoverOut = null;
+            this.handler.onHoverOut = null;
         }
 
         public clearAll() : void {
@@ -166,6 +162,14 @@ module GUI {
 
         public unfreeze() : void {
             this.sys.start(true);
+        }
+
+        public bindCanvasEvents() : void { 
+            this.handler.bindCanvasEvents();
+        }
+
+        public unbindCanvasEvents() : void {
+            this.handler.unbindCanvasEvents();
         }
     }
 }

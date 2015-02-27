@@ -702,7 +702,7 @@ module CCS {
         }
     }
 
-    class GrowingIndexedArraySet<T> {
+    export class GrowingIndexedArraySet<T> {
             
         private elements = [];
 
@@ -711,6 +711,7 @@ module CCS {
         getOrAdd(element : T) : T {
             var result = element,
                 index = this.indexOf(element);
+            if (element === undefined || element === null) throw "Bad argument to getOrAdd";
             if (index === -1) {
                 this.elements.push(element);
             } else {
