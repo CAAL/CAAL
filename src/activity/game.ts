@@ -475,13 +475,13 @@ module Activity {
         protected marking : dg.LevelMarking;
         
         private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
-        
         protected gameLog : GameLog = new GameLog();
         
         protected attacker : Player;
         protected defender : Player;
-        private round : number = 1;
+        protected currentWinner : Player;
         
+        private round : number = 1;
         protected lastMove : Move;
         protected lastAction : string;
         protected currentNodeId : any = 0; // the DG node id
@@ -605,6 +605,7 @@ module Activity {
         private preparePlayer(player : Player) {
             var choices : any = this.getCurrentChoices(player.getPlayType());
             
+            // determine if game is over
             if (choices.length === 0) {
                 // the player to be prepared cannot make a move
                 // the player to prepare has lost, announce it
@@ -613,6 +614,14 @@ module Activity {
                 // stop game
                 this.stopGame();
             } else {
+                // save the old winner, and then update who wins
+                var oldWinner = this.currentWinner
+                this.currentWinner = this.getCurrentWinner();
+                
+                // if winner changed, let the user know
+                if (oldWinner !== this.currentWinner)
+                    this.gameLog.printWinnerChanged(this.currentWinner);
+                
                 // tell the player to prepare for his turn
                 player.prepareTurn(choices, this);
             }
@@ -667,7 +676,6 @@ module Activity {
         private bisimulationDG : dg.BisimulationDG;
         private bisimilar : boolean;
         private gameType : string;
-        private currentWinner : Player;
         
         constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
             // stupid compiler
@@ -684,17 +692,6 @@ module Activity {
         public startGame() : void {
             this.gameLog.printIntro(this.gameType, this.getCurrentConfiguration(), this.getUniversalWinner(), this.attacker);
             super.startGame();
-        }
-        
-        public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) : void {
-            
-            var winner = this.marking.getMarking(nextNode) === this.marking.ONE ? this.attacker : this.defender;
-            
-            if (this.currentWinner !== winner)
-                this.gameLog.printWinnerChanged(winner);
-            this.currentWinner = winner;
-            
-            super.play(player, destinationProcess, nextNode, action, move);
         }
         
         public isBisimilar() : boolean {
@@ -716,7 +713,7 @@ module Activity {
         }
         
         public getCurrentWinner() : Player {
-            return this.currentWinner;
+            return this.marking.getMarking(this.currentNodeId) === this.marking.ONE ? this.attacker : this.defender;
         }
         
         protected createMarking() : dg.LevelMarking {
@@ -1148,7 +1145,6 @@ module Activity {
         }
         
         public printWinnerChanged(winner : Player) : void {
-            console.log("changed");
             this.println("You made a bad move. " + winner.playTypeStr() + " now has a winning strategy.", "<p>");
         }
 
