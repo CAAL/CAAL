@@ -1,5 +1,6 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="activity.ts" />
+/// <reference path="fullscreen.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
@@ -42,12 +43,11 @@ module Activity {
         private htmlNotationVisitor : TooltipHtmlCCSNotationVisitor;
         private ccsNotationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
-        private fullScreenContainer;
         private statusTableContainer;
         private freezeBtn;
         private saveBtn;
-        private fullscreenBtn;
         private sourceDefinition;
+        private fullscreen : Fullscreen;
 
         constructor(container: string, button: string) {
             super(container, button);
@@ -61,16 +61,15 @@ module Activity {
             this.renderer = new Renderer(this.canvas);
             this.uiGraph = new ArborGraph(this.renderer);
 
-            this.fullScreenContainer = this.$container.find("#fullscreen-container")[0];
             this.statusTableContainer = this.$container.find("#status-table-container")[0];
             this.freezeBtn = this.$container.find("#explorer-freeze-btn")[0];
             this.saveBtn = this.$container.find("#explorer-save-btn")[0];
-            this.fullscreenBtn = this.$container.find("#explorer-fullscreen-btn")[0];
             this.sourceDefinition = this.$container.find("#explorer-source-definition")[0];
-
+            
+            this.fullscreen = new Fullscreen(this.$container.find("#fullscreen-container")[0], this.$container.find("#explorer-fullscreen-btn"), () => this.resize());
+            
             $(this.freezeBtn).on("click", () => this.toggleFreeze());
             $(this.saveBtn).on("click", () => this.saveCanvas());
-            $(this.fullscreenBtn).on("click", this.toggleFullscreen.bind(this));
 
             $(this.statusTableContainer).find("tbody")
                 .on("click", "tr", this.onTransitionTableRowClick.bind(this))
@@ -116,15 +115,7 @@ module Activity {
             $(window).on("resize", () => this.resize());
             this.resize();
             
-            $(document).on("fullscreenchange", () => this.fullscreenChanged());
-            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
-            
-            $(document).on("fullscreenerror", () => this.fullscreenError());
-            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
-            $(document).on("mozfullscreenerror", () => this.fullscreenError());
-            $(document).on("MSFullscreenError", () => this.fullscreenError());
+            this.fullscreen.onShow();
             
             if (this.changed) {
                 this.changed = false;
@@ -161,15 +152,7 @@ module Activity {
         public onHide(): void {
             $(window).off("resize");
 
-            $(document).off("fullscreenchange");
-            $(document).off("webkitfullscreenchange");
-            $(document).off("mozfullscreenchange");
-            $(document).off("MSFullscreenChange");
-            
-            $(document).off("fullscreenerror");
-            $(document).off("webkitfullscreenerror");
-            $(document).off("mozfullscreenerror");
-            $(document).off("MSFullscreenError");
+            this.fullscreen.onHide();
 
             this.uiGraph.unbindCanvasEvents();
             this.uiGraph.clearOnSelectListener();
@@ -213,53 +196,9 @@ module Activity {
             return text;
         }
 
-        private isFullscreen(): boolean {
-            return !!document.fullscreenElement ||
-                   !!document.mozFullScreenElement ||
-                   !!document.webkitFullscreenElement ||
-                   !!document.msFullscreenElement;
-        }
-        
-        private toggleFullscreen() {
-            var fullScreenContainer = this.fullScreenContainer;
-            if (!this.isFullscreen()) {
-                if (fullScreenContainer.requestFullscreen) {
-                    fullScreenContainer.requestFullscreen();
-                } else if (fullScreenContainer.msRequestFullscreen) {
-                    fullScreenContainer.msRequestFullscreen();
-                } else if (fullScreenContainer.mozRequestFullScreen) {
-                    fullScreenContainer.mozRequestFullScreen();
-                } else if (fullScreenContainer.webkitRequestFullscreen) {
-                    fullScreenContainer.webkitRequestFullscreen();
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                }
-            }
-        }
-
         private saveCanvas() {
             $(this.saveBtn).attr("href", this.canvas.toDataURL("image/png"));
             $(this.saveBtn).attr("download", this.initialProcessName + ".png");
-        }
-
-        private fullscreenChanged() {
-            $(this.fullscreenBtn).text(this.isFullscreen() ? "Exit" : "Fullscreen");
-            this.resize();
-        }
-        
-        private fullscreenError() {
-            console.log("Fullscreen error");
-            
-            // user might have entered fullscreen and gone out of it, treat as fullscreen changed
-            this.fullscreenChanged();
         }
 
         private clear() : void {
@@ -388,7 +327,7 @@ module Activity {
         private resize(): void {
             var width = this.canvas.parentNode.clientWidth;
             var height;
-            if (!this.isFullscreen()) {
+            if (!this.fullscreen.isFullscreen()) {
                 var offsetTop = $(this.canvas).offset().top;
                 var offsetBottom = $(this.statusTableContainer).height() + 20; // Parent container margin = 20.
                 height = Math.max(275, window.innerHeight - offsetTop - offsetBottom);
