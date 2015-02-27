@@ -558,6 +558,7 @@ module Activity {
             
             this.attacker = attacker;
             this.defender = defender;
+            this.currentWinner = this.getUniversalWinner();
         }
         
         private saveCurrentProcess(process : any, move : Move) : void {
@@ -701,11 +702,6 @@ module Activity {
         protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph {
             
             return this.bisimulationDG = new dg.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
-        }
-        
-        public setPlayers(attacker : Player, defender : Player) : void {
-            super.setPlayers(attacker, defender);
-            this.currentWinner = this.getUniversalWinner();
         }
         
         public getUniversalWinner() : Player {
