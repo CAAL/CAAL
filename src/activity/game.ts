@@ -464,7 +464,7 @@ module Activity {
         
         protected attacker : Player;
         protected defender : Player;
-        private step : number = 0;
+        private round : number = 1;
         
         protected lastMove : Move;
         protected lastAction : string;
@@ -486,7 +486,7 @@ module Activity {
         }
         
         public getRound() : number {
-            return this.step / 2 + 1;
+            return this.round;
         }
         
         public getUniversalWinner() : Player {
@@ -554,7 +554,6 @@ module Activity {
                 throw "No players in game.";
             this.stopGame();
             this.currentNodeId = 0;
-            this.step = 0;
             
             this.cycleCache = {};
             this.cycleCache[this.getConfigurationStr(this.getCurrentConfiguration())] = this.currentNodeId;
@@ -602,8 +601,6 @@ module Activity {
         }
         
         public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) : void {
-            
-            this.step++;
             var previousConfig = this.getCurrentConfiguration();
             
             // change the current node id to the next
@@ -626,6 +623,8 @@ module Activity {
                 this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove);
                 
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
+
+                this.round++;
                 
                 if (!this.cycleExists())
                     this.preparePlayer(this.attacker);
@@ -665,7 +664,7 @@ module Activity {
             
             if (this.cycleCache[cacheStr] != undefined) {
                 // cycle detected
-                this.gameLog.printCycleWinner(configuration, this.defender);
+                this.gameLog.printCycleWinner(this.defender);
                 this.stopGame();
                 
                 // clear the cache
@@ -874,7 +873,6 @@ module Activity {
             if (this.playType === PlayType.Attacker) {
                 this.gameLog.printRound(game.getRound());
                 this.gameLog.printConfiguration(game.getCurrentConfiguration());
-            } else {
             }
 
             switch (this.playType)
@@ -907,7 +905,7 @@ module Activity {
         }
         
         public playTypeStr() : string {
-            return this.playType == PlayType.Attacker ? "Attacker" : this.playType == PlayType.Defender ? "Defender" : "unknown";
+            return this.playType == PlayType.Attacker ? "Attacker" : "Defender";
         }
     }
     
@@ -924,12 +922,12 @@ module Activity {
         
         protected prepareAttack(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, true);
-            this.gameLog.println("Pick a transition from left or right.");
+            this.gameLog.println("Pick a transition from left or right.", "<p>");
         }
         
         protected prepareDefend(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, false);
-            this.gameLog.println("Pick a transition from " + ((game.getLastMove() === Move.Left) ? "right." : "left."));
+            this.gameLog.println("Pick a transition from " + ((game.getLastMove() === Move.Left) ? "right." : "left."), "<p>");
         }
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
@@ -1092,81 +1090,132 @@ module Activity {
     }
 
     class GameLog {
-        
         private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
         private $log : JQuery;
-        
+
         constructor() {
             this.$log = $("#game-log");
             this.$log.empty();
         }
-        
-        public print(msg : string) : void {
-            this.$log.append(msg);
-            this.$log.scrollTop(this.$log[0].scrollHeight);
+
+        public println(line: string, wrapper? : string) : void {
+            if (wrapper) {
+                this.$log.append($(wrapper).append(line));
+            } else {
+                this.$log.append(line);
+            }
+
+            this.$log.scrollTop(this.$log[0].scrollHeight);;
         }
-        
-        public println(msg : string) : void {
-            this.print("<p>" + msg + "</p>");
+
+        public render(template : string, context : any) : string {
+            for (var i in context) {
+                var current = context[i].text;
+
+                if (context[i].tag) {
+                    current = $(context[i].tag).append(current);
+
+                    for (var j in context[i].attr) {
+                        current.attr(context[i].attr[j].name, context[i].attr[j].value);
+                    }
+
+                    template = template.replace("{" + i + "}", current[0].outerHTML);
+                } else {
+                    template = template.replace("{" + i + "}", current);
+                }
+            }
+
+            return template;
         }
-        
+
+        public removeLastLine() : void {
+            this.$log.find("p:last-child").remove();
+        }
+
         public printRound(round : number) : void {
-            this.$log.append("<h4>Round " + Math.floor(round) + "</h4>");
+            this.println("Round " + round, "<h4>");
         }
 
-        public printConfiguration(conf : any) {
-            this.println("Current configuration: (<span class=\"transition\">" + this.labelFor(conf.left) +
-                "</span>, <span class=\"transition\">" + this.labelFor(conf.right) + "</span>).");
-        }
+        public printConfiguration(configuration : any) : void {
+            var template = "Current configuration: ({1}, {2}).";
 
-        public printPlayerType(attacker : Player) {
-            if (attacker instanceof Computer)
-                this.print('<p class="intro">You are playing as defender.</p>');
-            else
-                this.print('<p class="intro">You are playing as attacker.</p>');
+            var context = {
+                1: {text: this.labelFor(configuration.left), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
+                2: {text: this.labelFor(configuration.right), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]}
+            }
+
+            this.println(this.render(template, context), "<p>");
         }
 
         public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process, move : Move) : void {
-            
-            var who = player instanceof Computer ? player.playTypeStr() : "You";
+            var template = "{1} played ({2}, {3}, {4}) on {5}.";
 
-            this.println(who + " played (<span class=\"transition\">" + this.labelFor(source) +
-                "</span>, <span class=\"transition\">" + action +
-                "</span>, <span class=\"transition\">" + this.labelFor(destination) + "</span>) on " + (move == Move.Left ? "left" : "right") + ".");
+            var context = {
+                1: {text: (player instanceof Computer) ? player.playTypeStr() : "You"},
+                2: {text: this.labelFor(source), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
+                3: {text: action, tag: "<span>", attr: [{name: "class", value: "monospace"}]},
+                4: {text: this.labelFor(destination), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
+                5: {text: (move === Move.Left) ? "left" : "right"}
+            };
+
+            if (player instanceof Human) {
+                this.removeLastLine();
+            }
+
+            this.println(this.render(template, context), "<p>");
         }
 
         public printWinner(winner : Player) : void {
-            if (winner instanceof Computer) {
-                this.print('<p class="outro">You have no available transitions. You lose!</p>');
-            } else {
-                var loser = (winner.getPlayType() === PlayType.Attacker) ? "Defender" : "Attacker";
-                this.print('<p class="outro">' + loser + " has no available transitions. You win!</p>");
-            }
+            var template = "{1} no available transitions. You {2}!";
+
+            var context = {
+                1: {text: (winner instanceof Computer) ? "You have" : (winner.getPlayType() === PlayType.Attacker) ? "Defender has" : "Attacker has"},
+                2: {text: (winner instanceof Computer) ? "lose" : "win"}
+            };
+
+            this.println(this.render(template, context), "<p class='outro'>");
         }
-        
-        public printCycleWinner(configuration : any, defender : Player) : void {
-            this.print('<p class="outro">A cycle has been detected. ' + ((defender instanceof Human) ? "You win!" : "You lose!") + "</p>");
+
+        public printCycleWinner(defender : Player) : void {
+            var template = "A cycle has been detected. {1}!";
+
+            var context = {
+                1: {text: (defender instanceof Human) ? "You win" : "You lose"}
+            };
+
+            this.println(this.render(template, context), "<p class='outro'>");
         }
-        
+
         public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
-            this.print('<p class="intro">You are playing a ' + gameType + " bisimulation game starting from (<span class=\"transition\">" + this.labelFor(configuration.left) +
-                "</span>, <span class=\"transition\">" + this.labelFor(configuration.right) + "</span>).</p>");
-            
-            this.printPlayerType(attacker);
+            var template = "{1} bisimulation game starting from ({2}, {3}).";
+
+            var context = {
+                1: {text: this.capitalize(gameType)},
+                2: {text: this.labelFor(configuration.left), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
+                3: {text: this.labelFor(configuration.right), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]}
+            };
+
+            this.println(this.render(template, context), "<p class='intro'>");
+
+            if (attacker instanceof Computer) {
+                this.println("You are playing as defender.", "<p class='intro'>");
+            } else {
+                this.println("You are playing as attacker.", "<p class='intro'>");
+            }
             
             if (winner instanceof Human){
-                this.print('<p class="intro">You have a winning strategy.</p>');
+                this.println("You have a winning strategy.", "<p class='intro'>");
             } else {
-                this.print('<p class="intro">' + winner.playTypeStr() + ' has a winning strategy. You are going to lose.</p>');
+                this.println(winner.playTypeStr() + " has a winning strategy. You are going to lose.", "<p class='intro'>");
             }
         }
-        
+
+        private capitalize(str : string) : string {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
         private labelFor(process : CCS.Process) : string {
-            if (process instanceof CCS.NamedProcess)
-                return this.htmlNotationVisitor.visit(process);
-            else 
-                // return process.id.toString();
-                return '<span class="ccs-tooltip-constant">' + process.id + '</span>';
+            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
         }
     }
 }
