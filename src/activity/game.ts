@@ -50,7 +50,7 @@ module Activity {
 
             this.project = Project.getInstance();
 
-            this.$gameType = $("#game-type");
+            this.$gameType = $("#game-type > select");
             this.$playerType = $("input[name=player-type]");
             this.$leftProcessList = $("#game-left-process");
             this.$rightProcessList = $("#game-right-process");
@@ -72,8 +72,6 @@ module Activity {
             this.$playerType.on("change", () => this.newGame(false, false));
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
-            
-            this.$leftContainer.add(this.$rightContainer).on("scroll", () => this.positionSliders());
             
             if (this.isInternetExplorer()) {
                 this.$leftZoom.on("change", () => this.zoom(this.$leftZoom.val(), "left"));
@@ -367,13 +365,6 @@ module Activity {
                 this.$rightContainer.scrollLeft(position.x - (this.$rightContainer.width() / 2));
                 this.$rightContainer.scrollTop(position.y - (this.$rightContainer.height() / 2));
             }
-        }
-
-        private positionSliders() : void {
-            this.$leftZoom.css("top", this.$leftContainer.scrollTop() + 10);
-            this.$leftZoom.css("left", this.$leftContainer.scrollLeft() + 10);
-            this.$rightZoom.css("top", this.$rightContainer.scrollTop() + 10);
-            this.$rightZoom.css("left", this.$rightContainer.scrollLeft() + 10);
         }
 
         private resize() : void {
