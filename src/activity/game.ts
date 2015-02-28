@@ -368,17 +368,17 @@ module Activity {
         }
 
         private resize() : void {
-            var offsetTop = $("#game-main").offset().top + 20;
-            var offsetBottom = $("#game-status").height() + 3; // + border.
+            var offsetTop = $("#game-main").offset().top;
+            var offsetBottom = $("#game-status").height();
 
-            var availableHeight = window.innerHeight - offsetTop - offsetBottom;
+            var availableHeight = window.innerHeight - offsetTop - offsetBottom - 22; // 22 = margin bot + border.
             
             if (this.fullscreen.isFullscreen())
                 availableHeight += 10;
 
-            // Minimum height 275 px.
-            this.$leftContainer.height(Math.max(275, availableHeight));
-            this.$rightContainer.height(Math.max(275, availableHeight));
+            // Minimum height 265 px.
+            this.$leftContainer.height(Math.max(265, availableHeight));
+            this.$rightContainer.height(Math.max(265, availableHeight));
 
             // Container height - 20 scrollbar size. 20px should be a safe value.
             this.leftCanvas.width = (this.$leftContainer.width() - 20);
