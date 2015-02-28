@@ -50,7 +50,7 @@ module Activity {
 
             this.project = Project.getInstance();
 
-            this.$gameType = $("#game-type");
+            this.$gameType = $("#game-type > select");
             this.$playerType = $("input[name=player-type]");
             this.$leftProcessList = $("#game-left-process");
             this.$rightProcessList = $("#game-right-process");
@@ -72,8 +72,6 @@ module Activity {
             this.$playerType.on("change", () => this.newGame(false, false));
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
-            
-            this.$leftContainer.add(this.$rightContainer).on("scroll", () => this.positionSliders());
             
             if (this.isInternetExplorer()) {
                 this.$leftZoom.on("change", () => this.zoom(this.$leftZoom.val(), "left"));
@@ -369,13 +367,6 @@ module Activity {
             }
         }
 
-        private positionSliders() : void {
-            this.$leftZoom.css("top", this.$leftContainer.scrollTop() + 10);
-            this.$leftZoom.css("left", this.$leftContainer.scrollLeft() + 10);
-            this.$rightZoom.css("top", this.$rightContainer.scrollTop() + 10);
-            this.$rightZoom.css("left", this.$rightContainer.scrollLeft() + 10);
-        }
-
         private resize() : void {
             var offsetTop = $("#game-main").offset().top + 20;
             var offsetBottom = $("#game-status").height() + 3; // + border.
@@ -498,6 +489,7 @@ module Activity {
             
             this.attacker = attacker;
             this.defender = defender;
+            this.currentWinner = this.getUniversalWinner();
         }
         
         private saveCurrentProcess(process : any, move : Move) : void {
@@ -641,11 +633,6 @@ module Activity {
         protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph {
             
             return this.bisimulationDG = new dg.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
-        }
-        
-        public setPlayers(attacker : Player, defender : Player) : void {
-            super.setPlayers(attacker, defender);
-            this.currentWinner = this.getUniversalWinner();
         }
         
         public getUniversalWinner() : Player {

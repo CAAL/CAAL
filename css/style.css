@@ -354,17 +354,19 @@ p.small {
     margin-bottom: 20px;
 }
 
-#game-fullscreen {
-    margin-right: 15px;
+#game-type {
+    width: 215px;
 }
 
-#game-main, #game-status {
-    margin: 0;
+#game-left {
+    padding-right: 0;
+}
+
+#game-right {
+    padding-left: 0;
 }
 
 #game-left-canvas, #game-right-canvas {
-    margin: 0;
-    padding: 0;
     border: 1px solid #e7e7e7;
     overflow: auto;
 }
@@ -373,7 +375,7 @@ p.small {
     border-left: none;
 }
 
-#game-left-canvas input[type=range], #game-right-canvas input[type=range] {
+input[type=range] {
     position: absolute;
     top: 10px;
     left: 10px;
@@ -381,16 +383,20 @@ p.small {
     cursor: pointer;
 }
 
-#game-status {
-    height: 225px;
+#game-status .col-md-4 {
+    padding-right: 0;
+}
+
+#game-status .col-md-8 {
+    padding-left: 0;
 }
 
 #game-log {
-    height: 100%;
+    height: 225px;
+    padding: 10px;
     overflow: auto;
     border: 1px solid #e7e7e7;
     border-top: none;
-    padding: 10px;
 }
 
 #game-log p {
@@ -418,7 +424,8 @@ p.small {
 }
 
 #game-transitions {
-    height: 100%;
+    height: 225px;
+    padding: 10px;
     overflow: auto;
     border: 1px solid #e7e7e7;
     border-top: none;
@@ -431,6 +438,18 @@ p.small {
 }
 
 @media (max-width: 991px) {
+    #game-type {
+        width: 100%;
+    }
+
+    #game-left {
+        padding-right: 15px;
+    }
+
+    #game-right {
+        padding-left: 15px;
+    }
+
     #game-right-canvas {
         border-top: none;
         border-left: 1px solid #e7e7e7;
@@ -439,6 +458,14 @@ p.small {
     #game-transitions {
         border-left: 1px solid #e7e7e7;
         margin-bottom: 20px;
+    }
+
+    #game-status .col-md-4 {
+        padding-right: 15px;
+    }
+
+    #game-status .col-md-8 {
+        padding-left: 15px;
     }
 }
 
