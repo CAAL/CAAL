@@ -21,7 +21,6 @@ module Property {
         public status: PropertyStatus;
         public worker;
         public statistics = {elapsedTime: null};
-        public onStatusClick : Function;
         public onVerify : Function;
         //public onStatusHover : Function = () => {return""}; /*it is not allowed to be null?*/
         public onToolMenuClick : Function;
@@ -31,22 +30,37 @@ module Property {
         protected startTime;
 
         public toolMenuOptions = {
-                "Edit":{
-                    id:"property-edit",
-                    label: "Edit",
-                    click: null
-                }, 
-                "Delete":{
-                    id: "property-delete",
-                    label: "Delete",
-                    click: null
-                },
-                "Play":{
-                    id: "property-playgame",
-                    label: "Play",
-                    click: null
-                }
-            };
+            "edit":{
+                id:"property-edit",
+                label: "Edit",
+                click: null
+            }, 
+            "delete":{
+                id: "property-delete",
+                label: "Delete",
+                click: null
+            },
+            "play":{
+                id: "property-playgame",
+                label: "Play",
+                click: null
+            }
+        };
+
+        public rowClickHandlers = {
+            "description" : {
+                id : "property-description",
+                click : null
+            },
+            "status" : {
+                id : "property-status",
+                click : null
+            },
+            "verify" : {
+                id : "property-verify",
+                click : null
+            }
+        }
 
         public icons = {
             "play" : $("<i class=\"fa fa-play\"></i>"),
@@ -81,12 +95,18 @@ module Property {
             var list = $("<ul id=\"toolmenu\" class=\"dropdown-menu\"></ul>")
 
             for (var key in this.toolMenuOptions) {
-                if(this.toolMenuOptions[key].click){
+                if(this.toolMenuOptions[key].click != null){
                     list.append("<li><a id=\""+this.toolMenuOptions[key].id+"\">"+this.toolMenuOptions[key].label+"</a></li>")
-                } else {
+                } /* else {
                     list.append("<li class=\"disabled\"><a id=\""+this.toolMenuOptions[key].id+"\">"+this.toolMenuOptions[key].label+"</a></li>")
-                }
+                }*/
             }
+
+            // if no element in the lists, just disable it.
+            if(list[0].childElementCount === 0) {
+                btn.addClass("disabled");
+            }
+
             btn.append(dots);
             toolmenu.append(btn);
             toolmenu.append(list);
@@ -96,6 +116,12 @@ module Property {
         public setToolMenuOptions(menuOptions : Object){
             for (var key in menuOptions) {
                 this.toolMenuOptions[key] = menuOptions[key];
+            }
+        }
+
+        public setRowClickHandlers(rowHandlers : Object) {
+            for (var key in rowHandlers){
+                this.rowClickHandlers[key] = rowHandlers[key];
             }
         }
 
@@ -162,14 +188,28 @@ module Property {
                 selector: '.fa-check'
             });
             
-            this.tdStatus.on("click",        {property: this},  (e) => this.toolMenuOptions["Play"].click(e));
-            tdDescription.on("click",   {property: this}, (e) =>  this.toolMenuOptions["Edit"].click(e));
-            tdVerify.on("click",        {property: this}, (e) => this.onVerify(e));
+
+            for (var rowHandler in this.rowClickHandlers){
+                var rowElement = row.find("#"+this.rowClickHandlers[rowHandler].id);
+                if(this.rowClickHandlers[rowHandler].click) {
+                    rowElement.on("click", {property:this}, this.rowClickHandlers[rowHandler].click);
+                }
+            }
+            /*
+            if(this.rowClickHandlers.status.click){
+                this.tdStatus.on("click",       {property: this}, this.rowClickHandlers.status.click);
+            }
+            if(this.rowClickHandlers.description.click) {
+                tdDescription.on("click",       {property: this}, this.rowClickHandlers.description.click);
+            }
+            if (this.rowClickHandlers.verify) {
+                tdVerify.on("click",            {property: this}, this.rowClickHandlers.verify.click);
+            }*/
 
             /*Tool menu options*/
             for (var tooloption in this.toolMenuOptions){
                 var toolMenuOption = toolmenu.find("#" + this.toolMenuOptions[tooloption].id);
-                if(this.toolMenuOptions[tooloption].click) {
+                if(this.toolMenuOptions[tooloption].click !== null) {
                     toolMenuOption.on("click", {property:this}, this.toolMenuOptions[tooloption].click);
                 }
             }
@@ -225,13 +265,12 @@ module Property {
                 // if they are defined check whether they are defined in the CCS-program
                 var processList = Main.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
-                    this.setInvalidateStatus();
                     isReady = false;
                 }
             }
 
-            if(this.status === PropertyStatus.invalid) { 
-                isReady = false;
+            if(!isReady) { 
+                this.setInvalidateStatus();
             }
 
             return isReady
@@ -435,8 +474,11 @@ module Property {
              * complete syntax check are done by the worker, it will post a error if the hml syntax did not parse. 
              */
             if(!this.formula || this.formula === "") {
-                this.setInvalidateStatus();
                 isReady = false;
+            }
+
+            if(!isReady){
+                this.setInvalidateStatus()
             }
             
             return isReady
@@ -495,8 +537,6 @@ module Property {
         public distinguishingFormula : string;
         private isexpanded : boolean = true;
         
-
-
         public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
             super(status);
             this.firstHMLProperty = new HML(options.firstHMLProperty);
@@ -569,13 +609,18 @@ module Property {
         public toTableRow() : any {
             var result = super.toTableRow();
 
+            //this.tdStatus.on("click", {property: this}, this.rowClickHandlers.status);
+
             if(this.isExpanded() /*&& this.firstHMLProperty.getFormula() !== "" && this.secondHMLProperty.getFormula() !== ""*/) {
-                this.firstHMLProperty.onVerify = this.onVerify;
+                var rowHandlers = {verify: null};
+                rowHandlers.verify = this.rowClickHandlers.verify;
+
+                this.firstHMLProperty.setRowClickHandlers(rowHandlers);
                 //this.firstHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
                 var firstRow = this.firstHMLProperty.toTableRow();
                 result.push(firstRow);
                 
-                this.secondHMLProperty.onVerify = this.onVerify;
+                this.secondHMLProperty.setRowClickHandlers(rowHandlers);
                 //this.secondHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
                 var secondRow = this.secondHMLProperty.toTableRow();
                 result.push(secondRow);
@@ -590,8 +635,28 @@ module Property {
          * @return {boolean} if true, everything is defined.
          */
         protected isReadyForVerification() : boolean {
-            ///TODO: Fix this
-            return true;
+            var isReady = true;
+            
+            if(!this.getFirstProcess() && !this.getSecondProcess()) {
+                isReady = false;
+            } else {
+                // if they are defined check whether they are defined in the CCS-program
+                var processList = Main.getGraph().getNamedProcesses()
+                if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
+                    isReady = false;
+                }
+            }
+
+            // if they are clearly bisimular then do nothing..
+            if (this.getFirstProcess() === this.getSecondProcess()) {
+                isReady = false;
+            }
+
+            // if is not ready invalidate the property
+            if (!isReady) {
+                this.setInvalidateStatus();
+            }
+            return isReady;
         }
 
         public verify(callback : Function, queProperties : Function): void {
@@ -616,9 +681,9 @@ module Property {
                     callback(this.status)
                 }, false);
                 this.worker.addEventListener("message", event => {
-                    var goodResult = !event.data.result.isBisimilar;
-                    this.status = goodResult ? PropertyStatus.unknown : PropertyStatus.invalid;
-                    if (goodResult ) {
+                    var goodResult = !event.data.result.isBisimilar; //this should be false, for there to be distinguishing formula
+                    this.status = goodResult ? PropertyStatus.satisfied : PropertyStatus.invalid;
+                    if (goodResult) {
                         var formula = event.data.result.formula;
                         this.firstHMLProperty.setFormula(formula);
                         this.secondHMLProperty.setFormula(formula);
@@ -633,6 +698,7 @@ module Property {
             } else {
                 // something is not defined or syntax error
                 console.log("something is wrong, please check the property");
+                this.stopTimer()
                 callback(this.status); /*verification ended*/
             }
         }

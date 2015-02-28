@@ -161,33 +161,48 @@ module Activity {
 
             for (var i = 0; i < properties.length; i++) {
                 var toolMenuOptions = {
-                    "Edit":{
+                    "edit": {
                         id:"property-edit",
                         label: "Edit",
                         click: (e) => this.editProperty(e)
                     }, 
-                    "Delete":{
+                    "delete": {
                         id: "property-delete",
                         label: "Delete",
                         click: (e) => this.deleteProperty(e)
+                    },
+                    "play": {
+                        id: "property-playgame",
+                        label: "Play",
+                        click: (e) => this.playGame(e)
                     }
                 };
+
+                var rowClickHandlers = {
+                    "status":{
+                        id : "property-status",
+                        click : (e) => this.playGame(e)
+                    },
+                    "description": {
+                        id : "property-description",
+                        click : (e) => this.editProperty(e)
+                    },
+                    "verify": {
+                        id : "property-verify",
+                        click : (e) => this.verify(e)
+                    }
+                }
 
                 var propertyRows = null;
                 if (properties[i] instanceof Property.Equivalence || properties[i] instanceof Property.HML) {
                     /* Strong/Weak bisim and HML*/
-                    toolMenuOptions["Play"] = {
-                            id: "property-playgame",
-                            label: "Play",
-                            click: (e) => this.playGame(e)
-                    };
 
-                    properties[i].onVerify = (e) => this.verify(e);
+                    properties[i].setRowClickHandlers(rowClickHandlers)
                     properties[i].setToolMenuOptions(toolMenuOptions)
                     propertyRows = properties[i].toTableRow();
                 } else {
                     /* distinguishing formula */
-                    properties[i].onStatusClick = (e) => {
+                    var onStatusClick = (e) => {
                         if(e.data.property.isExpanded()){
                             this.onCollapse(e);
                             e.data.property.setExpanded(false);
@@ -196,10 +211,10 @@ module Activity {
                             e.data.property.setExpanded(true);
                         }
                         this.displayProperties()
-                    };
-
-                    properties[i].onVerify = (e) => this.verify(e);
-                    properties[i].onPlayGame = (e) => this.verify(e);
+                    };  
+                    
+                    rowClickHandlers.status.click = onStatusClick; // TODO find another way to collapse and expand a row
+                    properties[i].setRowClickHandlers(rowClickHandlers)
                     properties[i].setToolMenuOptions(toolMenuOptions);
                     propertyRows = properties[i].toTableRow();
                 }
@@ -273,16 +288,18 @@ module Activity {
         private playGame(e){
             var property = e.data.property;
             if (property instanceof Property.Equivalence) {
-                var equivalence = <Property.Equivalence> property,
-                    gameType = (equivalence instanceof Property.StrongBisimulation) ? "strong" : "weak",
-                    playerType = (equivalence.getStatus() === PropertyStatus.satisfied) ? "attacker" : "defender",
-                    configuration = {
-                        gameType: gameType,
-                        playerType: playerType,
-                        leftProcess: equivalence.firstProcess,
-                        rightProcess: equivalence.secondProcess
-                    };
-                Main.activityHandler.selectActivity("game", configuration);
+                if(property.status === PropertyStatus.satisfied || property.status === PropertyStatus.unsatisfied) {       
+                    var equivalence = <Property.Equivalence> property,
+                        gameType = (equivalence instanceof Property.StrongBisimulation) ? "strong" : "weak",
+                        playerType = (equivalence.getStatus() === PropertyStatus.satisfied) ? "attacker" : "defender",
+                        configuration = {
+                            gameType: gameType,
+                            playerType: playerType,
+                            leftProcess: equivalence.firstProcess,
+                            rightProcess: equivalence.secondProcess
+                        };
+                    Main.activityHandler.selectActivity("game", configuration);
+                }
             }
         }
 
