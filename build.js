@@ -2,8 +2,7 @@ var path = require('path');
 var child_process = require('child_process');
 var fs = require('fs');
 
-// var _P = path.normalize;
-var _P = function (x) { return x; };
+var _P = path.normalize;
 
 // Binaries
 TSC = _P('./node_modules/.bin/tsc');
