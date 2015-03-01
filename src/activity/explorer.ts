@@ -7,6 +7,7 @@
 /// <reference path="../gui/gui.ts" />
 /// <reference path="../../lib/suppressWarnings.d.ts" />
 /// <reference path="../gui/project.ts" />
+/// <reference path="tooltip.ts" />
 
 module Activity {
 
@@ -48,6 +49,7 @@ module Activity {
         private saveBtn;
         private sourceDefinition;
         private fullscreen : Fullscreen;
+        private tooltip : TooltipNotation;
 
         constructor(container: string, button: string) {
             super(container, button);
@@ -76,15 +78,8 @@ module Activity {
                 .on("mouseenter", "tr", this.onTransitionTableRowHover.bind(this, true))
                 .on("mouseleave", "tr", this.onTransitionTableRowHover.bind(this, false));
 
-            var getCCSNotation = this.ccsNotationForProcessId.bind(this);
-            $(this.statusTableContainer).tooltip({
-                title: function() {
-                    var process : string = $(this).text();
-                    return process + " = " + getCCSNotation(process);
-                },
-                selector: "span.ccs-tooltip-constant"
-            });
-
+            this.tooltip = new TooltipNotation($(this.statusTableContainer));
+            
             // Prevent options menu from closing when pressing form elements.
             $(document).on('click', '.yamm .dropdown-menu', e => e.stopPropagation());
 
@@ -131,6 +126,8 @@ module Activity {
 
                 this.draw();
             }
+            
+            this.tooltip.setGraph(this.graph);
 
             this.uiGraph.bindCanvasEvents();
 
@@ -185,15 +182,6 @@ module Activity {
             this.htmlNotationVisitor.clearCache();
             this.ccsNotationVisitor.clearCache();
             this.expand(this.graph.processByName(this.initialProcessName), options.depth);
-        }
-
-        private ccsNotationForProcessId(id: string): string {
-            var process = this.graph.processByName(id) || this.graph.processById(parseInt(id, 10)),
-                text = "Unknown definition";
-            if (process) {
-                text = this.getDefinitionForProcess(process, this.ccsNotationVisitor);
-            }
-            return text;
         }
 
         private saveCanvas() {
