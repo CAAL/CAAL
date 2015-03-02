@@ -5,13 +5,14 @@
   "main": "",
   "dependencies": {
     "typescript": ">=1.4",
-    "pegjs": "~0.8.0"
+    "pegjs": "~0.8.0",
+    "jake": "latest"
   },
   "devDependencies": {
     "node-qunit-phantomjs": ">=1.2.0"
   },
   "scripts": {
-    "build": "bash build.sh",
+    "build": "./node_modules/.bin/jake -q -f build.js",
     "test": "./node_modules/.bin/node-qunit-phantomjs ./test/test.html",
     "release": "bash build.sh || exit 1; ./node_modules/.bin/node-qunit-phantomjs ./test/test.html || exit 1; rm -f release.tar.gz; tar -zcvf release.tar.gz lib/ css/ fonts/ index.html LICENSE README.md server.js"
   },
