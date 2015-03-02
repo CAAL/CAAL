@@ -188,23 +188,13 @@ module Property {
                 selector: '.fa-check'
             });
             
-
+            /*Row click handlers*/
             for (var rowHandler in this.rowClickHandlers){
                 var rowElement = row.find("#"+this.rowClickHandlers[rowHandler].id);
                 if(this.rowClickHandlers[rowHandler].click) {
                     rowElement.on("click", {property:this}, this.rowClickHandlers[rowHandler].click);
                 }
             }
-            /*
-            if(this.rowClickHandlers.status.click){
-                this.tdStatus.on("click",       {property: this}, this.rowClickHandlers.status.click);
-            }
-            if(this.rowClickHandlers.description.click) {
-                tdDescription.on("click",       {property: this}, this.rowClickHandlers.description.click);
-            }
-            if (this.rowClickHandlers.verify) {
-                tdVerify.on("click",            {property: this}, this.rowClickHandlers.verify.click);
-            }*/
 
             /*Tool menu options*/
             for (var tooloption in this.toolMenuOptions){
@@ -250,6 +240,7 @@ module Property {
             this.secondProcess = secondProcess;
             this.setUnknownStatus();
         }
+
         /**
          * Check whether both process(first and second) is defined, and it exists in the CCS program.
          * And property status must not be invalid.
@@ -260,8 +251,7 @@ module Property {
             
             if(!this.getFirstProcess() && !this.getSecondProcess()) {
                 isReady = false;
-            } 
-            else {
+            } else {
                 // if they are defined check whether they are defined in the CCS-program
                 var processList = Main.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
