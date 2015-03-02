@@ -56,7 +56,7 @@ module DependencyGraph {
         private getProcessPairStates(leftProcessId, rightProcessIds) {
             var hyperedges = [];
             var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
-            var rightTransitions [];
+            var rightTransitions = [];
 
             rightProcessIds.forEach(rightProcessId => {
                 rightTransitions.push(this.attackSuccGen.getSuccessors(rightProcessId));
@@ -77,12 +77,16 @@ module DependencyGraph {
 
                 
                 var rightSets = this.leftPairs[leftTransition.targetProcess.id][rightTargets.length];
+                var existing = false;
 
                 if (rightSets) {
-                    rightSets.forEach(rightSet => {
-                        existing = (rightTargets.every((v,i)=> v === rightSet.set[i])) ? rightSet.index : null;
-                    });
-                    
+
+                    for(var n = 0; n < rightSets.length; n++) {
+                        if(rightTargets.every((v,i)=> v === rightSets[n].set[i])) {
+                            existing = rightSets[n].index;
+                            break;
+                        }
+                    }
                 }
 
                 if (existing) {
@@ -91,14 +95,17 @@ module DependencyGraph {
                     var newNodeIdx = this.nextIdx++;
 
                     var rightSet = {set: rightTargets, index = newNodeIdx};
-                    if (!rightSets) this.leftPairs[leftTransition.targetProcess.id][rightTargets.length].push(rightSet);
+
+                    if(!this.leftPairs[leftTransition.targetProcess.id][rightTargets.length])
+                        this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] = {};
+                    
+                    this.leftPairs[leftTransition.targetProcess.id][rightTargets.length].push(rightSet);
 
                     this.constructData[newNodeIdx] = [0, leftTransition.action, leftTransition.targetProcess.id, rightTargets];
                 
                     hyperedges.push(newNodeIdx);
                     
                 }
-
                 
             });
             
