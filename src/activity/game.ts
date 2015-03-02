@@ -3,7 +3,8 @@
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="activity.ts" />
-/// <reference path="../../lib/suppressWarnings.d.ts" />
+/// <reference path="fullscreen.ts" />
+/// <reference path="tooltip.ts" />
 
 module Activity {
 
@@ -31,8 +32,6 @@ module Activity {
         private $playerType : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
-        private $fullscreenBtn : JQuery;
-        private $fullScreenContainer;
         private $leftContainer : JQuery;
         private $rightContainer : JQuery;
         private $leftZoom : JQuery;
@@ -45,24 +44,26 @@ module Activity {
         private rightGraph: GUI.ProcessGraphUI;
         private dgGame : DgGame;
         private ccsNotationVisitor = new Traverse.CCSNotationVisitor();
+        private fullscreen : Fullscreen;
+        private tooltip : TooltipNotation;
         
         constructor(container : string, button : string) {
             super(container, button);
 
             this.project = Project.getInstance();
 
-            this.$gameType = $("#game-type");
+            this.$gameType = $("#game-type > select");
             this.$playerType = $("input[name=player-type]");
             this.$leftProcessList = $("#game-left-process");
             this.$rightProcessList = $("#game-right-process");
             this.$leftContainer = $("#game-left-canvas");
             this.$rightContainer = $("#game-right-canvas");
-            this.$fullscreenBtn = $("#game-fullscreen");
-            this.$fullScreenContainer = $("#game-container")[0];
             this.$leftZoom = $("#zoom-left");
             this.$rightZoom = $("#zoom-right");
             this.leftCanvas = <HTMLCanvasElement> this.$leftContainer.find("canvas")[0];
             this.rightCanvas = <HTMLCanvasElement> this.$rightContainer.find("canvas")[0];
+
+            this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize());
 
             this.leftRenderer = new Renderer(this.leftCanvas);
             this.rightRenderer = new Renderer(this.rightCanvas);
@@ -73,66 +74,23 @@ module Activity {
             this.$playerType.on("change", () => this.newGame(false, false));
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
-            this.$fullscreenBtn.on("click", () => this.toggleFullscreen());
             
-            this.$leftContainer.add(this.$rightContainer).on("scroll", () => this.positionSliders());
-            this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
-            this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
+            if (this.isInternetExplorer()) {
+                this.$leftZoom.on("change", () => this.zoom(this.$leftZoom.val(), "left"));
+                this.$rightZoom.on("change", () => this.zoom(this.$rightZoom.val(), "right"));
+            } else {
+                this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
+                this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
+            }
 
             $(document).on("ccs-changed", () => this.changed = true);
             
-            // Set tooltip handler
-            var getCCSNotation = this.ccsNotationForProcessId.bind(this);
-            $("#game-status").tooltip({
-                title: function() {
-                    var process = $(this).text();
-                    return process + " = " + getCCSNotation(process);
-                },
-                selector: "span.ccs-tooltip-constant"
-            });
+            this.tooltip = new TooltipNotation($("#game-status"));
         }
         
-        private isFullscreen(): boolean {
-            return !!document.fullscreenElement ||
-                   !!document.mozFullScreenElement ||
-                   !!document.webkitFullscreenElement ||
-                   !!document.msFullscreenElement;
-        }
-        
-        private toggleFullscreen() {
-            if (!this.isFullscreen()) {
-                if (this.$fullScreenContainer.requestFullscreen) {
-                    this.$fullScreenContainer.requestFullscreen();
-                } else if (this.$fullScreenContainer.msRequestFullscreen) {
-                    this.$fullScreenContainer.msRequestFullscreen();
-                } else if (this.$fullScreenContainer.mozRequestFullScreen) {
-                    this.$fullScreenContainer.mozRequestFullScreen();
-                } else if (this.$fullScreenContainer.webkitRequestFullscreen) {
-                    this.$fullScreenContainer.webkitRequestFullscreen();
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                }
-            }
-        }
-
-        private fullscreenChanged() {
-            this.$fullscreenBtn.text(this.isFullscreen() ? "Exit" : "Fullscreen");
-            this.resize();
-        }
-        
-        private fullscreenError() {
-            console.log("Fullscreen error");
-            
-            // user might have entered fullscreen and gone out of it, treat as fullscreen changed
-            this.fullscreenChanged();
+        private isInternetExplorer() : boolean {
+            var msie = window.navigator.userAgent.indexOf("MSIE ");
+            return msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./);
         }
 
         protected checkPreconditions(): boolean {
@@ -149,19 +107,6 @@ module Activity {
             return true;
         }
         
-        private ccsNotationForProcessId(id : string): string {
-            var process = this.graph.processById(id) || this.graph.processByName(id),
-                text = "Unknown definition";
-                
-            if (process) {
-                if (process instanceof ccs.NamedProcess)
-                    text = this.ccsNotationVisitor.visit((<ccs.NamedProcess>process).subProcess);
-                else
-                    text = this.ccsNotationVisitor.visit(process);
-            }
-            return text;
-        }
-        
         public onShow(configuration? : any) : void {
             $(window).on("resize", () => {
                 this.resize();
@@ -169,16 +114,8 @@ module Activity {
                 this.zoom(this.$rightZoom.val(), "right");
             });
             
-            $(document).on("fullscreenchange", () => this.fullscreenChanged());
-            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
+            this.fullscreen.onShow();
             
-            $(document).on("fullscreenerror", () => this.fullscreenError());
-            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
-            $(document).on("mozfullscreenerror", () => this.fullscreenError());
-            $(document).on("MSFullscreenError", () => this.fullscreenError());
-
             if (this.changed || configuration) {
                 this.changed = false;
                 this.resize();
@@ -186,20 +123,24 @@ module Activity {
                 this.displayOptions();
                 this.newGame(true, true, configuration);
             }
+            
+            this.tooltip.setGraph(this.graph);
+            
+            this.leftGraph.bindCanvasEvents();
+            this.rightGraph.bindCanvasEvents();
+            this.rightGraph.unfreeze();
+            this.leftGraph.unfreeze();
         }
 
         public onHide() : void {
             $(window).off("resize");
             
-            $(document).off("fullscreenchange");
-            $(document).off("webkitfullscreenchange");
-            $(document).off("mozfullscreenchange");
-            $(document).off("MSFullscreenChange");
-            
-            $(document).off("fullscreenerror");
-            $(document).off("webkitfullscreenerror");
-            $(document).off("mozfullscreenerror");
-            $(document).off("MSFullscreenError");
+            this.fullscreen.onHide();
+
+            this.leftGraph.unbindCanvasEvents();
+            this.rightGraph.unbindCanvasEvents();
+            this.rightGraph.freeze();
+            this.leftGraph.freeze();
         }
 
         private displayOptions() : void {
@@ -270,9 +211,9 @@ module Activity {
             
             if (options.playerType === "defender") {
                 attacker = new Computer(PlayType.Attacker);
-                defender = new Human(PlayType.Defender);
+                defender = new Human(PlayType.Defender, this);
             } else {
-                attacker = new Human(PlayType.Attacker);
+                attacker = new Human(PlayType.Attacker, this);
                 defender = new Computer(PlayType.Defender);
             }
             
@@ -314,11 +255,12 @@ module Activity {
                 this.showProcess(fromProcess, graph);
                 var groupedByTargetProcessId = groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
 
-                Object.keys(groupedByTargetProcessId).forEach(tProcId => {
-                    var group = groupedByTargetProcessId[tProcId],
-                        data = group.map(t => { return {label: t.action.toString()}; });
-                    this.showProcess(this.graph.processById(tProcId), graph);
-                    graph.showTransitions(fromProcess.id, tProcId, data);
+                Object.keys(groupedByTargetProcessId).forEach(strProcId => {
+                    var group = groupedByTargetProcessId[strProcId],
+                        data = group.map(t => { return {label: t.action.toString()}; }),
+                        numId = parseInt(strProcId, 10);
+                    this.showProcess(this.graph.processById(numId), graph);
+                    graph.showTransitions(fromProcess.id, numId, data);
                 });
             }
 
@@ -339,7 +281,7 @@ module Activity {
             this.rightGraph.setSelected(conf.right.id.toString());
         }
 
-        public hightlightChoices(isLeft : boolean, targetId : string) : void {
+        public highlightChoices(isLeft : boolean, targetId : string) : void {
             if (isLeft) {
                 this.leftGraph.setHover(targetId); 
             } else {
@@ -347,7 +289,7 @@ module Activity {
             }
         }
 
-        public removeHightlightChoices(isLeft : boolean){
+        public removeHighlightChoices(isLeft : boolean){
             if(isLeft) {
                 this.leftGraph.clearHover();
             } else {
@@ -408,20 +350,13 @@ module Activity {
             }
         }
 
-        private positionSliders() : void {
-            this.$leftZoom.css("top", this.$leftContainer.scrollTop() + 10);
-            this.$leftZoom.css("left", this.$leftContainer.scrollLeft() + 10);
-            this.$rightZoom.css("top", this.$rightContainer.scrollTop() + 10);
-            this.$rightZoom.css("left", this.$rightContainer.scrollLeft() + 10);
-        }
-
         private resize() : void {
             var offsetTop = $("#game-main").offset().top + 20;
             var offsetBottom = $("#game-status").height() + 3; // + border.
 
             var availableHeight = window.innerHeight - offsetTop - offsetBottom;
             
-            if (this.isFullscreen())
+            if (this.fullscreen.isFullscreen())
                 availableHeight += 10;
 
             // Minimum height 275 px.
@@ -439,24 +374,27 @@ module Activity {
         }
     }
     
-    
     export enum PlayType { Attacker, Defender }
     export enum Move { Right, Left }
-
-    class DgGame {
+    
+    class Abstract {
+        protected abstract() : any {
+            throw new Error("Abstract method not implemented.");
+        }
+    }
+    
+    class DgGame extends Abstract {
         
         protected dependencyGraph : dg.DependencyGraph;
         protected marking : dg.LevelMarking;
-        
-        private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
-        // private htmlNotationVisitor : Traverse.CCSNotationVisitor;
         
         protected gameLog : GameLog = new GameLog();
         
         protected attacker : Player;
         protected defender : Player;
-        private step : number = 0;
+        protected currentWinner : Player;
         
+        private round : number = 1;
         protected lastMove : Move;
         protected lastAction : string;
         protected currentNodeId : any = 0; // the DG node id
@@ -466,9 +404,7 @@ module Activity {
         constructor(private gameActivity : Game, protected graph : CCS.Graph,
             attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator,
             protected currentLeft : any, protected currentRight : any) {
-            
-            this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
-            //this.htmlNotationVisitor = new Traverse.CCSNotationVisitor();
+            super();
             
             // create the dependency graph
             this.dependencyGraph = this.createDependencyGraph(this.graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight);
@@ -478,17 +414,16 @@ module Activity {
         }
         
         public getRound() : number {
-            return this.step / 2 + 1;
-        }
-        
-        public getUniversalWinner() : Player {
-            throw "Abstract method. Not implemented.";
-            return undefined;
+            return this.round;
         }
         
         public isUniversalWinner(player : Player) : boolean {
             // returns true if the player has a universal winning strategy
             return this.getUniversalWinner() === player;
+        }
+        
+        public isCurrentWinner(player : Player) : boolean {
+            return this.getCurrentWinner() === player;
         }
         
         public getLastMove() : Move {
@@ -503,41 +438,11 @@ module Activity {
             return { left: this.currentLeft, right: this.currentRight };
         }
         
-        public getBestWinningAttack(choices : any) : any {
-            // consider adding this method to DepedencyGraph interface
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
-        public getTryHardAttack(choices : any) : any {
-            // consider adding this method to DepedencyGraph interface
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
-        public getWinningDefend(choices : any) : any {
-            // consider adding this method to DepedencyGraph interface
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
-        public getTryHardDefend(choices : any) : any {
-            // consider adding this method to DepedencyGraph interface
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
-        public getCurrentChoices(playType : PlayType) : any {
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
         public startGame() : void {
             if (this.attacker == undefined || this.defender == undefined)
                 throw "No players in game.";
             this.stopGame();
             this.currentNodeId = 0;
-            this.step = 0;
             
             this.cycleCache = {};
             this.cycleCache[this.getConfigurationStr(this.getCurrentConfiguration())] = this.currentNodeId;
@@ -553,7 +458,7 @@ module Activity {
             this.defender.abortPlay();
         }
         
-        public setPlayers(attacker : Player, defender : Player) {
+        public setPlayers(attacker : Player, defender : Player) : void {
             if (attacker.getPlayType() == defender.getPlayType()) {
                 throw "Cannot make game with two " + attacker.playTypeStr() + "s";
             }
@@ -564,16 +469,7 @@ module Activity {
             
             this.attacker = attacker;
             this.defender = defender;
-        }
-        
-        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph { // abstract
-            throw "Abstract method. Not implemented.";
-            return undefined;
-        }
-        
-        protected createMarking() : dg.LevelMarking { // abstract
-            throw "Abstract method. Not implemented.";
-            return undefined;
+            this.currentWinner = this.getUniversalWinner();
         }
         
         private saveCurrentProcess(process : any, move : Move) : void {
@@ -584,9 +480,7 @@ module Activity {
             }
         }
         
-        public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) {
-            
-            this.step++;
+        public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) : void {
             var previousConfig = this.getCurrentConfiguration();
             
             // change the current node id to the next
@@ -609,6 +503,8 @@ module Activity {
                 this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove);
                 
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
+
+                this.round++;
                 
                 if (!this.cycleExists())
                     this.preparePlayer(this.attacker);
@@ -617,18 +513,11 @@ module Activity {
             this.gameActivity.highlightNodes();
             this.gameActivity.centerNode(destinationProcess, this.lastMove);
         }
-
-        public highlightChoices(isLeft : boolean, targetId : string) : void {
-            this.gameActivity.hightlightChoices(isLeft, targetId);
-        }
-
-        public removeHightlightChoices(isLeft : boolean) : void {
-            this.gameActivity.removeHightlightChoices(isLeft);
-        }
         
         private preparePlayer(player : Player) {
             var choices : any = this.getCurrentChoices(player.getPlayType());
             
+            // determine if game is over
             if (choices.length === 0) {
                 // the player to be prepared cannot make a move
                 // the player to prepare has lost, announce it
@@ -637,6 +526,14 @@ module Activity {
                 // stop game
                 this.stopGame();
             } else {
+                // save the old winner, and then update who wins
+                var oldWinner = this.currentWinner
+                this.currentWinner = this.getCurrentWinner();
+                
+                // if winner changed, let the user know
+                if (oldWinner !== this.currentWinner)
+                    this.gameLog.printWinnerChanged(this.currentWinner);
+                
                 // tell the player to prepare for his turn
                 player.prepareTurn(choices, this);
             }
@@ -648,7 +545,7 @@ module Activity {
             
             if (this.cycleCache[cacheStr] != undefined) {
                 // cycle detected
-                this.gameLog.printCycleWinner(configuration, this.defender);
+                this.gameLog.printCycleWinner(this.defender);
                 this.stopGame();
                 
                 // clear the cache
@@ -671,6 +568,17 @@ module Activity {
 
             return result;
         }
+        
+        /* Abstract methods */
+        public getUniversalWinner() : Player { return this.abstract(); }
+        public getCurrentWinner() : Player { return this.abstract(); }
+        public getBestWinningAttack(choices : any) : any { this.abstract(); }
+        public getTryHardAttack(choices : any) : any { this.abstract(); }
+        public getWinningDefend(choices : any) : any { this.abstract(); }
+        public getTryHardDefend(choices : any) : any { this.abstract(); }
+        public getCurrentChoices(playType : PlayType) : any { this.abstract(); }
+        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph { return this.abstract(); }
+        protected createMarking() : dg.LevelMarking { return this.abstract(); }
     }
 
     class BisimulationGame extends DgGame {
@@ -709,6 +617,10 @@ module Activity {
         
         public getUniversalWinner() : Player {
             return this.bisimilar ? this.defender : this.attacker;
+        }
+        
+        public getCurrentWinner() : Player {
+            return this.marking.getMarking(this.currentNodeId) === this.marking.ONE ? this.attacker : this.defender;
         }
         
         protected createMarking() : dg.LevelMarking {
@@ -823,12 +735,12 @@ module Activity {
         }
     }
 
-    class Player { // abstract
+    class Player extends Abstract {
 
         protected gameLog : GameLog = new GameLog();
         
         constructor(private playType : PlayType) {
-            
+            super();
         }
         
         public prepareTurn(choices : any, game : DgGame) : void {
@@ -836,7 +748,6 @@ module Activity {
             if (this.playType === PlayType.Attacker) {
                 this.gameLog.printRound(game.getRound());
                 this.gameLog.printConfiguration(game.getCurrentConfiguration());
-            } else {
             }
 
             switch (this.playType)
@@ -856,29 +767,24 @@ module Activity {
             return this.playType;
         }
         
-        protected prepareAttack(choices : any, game : DgGame) : void {
-            throw "Abstract method. Not implemented.";
-        }
-        
-        protected prepareDefend(choices : any, game : DgGame) : void {
-            throw "Abstract method. Not implemented.";
-        }
-        
         public abortPlay() : void {
-            // empty, override
+            // virtual, override
         }
-        
+
         public playTypeStr() : string {
-            return this.playType == PlayType.Attacker ? "Attacker" : this.playType == PlayType.Defender ? "Defender" : "unknown";
+            return this.playType == PlayType.Attacker ? "Attacker" : "Defender";
         }
+
+        /* Abstract methods */
+        protected prepareAttack(choices : any, game : DgGame) : void { this.abstract(); }
+        protected prepareDefend(choices : any, game : DgGame) : void { this.abstract(); }
     }
     
     class Human extends Player {
         
-        private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
         private $table;
         
-        constructor(playType : PlayType) {
+        constructor(playType : PlayType, private gameActivity : Game) {
             super(playType);
             
             this.$table = $("#game-transitions-table").find("tbody");
@@ -886,12 +792,12 @@ module Activity {
         
         protected prepareAttack(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, true);
-            this.gameLog.println("Pick a transition from left or right.");
+            this.gameLog.println("Pick a transition on left or right.", "<p class='game-prompt'>");
         }
         
         protected prepareDefend(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, false);
-            this.gameLog.println("Pick a transition from " + ((game.getLastMove() === Move.Left) ? "right." : "left."));
+            this.gameLog.println("Pick a transition on " + ((game.getLastMove() === Move.Left) ? "right." : "left."), "<p class='game-prompt'>");
         }
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
@@ -940,11 +846,7 @@ module Activity {
         }
         
         private labelFor(process : CCS.Process) : string {
-            if (process instanceof CCS.NamedProcess)
-                return this.htmlNotationVisitor.visit(process);
-            else 
-                // return process.id.toString();
-                return '<span class="ccs-tooltip-constant">' + process.id + '</span>';
+            return TooltipNotation.GetSpan(process instanceof CCS.NamedProcess ? process.name : process.id.toString());
         }
 
         private hightlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
@@ -959,16 +861,16 @@ module Activity {
             if (entering) {
                 var targetId = $(event.currentTarget).data("targetId");
                 if(move === Move.Left) {
-                    game.highlightChoices(true, targetId); // hightlight the left graph
+                    this.gameActivity.highlightChoices(true, targetId); // hightlight the left graph
                 } else{
-                    game.highlightChoices(false, targetId) // hightlight the right graph
+                    this.gameActivity.highlightChoices(false, targetId) // hightlight the right graph
                 }
                 $(event.currentTarget).css("background", "rgba(0, 0, 0, 0.07)"); // color the row
             } else {
                 if(move === Move.Left) {
-                    game.removeHightlightChoices(true);
+                    this.gameActivity.removeHighlightChoices(true);
                 } else{
-                    game.removeHightlightChoices(false);
+                    this.gameActivity.removeHighlightChoices(false);
                 }
                 $(event.currentTarget).css("background", ""); // remove highlight
             }
@@ -983,15 +885,16 @@ module Activity {
             else {
                 game.play(this, choice.targetProcess, choice.nextNode);
             }
-            game.removeHightlightChoices(true); // remove highlight from both graphs
-            game.removeHightlightChoices(false); // remove highlight from both graphs
+            this.gameActivity.removeHighlightChoices(true); // remove highlight from both graphs
+            this.gameActivity.removeHighlightChoices(false); // remove highlight from both graphs
         }
         
         public abortPlay() : void {
             this.$table.empty();
         }
     }
-
+    
+    // such ai
     class Computer extends Player {
         
         static Delay : number = 1500;
@@ -1008,7 +911,7 @@ module Activity {
         
         protected prepareAttack(choices : any, game : DgGame) : void {
             // select strategy
-            if (game.isUniversalWinner(this))
+            if (game.isCurrentWinner(this))
                 this.delayedPlay = setTimeout( () => this.winningAttack(choices, game), Computer.Delay);
             else
                 this.delayedPlay = setTimeout( () => this.losingAttack(choices, game), Computer.Delay);
@@ -1016,17 +919,13 @@ module Activity {
         
         protected prepareDefend(choices : any, game : DgGame) : void {
             // select strategy
-            if (game.isUniversalWinner(this))
+            if (game.isCurrentWinner(this))
                 this.delayedPlay = setTimeout( () => this.winningDefend(choices, game), Computer.Delay);
             else
                 this.delayedPlay = setTimeout( () => this.losingDefend(choices, game), Computer.Delay);
         }
         
         private losingAttack(choices : any, game : DgGame) : void {
-            // var random : number = this.random(choices.length - 1);
-            // var move : Move = choices[random].move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
-            // game.play(this, choices[random].targetProcess, choices[random].nextNode, choices[random].action, move);
-            
             var tryHardChoice = game.getTryHardAttack(choices);
             var move : Move = tryHardChoice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
             game.play(this, tryHardChoice.targetProcess, tryHardChoice.nextNode, tryHardChoice.action, move);
@@ -1040,9 +939,6 @@ module Activity {
         }
         
         private losingDefend(choices : any, game : DgGame) : void {
-            // var random : number = this.random(choices.length - 1);
-            // game.play(this, choices[random].targetProcess, choices[random].nextNode);
-            
             var tryHardChoice = game.getTryHardDefend(choices);
             game.play(this, tryHardChoice.targetProcess, tryHardChoice.nextNode);
         }
@@ -1054,81 +950,135 @@ module Activity {
     }
 
     class GameLog {
-        
-        private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
         private $log : JQuery;
-        
+
         constructor() {
             this.$log = $("#game-log");
             this.$log.empty();
         }
-        
-        public print(msg : string) : void {
-            this.$log.append(msg);
-            this.$log.scrollTop(this.$log[0].scrollHeight);
+
+        public println(line: string, wrapper? : string) : void {
+            if (wrapper) {
+                this.$log.append($(wrapper).append(line));
+            } else {
+                this.$log.append(line);
+            }
+
+            this.$log.scrollTop(this.$log[0].scrollHeight);;
         }
-        
-        public println(msg : string) : void {
-            this.print("<p>" + msg + "</p>");
+
+        public render(template : string, context : any) : string {
+            for (var i in context) {
+                var current = context[i].text;
+
+                if (context[i].tag) {
+                    current = $(context[i].tag).append(current);
+
+                    for (var j in context[i].attr) {
+                        current.attr(context[i].attr[j].name, context[i].attr[j].value);
+                    }
+
+                    template = template.replace("{" + i + "}", current[0].outerHTML);
+                } else {
+                    template = template.replace("{" + i + "}", current);
+                }
+            }
+
+            return template;
         }
-        
+
+        public removeLastPrompt() : void {
+            this.$log.find(".game-prompt").last().remove();
+        }
+
         public printRound(round : number) : void {
-            this.$log.append("<h4>Round " + Math.floor(round) + "</h4>");
+            this.println("Round " + round, "<h4>");
         }
 
-        public printConfiguration(conf : any) {
-            this.println("Current configuration: (<span class=\"transition\">" + this.labelFor(conf.left) +
-                "</span>, <span class=\"transition\">" + this.labelFor(conf.right) + "</span>).");
-        }
+        public printConfiguration(configuration : any) : void {
+            var template = "Current configuration: ({1}, {2}).";
 
-        public printPlayerType(attacker : Player) {
-            if (attacker instanceof Computer)
-                this.print('<p class="intro">You are playing as defender.</p>');
-            else
-                this.print('<p class="intro">You are playing as attacker.</p>');
+            var context = {
+                1: {text: this.labelFor(configuration.left), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
+                2: {text: this.labelFor(configuration.right), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]}
+            }
+
+            this.println(this.render(template, context), "<p>");
         }
 
         public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process, move : Move) : void {
-            
-            var who = player instanceof Computer ? player.playTypeStr() : "You";
+            var template = "{1} played ({2}, {3}, {4}) on {5}.";
 
-            this.println(who + " played (<span class=\"transition\">" + this.labelFor(source) +
-                "</span>, <span class=\"transition\">" + action +
-                "</span>, <span class=\"transition\">" + this.labelFor(destination) + "</span>) on " + (move == Move.Left ? "left" : "right") + ".");
+            var context = {
+                1: {text: (player instanceof Computer) ? player.playTypeStr() : "You"},
+                2: {text: this.labelFor(source), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
+                3: {text: action, tag: "<span>", attr: [{name: "class", value: "monospace"}]},
+                4: {text: this.labelFor(destination), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
+                5: {text: (move === Move.Left) ? "left" : "right"}
+            };
+
+            if (player instanceof Human) {
+                this.removeLastPrompt();
+            }
+
+            this.println(this.render(template, context), "<p>");
         }
 
         public printWinner(winner : Player) : void {
-            if (winner instanceof Computer) {
-                this.print('<p class="outro">You have no available transitions. You lose!</p>');
-            } else {
-                var loser = (winner.getPlayType() === PlayType.Attacker) ? "Defender" : "Attacker";
-                this.print('<p class="outro">' + loser + " has no available transitions. You win!</p>");
-            }
+            var template = "{1} no available transitions. You {2}!";
+
+            var context = {
+                1: {text: (winner instanceof Computer) ? "You have" : (winner.getPlayType() === PlayType.Attacker) ? "Defender has" : "Attacker has"},
+                2: {text: (winner instanceof Computer) ? "lose" : "win"}
+            };
+
+            this.println(this.render(template, context), "<p class='outro'>");
+        }
+
+        public printCycleWinner(defender : Player) : void {
+            var template = "A cycle has been detected. {1}!";
+
+            var context = {
+                1: {text: (defender instanceof Human) ? "You win" : "You lose"}
+            };
+
+            this.println(this.render(template, context), "<p class='outro'>");
         }
         
-        public printCycleWinner(configuration : any, defender : Player) : void {
-            this.print('<p class="outro">A cycle has been detected. ' + ((defender instanceof Human) ? "You win!" : "You lose!") + "</p>");
+        public printWinnerChanged(winner : Player) : void {
+            this.println("You made a bad move. " + winner.playTypeStr() + " now has a winning strategy.", "<p>");
         }
-        
+
         public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
-            this.print('<p class="intro">You are playing a ' + gameType + " bisimulation game starting from (<span class=\"transition\">" + this.labelFor(configuration.left) +
-                "</span>, <span class=\"transition\">" + this.labelFor(configuration.right) + "</span>).</p>");
-            
-            this.printPlayerType(attacker);
+            var template = "{1} bisimulation game starting from ({2}, {3}).";
+
+            var context = {
+                1: {text: this.capitalize(gameType)},
+                2: {text: this.labelFor(configuration.left), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
+                3: {text: this.labelFor(configuration.right), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]}
+            };
+
+            this.println(this.render(template, context), "<p class='intro'>");
+
+            if (attacker instanceof Computer) {
+                this.println("You are playing as defender.", "<p class='intro'>");
+            } else {
+                this.println("You are playing as attacker.", "<p class='intro'>");
+            }
             
             if (winner instanceof Human){
-                this.print('<p class="intro">You have a winning strategy.</p>');
+                this.println("You have a winning strategy.", "<p class='intro'>");
             } else {
-                this.print('<p class="intro">' + winner.playTypeStr() + ' has a winning strategy. You are going to lose.</p>');
+                this.println(winner.playTypeStr() + " has a winning strategy. You are going to lose.", "<p class='intro'>");
             }
         }
-        
+
+        private capitalize(str : string) : string {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
         private labelFor(process : CCS.Process) : string {
-            if (process instanceof CCS.NamedProcess)
-                return this.htmlNotationVisitor.visit(process);
-            else 
-                // return process.id.toString();
-                return '<span class="ccs-tooltip-constant">' + process.id + '</span>';
+            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
         }
     }
 }

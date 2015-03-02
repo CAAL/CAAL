@@ -4,6 +4,10 @@ html, body {
     font: normal 14px "Open Sans", "Arial";
 }
 
+.table-responsive{
+    overflow-x: visible; 
+}
+
 a {
     cursor: pointer;
 }
@@ -18,6 +22,10 @@ canvas {
 
 textarea {
     resize: none;
+}
+
+.monospace {
+    font: normal 14px "Inconsolata";
 }
 
 
@@ -61,6 +69,15 @@ textarea {
 
 .dropdown-menu {
     min-width: 0px;
+}
+
+#toolmenu.dropdown-menu {
+    right: 0;
+    left: inherit;
+}
+
+.dropdown-menu #toolmenu.dropdown-menu > li {
+    z-index: 10001;
 }
 
 .table-hover td {
@@ -242,6 +259,19 @@ textarea {
     border-radius: 6px;
 }
 
+#about-dialog .modal-footer {
+    padding: 15px;
+    border-top: 1px solid #e5e5e5;
+    text-align: initial;
+}
+#aboutok {
+    float: right;
+}
+#version {
+    float: left;
+    font-family: normal 14px "Inconsolata";
+}
+
 .modal-footer > #game-btn-group {
     width: 100%;
 }
@@ -285,11 +315,11 @@ p.small {
  * Verifier activity styles
  */
 
-#property-table tbody {
-    font: normal 14px "Inconsolata";
+#property-table td {
+    vertical-align: middle;
 }
 
-#equivalence, #model-checking {
+#equivalence, #model-checking, #distinguishing-formula {
     display: none;
 }
 
@@ -314,6 +344,8 @@ p.small {
 }
 
 
+
+
 /*
  * Game activity styles
  */
@@ -322,17 +354,19 @@ p.small {
     margin-bottom: 20px;
 }
 
-#game-fullscreen {
-    margin-right: 15px;
+#game-type {
+    width: 215px;
 }
 
-#game-main, #game-status {
-    margin: 0;
+#game-left {
+    padding-right: 0;
+}
+
+#game-right {
+    padding-left: 0;
 }
 
 #game-left-canvas, #game-right-canvas {
-    margin: 0;
-    padding: 0;
     border: 1px solid #e7e7e7;
     overflow: auto;
 }
@@ -341,7 +375,7 @@ p.small {
     border-left: none;
 }
 
-#game-left-canvas input[type=range], #game-right-canvas input[type=range] {
+input[type=range] {
     position: absolute;
     top: 10px;
     left: 10px;
@@ -349,20 +383,28 @@ p.small {
     cursor: pointer;
 }
 
-#game-status {
-    height: 205px;
+#game-status .col-md-4 {
+    padding-right: 0;
+}
+
+#game-status .col-md-8 {
+    padding-left: 0;
 }
 
 #game-log {
-    height: 100%;
+    height: 225px;
+    padding: 10px;
     overflow: auto;
     border: 1px solid #e7e7e7;
     border-top: none;
-    padding: 10px;
 }
 
 #game-log p {
-    margin-left: 20px;
+    margin: 0 0 10px 20px;
+}
+
+#game-log p:last-child {
+    margin-bottom: 0;
 }
 
 #game-log p.intro, #game-log p.outro {
@@ -374,15 +416,16 @@ p.small {
 }
 
 #game-log h4 {
-    margin-top: 20px;
+    margin: 20px 0 10px 0;
 }
 
-span.transition {
+#game-log .tooltip {
     font: normal 14px "Inconsolata";
 }
 
 #game-transitions {
-    height: 100%;
+    height: 225px;
+    padding: 10px;
     overflow: auto;
     border: 1px solid #e7e7e7;
     border-top: none;
@@ -395,6 +438,18 @@ span.transition {
 }
 
 @media (max-width: 991px) {
+    #game-type {
+        width: 100%;
+    }
+
+    #game-left {
+        padding-right: 15px;
+    }
+
+    #game-right {
+        padding-left: 15px;
+    }
+
     #game-right-canvas {
         border-top: none;
         border-left: 1px solid #e7e7e7;
@@ -403,6 +458,14 @@ span.transition {
     #game-transitions {
         border-left: 1px solid #e7e7e7;
         margin-bottom: 20px;
+    }
+
+    #game-status .col-md-4 {
+        padding-right: 15px;
+    }
+
+    #game-status .col-md-8 {
+        padding-left: 15px;
     }
 }
 
@@ -417,6 +480,7 @@ span.transition {
     border-radius: 5px;
     padding: 0px 2px 0px 2px;
     cursor: pointer;
+    font: normal 14px "Inconsolata";
 }
 
 .tooltip {
@@ -437,18 +501,4 @@ span.transition {
 
 .tooltip-arrow {
     border-top-color: #bbb !important;
-}
-
-#tip {
-    display: none;
-    position: absolute;
-    border: 1px solid #bbb;
-    background-color: #eee;
-    border-radius: 5px;
-    padding: 3px;
-    z-index: 1000;
-    margin-left: 6px;
-    margin-top: 6px;
-    /* set this to create word wrap */
-    max-width: 500px;
 }

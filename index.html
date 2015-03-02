@@ -1,644 +1,668 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CAAL</title>
-    <link href='css/fonts.css' rel='stylesheet' type='text/css'>
-    <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-    <link href="lib/fontawesome/css/font-awesome.min.css" rel="stylesheet">
-    <link href="lib/smartmenus/jquery.smartmenus.bootstrap.css" rel="stylesheet">
-    <link href="css/yamm.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
-  </head>
-  <body>
-    <!-- Top navigation -->
-    <nav class="navbar navbar-default" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand">Caal</a>
-        </div>
-        <div class="collapse navbar-collapse" id="navbar-collapse">
-          <ul class="nav navbar-nav noHighlight">
-            <li class="divider-vertical"></li>
-            <li><a>Project</a>
-              <ul class="dropdown-menu">
-                <li id="new-btn"><a>New Project</a></li>
-                <li><a>Save</a>
-                  <ul class="dropdown-menu">
-                    <li><a id="save-file-btn">To File</a></li>
-                    <li id="save-projects-btn"><a>To My Projects</a></li>
-                  </ul>
-                </li>
-                <li><a>Load</a>
-                  <ul class="dropdown-menu">
-                    <li id="load-file-btn"><a>From File</a></li>
-                    <input type="file" id="file-input" class="hidden" accept=".caal" />
-                    <li class="divider"></li>
-                    <li id="projects-list" class="dropdown-header" role="presentation">My Projects</li>
-                    <li class="divider"></li>
-                    <li id="examples-list" class="dropdown-header" role="presentation">Examples</li>
-                  </ul>
-                </li>
-                <li><a>Delete</a>
-                  <ul class="dropdown-menu">
-                    <li id="delete-list" class="dropdown-header" role="presentation">My Projects</li>
-                  </ul>
-                </li>
-                <li><a>Export</a>
-                  <ul class="dropdown-menu">
-                    <li id="export-pdf-btn"><a>To PDF</a></li>
-                  </ul>
-                </li>
-              </ul>
-            </li>
-            <li class="divider-vertical"></li>
-            <li id="edit-btn" class="active"><a>Edit</a></li>
-            <li id="explore-btn"><a>Explore</a></li>
-            <li id="verify-btn"><a>Verify</a></li>
-            <li id="game-btn"><a>Games</a></li>
-          </ul>
-          <ul class="nav navbar-nav navbar-right noHighlight">
-            <li button onclick="$('#about-dialog').modal('show');"><a>About</a></li>
-            <li button onclick="$('#help-dialog').modal('show')"><a>Help</a></button li>
-            <li><a href="https://github.com/CAAL/CAAL"><i class="fa fa-github fa-lg"></i></a></li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-	
-    <div class="container">
-      <!-- Editor -->
-      <div id="editor-container">
-        <h4 id="project-title" class="pull-left" contenteditable="true"></h4>
-        <i id="title-edit-icon" class="fa fa-pencil-square-o"></i>
-        <div class="btn-group pull-right">
-          <button id="parse-btn" type="button" class="btn btn-default">Parse</button>
-          <div class="btn-group">
-            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-              Font Size
-              <span class="caret"></span>
-            </button>
-            <ul id="font-size-btn" class="dropdown-menu" role="menu">
-              <li><a>10</a></li>
-              <li><a>12</a></li>
-              <li><a>14</a></li>
-              <li><a>16 <i class="fa fa-check"></i></a></li>
-              <li><a>18</a></li>
-              <li><a>20</a></li>
-              <li><a>22</a></li>
-              <li><a>24</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="clearfix"></div>
-        <div class="editor-border">
-          <div id="editor"></div>
-        </div>
-        <div id="status-area" class="alert alert-dismissible" role="alert">
-          <button type="button" class="close" data-hide="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-          <p></p>
-        </div>
-      </div>
-
-      <!-- Explorer -->
-      <div id="explorer-container">
-        <div id="fullscreen-container">
-          <nav class="navbar yamm navbar-default controls" role="navigation">
-            <div id="explorer-process-list" class="col-md-2">
-              <select class="form-control">
-              </select>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>CAAL</title>
+        <link href='css/fonts.css' rel='stylesheet' type='text/css'>
+        <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+        <link href="lib/fontawesome/css/font-awesome.min.css" rel="stylesheet">
+        <link href="lib/smartmenus/jquery.smartmenus.bootstrap.css" rel="stylesheet">
+        <link href="css/yamm.css" rel="stylesheet">
+        <link href="css/style.css" rel="stylesheet">
+    </head>
+    <body>
+        <!-- Top navigation -->
+        <nav class="navbar navbar-default" role="navigation">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand">Caal</a>
+                </div>
+                <div class="collapse navbar-collapse" id="navbar-collapse">
+                    <ul class="nav navbar-nav noHighlight">
+                        <li class="divider-vertical"></li>
+                        <li><a>Project</a>
+                            <ul class="dropdown-menu">
+                                <li id="new-btn"><a>New Project</a></li>
+                                <li><a>Save</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a id="save-file-btn">To File</a></li>
+                                        <li id="save-projects-btn"><a>To My Projects</a></li>
+                                    </ul>
+                                </li>
+                                <li><a>Load</a>
+                                    <ul class="dropdown-menu">
+                                        <li id="load-file-btn"><a>From File</a></li>
+                                        <input type="file" id="file-input" class="hidden" accept=".caal" />
+                                        <li class="divider"></li>
+                                        <li id="projects-list" class="dropdown-header" role="presentation">My Projects</li>
+                                        <li class="divider"></li>
+                                        <li id="examples-list" class="dropdown-header" role="presentation">Examples</li>
+                                    </ul>
+                                </li>
+                                <li><a>Delete</a>
+                                    <ul class="dropdown-menu">
+                                        <li id="delete-list" class="dropdown-header" role="presentation">My Projects</li>
+                                    </ul>
+                                </li>
+                                <li><a>Export</a>
+                                    <ul class="dropdown-menu">
+                                        <li id="export-pdf-btn"><a>To PDF</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li class="divider-vertical"></li>
+                        <li id="edit-btn" class="active"><a>Edit</a></li>
+                        <li id="explore-btn"><a>Explore</a></li>
+                        <li id="verify-btn"><a>Verify</a></li>
+                        <li id="game-btn"><a>Games</a></li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right noHighlight">
+                        <li button onclick="$('#about-dialog').modal('show');"><a>About</a></li>
+                        <li button onclick="$('#help-dialog').modal('show')"><a>Help</a></button li>
+                        <li><a href="https://github.com/CAAL/CAAL"><i class="fa fa-github fa-lg"></i></a></li>
+                    </ul>
+                </div>
             </div>
-            <ul class="nav navbar-nav">
-              <li class="dropdown">
-                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                  Options <span class="caret"></span>
-                </button>
-                <ul class="dropdown-menu">
-                  <li>
-                    <div class="yamm-content">
-                      <div class="form-inline">
-                        <label>Expand Depth: </label>
-                        <select id="option-depth" class="form-control">
-                          <option>1</option>
-                          <option>5</option>
-                          <option selected>10</option>
-                          <option>100</option>
+        </nav>
+        
+        <!-- Editor -->
+        <div id="editor-container" class="container">
+            <h4 id="project-title" class="pull-left" contenteditable="true"></h4>
+            <i id="title-edit-icon" class="fa fa-pencil-square-o"></i>
+            <div class="btn-group pull-right">
+                <button id="parse-btn" type="button" class="btn btn-default">Parse</button>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                        Font Size
+                        <span class="caret"></span>
+                    </button>
+                    <ul id="font-size-btn" class="dropdown-menu" role="menu">
+                        <li><a>10</a></li>
+                        <li><a>12</a></li>
+                        <li><a>14</a></li>
+                        <li><a>16 <i class="fa fa-check"></i></a></li>
+                        <li><a>18</a></li>
+                        <li><a>20</a></li>
+                        <li><a>22</a></li>
+                        <li><a>24</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+            <div class="editor-border">
+                <div id="editor"></div>
+            </div>
+            <div id="status-area" class="alert alert-dismissible" role="alert">
+                <button type="button" class="close" data-hide="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <p></p>
+            </div>
+        </div>
+
+        <!-- Explorer -->
+        <div id="explorer-container" class="container">
+            <div id="fullscreen-container">
+                <nav class="navbar yamm navbar-default controls" role="navigation">
+                    <div id="explorer-process-list" class="col-md-2">
+                        <select class="form-control">
                         </select>
-                      </div>
-                      <div class="divider"></div>
-                      <div class="radio">
-                        <label data-tooltip="collapse-none">
-                          <input name="option-collapse" value="none" type="radio" checked>
-                          No Bisimulation Collapse
-                      </div>
-                      <div class="radio">
-                        <label data-tooltip="collapse-strong">
-                          <input name="option-collapse" value="strong" type="radio">
-                          Strong Bisimulation Collapse
-                        </label>
-                      </div>
-                      <div class="radio">
-                        <label data-tooltip="collapse-weak">
-                          <input name="option-collapse" value="weak" type="radio">
-                          Weak Bisimulation Collapse
-                        </label>
-                      </div>
-                      <div class="divider"></div>
-                      <div class="checkbox">
-                        <label>
-                          <input id="option-simplify" type="checkbox" checked>
-                          Simplify
-                        </label>
-                      </div>
                     </div>
-                  </li>
-                </ul>
-              </li>
-            </ul>
-            <div class="btn-group pull-right">
-              <button id="explorer-freeze-btn" type="button" class="btn btn-default">Freeze</button>
-              <a id="explorer-save-btn" class="btn btn-default">Save Image</a>
-              <button id="explorer-fullscreen-btn" type="button" class="btn btn-default">Fullscreen</button>
+                    <ul class="nav navbar-nav">
+                        <li class="dropdown">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                Options <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <div class="yamm-content">
+                                        <div class="radio">
+                                            <label>
+                                                <input name="option-successor" value="strong" type="radio" checked>
+                                                    Strong Successors (&#x2192;)
+                                            </label>
+                                        </div>
+                                        <div class="radio">
+                                            <label>
+                                                <input name="option-successor" value="weak" type="radio">
+                                                    Weak Successors (&#x21D2;)
+                                            </label>
+                                        </div>
+                                        <div class="divider"></div>
+                                        <div class="form-inline">
+                                            <label>Expand Depth: </label>
+                                            <select id="option-depth" class="form-control">
+                                                <option>1</option>
+                                                <option>5</option>
+                                                <option selected>10</option>
+                                                <option>100</option>
+                                            </select>
+                                        </div>
+                                        <div class="divider"></div>
+                                        <div class="radio">
+                                            <label data-tooltip="collapse-none">
+                                                <input name="option-collapse" value="none" type="radio" checked>
+                                                    No Bisimulation Collapse
+                                        </div>
+                                        <div class="radio">
+                                            <label data-tooltip="collapse-strong">
+                                                <input name="option-collapse" value="strong" type="radio">
+                                                    Strong Bisimulation Collapse
+                                            </label>
+                                        </div>
+                                        <div class="radio">
+                                            <label data-tooltip="collapse-weak">
+                                                <input name="option-collapse" value="weak" type="radio">
+                                                    Weak Bisimulation Collapse
+                                            </label>
+                                        </div>
+                                        <div class="divider"></div>
+                                        <div class="checkbox">
+                                            <label>
+                                                <input id="option-simplify" type="checkbox" checked>
+                                                Simplify
+                                            </label>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <div class="btn-group pull-right">
+                        <button id="explorer-freeze-btn" type="button" class="btn btn-default">Freeze</button>
+                        <a id="explorer-save-btn" class="btn btn-default">Save Image</a>
+                        <button id="explorer-fullscreen-btn" type="button" class="btn btn-default">Fullscreen</button>
+                    </div>
+                </nav>
+                <div class="clearfix"></div>
+                <canvas id="arbor-canvas"></canvas>
             </div>
-          </nav>
-          <div class="clearfix"></div>
-          <canvas id="arbor-canvas"></canvas>
+            <div id="status-table-container">
+                <h4>Source Process</h4>
+                <p id="explorer-source-definition" style="margin-left: 2em"></p>
+                <h4>Target Processes</h4>
+                <table id="status-table" class="table table-responsive table-striped table-condensed table-hover noHighlight" >
+                    <thead>
+                        <tr>
+                            <th class="col-1">Action</th>
+                            <th class="col-2">Target</th>
+                            <th class="col-3">Target Definition</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div id="status-table-container">
-          <h4>Source Process</h4>
-          <p id="explorer-source-definition" style="margin-left: 2em"></p>
-          <h4>Target Processes</h4>
-          <table id="status-table" class="table table-responsive table-striped table-condensed table-hover noHighlight" >
-            <thead>
-              <tr>
-                <th class="col-1">Action</th>
-                <th class="col-2">Target</th>
-                <th class="col-3">Target Definition</th>
-              </tr>
-            </thead>
-            <tbody>
-            </tbody>
-          </table>
-        </div>
-      </div>
 
-      <!-- Verifier -->
-      <div id="verifier-container">
-        <div class="row">
-          <div class="col-md-7">
-            <div class="table-responsive">
-              <table id="property-table" class="table table-bordered table-hover">
-                <thead>
-                  <tr>
-                    <th class="col-md-1 text-center">Status</th>
-                    <th class="col-md-9">Property</th>
-                    <th class="col-md-1 text-center">Delete</th>
-                    <th class="col-md-1 text-center">Verify</th>
-                  </tr>
-                </thead>
-                  <tbody>
-                  </tbody>
-              </table>
-            </div>
-            <div class="btn-group">
-              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                Add Property
-                <span class="caret"></span>
-              </button>
-              <ul id="add-property" class="dropdown-menu" role="menu">
-                <li class="dropdown-header" role="presentation">Equivalence</li>
-                <li id="strong"><a>Strong Bisimulation</a></li>
-                <li id="weak"><a>Weak Bisimulation</a></li>
-                <li class="divider"></li>
-                <li class="dropdown-header" role="presentation">Model Checking</li>
-                <li id="hml"><a>HML</a></li>
-              </ul>
-            </div>
-            <div class="btn-group pull-right">
-              <button id="verify-stop" type="button" class="btn btn-default" disabled>Stop</button>
-              <button id="verify-all" type="button" class="btn btn-default">Verify All</button>
-            </div>
-          </div>
-          <div class="col-md-5">
+        <!-- Verifier -->
+        <div id="verifier-container" class="container">
             <div class="row">
-              <div class="col-md-12">
-                <div id="equivalence">
-                  <div class="form-group">
-                    <label for="equivalence-first-process" class="control-label">First Process</label>
-                    <select id="equivalence-first-process" class="form-control"></select>
-                  </div>
-                  <div class="form-group">
-                    <label for="equivalence-second-process" class="control-label">Second Process</label>
-                    <select id="equivalence-second-process" class="form-control"></select>
-                  </div>
-                </div>
-                <div id="model-checking">
-                  <div class="form-group">
-                    <label for="hml-process" class="control-label">Process</label>
-                    <select id="hml-process" class="form-control"></select>
-                    <div class="editor-border">
-                      <div id="hml-editor"></div>
+                <div class="col-md-7">
+                    <div class="table-responsive">
+                        <table id="property-table" class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="col-md-1 text-center">Status</th>
+                                    <th class="col-md-9">Property</th>
+                                    <th class="col-md-1 text-center">Verify</th>
+                                    <th class="col-md-1 text-center"></th>
+                                </tr>
+                            </thead>
+                                <tbody>
+                                </tbody>
+                        </table>
                     </div>
-                  </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                            Add Property
+                            <span class="caret"></span>
+                        </button>
+                        <ul id="add-property" class="dropdown-menu" role="menu">
+                            <li class="dropdown-header" role="presentation">Equivalence</li>
+                            <li id="strong"><a>Strong Bisimulation</a></li>
+                            <li id="weak"><a>Weak Bisimulation</a></li>
+                            <li id="strongtraceinclusion"><a>Strong Trace Inclusion</a></li>
+                            <li class="divider"></li>
+                            <li class="dropdown-header" role="presentation">Model Checking</li>
+                            <li id="hml"><a>HML</a></li>
+                            <li id="distinguishing"><a>Distinguishing formula</a></li>
+                        </ul>
+                    </div>
+                    <div class="btn-group pull-right">
+                        <button id="verify-stop" type="button" class="btn btn-default" disabled>Stop</button>
+                        <button id="verify-all" type="button" class="btn btn-default">Verify All</button>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Game -->
-      <div id="game-container">
-        <div id="game-options" class="row">
-          <div class="row">
-            <div class="col-md-9">
-              <div class="col-md-3">
-                <select id="game-type" class="form-control">
-                  <option value="strong" selected>Strong Bisimulation</option>
-                  <option value="weak">Weak Bisimulation</option>
-                </select>
-              </div>
-              <div class="col-md-2">
-                <select id="game-left-process" class="form-control">
-                </select>
-              </div>
-              <div class="col-md-2">
-                <select id="game-right-process" class="form-control">
-                </select>
-              </div>
-              <div class="col-md-4">
-                <div class="btn-group" data-toggle="buttons">
-                  <label class="btn btn-default">
-                    <input name="player-type" value="attacker" type="radio"> Attacker
-                  </label>
-                  <label class="btn btn-default active">
-                    <input name="player-type" value="defender" type="radio" checked> Defender
-                  </label>
+                <div class="col-md-5">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div id="equivalence">
+                                <div class="form-group">
+                                    <label for="equivalence-first-process" class="control-label">First Process</label>
+                                    <select id="equivalence-first-process" class="form-control"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="equivalence-second-process" class="control-label">Second Process</label>
+                                    <select id="equivalence-second-process" class="form-control"></select>
+                                </div>
+                            </div>
+                            <div id="model-checking">
+                                <div class="form-group">
+                                    <label for="hml-process" class="control-label">Process</label>
+                                    <select id="hml-process" class="form-control"></select>
+                                    <div class="editor-border">
+                                        <div id="hml-editor"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="distinguishing-formula">
+                                <div class="form-group">
+                                    <label for="distinguishing-first-process" class="control-label">First Process</label>
+                                    <select id="distinguishing-first-process" class="form-control"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="distinguishing-second-process" class="control-label">Second Process</label>
+                                    <select id="distinguishing-second-process" class="form-control"></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
-            <div class="col-md-3 text-right">
-              <div class="btn-group" data-toggle="buttons">
-                <button id="game-fullscreen" type="button" class="btn btn-default align-right">Fullscreen</button>
-              </div>
-            </div>
-          </div>
         </div>
-        <div id="game-main" class="row">
-          <div id="game-left-canvas" class="col-md-6">
-            <input id="zoom-left" data-side="left" min="1" max="3" step="0.2" value="1" type="range" />
-            <canvas></canvas>
-          </div>
-          <div id="game-right-canvas" class="col-md-6">
-            <input id="zoom-right" data-side="right" min="1" max="3" step="0.2" value="1" type="range" />
-            <canvas></canvas>
-          </div>
-        </div>
-        <div id="game-status" class="row">
-          <div id="game-log" class="col-md-4">
-          </div>
-          <div id="game-transitions" class="col-md-8">
-            <table id="game-transitions-table" class="table table-responsive table-striped table-condensed table-hover noHighlight">
-              <thead>
-                <tr>
-                  <th class="col-md-4">Source</th>
-                  <th class="col-md-4">Action</th>
-                  <th class="col-md-4">Target</th>
-                </tr>
-              </thead>
-              <tbody>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
 
-    <!-- Modals -->
-    <div id="delete-modal" class="modal fade" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            <h4 class="modal-title">Confirm Delete</h4>
-          </div>
-          <div class="modal-body">
-            <p>Are you sure you want to delete this project?</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-            <button id="confirm-delete" type="button" class="btn btn-primary">Delete</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="modal fade" id="viz-mode-dialog" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            <h4 class="modal-title">Select Initial Process</h4>
-          </div>
-          <div class="modal-body" id="viz-mode-dialog-body" tabindex="-1">
-            Select whether to use strong or weak successors:<br>
-            <div class="btn-group" data-toggle="buttons">
-              <label class="btn btn-primary active">
-                <input type="radio" name="viz-mode-succgen" value="strong" autocomplete="off" checked>Strong Successors
-              </label>
-              <label class="btn btn-primary">
-                <input type="radio" name="viz-mode-succgen" value="weak" autocomplete="off">Weak Successors
-              </label>
+        <!-- Game -->
+        <div id="game-container" class="container">
+            <div id="game-options" class="row">
+                <div id="game-type" class="col-md-3">
+                    <select class="form-control">
+                        <option value="strong" selected>Strong Bisimulation</option>
+                        <option value="weak">Weak Bisimulation</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="game-left-process" class="form-control"></select>
+                </div>
+                <div class="col-md-2">
+                    <select id="game-right-process" class="form-control"></select>
+                </div>
+                <div class="col-md-3">
+                    <div class="btn-group" data-toggle="buttons">
+                        <label class="btn btn-default">
+                            <input name="player-type" value="attacker" type="radio"> Attacker
+                        </label>
+                        <label class="btn btn-default active">
+                            <input name="player-type" value="defender" type="radio" checked> Defender
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-2 pull-right text-right ">
+                    <div class="btn-group">
+                        <button id="game-fullscreen" type="button" class="btn btn-default">Fullscreen</button>
+                    </div>
+                </div>
             </div>
-            <br>
-            Select whether to simplify processes:
-            <br>
-            <button type="button" id="viz-mode-reduce-btn" class="btn btn-primary active" data-toggle="button" aria-pressed="true" autocomplete="off">Simplify</button>
-            <br>
-            <label for="viz-mode-dialog-depth">Select how deep to expand</label>
-            <select class="form-control" id="viz-mode-dialog-depth">
-              <option selected>1</option>
-              <option>2</option>
-              <option>3</option>
-              <option>5</option>
-              <option>10</option>
-              <option>100</option>
-              <option>500</option>
-            </select><br>
-            <p>Select initial process</p>
-            <div id="viz-mode-dialog-body-list"></div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-          </div>
+            <div id="game-main" class="row">
+                <div id="game-left" class="col-md-6">
+                    <div style="position: relative">
+                        <input id="zoom-left" data-side="left" min="1" max="3" step="0.2" value="1" type="range" />
+                    </div>
+                    <div id="game-left-canvas">
+                        <canvas></canvas>
+                    </div>
+                </div>
+                <div id="game-right" class="col-md-6">
+                    <div style="position: relative">
+                        <input id="zoom-right" data-side="right" min="1" max="3" step="0.2" value="1" type="range" />
+                    </div>
+                    <div id="game-right-canvas">
+                        <canvas></canvas>
+                    </div>
+                </div>
+            </div>
+            <div id="game-status" class="row">
+                <div class="col-md-4">
+                    <div id="game-log"></div>
+                </div>
+                <div class="col-md-8">
+                    <div id="game-transitions">
+                        <table id="game-transitions-table" class="table table-responsive table-striped table-condensed table-hover noHighlight">
+                            <thead>
+                                <tr>
+                                    <th class="col-md-4">Source</th>
+                                    <th class="col-md-4">Action</th>
+                                    <th class="col-md-4">Target</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div class="modal fade" id="game-mode-dialog" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            <h4 class="modal-title">Setup Game</h4>
-          </div>
 
-          <div class="modal-body" id="game-mode-dialog-body">
-            <label for="game-mode-dialog-depth">First Process</label>
-            <select class="form-control" id="game-mode-dialog-processa">
-            </select><br>
-            <label for="game-mode-dialog-depth">Second Process</label>
-            <select class="form-control" id="game-mode-dialog-processb">
-            </select><br>
-            <p>Select Bisimulation Type</p>
-            <div id="game-mode-dialog-succ-list">
-              <div class="btn-group" data-toggle="buttons">
-                <label class="btn btn-default btn-lg btn-block active">
-                  <input type="radio" name="options" id="strong" autocomplete="off" checked> Strong Bisimulation
-                </label>
-                <label class="btn btn-default btn-lg btn-block">
-                  <input type="radio" name="options" id="weak" autocomplete="off"> Weak Bisimulation
-                </label>
-              </div>
+        <!-- Modals -->
+        <div id="delete-modal" class="modal fade" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title">Confirm Delete</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete this project?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button id="confirm-delete" type="button" class="btn btn-primary">Delete</button>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="modal-footer">
-            <div id="game-btn-group" class="btn-group" role="group">
-              <button type="button" id="start-btn" class="btn btn-success" data-dismiss="modal">Start</button>
-              <button type="button" id="cancel-btn" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+        </div>
+        <div class="modal fade" id="viz-mode-dialog" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title">Select Initial Process</h4>
+                    </div>
+                    <div class="modal-body" id="viz-mode-dialog-body" tabindex="-1">
+                        Select whether to use strong or weak successors:<br>
+                        <div class="btn-group" data-toggle="buttons">
+                            <label class="btn btn-primary active">
+                                <input type="radio" name="viz-mode-succgen" value="strong" autocomplete="off" checked>Strong Successors
+                            </label>
+                            <label class="btn btn-primary">
+                                <input type="radio" name="viz-mode-succgen" value="weak" autocomplete="off">Weak Successors
+                            </label>
+                        </div>
+                        <br>
+                        Select whether to simplify processes:
+                        <br>
+                        <button type="button" id="viz-mode-reduce-btn" class="btn btn-primary active" data-toggle="button" aria-pressed="true" autocomplete="off">Simplify</button>
+                        <br>
+                        <label for="viz-mode-dialog-depth">Select how deep to expand</label>
+                        <select class="form-control" id="viz-mode-dialog-depth">
+                            <option selected>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>5</option>
+                            <option>10</option>
+                            <option>100</option>
+                            <option>500</option>
+                        </select><br>
+                        <p>Select initial process</p>
+                        <div id="viz-mode-dialog-body-list"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-    </div>    
-    <div class="modal fade" id="explain-dialog" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            <h4 class="modal-title" id="explain-dialog-title"></h4>
-          </div>
-          <div class="modal-body">
-            <p id="explain-dialog-body-par"></p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-          </div>
-        </div>
-      </div>
-    </div>				
-	<div class="modal fade" id="about-dialog" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            <h4 class="modal-title" id="about-dialog-title">About</h4>
-          </div>
-          <div class="modal-body">
-            <p>
-	
-				<span class="small">Caal</span> is a model checking tool developed at Aalborg University. It has support for the process algebra CCS.
-				
-				<br/>
-				<br/>
-				It can visualise CCS processes in the explorer and check for strong and weak bisimulation and HML properties in the verifier. 
-				<br/>
-				<br/>
-				
-				Authors: Jacob K. Wortmann, Jesper Riemer Andersen, Nicklas Andersen, Mathias Munk Hansen, Simon Reedtz Olesen, and Søren Enevoldsen.
-			</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-          </div>
-        </div>
-      </div>
-    </div>
-	
-    <div class="modal fade" id="help-dialog" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-            <h4 class="modal-title" id="help-dialog-title">Caal</h4>
-          </div>
-          <div class="modal-body">
-            <p id="help-dialog-body-par">
-		      The table listed contains the allowed CCS expressions along with the syntax
-			  <table style="width:100%" class="helpTable ace-crisp">
-			    <col style="width:50%" span="2"/>
-			    <thead>
-		          <tr>
-					<th>Expression</th>
-					<th>Syntax</th>
-				  </tr>
-				</thead>
-				  <tbody>
-					<tr>
-					  <td>Comment</td>
-						<td class="inconsolata"><span class="ace_comment">* This is a comment</span></td>
-					</tr>
-					<tr>
-					  <td>Process Definition</td>
-					  <td class ="inconsolata"><span class="ace_constant">A</span>
-											   <span class="ace_keyword ace_operator">=</span> 
-											   a<span class="ace_keyword ace_operator">.</span><span class="ace_constant">B</span>;
-					  </td>
-					</tr>		
-					<tr>
-					  <td>Parallel Composition</td>
-					  <td class ="inconsolata"><span class="ace_constant">P</span>
-											   <span class="ace_keyword ace_operator">|</span>
-						  					   <span class="ace_constant">Q</span>;
-					  </td>
-					</tr>			
-					<tr>
-					  <td>Choice</td>
-					  <td class ="inconsolata"><span class="ace_constant">P</span>
-											   <span class="ace_keyword ace_operator">+</span> 
-											   <span class="ace_constant">Q</span>;
-					  </td>
-					</tr>			
-					<tr>
-					  <td>Restriction</td>
-					  <td class ="inconsolata"><span class="ace_constant">A</span> 
-											   <span class="ace_keyword ace_operator">\</span> {a,b};
-					  </td>
-					</tr>
-					<tr>
-					  <td>Renaming</td>
-					  <td class ="inconsolata"><span class="ace_constant">A</span>[b/a];</td>
-					</tr>
-					<tr>
-					  <td>Set</td>
-					  <td class ="inconsolata">set 
-											   <span class="ace_constant">L</span> 
-											   <span class="ace_keyword ace_operator">=</span> {a,b,c};
-					  </td>
-					</tr>
-					<tr>
-					  <td>Empty Process</td>
-					  <td class ="inconsolata">0;</td>
-					</tr>
-				  </tbody>
-				</table>
-			</p>	
+        <div class="modal fade" id="game-mode-dialog" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title">Setup Game</h4>
+                    </div>
 
-            <p id="help-dialog-body-par1">
-			  <br/>
-				The table listed contains the allowed HML formulas along with the syntax
-				
-				<table style="width:100%" class="helpTable ace-crisp">
-				  <col style="width:50%" span="2"/>
-				  <thead>
-			    	<tr>
-				      <th>Formula</th>
-					  <th>Syntax</th>
-					</tr>
-				  </thead>
-				  <tbody>
-				    <tr>
-					  <td>True</td>
-					  <td class ="inconsolata"><span class="ace_constant">tt</span> or <span class="ace_constant">T</span></td>
-					</tr>
-					<tr>
-					  <td>False</td>
-					  <td class ="inconsolata"><span class="ace_constant">ff</span> or <span class="ace_constant">F</span></td>
-					</tr>		
-					<tr>
-					  <td>Conjunction</td>
-					  <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">and</span> <span class="ace_constant">G </span>;</td>
-					</tr>			
-					<tr>
-					  <td>Disjunction</td>
-					  <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">or</span> <span class="ace_constant">G</span>;</td>
-					</tr>			
-					<tr>
-					  <td>Strong Existential Modality</td>
-					  <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt</span>a,b<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span></td>
-					</tr>
-					<tr>
-					  <td>Weak Existential Modality</td>
-					  <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt&lt</span>a,b<span class="ace_keyword ace_operator">&gt&gt</span><span class="ace_constant">H</span>;</td>
-					</tr>
-					<tr>
-					  <td>Strong Forall Modality</td>
-				      <td class ="inconsolata"><span class="ace_keyword ace_operator">[</span>a,b<span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span>;</td>
-					</tr>
-					<tr>
-					<td>Weak Forall Modality</td>
-					  <td class ="inconsolata"><span class="ace_keyword ace_operator">[[</span>a,b<span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span>;</td>
-					</tr>
-					<tr>
-					  <td>All Actions</td>
-					  <td class ="inconsolata">-, e.g <span class="ace_keyword ace_operator">&lt</span>-<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span>;
-					  </td>
-					</tr>
-					<tr>
-					  <td>Minimum fix-point</td>
-					  <td class ="inconsolata"><span class="ace_constant">X</span> 
-											   <span class="ace_keyword ace_operator">min=</span>
-											   <span class="ace_keyword ace_operator">&lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
-                                               <span class="ace_keyword ace_operator">or</span> 
-											   <span class="ace_keyword ace_operator">[</span>-<span class="ace_keyword ace_operator">]</span>
-											   <span class="ace_constant">X</span>;
-					  </td>
-					</tr>
-					<tr>
-					  <td>Maximum fix-point</td>
-					  <td class ="inconsolata"><span class="ace_constant">X</span>
-											   <span class="ace_keyword ace_operator">max=</span>
-											   <span class="ace_keyword ace_operator">&lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
-											   <span class="ace_keyword ace_operator">and</span> 
-											   <span class="ace_constant">X</span>;
-					  </td>
-				    </tr>
-					<tr>
-					  <td>Recursive Variable</td>
-				      <td class ="inconsolata"><span class="ace_constant">X</span> 
-											   <span class="ace_keyword ace_operator">max=</span>
-											   <span class="ace_keyword ace_operator">&lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span> 
-											   <span class="ace_keyword ace_operator">and</span> 
-											   <span class="ace_constant">Y</span> 
-											   <span class="ace_keyword ace_operator">and</span>
-											   <span class="ace_keyword ace_operator">[</span>-<span class="ace_keyword ace_operator">]</span><span class="ace_constant">X</span>; 
-											   <br/> 
-						  					   <span class="ace_constant">Y</span> 
-											   <span class="ace_keyword ace_operator">min=</span>
-											   <span class="ace_keyword ace_operator">&lt</span>b<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span> 
-											   <span class="ace_keyword ace_operator">or</span> 
-											   <span class="ace_constant">Y</span>;
-					  </td>
-					</tr>
-				  </tbody>
-				</table>	
-			  </p>
+                    <div class="modal-body" id="game-mode-dialog-body">
+                        <label for="game-mode-dialog-depth">First Process</label>
+                        <select class="form-control" id="game-mode-dialog-processa">
+                        </select><br>
+                        <label for="game-mode-dialog-depth">Second Process</label>
+                        <select class="form-control" id="game-mode-dialog-processb">
+                        </select><br>
+                        <p>Select Bisimulation Type</p>
+                        <div id="game-mode-dialog-succ-list">
+                            <div class="btn-group" data-toggle="buttons">
+                                <label class="btn btn-default btn-lg btn-block active">
+                                    <input type="radio" name="options" id="strong" autocomplete="off" checked> Strong Bisimulation
+                                </label>
+                                <label class="btn btn-default btn-lg btn-block">
+                                    <input type="radio" name="options" id="weak" autocomplete="off"> Weak Bisimulation
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div id="game-btn-group" class="btn-group" role="group">
+                            <button type="button" id="start-btn" class="btn btn-success" data-dismiss="modal">Start</button>
+                            <button type="button" id="cancel-btn" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-          </div>
+        </div>    
+        <div class="modal fade" id="explain-dialog" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="explain-dialog-title"></h4>
+                    </div>
+                    <div class="modal-body">
+                        <p id="explain-dialog-body-par"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+                    </div>
+                </div>
+            </div>
+        </div>              
+        <div class="modal fade" id="about-dialog" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="about-dialog-title">About</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            <span class="small">Caal</span> is a web-based tool for modelling and verification of concurrent systems developed at Aalborg University. Concurrent systems are modelled using the CCS language.
+                            <br/><br/>
+                            It can visualise CCS processes in the explorer and check for strong and weak bisimulation and HML properties in the verifier. 
+                            <br/><br/>
+                            Authors: Jacob K. Wortmann, Jesper Riemer Andersen, Nicklas Andersen, Mathias Munk Hansen, Simon Reedtz Olesen, and Søren Enevoldsen.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <span id="version"></span>
+                        <button id="aboutok" type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div id="tip"></div>
-    <script src="lib/jquery-1.11.1.min.js"></script>
-    <script src="lib/bootstrap/js/bootstrap.min.js"></script>
-    <script src="lib/smartmenus/jquery.smartmenus.min.js"></script>
-    <script src="lib/smartmenus/jquery.smartmenus.bootstrap.min.js"></script>
-    <script src="lib/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
-    <script src="lib/ace/src/ext-language_tools.js"></script>
-    <script src="lib/ccs_grammar.js"></script>
-    <script src="lib/hml_grammar.js"></script>
-    <script src="lib/arbor.js"></script>
-    <script src="lib/graphics.js"></script>
-    <script src="lib/ccs.js"></script>
-    <script src="lib/blob-stream.js"></script>
-    <script src="lib/pdfkit.js"></script>
-    <script src="lib/main.js"></script>
-  </body>
+        
+        <div class="modal fade" id="help-dialog" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="help-dialog-title">Caal</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p id="help-dialog-body-par">
+                            The table listed contains the allowed CCS expressions along with the syntax
+                            <table style="width:100%" class="helpTable ace-crisp">
+                                <col style="width:50%" span="2"/>
+                                <thead>
+                                    <tr>
+                                        <th>Expression</th>
+                                        <th>Syntax</th>
+                                    </tr>
+                                </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Comment</td>
+                                                <td class="inconsolata"><span class="ace_comment">* This is a comment</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Process Definition</td>
+                                            <td class ="inconsolata"><span class="ace_constant">A</span>
+                                                                                             <span class="ace_keyword ace_operator">=</span> 
+                                                                                             a<span class="ace_keyword ace_operator">.</span><span class="ace_constant">B</span>;
+                                            </td>
+                                        </tr>       
+                                        <tr>
+                                            <td>Parallel Composition</td>
+                                            <td class ="inconsolata"><span class="ace_constant">P</span>
+                                                                                             <span class="ace_keyword ace_operator">|</span>
+                                                                                             <span class="ace_constant">Q</span>;
+                                            </td>
+                                        </tr>           
+                                        <tr>
+                                            <td>Choice</td>
+                                            <td class ="inconsolata"><span class="ace_constant">P</span>
+                                                                                             <span class="ace_keyword ace_operator">+</span> 
+                                                                                             <span class="ace_constant">Q</span>;
+                                            </td>
+                                        </tr>           
+                                        <tr>
+                                            <td>Restriction</td>
+                                            <td class ="inconsolata"><span class="ace_constant">A</span> 
+                                                                                             <span class="ace_keyword ace_operator">\</span> {a,b};
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Renaming</td>
+                                            <td class ="inconsolata"><span class="ace_constant">A</span>[b/a];</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Set</td>
+                                            <td class ="inconsolata">set 
+                                                                                             <span class="ace_constant">L</span> 
+                                                                                             <span class="ace_keyword ace_operator">=</span> {a,b,c};
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Empty Process</td>
+                                            <td class ="inconsolata">0;</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                        </p>    
+
+                        <p id="help-dialog-body-par1">
+                            <br/>
+                                The table listed contains the allowed HML formulas along with the syntax
+                                
+                                <table style="width:100%" class="helpTable ace-crisp">
+                                    <col style="width:50%" span="2"/>
+                                    <thead>
+                                        <tr>
+                                            <th>Formula</th>
+                                            <th>Syntax</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>True</td>
+                                            <td class ="inconsolata"><span class="ace_constant">tt</span> or <span class="ace_constant">T</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>False</td>
+                                            <td class ="inconsolata"><span class="ace_constant">ff</span> or <span class="ace_constant">F</span></td>
+                                        </tr>       
+                                        <tr>
+                                            <td>Conjunction</td>
+                                            <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">and</span> <span class="ace_constant">G </span>;</td>
+                                        </tr>           
+                                        <tr>
+                                            <td>Disjunction</td>
+                                            <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">or</span> <span class="ace_constant">G</span>;</td>
+                                        </tr>           
+                                        <tr>
+                                            <td>Strong Existential Modality</td>
+                                            <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt</span>a,b<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Weak Existential Modality</td>
+                                            <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt&lt</span>a,b<span class="ace_keyword ace_operator">&gt&gt</span><span class="ace_constant">H</span>;</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Strong Forall Modality</td>
+                                            <td class ="inconsolata"><span class="ace_keyword ace_operator">[</span>a,b<span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span>;</td>
+                                        </tr>
+                                        <tr>
+                                        <td>Weak Forall Modality</td>
+                                            <td class ="inconsolata"><span class="ace_keyword ace_operator">[[</span>a,b<span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span>;</td>
+                                        </tr>
+                                        <tr>
+                                            <td>All Actions</td>
+                                            <td class ="inconsolata">-, e.g <span class="ace_keyword ace_operator">&lt</span>-<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span>;
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Minimum fix-point</td>
+                                            <td class ="inconsolata"><span class="ace_constant">X</span> 
+                                                                                             <span class="ace_keyword ace_operator">min=</span>
+                                                                                             <span class="ace_keyword ace_operator">&lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
+                                                                                             <span class="ace_keyword ace_operator">or</span> 
+                                                                                             <span class="ace_keyword ace_operator">[</span>-<span class="ace_keyword ace_operator">]</span>
+                                                                                             <span class="ace_constant">X</span>;
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Maximum fix-point</td>
+                                            <td class ="inconsolata"><span class="ace_constant">X</span>
+                                                                                             <span class="ace_keyword ace_operator">max=</span>
+                                                                                             <span class="ace_keyword ace_operator">&lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
+                                                                                             <span class="ace_keyword ace_operator">and</span> 
+                                                                                             <span class="ace_constant">X</span>;
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Recursive Variable</td>
+                                            <td class ="inconsolata"><span class="ace_constant">X</span> 
+                                                                                             <span class="ace_keyword ace_operator">max=</span>
+                                                                                             <span class="ace_keyword ace_operator">&lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span> 
+                                                                                             <span class="ace_keyword ace_operator">and</span> 
+                                                                                             <span class="ace_constant">Y</span> 
+                                                                                             <span class="ace_keyword ace_operator">and</span>
+                                                                                             <span class="ace_keyword ace_operator">[</span>-<span class="ace_keyword ace_operator">]</span><span class="ace_constant">X</span>; 
+                                                                                             <br/> 
+                                                                                             <span class="ace_constant">Y</span> 
+                                                                                             <span class="ace_keyword ace_operator">min=</span>
+                                                                                             <span class="ace_keyword ace_operator">&lt</span>b<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span> 
+                                                                                             <span class="ace_keyword ace_operator">or</span> 
+                                                                                             <span class="ace_constant">Y</span>;
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>    
+                            </p>
+                        </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="lib/jquery-1.11.1.min.js"></script>
+        <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+        <script src="lib/smartmenus/jquery.smartmenus.min.js"></script>
+        <script src="lib/smartmenus/jquery.smartmenus.bootstrap.min.js"></script>
+        <script src="lib/ace/src/ace.js" type="text/javascript" charset="utf-8"></script>
+        <script src="lib/ace/src/ext-language_tools.js"></script>
+        <script src="lib/ccs_grammar.js"></script>
+        <script src="lib/hml_grammar.js"></script>
+        <script src="lib/arbor.js"></script>
+        <script src="lib/graphics.js"></script>
+        <script src="lib/ccs.js"></script>
+        <script src="lib/blob-stream.js"></script>
+        <script src="lib/pdfkit.js"></script>
+        <script src="lib/main.js"></script>
+    </body>
 </html>

@@ -1,11 +1,13 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="activity.ts" />
+/// <reference path="fullscreen.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="../gui/gui.ts" />
 /// <reference path="../../lib/suppressWarnings.d.ts" />
 /// <reference path="../gui/project.ts" />
+/// <reference path="tooltip.ts" />
 
 module Activity {
 
@@ -42,12 +44,12 @@ module Activity {
         private htmlNotationVisitor : TooltipHtmlCCSNotationVisitor;
         private ccsNotationVisitor : CCSNotationVisitor;
         private expandDepth : number = 1;
-        private fullScreenContainer;
         private statusTableContainer;
         private freezeBtn;
         private saveBtn;
-        private fullscreenBtn;
         private sourceDefinition;
+        private fullscreen : Fullscreen;
+        private tooltip : TooltipNotation;
 
         constructor(container: string, button: string) {
             super(container, button);
@@ -61,37 +63,29 @@ module Activity {
             this.renderer = new Renderer(this.canvas);
             this.uiGraph = new ArborGraph(this.renderer);
 
-            this.fullScreenContainer = this.$container.find("#fullscreen-container")[0];
             this.statusTableContainer = this.$container.find("#status-table-container")[0];
             this.freezeBtn = this.$container.find("#explorer-freeze-btn")[0];
             this.saveBtn = this.$container.find("#explorer-save-btn")[0];
-            this.fullscreenBtn = this.$container.find("#explorer-fullscreen-btn")[0];
             this.sourceDefinition = this.$container.find("#explorer-source-definition")[0];
-
+            
+            this.fullscreen = new Fullscreen(this.$container.find("#fullscreen-container")[0], this.$container.find("#explorer-fullscreen-btn"), () => this.resize());
+            
             $(this.freezeBtn).on("click", () => this.toggleFreeze());
             $(this.saveBtn).on("click", () => this.saveCanvas());
-            $(this.fullscreenBtn).on("click", this.toggleFullscreen.bind(this));
 
             $(this.statusTableContainer).find("tbody")
                 .on("click", "tr", this.onTransitionTableRowClick.bind(this))
                 .on("mouseenter", "tr", this.onTransitionTableRowHover.bind(this, true))
                 .on("mouseleave", "tr", this.onTransitionTableRowHover.bind(this, false));
 
-            var getCCSNotation = this.ccsNotationForProcessId.bind(this);
-            $(this.statusTableContainer).tooltip({
-                title: function() {
-                    var process : string = $(this).text();
-                    return process + " = " + getCCSNotation(process);
-                },
-                selector: "span.ccs-tooltip-constant"
-            });
-
+            this.tooltip = new TooltipNotation($(this.statusTableContainer));
+            
             // Prevent options menu from closing when pressing form elements.
             $(document).on('click', '.yamm .dropdown-menu', e => e.stopPropagation());
 
             $(document).on("ccs-changed", () => this.changed = true);
 
-            $("#explorer-process-list, input[name=option-collapse], #option-simplify").on("change", () => this.draw());
+            $("#explorer-process-list, input[name=option-collapse], input[name=option-successor], #option-simplify").on("change", () => this.draw());
             $("#option-depth").on("change", () => {
                 this.expandDepth = $("#option-depth").val();
                 this.draw()
@@ -116,15 +110,7 @@ module Activity {
             $(window).on("resize", () => this.resize());
             this.resize();
             
-            $(document).on("fullscreenchange", () => this.fullscreenChanged());
-            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
-            
-            $(document).on("fullscreenerror", () => this.fullscreenError());
-            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
-            $(document).on("mozfullscreenerror", () => this.fullscreenError());
-            $(document).on("MSFullscreenError", () => this.fullscreenError());
+            this.fullscreen.onShow();
             
             if (this.changed) {
                 this.changed = false;
@@ -140,6 +126,10 @@ module Activity {
 
                 this.draw();
             }
+            
+            this.tooltip.setGraph(this.graph);
+
+            this.uiGraph.bindCanvasEvents();
 
             this.uiGraph.setOnSelectListener((processId) => {
                 this.expand(this.graph.processById(processId), this.expandDepth);
@@ -152,39 +142,36 @@ module Activity {
             this.uiGraph.setHoverOutListener(() => {
                 this.uiGraph.clearHover();
             });
+
+            this.uiGraph.unfreeze();
         }
 
         public onHide(): void {
             $(window).off("resize");
 
-            $(document).off("fullscreenchange");
-            $(document).off("webkitfullscreenchange");
-            $(document).off("mozfullscreenchange");
-            $(document).off("MSFullscreenChange");
-            
-            $(document).off("fullscreenerror");
-            $(document).off("webkitfullscreenerror");
-            $(document).off("mozfullscreenerror");
-            $(document).off("MSFullscreenError");
+            this.fullscreen.onHide();
 
+            this.uiGraph.unbindCanvasEvents();
             this.uiGraph.clearOnSelectListener();
             this.uiGraph.clearHoverOnListener();
             this.uiGraph.clearHoverOutListener();
+            this.uiGraph.freeze(); // freeze the physics, when leaving the tab
         }
 
         private getOptions(): any {
-            var process = $("#explorer-process-list :selected").text();
-            var depth = $("#option-depth").val();
-            var collapse = $('input[name=option-collapse]:checked').val();
-            var simplify = $("#option-simplify").prop("checked");
-
-            return {process: process, depth: depth, collapse: collapse, simplify: simplify};
+            return {
+                process: $("#explorer-process-list :selected").text(),
+                depth: $("#option-depth").val(),
+                successor: $("input[name=option-successor]:checked").val(),
+                collapse: $("input[name=option-collapse]:checked").val(),
+                simplify: $("#option-simplify").prop("checked")
+            };
         }
 
         public draw(): void {
             this.clear();
             var options = this.getOptions();
-            this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
+            this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.successor, reduce: options.simplify});
             this.initialProcessName = options.process;
             var initialProcess = this.graph.processByName(this.initialProcessName);
             if (options.collapse != "none") {
@@ -197,62 +184,9 @@ module Activity {
             this.expand(this.graph.processByName(this.initialProcessName), options.depth);
         }
 
-        private ccsNotationForProcessId(id: string): string {
-            var process = this.graph.processByName(id) || this.graph.processById(id),
-                text = "Unknown definition";
-            if (process) {
-                text = this.getDefinitionForProcess(process, this.ccsNotationVisitor);
-            }
-            return text;
-        }
-
-        private isFullscreen(): boolean {
-            return !!document.fullscreenElement ||
-                   !!document.mozFullScreenElement ||
-                   !!document.webkitFullscreenElement ||
-                   !!document.msFullscreenElement;
-        }
-        
-        private toggleFullscreen() {
-            var fullScreenContainer = this.fullScreenContainer;
-            if (!this.isFullscreen()) {
-                if (fullScreenContainer.requestFullscreen) {
-                    fullScreenContainer.requestFullscreen();
-                } else if (fullScreenContainer.msRequestFullscreen) {
-                    fullScreenContainer.msRequestFullscreen();
-                } else if (fullScreenContainer.mozRequestFullScreen) {
-                    fullScreenContainer.mozRequestFullScreen();
-                } else if (fullScreenContainer.webkitRequestFullscreen) {
-                    fullScreenContainer.webkitRequestFullscreen();
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                }
-            }
-        }
-
         private saveCanvas() {
             $(this.saveBtn).attr("href", this.canvas.toDataURL("image/png"));
             $(this.saveBtn).attr("download", this.initialProcessName + ".png");
-        }
-
-        private fullscreenChanged() {
-            $(this.fullscreenBtn).text(this.isFullscreen() ? "Exit" : "Fullscreen");
-            this.resize();
-        }
-        
-        private fullscreenError() {
-            console.log("Fullscreen error");
-            
-            // user might have entered fullscreen and gone out of it, treat as fullscreen changed
-            this.fullscreenChanged();
         }
 
         private clear() : void {
@@ -298,11 +232,12 @@ module Activity {
                 this.showProcessAsExplored(fromProcess);
                 var groupedByTargetProcessId = groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
 
-                Object.keys(groupedByTargetProcessId).forEach(tProcId => {
-                    var group = groupedByTargetProcessId[tProcId],
-                        datas = group.map(t => { return {label: t.action.toString()}; });
-                    this.showProcess(this.graph.processById(tProcId));
-                    this.uiGraph.showTransitions(fromProcess.id, tProcId, datas);
+                Object.keys(groupedByTargetProcessId).forEach(strProcId => {
+                    var group = groupedByTargetProcessId[strProcId],
+                        datas = group.map(t => { return {label: t.action.toString()}; }),
+                        numId = parseInt(strProcId, 10);
+                    this.showProcess(this.graph.processById(numId));
+                    this.uiGraph.showTransitions(fromProcess.id, numId, datas);
                 });
             }
 
@@ -380,7 +315,7 @@ module Activity {
         private resize(): void {
             var width = this.canvas.parentNode.clientWidth;
             var height;
-            if (!this.isFullscreen()) {
+            if (!this.fullscreen.isFullscreen()) {
                 var offsetTop = $(this.canvas).offset().top;
                 var offsetBottom = $(this.statusTableContainer).height() + 20; // Parent container margin = 20.
                 height = Math.max(275, window.innerHeight - offsetTop - offsetBottom);

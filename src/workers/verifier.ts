@@ -41,6 +41,16 @@ messageHandlers.isWeaklyBisimilar = data => {
     self.postMessage(data);
 };
 
+messageHandlers.isStronglyTraceIncluded = data => {
+    var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        defendSuccGen = attackSuccGen,
+        leftProcess = graph.processByName(data.leftProcess),
+        rightProcess = graph.processByName(data.rightProcess),
+        isTraceIncluded = false; //DependencyGraph.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    data.result = isTraceIncluded;
+    self.postMessage(data);
+};
+
 messageHandlers.checkFormula = data => {
     var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
         weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
@@ -58,6 +68,29 @@ messageHandlers.checkFormulaForVariable = data => {
         formula = formulaSet.formulaByName(data.variable),
         result = DependencyGraph.solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, graph.processByName(data.processName).id);
     data.result = result;
+    self.postMessage(data);
+};
+
+messageHandlers.findDistinguishingFormula = data => {
+    var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        leftProcess = graph.processByName(data.leftProcess),
+        rightProcess = graph.processByName(data.rightProcess),
+        bisimilarDg = new DependencyGraph.BisimulationDG(strongSuccGen, strongSuccGen, leftProcess.id, rightProcess.id),
+        marking = DependencyGraph.solveDgGlobalLevel(bisimilarDg),
+        formula, hmlNotation;
+    if (marking.getMarking(0) === marking.ZERO) {
+        data.result = {
+            isBisimilar: true,
+            formula: ""
+        };
+    } else {
+        formula = bisimilarDg.findDistinguishingFormula(marking),
+        hmlNotation = new Traverse.HMLNotationVisitor();
+        data.result = {
+            isBisimilar: false,
+            formula: hmlNotation.visit(formula)
+        }
+    }
     self.postMessage(data);
 };
 

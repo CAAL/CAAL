@@ -23,7 +23,7 @@ import ccs = CCS;
 import hml = HML;
 
 module Main {
-
+    declare var Version : string;
     export var activityHandler = new Activity.ActivityHandler();
 
     $(document).ready(function() {
@@ -32,6 +32,8 @@ module Main {
         activityHandler.addActivity("verifier" , new Activity.Verifier("#verifier-container", "#verify-btn"));
         activityHandler.addActivity("game" , new Activity.Game("#game-container", "#game-btn"));
         activityHandler.selectActivity("editor");
+
+        $("#version").append(Version);
 
         new New("#new-btn", activityHandler);
         new Save(null, activityHandler);
