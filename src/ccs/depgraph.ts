@@ -24,12 +24,14 @@ module DependencyGraph {
 
         private nextIdx;
         private constructData = [];
-        private nodes = [];
+        public nodes = [];
         private leftPairs = {};
+        private attackSuccGen;
 
-        constructor(leftNode, rightNode) {
-            this.constructData[0] = [0, leftNode, rightNode];
+        constructor(leftNode, rightNode, attackSuccGen) {
+            this.constructData[0] = [0, leftNode, [rightNode]];
             this.nextIdx = 1;
+            this.attackSuccGen = attackSuccGen;
         }
 
         public getHyperEdges(identifier) : any[][] {
@@ -40,26 +42,31 @@ module DependencyGraph {
             } else {
                 result = this.constructNode(identifier);
             }
-            return copyHyperEdges(result);
+
+            var hest = copyHyperEdges(result);
+            console.table(hest);
+            return hest;
         }
 
         public getAllHyperEdges() : any[] {
-            
+            return undefined;
         }
 
         private constructNode(identifier) : any {
-            var data = this.constructData[identifier],
+            var data = this.constructData[identifier];
 
             return this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
         }
 
         private getProcessPairStates(leftProcessId, rightProcessIds) {
             var hyperedges = [];
+
             var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
             var rightTransitions = [];
 
             rightProcessIds.forEach(rightProcessId => {
-                rightTransitions.push(this.attackSuccGen.getSuccessors(rightProcessId));
+                var succs = this.attackSuccGen.getSuccessors(rightProcessId);
+                succs.forEach(succ => {rightTransitions.push(succ) });
             });
             
             leftTransitions.forEach(leftTransition => {
@@ -75,6 +82,12 @@ module DependencyGraph {
 
                 rightTargets.sort();
 
+
+                if(this.leftPairs[leftTransition.targetProcess.id] === undefined)
+                    this.leftPairs[leftTransition.targetProcess.id] = [];
+
+                if(this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] === undefined)
+                    this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] = [];
                 
                 var rightSets = this.leftPairs[leftTransition.targetProcess.id][rightTargets.length];
                 var existing = false;
@@ -94,14 +107,14 @@ module DependencyGraph {
                 } else {
                     var newNodeIdx = this.nextIdx++;
 
-                    var rightSet = {set: rightTargets, index = newNodeIdx};
+                    var rightSet = {set: rightTargets, index: newNodeIdx};
 
                     if(!this.leftPairs[leftTransition.targetProcess.id][rightTargets.length])
                         this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] = {};
                     
                     this.leftPairs[leftTransition.targetProcess.id][rightTargets.length].push(rightSet);
 
-                    this.constructData[newNodeIdx] = [0, leftTransition.action, leftTransition.targetProcess.id, rightTargets];
+                    this.constructData[newNodeIdx] = [0, leftTransition.targetProcess.id, rightTargets];
                 
                     hyperedges.push(newNodeIdx);
                     
@@ -733,6 +746,17 @@ module DependencyGraph {
         //     }
         // }
         return marking.getMarking(0) === marking.ZERO;
+    }
+
+    export function isTraceIncluded(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
+        var dg = new TraceDG(leftProcessId, rightProcessId, attackSuccGen);
+        
+        var marking = liuSmolkaLocal2(0, dg);
+
+        console.log(dg.nodes);
+
+        return marking.getMarking(0) === marking.ZERO;
+        
     }
 
     export function getBisimulationCollapse(
