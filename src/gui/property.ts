@@ -48,6 +48,10 @@ module Property {
         };
 
         public rowClickHandlers = {
+            "collapse" : {
+                id:"property-collapse",
+                click : null,
+            },
             "description" : {
                 id : "property-description",
                 click : null
@@ -90,7 +94,7 @@ module Property {
 
         protected getToolMenu(){
             var toolmenu = $("<div class=\"btn-group\"></div>");
-            var btn = $("<button type=\"button\" data-toggle=\"dropdown\" class=\"btn btn-default btn-xs dropdown-toggle\"></button>");
+            var btn = $("<button id=\"toolmenu-btn\" type=\"button\" data-toggle=\"dropdown\" class=\"btn btn-default btn-xs dropdown-toggle\"></button>");
             var dots = $("<span class=\"fa fa-ellipsis-v\"></span>")
             var list = $("<ul id=\"toolmenu\" class=\"dropdown-menu\"></ul>")
 
@@ -177,11 +181,12 @@ module Property {
             var verify = $("<i class=\"fa fa-play\"></i>");
             var toolmenu = this.getToolMenu()
 
-            this.tdStatus = $("<td id='property-status' class=\"text-center\"></td>").append(this.getStatusIcon());
-            var tdDescription = $("<td id='property-description'></td>").append(this.getDescription());
-            var tdVerify = $("<td id='property-verify' class=\"text-center\"></td>").append(verify);
-            var tdToolMenu = $("<td id='property-toolmenu' class=\"text-center\"></td>").append(toolmenu);
-            row.append(this.tdStatus, tdDescription, tdVerify, tdToolMenu);
+            var collapse = $("<td id=\"property-collapse\" class=\"text-center\"></td>");
+            this.tdStatus = $("<td id=\"property-status\" class=\"text-center\"></td>").append(this.getStatusIcon());
+            var tdDescription = $("<td id=\"property-description\"></td>").append(this.getDescription());
+            var tdVerify = $("<td id=\"property-verify\" class=\"text-center\"></td>").append(verify);
+            var tdToolMenu = $("<td id=\"property-toolmenu\" class=\"text-center\"></td>").append(toolmenu);
+            row.append(collapse, this.tdStatus, tdDescription, tdVerify, tdToolMenu);
 
             this.tdStatus.tooltip({
                 title: this.onStatusHover(this),
@@ -587,7 +592,7 @@ module Property {
             };
         }
 
-        public getStatusIcon(): JQuery {
+        private getCollapseState(): JQuery {
             if (this.isExpanded()) {
                 return this.icons.minus;
             }
@@ -600,7 +605,8 @@ module Property {
             var result = super.toTableRow();
 
             //this.tdStatus.on("click", {property: this}, this.rowClickHandlers.status);
-
+            result[0].find("#property-collapse").append(this.getCollapseState());
+            
             if(this.isExpanded() /*&& this.firstHMLProperty.getFormula() !== "" && this.secondHMLProperty.getFormula() !== ""*/) {
                 var rowHandlers = {verify: null};
                 rowHandlers.verify = this.rowClickHandlers.verify;

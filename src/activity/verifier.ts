@@ -179,7 +179,11 @@ module Activity {
                 };
 
                 var rowClickHandlers = {
-                    "status":{
+                    "collapse" : {
+                        id:"property-collapse",
+                        click : null,
+                    },
+                    "status" : {
                         id : "property-status",
                         click : (e) => this.playGame(e)
                     },
@@ -194,15 +198,9 @@ module Activity {
                 }
 
                 var propertyRows = null;
-                if (properties[i] instanceof Property.Equivalence || properties[i] instanceof Property.HML) {
-                    /* Strong/Weak bisim and HML*/
-
-                    properties[i].setRowClickHandlers(rowClickHandlers)
-                    properties[i].setToolMenuOptions(toolMenuOptions)
-                    propertyRows = properties[i].toTableRow();
-                } else {
+                if (properties[i] instanceof Property.DistinguishingFormula) {
                     /* distinguishing formula */
-                    var onStatusClick = (e) => {
+                    var onCollapseClick = (e) => {
                         if(e.data.property.isExpanded()){
                             this.onCollapse(e);
                             e.data.property.setExpanded(false);
@@ -212,10 +210,15 @@ module Activity {
                         }
                         this.displayProperties()
                     };  
-                    
-                    rowClickHandlers.status.click = onStatusClick; // TODO find another way to collapse and expand a row
+                    toolMenuOptions.play.click = null; // you can't play on a distinguishing formula.
+                    rowClickHandlers.collapse.click = onCollapseClick;
                     properties[i].setRowClickHandlers(rowClickHandlers)
                     properties[i].setToolMenuOptions(toolMenuOptions);
+                    propertyRows = properties[i].toTableRow();
+                } else {
+                    /* Strong/Weak bisim and HML*/
+                    properties[i].setRowClickHandlers(rowClickHandlers)
+                    properties[i].setToolMenuOptions(toolMenuOptions)
                     propertyRows = properties[i].toTableRow();
                 }
 
