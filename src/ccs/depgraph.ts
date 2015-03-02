@@ -24,7 +24,7 @@ module DependencyGraph {
 
         private nextIdx;
         private constructData = [];
-        public nodes = [];
+        private nodes = [];
         private leftPairs = {};
         private attackSuccGen;
 
@@ -43,9 +43,7 @@ module DependencyGraph {
                 result = this.constructNode(identifier);
             }
 
-            var hest = copyHyperEdges(result);
-            console.table(hest);
-            return hest;
+            return copyHyperEdges(result);
         }
 
         public getAllHyperEdges() : any[] {
@@ -103,7 +101,7 @@ module DependencyGraph {
                 }
 
                 if (existing) {
-                    hyperedges.push(existing);                    
+                    hyperedges.push([existing]);                    
                 } else {
                     var newNodeIdx = this.nextIdx++;
 
@@ -116,13 +114,13 @@ module DependencyGraph {
 
                     this.constructData[newNodeIdx] = [0, leftTransition.targetProcess.id, rightTargets];
                 
-                    hyperedges.push(newNodeIdx);
+                    hyperedges.push([newNodeIdx]);
                     
                 }
                 
             });
             
-            return [hyperedges];
+            return hyperedges;
         }
         
     }
@@ -752,8 +750,6 @@ module DependencyGraph {
         var dg = new TraceDG(leftProcessId, rightProcessId, attackSuccGen);
         
         var marking = liuSmolkaLocal2(0, dg);
-
-        console.log(dg.nodes);
 
         return marking.getMarking(0) === marking.ZERO;
         
