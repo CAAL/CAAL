@@ -21,7 +21,6 @@ module Property {
         public status: PropertyStatus;
         public worker;
         public statistics = {elapsedTime: null};
-        public onStatusClick : Function;
         public onVerify : Function;
         //public onStatusHover : Function = () => {return""}; /*it is not allowed to be null?*/
         public onToolMenuClick : Function;
@@ -29,24 +28,44 @@ module Property {
         protected tdStatus;
         protected clockInterval;
         protected startTime;
+        protected error : string = "";
 
         public toolMenuOptions = {
-                "Edit":{
-                    id:"property-edit",
-                    label: "Edit",
-                    click: null
-                }, 
-                "Delete":{
-                    id: "property-delete",
-                    label: "Delete",
-                    click: null
-                },
-                "Play":{
-                    id: "property-playgame",
-                    label: "Play",
-                    click: null
-                }
-            };
+            "edit":{
+                id:"property-edit",
+                label: "Edit",
+                click: null
+            }, 
+            "delete":{
+                id: "property-delete",
+                label: "Delete",
+                click: null
+            },
+            "play":{
+                id: "property-playgame",
+                label: "Play",
+                click: null
+            }
+        };
+
+        public rowClickHandlers = {
+            "collapse" : {
+                id:"property-collapse",
+                click : null,
+            },
+            "description" : {
+                id : "property-description",
+                click : null
+            },
+            "status" : {
+                id : "property-status",
+                click : null
+            },
+            "verify" : {
+                id : "property-verify",
+                click : null
+            }
+        }
 
         public icons = {
             "play" : $("<i class=\"fa fa-play\"></i>"),
@@ -76,17 +95,23 @@ module Property {
 
         protected getToolMenu(){
             var toolmenu = $("<div class=\"btn-group\"></div>");
-            var btn = $("<button type=\"button\" data-toggle=\"dropdown\" class=\"btn btn-default btn-xs dropdown-toggle\"></button>");
+            var btn = $("<button id=\"toolmenu-btn\" type=\"button\" data-toggle=\"dropdown\" class=\"btn btn-default btn-xs dropdown-toggle\"></button>");
             var dots = $("<span class=\"fa fa-ellipsis-v\"></span>")
             var list = $("<ul id=\"toolmenu\" class=\"dropdown-menu\"></ul>")
 
             for (var key in this.toolMenuOptions) {
-                if(this.toolMenuOptions[key].click){
+                if(this.toolMenuOptions[key].click != null){
                     list.append("<li><a id=\""+this.toolMenuOptions[key].id+"\">"+this.toolMenuOptions[key].label+"</a></li>")
-                } else {
+                } /* else {
                     list.append("<li class=\"disabled\"><a id=\""+this.toolMenuOptions[key].id+"\">"+this.toolMenuOptions[key].label+"</a></li>")
-                }
+                }*/
             }
+
+            // if no element in the lists, just disable it.
+            if(list[0].childElementCount === 0) {
+                btn.addClass("disabled");
+            }
+
             btn.append(dots);
             toolmenu.append(btn);
             toolmenu.append(list);
@@ -96,6 +121,12 @@ module Property {
         public setToolMenuOptions(menuOptions : Object){
             for (var key in menuOptions) {
                 this.toolMenuOptions[key] = menuOptions[key];
+            }
+        }
+
+        public setRowClickHandlers(rowHandlers : Object) {
+            for (var key in rowHandlers){
+                this.rowClickHandlers[key] = rowHandlers[key];
             }
         }
 
@@ -115,7 +146,12 @@ module Property {
         }
 
         public onStatusHover(property) {
-            return property.statistics.elapsedTime + " ms";
+            if (this.status === PropertyStatus.satisfied || this.status === PropertyStatus.unsatisfied){
+                return property.statistics.elapsedTime + " ms";
+            } 
+            else if(this.status === PropertyStatus.invalid) {
+                return this.error;
+            }
         }
 
         public getStatusIcon(): JQuery {
@@ -133,7 +169,8 @@ module Property {
             }
         }
 
-        public setInvalidateStatus() : void {
+        public setInvalidateStatus(error? : string) : void {
+            this.error = error;
             this.status = PropertyStatus.invalid;
         }
 
@@ -147,29 +184,33 @@ module Property {
 
         public toTableRow() : any[] {
             var row = $("<tr id='"+this.getId()+"'></tr>");
-            var del = $("<i class=\"fa fa-trash\"></i>");
-            var verify = $("<i class=\"fa fa-play\"></i>");
             var toolmenu = this.getToolMenu()
 
-            this.tdStatus = $("<td id='property-status' class=\"text-center\"></td>").append(this.getStatusIcon());
-            var tdDescription = $("<td id='property-description'></td>").append(this.getDescription());
-            var tdVerify = $("<td id='property-verify' class=\"text-center\"></td>").append(verify);
-            var tdToolMenu = $("<td id='property-toolmenu' class=\"text-center\"></td>").append(toolmenu);
-            row.append(this.tdStatus, tdDescription, tdVerify, tdToolMenu);
+            var collapse = $("<td id=\"property-collapse\" class=\"text-center\"></td>");
+            this.tdStatus = $("<td id=\"property-status\" class=\"text-center\"></td>").append(this.getStatusIcon());
+            var tdDescription = $("<td id=\"property-description\"></td>").append(this.getDescription());
+            var tdVerify = $("<td id=\"property-verify\" class=\"text-center\"></td>").append(this.icons.play);
+            var tdToolMenu = $("<td id=\"property-toolmenu\" class=\"text-center\"></td>").append(toolmenu);
+            row.append(collapse, this.tdStatus, tdDescription, tdVerify, tdToolMenu);
 
             this.tdStatus.tooltip({
                 title: this.onStatusHover(this),
-                selector: '.fa-check'
+                selector: '.fa-check, .fa-times, .fa-exclamation-triangle'
             });
+
             
-            this.tdStatus.on("click",        {property: this},  (e) => this.toolMenuOptions["Play"].click(e));
-            tdDescription.on("click",   {property: this}, (e) =>  this.toolMenuOptions["Edit"].click(e));
-            tdVerify.on("click",        {property: this}, (e) => this.onVerify(e));
+            /*Row click handlers*/
+            for (var rowHandler in this.rowClickHandlers){
+                var rowElement = row.find("#"+this.rowClickHandlers[rowHandler].id);
+                if(this.rowClickHandlers[rowHandler].click) {
+                    rowElement.on("click", {property:this}, this.rowClickHandlers[rowHandler].click);
+                }
+            }
 
             /*Tool menu options*/
             for (var tooloption in this.toolMenuOptions){
                 var toolMenuOption = toolmenu.find("#" + this.toolMenuOptions[tooloption].id);
-                if(this.toolMenuOptions[tooloption].click) {
+                if(this.toolMenuOptions[tooloption].click !== null) {
                     toolMenuOption.on("click", {property:this}, this.toolMenuOptions[tooloption].click);
                 }
             }
@@ -210,6 +251,7 @@ module Property {
             this.secondProcess = secondProcess;
             this.setUnknownStatus();
         }
+
         /**
          * Check whether both process(first and second) is defined, and it exists in the CCS program.
          * And property status must not be invalid.
@@ -217,21 +259,22 @@ module Property {
          */
         protected isReadyForVerification() : boolean {
             var isReady = true;
-            
+            var error = "";
+
             if(!this.getFirstProcess() && !this.getSecondProcess()) {
                 isReady = false;
-            } 
-            else {
+                error = "Two processes must be selected"
+            } else {
                 // if they are defined check whether they are defined in the CCS-program
                 var processList = Main.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
-                    this.setInvalidateStatus();
                     isReady = false;
+                    error = "One of the processes is not defined in the CCS program."
                 }
             }
 
-            if(this.status === PropertyStatus.invalid) { 
-                isReady = false;
+            if(!isReady) { 
+                this.setInvalidateStatus(error);
             }
 
             return isReady
@@ -275,7 +318,7 @@ module Property {
                 });
                 this.worker.addEventListener("error", (error) => {
                     /*display tooltip with error*/
-                    this.setInvalidateStatus();
+                    this.setInvalidateStatus(error.message);
                     this.stopTimer();
                     callback(this.status)
                 }, false);
@@ -419,13 +462,15 @@ module Property {
          */
         protected isReadyForVerification() : boolean {
             var isReady = true;
-
+            var error = ""
             if (!this.getProcess()) {
                 isReady = false;
+                error = "There is no process selected.";
             } else {
                 // if they are defined check whether they are defined in the CCS-program
                 var processList = Main.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getProcess()) === -1 ) {
+                    error = "The processes selected is not defined in the CCS program.";
                     isReady = false;
                 }
             }
@@ -435,8 +480,12 @@ module Property {
              * complete syntax check are done by the worker, it will post a error if the hml syntax did not parse. 
              */
             if(!this.formula || this.formula === "") {
-                this.setInvalidateStatus();
+                error = "Formula is not defined.";
                 isReady = false;
+            }
+
+            if(!isReady){
+                this.setInvalidateStatus(error)
             }
             
             return isReady
@@ -460,7 +509,7 @@ module Property {
                 });
                 this.worker.addEventListener("error", (error) => {
                     /* HML syntax error */
-                    this.setInvalidateStatus();
+                    this.setInvalidateStatus(error.message);
                     this.stopTimer();
                     callback(this.status) 
                 }, false);
@@ -484,7 +533,7 @@ module Property {
                 // something is not defined or syntax error
                 this.stopTimer()
                 callback(this.status); /* verification ended */
-                throw "something is wrong, please check the property";
+                console.log("something is wrong, please check the property");
             }
         }
     }
@@ -495,8 +544,6 @@ module Property {
         public distinguishingFormula : string;
         private isexpanded : boolean = true;
         
-
-
         public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
             super(status);
             this.firstHMLProperty = new HML(options.firstHMLProperty);
@@ -557,7 +604,7 @@ module Property {
             };
         }
 
-        public getStatusIcon(): JQuery {
+        private getCollapseState(): JQuery {
             if (this.isExpanded()) {
                 return this.icons.minus;
             }
@@ -567,48 +614,25 @@ module Property {
         }
 
         public toTableRow() : any {
-            var result = [];
-            var rowHeader = $("<tr id=\""+this.getId()+"\" class=\"distinguishing-header\"></tr>");
+            var result = super.toTableRow();
 
-            var toolmenu = this.getToolMenu();
-            var verifyIcon = this.icons.play;
-
-            this.tdStatus = $("<td id=\"property-status\" class=\"text-center\"></td>").append(this.getStatusIcon());
-            var tdDescription = $("<td id=\"property-description\"></td>").append(this.getDescription());
-            var tdVerify = $("<td id=\"property-verify\" class=\"text-center\"></td>").append(verifyIcon);
-            var tdToolMenu = $("<td id=\"property-toolmenu\" class=\"text-center\"></td>").append(toolmenu);
-            rowHeader.append(this.tdStatus, tdDescription, tdVerify, tdToolMenu);
-            result.push(rowHeader);
-
+            //this.tdStatus.on("click", {property: this}, this.rowClickHandlers.status);
+            result[0].find("#property-collapse").append(this.getCollapseState());
+            
             if(this.isExpanded() /*&& this.firstHMLProperty.getFormula() !== "" && this.secondHMLProperty.getFormula() !== ""*/) {
-                this.firstHMLProperty.onVerify = this.onVerify;
+                var rowHandlers = {verify: null};
+                rowHandlers.verify = this.rowClickHandlers.verify;
+
+                this.firstHMLProperty.setRowClickHandlers(rowHandlers);
                 //this.firstHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
                 var firstRow = this.firstHMLProperty.toTableRow();
                 result.push(firstRow);
                 
-                this.secondHMLProperty.onVerify = this.onVerify;
+                this.secondHMLProperty.setRowClickHandlers(rowHandlers);
                 //this.secondHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
                 var secondRow = this.secondHMLProperty.toTableRow();
                 result.push(secondRow);
             }
-
-            this.tdStatus.tooltip({
-                title: this.onStatusHover(this),
-                selector: '.fa-check'
-            });
-
-            this.tdStatus.on("click",    {property: this},  (e) => this.onStatusClick(e));
-            tdDescription.on("click",   {property: this}, (e) =>  this.toolMenuOptions["Edit"].click(e));
-            tdVerify.on("click",    {property: this},  (e) => this.onVerify(e));
-
-            /*Tool menu options*/
-            for (var tooloption in this.toolMenuOptions){
-                var toolMenuOptions = toolmenu.find("#" + this.toolMenuOptions[tooloption].id);
-                if(this.toolMenuOptions[tooloption].click) {
-                    toolMenuOptions.on("click", {property:this}, this.toolMenuOptions[tooloption].click);
-                }
-            }
-
 
             return result;
         }
@@ -619,8 +643,32 @@ module Property {
          * @return {boolean} if true, everything is defined.
          */
         protected isReadyForVerification() : boolean {
-            ///TODO: Fix this
-            return true;
+            var isReady = true;
+            var error = "";
+            
+            if(!this.getFirstProcess() && !this.getSecondProcess()) {
+                isReady = false;
+                error = "Two processes must be selected"
+            } else {
+                // if they are defined check whether they are defined in the CCS-program
+                var processList = Main.getGraph().getNamedProcesses()
+                if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
+                    error = "One of the processes selected is not defined in the CCS program."
+                    isReady = false;
+                }
+            }
+
+            // if they are clearly bisimular then do nothing..
+            if (this.getFirstProcess() === this.getSecondProcess()) {
+                error = "The two selected processes are bisimular, and no distinguishing formula exists.";
+                isReady = false;
+            }
+
+            // if is not ready invalidate the property
+            if (!isReady) {
+                this.setInvalidateStatus(error);
+            }
+            return isReady;
         }
 
         public verify(callback : Function, queProperties : Function): void {
@@ -640,14 +688,15 @@ module Property {
                 });
                 this.worker.addEventListener("error", (error) => {
                     /*display tooltip with error*/
-                    this.setInvalidateStatus();
+                    console.log(error);
+                    this.setInvalidateStatus(error.message);
                     this.stopTimer()
                     callback(this.status)
                 }, false);
                 this.worker.addEventListener("message", event => {
-                    var goodResult = !event.data.result.isBisimilar;
-                    this.status = goodResult ? PropertyStatus.unknown : PropertyStatus.invalid;
-                    if (goodResult ) {
+                    var goodResult = !event.data.result.isBisimilar; //this should be false, for there to be distinguishing formula
+                    this.status = goodResult ? PropertyStatus.satisfied : PropertyStatus.invalid;
+                    if (goodResult) {
                         var formula = event.data.result.formula;
                         this.firstHMLProperty.setFormula(formula);
                         this.secondHMLProperty.setFormula(formula);
@@ -662,6 +711,7 @@ module Property {
             } else {
                 // something is not defined or syntax error
                 console.log("something is wrong, please check the property");
+                this.stopTimer()
                 callback(this.status); /*verification ended*/
             }
         }

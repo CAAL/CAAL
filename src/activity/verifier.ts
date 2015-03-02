@@ -101,27 +101,35 @@ module Activity {
                 var processList = Main.getGraph().getNamedProcesses()
                 //$("#equivalence").hide(); // hide the equivalence box(process selector), since it might have the wrong data 
                 //$("#model-checking").hide(); // hide the model-checking(HMl process selector) box, since it might have the wrong data
-
-                properties.forEach((property) => {
-                    if (property instanceof Property.StrongBisimulation || 
-                        property instanceof Property.WeakBisimulation) {
+                properties.forEach((property : Property.Property) => {
+                    if (property instanceof Property.Equivalence) {
                         if (processList.indexOf(property.getFirstProcess()) === -1 || processList.indexOf(property.getSecondProcess()) === -1 ) {
                             // If process is not in list of named processes, show the red triangle
-                            property.setInvalidateStatus()
+                            property.setInvalidateStatus("One of the processes selected is not defined in the CCS program.")
                         }
                         else {
                             property.setUnknownStatus(); // Otherwise set the unknown status
                         }
                     }
+                    else if (property instanceof Property.DistinguishingFormula) {
+                        var temp : Property.DistinguishingFormula = <Property.DistinguishingFormula> property;
+                        if (processList.indexOf(temp.getFirstProcess()) === -1 || processList.indexOf(temp.getSecondProcess()) === -1 ) {
+                            // If process is not in list of named processes, show the red triangle
+                            temp.setInvalidateStatus("One of the processes selected is not defined in the CCS program.")
+                        }
+                        else {
+                            temp.setUnknownStatus(); // Otherwise set the unknown status
+                        }
+                    }
                     else if (property instanceof Property.HML) {
                         if (processList.indexOf(property.getProcess()) === -1) {
                             // If process is not in list of named processes, show the red triangle
-                            property.setInvalidateStatus()
+                            property.setInvalidateStatus("The processes selected is not defined in the CCS program.")
                         }
                         else {
                             property.setUnknownStatus(); // Otherwise set the unknown status
                         }
-                    }   
+                    }
                 });
             }
 
@@ -161,33 +169,46 @@ module Activity {
 
             for (var i = 0; i < properties.length; i++) {
                 var toolMenuOptions = {
-                    "Edit":{
+                    "edit": {
                         id:"property-edit",
                         label: "Edit",
                         click: (e) => this.editProperty(e)
                     }, 
-                    "Delete":{
+                    "delete": {
                         id: "property-delete",
                         label: "Delete",
                         click: (e) => this.deleteProperty(e)
+                    },
+                    "play": {
+                        id: "property-playgame",
+                        label: "Play",
+                        click: (e) => this.playGame(e)
                     }
                 };
 
-                var propertyRows = null;
-                if (properties[i] instanceof Property.Equivalence || properties[i] instanceof Property.HML) {
-                    /* Strong/Weak bisim and HML*/
-                    toolMenuOptions["Play"] = {
-                            id: "property-playgame",
-                            label: "Play",
-                            click: (e) => this.playGame(e)
-                    };
+                var rowClickHandlers = {
+                    "collapse" : {
+                        id:"property-collapse",
+                        click : null,
+                    },
+                    "status" : {
+                        id : "property-status",
+                        click : (e) => this.playGame(e)
+                    },
+                    "description": {
+                        id : "property-description",
+                        click : (e) => this.editProperty(e)
+                    },
+                    "verify": {
+                        id : "property-verify",
+                        click : (e) => this.verify(e)
+                    }
+                }
 
-                    properties[i].onVerify = (e) => this.verify(e);
-                    properties[i].setToolMenuOptions(toolMenuOptions)
-                    propertyRows = properties[i].toTableRow();
-                } else {
+                var propertyRows = null;
+                if (properties[i] instanceof Property.DistinguishingFormula) {
                     /* distinguishing formula */
-                    properties[i].onStatusClick = (e) => {
+                    var onCollapseClick = (e) => {
                         if(e.data.property.isExpanded()){
                             this.onCollapse(e);
                             e.data.property.setExpanded(false);
@@ -196,11 +217,16 @@ module Activity {
                             e.data.property.setExpanded(true);
                         }
                         this.displayProperties()
-                    };
-
-                    properties[i].onVerify = (e) => this.verify(e);
-                    properties[i].onPlayGame = (e) => this.verify(e);
+                    };  
+                    toolMenuOptions.play.click = null; // you can't play on a distinguishing formula.
+                    rowClickHandlers.collapse.click = onCollapseClick;
+                    properties[i].setRowClickHandlers(rowClickHandlers)
                     properties[i].setToolMenuOptions(toolMenuOptions);
+                    propertyRows = properties[i].toTableRow();
+                } else {
+                    /* Strong/Weak bisim and HML*/
+                    properties[i].setRowClickHandlers(rowClickHandlers)
+                    properties[i].setToolMenuOptions(toolMenuOptions)
                     propertyRows = properties[i].toTableRow();
                 }
 
@@ -273,16 +299,18 @@ module Activity {
         private playGame(e){
             var property = e.data.property;
             if (property instanceof Property.Equivalence) {
-                var equivalence = <Property.Equivalence> property,
-                    gameType = (equivalence instanceof Property.StrongBisimulation) ? "strong" : "weak",
-                    playerType = (equivalence.getStatus() === PropertyStatus.satisfied) ? "attacker" : "defender",
-                    configuration = {
-                        gameType: gameType,
-                        playerType: playerType,
-                        leftProcess: equivalence.firstProcess,
-                        rightProcess: equivalence.secondProcess
-                    };
-                Main.activityHandler.selectActivity("game", configuration);
+                if(property.status === PropertyStatus.satisfied || property.status === PropertyStatus.unsatisfied) {       
+                    var equivalence = <Property.Equivalence> property,
+                        gameType = (equivalence instanceof Property.StrongBisimulation) ? "strong" : "weak",
+                        playerType = (equivalence.getStatus() === PropertyStatus.satisfied) ? "attacker" : "defender",
+                        configuration = {
+                            gameType: gameType,
+                            playerType: playerType,
+                            leftProcess: equivalence.firstProcess,
+                            rightProcess: equivalence.secondProcess
+                        };
+                    Main.activityHandler.selectActivity("game", configuration);
+                }
             }
         }
 

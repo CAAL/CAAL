@@ -72,6 +72,7 @@ module Activity {
 
         private fullscreenChanged() {
             this.$button.text(this.isFullscreen() ? "Exit" : "Fullscreen");
+            this.$button.blur();
             this.onChanged();
         }
         

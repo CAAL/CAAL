@@ -4,6 +4,7 @@
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="activity.ts" />
 /// <reference path="fullscreen.ts" />
+/// <reference path="tooltip.ts" />
 
 module Activity {
 
@@ -44,6 +45,7 @@ module Activity {
         private dgGame : DgGame;
         private ccsNotationVisitor = new Traverse.CCSNotationVisitor();
         private fullscreen : Fullscreen;
+        private tooltip : TooltipNotation;
         
         constructor(container : string, button : string) {
             super(container, button);
@@ -83,15 +85,7 @@ module Activity {
 
             $(document).on("ccs-changed", () => this.changed = true);
             
-            // Set tooltip handler
-            var getCCSNotation = this.ccsNotationForProcessId.bind(this);
-            $("#game-status").tooltip({
-                title: function() {
-                    var process = $(this).text();
-                    return process + " = " + getCCSNotation(process);
-                },
-                selector: "span.ccs-tooltip-constant"
-            });
+            this.tooltip = new TooltipNotation($("#game-status"));
         }
         
         private isInternetExplorer() : boolean {
@@ -113,19 +107,6 @@ module Activity {
             return true;
         }
         
-        private ccsNotationForProcessId(id : string): string {
-            var process = this.graph.processByName(id) || this.graph.processById(parseInt(id, 10)),
-                text = "Unknown definition";
-                
-            if (process) {
-                if (process instanceof ccs.NamedProcess)
-                    text = this.ccsNotationVisitor.visit((<ccs.NamedProcess>process).subProcess);
-                else
-                    text = this.ccsNotationVisitor.visit(process);
-            }
-            return text;
-        }
-        
         public onShow(configuration? : any) : void {
             $(window).on("resize", () => {
                 this.resize();
@@ -134,7 +115,7 @@ module Activity {
             });
             
             this.fullscreen.onShow();
-
+            
             if (this.changed || configuration) {
                 this.changed = false;
                 this.resize();
@@ -142,7 +123,9 @@ module Activity {
                 this.displayOptions();
                 this.newGame(true, true, configuration);
             }
-
+            
+            this.tooltip.setGraph(this.graph);
+            
             this.leftGraph.bindCanvasEvents();
             this.rightGraph.bindCanvasEvents();
             this.rightGraph.unfreeze();
@@ -213,8 +196,8 @@ module Activity {
 
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
 
-            if (drawLeft) {this.draw(this.graph.processByName(options.leftProcess), this.leftGraph, "left")}
-            if (drawRight) {this.draw(this.graph.processByName(options.rightProcess), this.rightGraph, "right")}
+            if (drawLeft) {this.draw(this.succGen.getProcessByName(options.leftProcess), this.leftGraph, "left")}
+            if (drawRight) {this.draw(this.succGen.getProcessByName(options.rightProcess), this.rightGraph, "right")}
             
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
@@ -405,7 +388,6 @@ module Activity {
         protected dependencyGraph : dg.DependencyGraph;
         protected marking : dg.LevelMarking;
         
-        private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
         protected gameLog : GameLog = new GameLog();
         
         protected attacker : Player;
@@ -423,8 +405,6 @@ module Activity {
             attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator,
             protected currentLeft : any, protected currentRight : any) {
             super();
-            
-            this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
             
             // create the dependency graph
             this.dependencyGraph = this.createDependencyGraph(this.graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight);
@@ -802,7 +782,6 @@ module Activity {
     
     class Human extends Player {
         
-        private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
         private $table;
         
         constructor(playType : PlayType, private gameActivity : Game) {
@@ -867,11 +846,7 @@ module Activity {
         }
         
         private labelFor(process : CCS.Process) : string {
-            if (process instanceof CCS.NamedProcess)
-                return this.htmlNotationVisitor.visit(process);
-            else 
-                // return process.id.toString();
-                return '<span class="ccs-tooltip-constant">' + process.id + '</span>';
+            return TooltipNotation.GetSpan(process instanceof CCS.NamedProcess ? process.name : process.id.toString());
         }
 
         private hightlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
@@ -975,7 +950,6 @@ module Activity {
     }
 
     class GameLog {
-        private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
         private $log : JQuery;
 
         constructor() {

@@ -76,6 +76,10 @@ textarea {
     left: inherit;
 }
 
+#toolmenu-btn {
+    border: none;
+}
+
 .dropdown-menu #toolmenu.dropdown-menu > li {
     z-index: 10001;
 }
