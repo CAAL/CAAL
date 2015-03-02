@@ -28,6 +28,7 @@ module Property {
         protected tdStatus;
         protected clockInterval;
         protected startTime;
+        protected error : string = "";
 
         public toolMenuOptions = {
             "edit":{
@@ -145,7 +146,12 @@ module Property {
         }
 
         public onStatusHover(property) {
-            return property.statistics.elapsedTime + " ms";
+            if (this.status === PropertyStatus.satisfied || this.status === PropertyStatus.unsatisfied){
+                return property.statistics.elapsedTime + " ms";
+            } 
+            else if(this.status === PropertyStatus.invalid) {
+                return this.error;
+            }
         }
 
         public getStatusIcon(): JQuery {
@@ -163,7 +169,8 @@ module Property {
             }
         }
 
-        public setInvalidateStatus() : void {
+        public setInvalidateStatus(error? : string) : void {
+            this.error = error;
             this.status = PropertyStatus.invalid;
         }
 
@@ -177,21 +184,20 @@ module Property {
 
         public toTableRow() : any[] {
             var row = $("<tr id='"+this.getId()+"'></tr>");
-            var del = $("<i class=\"fa fa-trash\"></i>");
-            var verify = $("<i class=\"fa fa-play\"></i>");
             var toolmenu = this.getToolMenu()
 
             var collapse = $("<td id=\"property-collapse\" class=\"text-center\"></td>");
             this.tdStatus = $("<td id=\"property-status\" class=\"text-center\"></td>").append(this.getStatusIcon());
             var tdDescription = $("<td id=\"property-description\"></td>").append(this.getDescription());
-            var tdVerify = $("<td id=\"property-verify\" class=\"text-center\"></td>").append(verify);
+            var tdVerify = $("<td id=\"property-verify\" class=\"text-center\"></td>").append(this.icons.play);
             var tdToolMenu = $("<td id=\"property-toolmenu\" class=\"text-center\"></td>").append(toolmenu);
             row.append(collapse, this.tdStatus, tdDescription, tdVerify, tdToolMenu);
 
             this.tdStatus.tooltip({
                 title: this.onStatusHover(this),
-                selector: '.fa-check'
+                selector: '.fa-check, .fa-times, .fa-exclamation-triangle'
             });
+
             
             /*Row click handlers*/
             for (var rowHandler in this.rowClickHandlers){
@@ -253,19 +259,22 @@ module Property {
          */
         protected isReadyForVerification() : boolean {
             var isReady = true;
-            
+            var error = "";
+
             if(!this.getFirstProcess() && !this.getSecondProcess()) {
                 isReady = false;
+                error = "Two processes must be selected"
             } else {
                 // if they are defined check whether they are defined in the CCS-program
                 var processList = Main.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
                     isReady = false;
+                    error = "One of the processes is not defined in the CCS program."
                 }
             }
 
             if(!isReady) { 
-                this.setInvalidateStatus();
+                this.setInvalidateStatus(error);
             }
 
             return isReady
@@ -309,7 +318,7 @@ module Property {
                 });
                 this.worker.addEventListener("error", (error) => {
                     /*display tooltip with error*/
-                    this.setInvalidateStatus();
+                    this.setInvalidateStatus(error.message);
                     this.stopTimer();
                     callback(this.status)
                 }, false);
@@ -453,13 +462,15 @@ module Property {
          */
         protected isReadyForVerification() : boolean {
             var isReady = true;
-
+            var error = ""
             if (!this.getProcess()) {
                 isReady = false;
+                error = "There is no process selected.";
             } else {
                 // if they are defined check whether they are defined in the CCS-program
                 var processList = Main.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getProcess()) === -1 ) {
+                    error = "The processes selected is not defined in the CCS program.";
                     isReady = false;
                 }
             }
@@ -469,11 +480,12 @@ module Property {
              * complete syntax check are done by the worker, it will post a error if the hml syntax did not parse. 
              */
             if(!this.formula || this.formula === "") {
+                error = "Formula is not defined.";
                 isReady = false;
             }
 
             if(!isReady){
-                this.setInvalidateStatus()
+                this.setInvalidateStatus(error)
             }
             
             return isReady
@@ -497,7 +509,7 @@ module Property {
                 });
                 this.worker.addEventListener("error", (error) => {
                     /* HML syntax error */
-                    this.setInvalidateStatus();
+                    this.setInvalidateStatus(error.message);
                     this.stopTimer();
                     callback(this.status) 
                 }, false);
@@ -521,7 +533,7 @@ module Property {
                 // something is not defined or syntax error
                 this.stopTimer()
                 callback(this.status); /* verification ended */
-                throw "something is wrong, please check the property";
+                console.log("something is wrong, please check the property");
             }
         }
     }
@@ -632,25 +644,29 @@ module Property {
          */
         protected isReadyForVerification() : boolean {
             var isReady = true;
+            var error = "";
             
             if(!this.getFirstProcess() && !this.getSecondProcess()) {
                 isReady = false;
+                error = "Two processes must be selected"
             } else {
                 // if they are defined check whether they are defined in the CCS-program
                 var processList = Main.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
+                    error = "One of the processes selected is not defined in the CCS program."
                     isReady = false;
                 }
             }
 
             // if they are clearly bisimular then do nothing..
             if (this.getFirstProcess() === this.getSecondProcess()) {
+                error = "The two selected processes are bisimular, and no distinguishing formula exists.";
                 isReady = false;
             }
 
             // if is not ready invalidate the property
             if (!isReady) {
-                this.setInvalidateStatus();
+                this.setInvalidateStatus(error);
             }
             return isReady;
         }
@@ -672,7 +688,8 @@ module Property {
                 });
                 this.worker.addEventListener("error", (error) => {
                     /*display tooltip with error*/
-                    this.setInvalidateStatus();
+                    console.log(error);
+                    this.setInvalidateStatus(error.message);
                     this.stopTimer()
                     callback(this.status)
                 }, false);

@@ -101,27 +101,35 @@ module Activity {
                 var processList = Main.getGraph().getNamedProcesses()
                 //$("#equivalence").hide(); // hide the equivalence box(process selector), since it might have the wrong data 
                 //$("#model-checking").hide(); // hide the model-checking(HMl process selector) box, since it might have the wrong data
-
-                properties.forEach((property) => {
-                    if (property instanceof Property.StrongBisimulation || 
-                        property instanceof Property.WeakBisimulation) {
+                properties.forEach((property : Property.Property) => {
+                    if (property instanceof Property.Equivalence) {
                         if (processList.indexOf(property.getFirstProcess()) === -1 || processList.indexOf(property.getSecondProcess()) === -1 ) {
                             // If process is not in list of named processes, show the red triangle
-                            property.setInvalidateStatus()
+                            property.setInvalidateStatus("One of the processes selected is not defined in the CCS program.")
                         }
                         else {
                             property.setUnknownStatus(); // Otherwise set the unknown status
                         }
                     }
+                    else if (property instanceof Property.DistinguishingFormula) {
+                        var temp : Property.DistinguishingFormula = <Property.DistinguishingFormula> property;
+                        if (processList.indexOf(temp.getFirstProcess()) === -1 || processList.indexOf(temp.getSecondProcess()) === -1 ) {
+                            // If process is not in list of named processes, show the red triangle
+                            temp.setInvalidateStatus("One of the processes selected is not defined in the CCS program.")
+                        }
+                        else {
+                            temp.setUnknownStatus(); // Otherwise set the unknown status
+                        }
+                    }
                     else if (property instanceof Property.HML) {
                         if (processList.indexOf(property.getProcess()) === -1) {
                             // If process is not in list of named processes, show the red triangle
-                            property.setInvalidateStatus()
+                            property.setInvalidateStatus("The processes selected is not defined in the CCS program.")
                         }
                         else {
                             property.setUnknownStatus(); // Otherwise set the unknown status
                         }
-                    }   
+                    }
                 });
             }
 
