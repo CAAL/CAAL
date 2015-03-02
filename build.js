@@ -69,7 +69,10 @@ function createTscFileTask(targetFile, sourceFiles, options, comment, onFinish) 
     if (comment) {
         desc(comment);
     }
-    file(targetFile, sourceFiles, {async: true}, function () {
+    //TSC compiles even with errors. Means running build again hides errors since input files not changed and target file exists
+    //Thus use task() for now.
+    //file(targetFile ....)
+    task(targetFile, sourceFiles, {async: true}, function () {
         var command = TSC;
         if (options.definitionFile) command += ' -d';
         if (options.sourceMap) command += ' --sourcemap';
