@@ -173,7 +173,7 @@ module Activity {
             var options = this.getOptions();
             this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.successor, reduce: options.simplify});
             this.initialProcessName = options.process;
-            var initialProcess = this.graph.processByName(this.initialProcessName);
+            var initialProcess = this.succGenerator.getProcessByName(this.initialProcessName);
             if (options.collapse != "none") {
                 var otherSuccGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
                 var collapse = DependencyGraph.getBisimulationCollapse(this.succGenerator, otherSuccGenerator, initialProcess.id, initialProcess.id);
@@ -181,7 +181,7 @@ module Activity {
             }
             this.htmlNotationVisitor.clearCache();
             this.ccsNotationVisitor.clearCache();
-            this.expand(this.graph.processByName(this.initialProcessName), options.depth);
+            this.expand(this.succGenerator.getProcessByName(this.initialProcessName), options.depth);
         }
 
         private saveCanvas() {

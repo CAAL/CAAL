@@ -25,6 +25,7 @@ module CCS {
     }
 
     export interface SuccessorGenerator {
+        getProcessByName(processName : string) : Process;
         getProcessById(processId : ProcessId) : Process;
         getSuccessors(processId : ProcessId) : TransitionSet;
     }
@@ -266,11 +267,11 @@ module CCS {
             this.definedSets[name] = this.allRestrictedSets.getOrAdd(labelSet);
         }
 
-        processById(id : ProcessId) : Process{
+        processById(id : ProcessId) : Process {
             return this.processes[id] || null;
         }
 
-        processByName(name : string) {
+        processByName(name : string) : Process {
             return this.namedProcesses[name] || null;
         }
 
@@ -568,6 +569,10 @@ module CCS {
             //if overflow becomes an issue.
             var process = this.graph.processById(processId);
             return this.cache[process.id] = process.dispatchOn(this);
+        }
+
+        getProcessByName(processName : string) : Process {
+            return this.graph.processByName(processName);
         }
 
         getProcessById(processId : ProcessId) : Process {

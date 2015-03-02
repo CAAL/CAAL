@@ -17,6 +17,10 @@ module Traverse {
         constructor(private succGenerator : ccs.SuccessorGenerator, private collapse : Collapse) {
         }
 
+        getProcessByName(processName : string) : ccs.Process {
+            return this.succGenerator.getProcessByName(processName);
+        }
+
         getProcessById(processId : ccs.ProcessId) : ccs.Process {
             return this.succGenerator.getProcessById(processId);
         }

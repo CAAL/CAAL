@@ -196,8 +196,8 @@ module Activity {
 
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
 
-            if (drawLeft) {this.draw(this.graph.processByName(options.leftProcess), this.leftGraph, "left")}
-            if (drawRight) {this.draw(this.graph.processByName(options.rightProcess), this.rightGraph, "right")}
+            if (drawLeft) {this.draw(this.succGen.getProcessByName(options.leftProcess), this.leftGraph, "left")}
+            if (drawRight) {this.draw(this.succGen.getProcessByName(options.rightProcess), this.rightGraph, "right")}
             
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
