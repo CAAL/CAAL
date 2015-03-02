@@ -103,8 +103,7 @@ module Activity {
                 //$("#model-checking").hide(); // hide the model-checking(HMl process selector) box, since it might have the wrong data
 
                 properties.forEach((property) => {
-                    if (property instanceof Property.StrongBisimulation || 
-                        property instanceof Property.WeakBisimulation) {
+                    if (property instanceof Property.Equivalence) {
                         if (processList.indexOf(property.getFirstProcess()) === -1 || processList.indexOf(property.getSecondProcess()) === -1 ) {
                             // If process is not in list of named processes, show the red triangle
                             property.setInvalidateStatus()
@@ -252,6 +251,9 @@ module Activity {
                     break;
                 case "weak":
                     property = new Property.WeakBisimulation({firstProcess: "", secondProcess: ""});
+                    break;
+                case "strongtraceinclusion":
+                    property = new Property.StrongTraceInclusion({firstProcess: "", secondProcess: ""});
                     break;
                 case "hml":
                     property = new Property.HML({process: "", formula: ""});

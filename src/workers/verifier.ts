@@ -41,6 +41,16 @@ messageHandlers.isWeaklyBisimilar = data => {
     self.postMessage(data);
 };
 
+messageHandlers.isStronglyTraceIncluded = data => {
+    var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        defendSuccGen = attackSuccGen,
+        leftProcess = graph.processByName(data.leftProcess),
+        rightProcess = graph.processByName(data.rightProcess),
+        isTraceIncluded = false; //DependencyGraph.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    data.result = isTraceIncluded;
+    self.postMessage(data);
+};
+
 messageHandlers.checkFormula = data => {
     var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
         weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
