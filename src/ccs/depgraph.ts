@@ -72,50 +72,57 @@ module DependencyGraph {
                 
                 rightTransitions.forEach(rightTransition => {
                     if (rightTransition.action.equals(leftTransition.action)) {
-                        rightTargets.push(rightTransition.targetProcess.id);
+                        rightTargets.push(parseInt(rightTransition.targetProcess.id));
 
                     }
 
                 });
 
-                rightTargets.sort();
+                if( !(rightTargets.length > 0) ) {
+                    hyperedges.push([]);
+                } else {
 
+                    rightTargets.sort(function(a, b){return a-b});
 
-                if(this.leftPairs[leftTransition.targetProcess.id] === undefined)
-                    this.leftPairs[leftTransition.targetProcess.id] = [];
+                    rightTargets = ArrayUtil.removeConsecutiveDuplicates(rightTargets);
 
-                if(this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] === undefined)
-                    this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] = [];
-                
-                var rightSets = this.leftPairs[leftTransition.targetProcess.id][rightTargets.length];
-                var existing = false;
+                    console.log(rightTargets);
+                    console.log(rightTargets.length);
 
-                if (rightSets) {
+                    if(this.leftPairs[leftTransition.targetProcess.id] === undefined)
+                        this.leftPairs[leftTransition.targetProcess.id] = [];
 
-                    for(var n = 0; n < rightSets.length; n++) {
-                        if(rightTargets.every((v,i)=> v === rightSets[n].set[i])) {
-                            existing = rightSets[n].index;
-                            break;
+                    if(this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] === undefined)
+                        this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] = [];
+                    
+                    var rightSets = this.leftPairs[leftTransition.targetProcess.id][rightTargets.length];
+                    var existing = false;
+
+                    if (rightSets) {
+
+                        for(var n = 0; n < rightSets.length; n++) {
+                            if(rightTargets.every((v,i)=> v === rightSets[n].set[i])) {
+                                existing = rightSets[n].index;
+                                break;
+                            }
                         }
                     }
-                }
 
-                if (existing) {
-                    hyperedges.push([existing]);                    
-                } else {
-                    var newNodeIdx = this.nextIdx++;
+                    if (existing) {
+                        hyperedges.push([existing]);                    
+                    } else {
+                        var newNodeIdx = this.nextIdx++;
 
-                    var rightSet = {set: rightTargets, index: newNodeIdx};
+                        var rightSet = {set: rightTargets, index: newNodeIdx};
+                        
+                        this.leftPairs[leftTransition.targetProcess.id][rightTargets.length].push(rightSet);
 
-                    if(!this.leftPairs[leftTransition.targetProcess.id][rightTargets.length])
-                        this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] = {};
-                    
-                    this.leftPairs[leftTransition.targetProcess.id][rightTargets.length].push(rightSet);
+                        this.constructData[newNodeIdx] = [0, leftTransition.targetProcess.id, rightTargets];
+                        
+                        hyperedges.push([newNodeIdx]);
+                        
+                    }
 
-                    this.constructData[newNodeIdx] = [0, leftTransition.targetProcess.id, rightTargets];
-                
-                    hyperedges.push([newNodeIdx]);
-                    
                 }
                 
             });
