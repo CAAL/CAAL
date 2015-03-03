@@ -846,14 +846,14 @@ module Activity {
                     this.clickChoice(choice, game, isAttack);
                 });
 
-                // hightlight the edge
+                // highlight the edge
                 $(row).on("mouseenter", (event) => { 
-                    this.hightlightChoices(choice, game, isAttack, true, event);
+                    this.highlightChoices(choice, game, isAttack, true, event);
                 });
 
                 // remove the highlight
                 $(row).on("mouseleave", (event) => {
-                    this.hightlightChoices(choice, game, isAttack, false, event);
+                    this.highlightChoices(choice, game, isAttack, false, event);
                 });
                 
                 row.append(sourceTd, actionTd, targetTd);
@@ -865,7 +865,7 @@ module Activity {
             return TooltipNotation.GetSpan(process instanceof CCS.NamedProcess ? process.name : process.id.toString());
         }
 
-        private hightlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
+        private highlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
             var move : Move;
             
             if (isAttack) {
@@ -877,9 +877,9 @@ module Activity {
             if (entering) {
                 var targetId = $(event.currentTarget).data("targetId");
                 if(move === Move.Left) {
-                    this.gameActivity.highlightChoices(true, targetId); // hightlight the left graph
+                    this.gameActivity.highlightChoices(true, targetId); // highlight the left graph
                 } else{
-                    this.gameActivity.highlightChoices(false, targetId) // hightlight the right graph
+                    this.gameActivity.highlightChoices(false, targetId) // highlight the right graph
                 }
                 $(event.currentTarget).css("background", "rgba(0, 0, 0, 0.07)"); // color the row
             } else {
