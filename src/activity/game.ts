@@ -194,7 +194,7 @@ module Activity {
                 options = this.getOptions();
             }
 
-            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
+            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
 
             if (drawLeft) {this.draw(this.succGen.getProcessByName(options.leftProcess), this.leftGraph, "left")}
             if (drawRight) {this.draw(this.succGen.getProcessByName(options.rightProcess), this.rightGraph, "right")}
