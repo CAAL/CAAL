@@ -36,6 +36,8 @@ module Activity {
         private $rightContainer : JQuery;
         private $leftZoom : JQuery;
         private $rightZoom : JQuery;
+        private $leftFreeze : JQuery;
+        private $rightFreeze : JQuery;
         private leftCanvas : HTMLCanvasElement;
         private rightCanvas : HTMLCanvasElement;
         private leftRenderer: Renderer;
@@ -60,6 +62,8 @@ module Activity {
             this.$rightContainer = $("#game-right-canvas");
             this.$leftZoom = $("#zoom-left");
             this.$rightZoom = $("#zoom-right");
+            this.$leftFreeze = $("#freeze-left");
+            this.$rightFreeze = $("#freeze-right");
             this.leftCanvas = <HTMLCanvasElement> this.$leftContainer.find("canvas")[0];
             this.rightCanvas = <HTMLCanvasElement> this.$rightContainer.find("canvas")[0];
 
@@ -74,6 +78,8 @@ module Activity {
             this.$playerType.on("change", () => this.newGame(false, false));
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
+            this.$leftFreeze.on("click", (e) => this.toggleFreeze(e, this.leftGraph));
+            this.$rightFreeze.on("click", (e) => this.toggleFreeze(e, this.rightGraph));
             
             if (this.isInternetExplorer()) {
                 this.$leftZoom.on("change", () => this.zoom(this.$leftZoom.val(), "left"));
@@ -86,6 +92,21 @@ module Activity {
             $(document).on("ccs-changed", () => this.changed = true);
             
             this.tooltip = new TooltipNotation($("#game-status"));
+        }
+
+        private toggleFreeze(e : Event, graph : GUI.ProcessGraphUI) {
+            var button = $(e.currentTarget);
+            var frozen = button.data("frozen");
+
+            if (frozen) {
+                graph.unfreeze();
+                button.find("i").replaceWith("<i class='fa fa-lock fa-lg'></i>");
+            } else {
+                graph.freeze();
+                button.find("i").replaceWith("<i class='fa fa-unlock-alt fa-lg'></i>");
+            }
+
+            button.data("frozen", !frozen);
         }
         
         private isInternetExplorer() : boolean {
@@ -128,8 +149,6 @@ module Activity {
             
             this.leftGraph.bindCanvasEvents();
             this.rightGraph.bindCanvasEvents();
-            this.rightGraph.unfreeze();
-            this.leftGraph.unfreeze();
         }
 
         public onHide() : void {
@@ -139,8 +158,6 @@ module Activity {
 
             this.leftGraph.unbindCanvasEvents();
             this.rightGraph.unbindCanvasEvents();
-            this.rightGraph.freeze();
-            this.leftGraph.freeze();
         }
 
         private displayOptions() : void {
@@ -363,11 +380,10 @@ module Activity {
             this.$leftContainer.height(Math.max(265, availableHeight));
             this.$rightContainer.height(Math.max(265, availableHeight));
 
-            // Container height - 20 scrollbar size. 20px should be a safe value.
-            this.leftCanvas.width = (this.$leftContainer.width() - 20);
-            this.rightCanvas.width = (this.$rightContainer.width() - 20);
-            this.leftCanvas.height = (this.$leftContainer.height() - 20);
-            this.rightCanvas.height = (this.$rightContainer.height() - 20);
+            this.leftCanvas.width = this.$leftContainer.width();
+            this.rightCanvas.width = this.$rightContainer.width();
+            this.leftCanvas.height = this.$leftContainer.height();
+            this.rightCanvas.height = this.$rightContainer.height();
 
             this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
             this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);

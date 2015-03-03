@@ -33,6 +33,16 @@ textarea {
  * Custom Bootstrap styles
  */
 
+.btn-default:focus {
+    background-color: #fff;
+    border-color: #ccc;
+}
+
+.btn-default:focus:hover {
+    background-color: #e6e6e6;
+    border-color: #adadad;
+}
+
 .navbar-header .navbar-brand {
 	font-variant: small-caps;
     cursor: auto;
@@ -370,6 +380,12 @@ p.small {
     padding-left: 0;
 }
 
+#game-left .btn-group, #game-right .btn-group {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
 #game-left-canvas, #game-right-canvas {
     border: 1px solid #e7e7e7;
     overflow: auto;
@@ -381,7 +397,7 @@ p.small {
 
 input[type=range] {
     position: absolute;
-    top: 10px;
+    top: 15px;
     left: 10px;
     width: 100px;
     cursor: pointer;
