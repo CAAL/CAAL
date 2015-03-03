@@ -28,6 +28,9 @@ module Activity {
         private changed : boolean;
         private graph : CCS.Graph;
         private succGen : CCS.SuccessorGenerator;
+        private dgGame : DgGame;
+        private fullscreen : Fullscreen;
+        private tooltip : TooltipNotation;
         private $gameType : JQuery;
         private $playerType : JQuery;
         private $leftProcessList : JQuery;
@@ -44,15 +47,13 @@ module Activity {
         private rightRenderer : Renderer;
         private leftGraph: GUI.ProcessGraphUI;
         private rightGraph: GUI.ProcessGraphUI;
-        private dgGame : DgGame;
-        private ccsNotationVisitor = new Traverse.CCSNotationVisitor();
-        private fullscreen : Fullscreen;
-        private tooltip : TooltipNotation;
         
         constructor(container : string, button : string) {
             super(container, button);
 
             this.project = Project.getInstance();
+            this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+            this.tooltip = new TooltipNotation($("#game-status"));
 
             this.$gameType = $("#game-type > select");
             this.$playerType = $("input[name=player-type]");
@@ -67,8 +68,6 @@ module Activity {
             this.leftCanvas = <HTMLCanvasElement> this.$leftContainer.find("canvas")[0];
             this.rightCanvas = <HTMLCanvasElement> this.$rightContainer.find("canvas")[0];
 
-            this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize());
-
             this.leftRenderer = new Renderer(this.leftCanvas);
             this.rightRenderer = new Renderer(this.rightCanvas);
             this.leftGraph = new GUI.ArborGraph(this.leftRenderer);
@@ -78,40 +77,31 @@ module Activity {
             this.$playerType.on("change", () => this.newGame(false, false));
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
-            this.$leftFreeze.on("click", (e) => this.toggleFreeze(e, this.leftGraph));
-            this.$rightFreeze.on("click", (e) => this.toggleFreeze(e, this.rightGraph));
-            
-            if (this.isInternetExplorer()) {
-                this.$leftZoom.on("change", () => this.zoom(this.$leftZoom.val(), "left"));
-                this.$rightZoom.on("change", () => this.zoom(this.$rightZoom.val(), "right"));
+            this.$leftFreeze.on("click", (e) => this.toggleFreeze(this.leftGraph, !this.$leftFreeze.data("frozen"), $(e.currentTarget)));
+            this.$rightFreeze.on("click", (e) => this.toggleFreeze(this.rightGraph, !this.$rightFreeze.data("frozen"), $(e.currentTarget)));
+
+            // Use onchange instead of oninput for IE.
+            if (navigator.userAgent.indexOf("MSIE ") > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
+                this.$leftZoom.on("change", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+                this.$rightZoom.on("change", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
             } else {
-                this.$leftZoom.on("input", () => this.zoom(this.$leftZoom.val(), "left"));
-                this.$rightZoom.on("input", () => this.zoom(this.$rightZoom.val(), "right"));
+                this.$leftZoom.on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+                this.$rightZoom.on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
             }
 
             $(document).on("ccs-changed", () => this.changed = true);
-            
-            this.tooltip = new TooltipNotation($("#game-status"));
         }
 
-        private toggleFreeze(e : Event, graph : GUI.ProcessGraphUI) {
-            var button = $(e.currentTarget);
-            var frozen = button.data("frozen");
-
-            if (frozen) {
-                graph.unfreeze();
-                button.find("i").replaceWith("<i class='fa fa-lock fa-lg'></i>");
-            } else {
+        private toggleFreeze(graph : GUI.ProcessGraphUI, freeze : boolean, button : JQuery) {
+            if (freeze) {
                 graph.freeze();
                 button.find("i").replaceWith("<i class='fa fa-unlock-alt fa-lg'></i>");
+            } else {
+                graph.unfreeze();
+                button.find("i").replaceWith("<i class='fa fa-lock fa-lg'></i>");
             }
 
-            button.data("frozen", !frozen);
-        }
-        
-        private isInternetExplorer() : boolean {
-            var msie = window.navigator.userAgent.indexOf("MSIE ");
-            return msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./);
+            button.data("frozen", freeze);
         }
 
         protected checkPreconditions(): boolean {
@@ -129,17 +119,12 @@ module Activity {
         }
         
         public onShow(configuration? : any) : void {
-            $(window).on("resize", () => {
-                this.resize();
-                this.zoom(this.$leftZoom.val(), "left");
-                this.zoom(this.$rightZoom.val(), "right");
-            });
+            $(window).on("resize", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
             
             this.fullscreen.onShow();
             
             if (this.changed || configuration) {
                 this.changed = false;
-                this.resize();
                 this.graph = this.project.getGraph();
                 this.displayOptions();
                 this.newGame(true, true, configuration);
@@ -213,13 +198,22 @@ module Activity {
 
             this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
 
-            if (drawLeft) {this.draw(this.succGen.getProcessByName(options.leftProcess), this.leftGraph, "left")}
-            if (drawRight) {this.draw(this.succGen.getProcessByName(options.rightProcess), this.rightGraph, "right")}
+            if (drawLeft) {
+                this.draw(this.succGen.getProcessByName(options.leftProcess), this.leftGraph);
+                this.resize(1, this.$rightZoom.val());
+                this.toggleFreeze(this.leftGraph, false, this.$leftFreeze);
+            }
+
+            if (drawRight) {
+                this.draw(this.succGen.getProcessByName(options.rightProcess), this.rightGraph)
+                this.resize(this.$leftZoom.val(), 1);
+                this.toggleFreeze(this.rightGraph, false, this.$rightFreeze);
+            }
             
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
 
-            if (this.dgGame != undefined) {this.dgGame.stopGame()};
+            if (this.dgGame !== undefined) {this.dgGame.stopGame()};
             
             this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, options.gameType);
             
@@ -261,9 +255,8 @@ module Activity {
         }*/
 
         // Use this for now. Needs refactor.
-        private draw(process : CCS.Process, graph : GUI.ProcessGraphUI, side : string) : void {
+        private draw(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
             this.clear(graph);
-            this.zoom(1, side)
 
             var allTransitions = this.expandBFS(process, 1000);
 
@@ -285,17 +278,14 @@ module Activity {
         }
 
         private showProcess(process : ccs.Process, graph : GUI.ProcessGraphUI) : void {
-            var data;
-            if (!process) throw {type: "ArgumentError", name: "Bad argument 'process'"};
             if (graph.getProcessDataObject(process.id)) return;
-            data = {label: this.labelFor(process)};
-            graph.showProcess(process.id, data);
+            graph.showProcess(process.id, {label: this.labelFor(process)});
         }
 
         public highlightNodes() : void {
-            var conf = this.dgGame.getCurrentConfiguration();
-            this.leftGraph.setSelected(conf.left.id.toString());
-            this.rightGraph.setSelected(conf.right.id.toString());
+            var configuration = this.dgGame.getCurrentConfiguration();
+            this.leftGraph.setSelected(configuration.left.id.toString());
+            this.rightGraph.setSelected(configuration.right.id.toString());
         }
 
         public highlightChoices(isLeft : boolean, targetId : string) : void {
@@ -306,7 +296,7 @@ module Activity {
             }
         }
 
-        public removeHighlightChoices(isLeft : boolean){
+        public removeHighlightChoices(isLeft : boolean) : void {
             if(isLeft) {
                 this.leftGraph.clearHover();
             } else {
@@ -339,22 +329,6 @@ module Activity {
             return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
         }
 
-        private zoom(value : number, side : string) : void {
-            if (side === "left") {
-                this.$leftZoom.val(value.toString());
-                this.leftCanvas.width = (this.$leftContainer.width() - 20) * value;
-                this.leftCanvas.height = (this.$leftContainer.height() - 20) * value;
-                this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
-                if (value > 1) {this.centerNode(this.dgGame.getCurrentConfiguration().left, Move.Left);}
-            } else {
-                this.$rightZoom.val(value.toString());
-                this.rightCanvas.width = (this.$rightContainer.width() - 20) * value;
-                this.rightCanvas.height = (this.$rightContainer.height() - 20) * value;
-                this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
-                if (value > 1) {this.centerNode(this.dgGame.getCurrentConfiguration().right, Move.Right);}
-            }
-        }
-
         public centerNode(process : CCS.Process, move : Move) : void {
             if (move === Move.Left) {
                 var position = this.leftGraph.getPosition(process.id.toString());
@@ -367,26 +341,49 @@ module Activity {
             }
         }
 
-        private resize() : void {
+        private resize(leftZoom : number, rightZoom : number) : void {
             var offsetTop = $("#game-main").offset().top;
             var offsetBottom = $("#game-status").height();
 
-            var availableHeight = window.innerHeight - offsetTop - offsetBottom - 22; // 22 = margin bot + border.
+            var availableHeight = window.innerHeight - offsetTop - offsetBottom - 22; // Margin bot + border = 22px.
             
+            // Only 10px margin bot in fullscreen.
             if (this.fullscreen.isFullscreen())
                 availableHeight += 10;
 
-            // Minimum height 265 px.
-            this.$leftContainer.height(Math.max(265, availableHeight));
-            this.$rightContainer.height(Math.max(265, availableHeight));
+            // Minimum height 265px.
+            var height = Math.max(265, availableHeight);
+            this.$leftContainer.height(height);
+            this.$rightContainer.height(height);
 
-            this.leftCanvas.width = this.$leftContainer.width();
-            this.rightCanvas.width = this.$rightContainer.width();
-            this.leftCanvas.height = this.$leftContainer.height();
-            this.rightCanvas.height = this.$rightContainer.height();
+            this.$leftZoom.val(leftZoom.toString());
+            this.$rightZoom.val(rightZoom.toString());
+
+            this.leftCanvas.width = this.$leftContainer.width() * leftZoom;
+            this.rightCanvas.width = this.$rightContainer.width() * rightZoom;
+            this.leftCanvas.height = height * leftZoom;
+            this.rightCanvas.height = height * rightZoom;
 
             this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
             this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
+
+            if (leftZoom > 1) {
+                this.$leftFreeze.css("right", 30);
+                this.$leftContainer.css("overflow", "auto");
+                this.centerNode(this.dgGame.getCurrentConfiguration().left, Move.Left);
+            } else {
+                this.$leftFreeze.css("right", 10);
+                this.$leftContainer.css("overflow", "hidden");
+            }
+
+            if (rightZoom > 1) {
+                this.$rightFreeze.css("right", 30);
+                this.$rightContainer.css("overflow", "auto");
+                this.centerNode(this.dgGame.getCurrentConfiguration().right, Move.Right);
+            } else {
+                this.$rightFreeze.css("right", 10);
+                this.$rightContainer.css("overflow", "hidden");
+            }
         }
     }
     
