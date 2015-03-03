@@ -23,8 +23,8 @@ messageHandlers.program = data => {
 messageHandlers.isStronglyBisimilar = data => {
     var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
         defendSuccGen = attackSuccGen,
-        leftProcess = graph.processByName(data.leftProcess),
-        rightProcess = graph.processByName(data.rightProcess),
+        leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
+        rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
         isBisimilar = DependencyGraph.isBisimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
     //Add some kind of request id to determine for which problem have result? It is necessary? Right now just add the new data to the result.
     data.result = isBisimilar;
@@ -34,10 +34,20 @@ messageHandlers.isStronglyBisimilar = data => {
 messageHandlers.isWeaklyBisimilar = data => {
     var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
         defendSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
-        leftProcess = graph.processByName(data.leftProcess),
-        rightProcess = graph.processByName(data.rightProcess),
+        leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
+        rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
         isBisimilar = DependencyGraph.isBisimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
     data.result = isBisimilar;
+    self.postMessage(data);
+};
+
+messageHandlers.isStronglyTraceIncluded = data => {
+    var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true});
+    var defendSuccGen = attackSuccGen;
+    var leftProcess = graph.processByName(data.leftProcess);
+    var rightProcess = graph.processByName(data.rightProcess);
+    var isTraceIncluded = DependencyGraph.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    data.result = isTraceIncluded;
     self.postMessage(data);
 };
 
@@ -58,6 +68,29 @@ messageHandlers.checkFormulaForVariable = data => {
         formula = formulaSet.formulaByName(data.variable),
         result = DependencyGraph.solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, graph.processByName(data.processName).id);
     data.result = result;
+    self.postMessage(data);
+};
+
+messageHandlers.findDistinguishingFormula = data => {
+    var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        leftProcess = strongSuccGen.getProcessByName(data.leftProcess),
+        rightProcess = strongSuccGen.getProcessByName(data.rightProcess),
+        bisimilarDg = new DependencyGraph.BisimulationDG(strongSuccGen, strongSuccGen, leftProcess.id, rightProcess.id),
+        marking = DependencyGraph.solveDgGlobalLevel(bisimilarDg),
+        formula, hmlNotation;
+    if (marking.getMarking(0) === marking.ZERO) {
+        data.result = {
+            isBisimilar: true,
+            formula: ""
+        };
+    } else {
+        formula = bisimilarDg.findDistinguishingFormula(marking),
+        hmlNotation = new Traverse.HMLNotationVisitor();
+        data.result = {
+            isBisimilar: false,
+            formula: hmlNotation.visit(formula)
+        }
+    }
     self.postMessage(data);
 };
 

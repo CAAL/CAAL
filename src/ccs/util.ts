@@ -126,9 +126,9 @@ module Traverse {
         }
     }
 
-    function wrapIfInstanceOf(stringRepr : string, process : ccs.Process, classes) {
+    function wrapIfInstanceOf(stringRepr : string, object : any, classes) {
         for (var i = 0; i < classes.length; i++) {
-            if (process instanceof classes[i]) {
+            if (object instanceof classes[i]) {
                 return "(" + stringRepr + ")";
             }
         }
@@ -366,7 +366,10 @@ module Traverse {
         dispatchConjFormula(formula : hml.ConjFormula) {
             var result = this.cache[formula.id];
             if (!result) {
-                var subStrs = formula.subFormulas.map(subF => subF.dispatchOn(this));
+                var subStrs = formula.subFormulas.map(subF => {
+                    var unwrapped = subF.dispatchOn(this)
+                    return wrapIfInstanceOf(unwrapped, subF, [hml.DisjFormula]);
+                });
                 result = this.cache[formula.id] = subStrs.join(" and ");
             }
             return result;
@@ -393,7 +396,8 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "<" + 
-                    formula.actionMatcher.actionMatchingString() + ">" + subStr;
+                    formula.actionMatcher.actionMatchingString() + ">" +
+                    wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
         }
@@ -403,7 +407,8 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "[" + 
-                    formula.actionMatcher.actionMatchingString() + "]" + subStr;
+                    formula.actionMatcher.actionMatchingString() + "]" +
+                    wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
         }
@@ -413,7 +418,8 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "<<" + 
-                    formula.actionMatcher.actionMatchingString() + ">>" + subStr;
+                    formula.actionMatcher.actionMatchingString() + ">>"
+                    wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
         }
@@ -423,7 +429,8 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "[[" + 
-                    formula.actionMatcher.actionMatchingString() + "]]" + subStr;
+                    formula.actionMatcher.actionMatchingString() + "]]"
+                    wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
         }

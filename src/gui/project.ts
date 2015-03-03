@@ -134,7 +134,6 @@ class Project {
 
     public toJSON(): any {
         var properties = Array();
-
         for (var i = 0; i < this.properties.length; i++) {
             properties.push(this.properties[i].toJSON());
         }

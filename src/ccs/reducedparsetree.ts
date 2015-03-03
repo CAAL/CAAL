@@ -1,13 +1,14 @@
 /// <reference path="ccs.ts" />
+/// <reference path="../util/array.ts" />
 
 module Traverse {
 
     import ccs = CCS;
 
     export class ProcessTreeReducer implements ccs.ProcessVisitor<ccs.Process>, ccs.ProcessDispatchHandler<ccs.Process> {
+        private cache : {[id : number] : ccs.Process} = Object.create(null);
 
-        constructor(public graph : ccs.Graph, public cache?) {
-            this.cache = cache || {};
+        constructor(public graph : ccs.Graph) {
         }
 
         visit(process : ccs.Process) : ccs.Process {
@@ -15,106 +16,87 @@ module Traverse {
         }
 
         dispatchNullProcess(process : ccs.NullProcess) {
-            this.cache[process.id] = true;
-            return process;
+            var resultProcess = this.cache[process.id];
+            if (!resultProcess) {
+                resultProcess = this.cache[process.id] = process;
+            }
+            return resultProcess;
         }
 
         dispatchNamedProcess(process : ccs.NamedProcess) {
-            if (!this.cache[process.id]) {
-                this.cache[process.id] = true;
-                process.subProcess = process.subProcess.dispatchOn(this);
-            }
             return process;
         }
 
         dispatchSummationProcess(process : ccs.SummationProcess) {
-            if (!this.cache[process.id]) {
-                //Reduce subprocesses first
-                var subProcesses = process.subProcesses;
-                subProcesses.forEach( (subProc, i) => {
-                    subProcesses[i] = subProc.dispatchOn(this);
-                });
-                //Remove null processes
-                subProcesses = subProcesses.filter( subProc => !(subProc instanceof ccs.NullProcess));
-                //Resort the processes
-                subProcesses.sort( (procA, procB) => procA.id - procB.id);
-                //Remove duplicates - already sorted on id.
-                if (subProcesses.length > 1) {
-                    var uniques = [subProcesses[0]];
-                    for (var i=1; i < subProcesses.length; i++) {
-                        var subProcess = subProcesses[i];
-                        if (subProcess.id !== uniques[uniques.length - 1].id) {
-                            uniques.push(subProcess);
-                        }
-                    }
-                    subProcesses = uniques;
-                }
+            var resultProcess = this.cache[process.id];
+            if (!resultProcess) {
+                var subProcesses = process.subProcesses.map(subProc => subProc.dispatchOn(this));
+                subProcesses = subProcesses.filter(subProc => !(subProc instanceof ccs.NullProcess));
+                subProcesses = ArrayUtil.sortAndRemoveDuplicates(subProcesses, p => p.id);
                 if (subProcesses.length === 0) {
                     return this.graph.getNullProcess();
                 }
-                process.subProcesses = subProcesses;
-                this.cache[process.id] = true;
+                resultProcess = this.cache[process.id] = this.graph.newSummationProcess(subProcesses);
             }
-            return process;
+            return resultProcess;
         }
 
         dispatchCompositionProcess(process : ccs.CompositionProcess) {
-            if (!this.cache[process.id]) {
-                //Reduce subprocesses first
-                var subProcesses = process.subProcesses;
-                subProcesses.forEach( (subProc, i) => {
-                    subProcesses[i] = subProc.dispatchOn(this);
-                });
-                //Remove null processes
-                subProcesses = subProcesses.filter( subProc => !(subProc instanceof ccs.NullProcess));
-                //Resort the processes
-                subProcesses.sort( (procA, procB) => procA.id - procB.id);
+            var resultProcess = this.cache[process.id];
+            if (!resultProcess) {
+                var subProcesses = process.subProcesses.map(subProc => subProc.dispatchOn(this));
+                subProcesses = subProcesses.filter(subProc => !(subProc instanceof ccs.NullProcess));
                 if (subProcesses.length === 0) {
                     return this.graph.getNullProcess();
                 }
-                process.subProcesses = subProcesses;
-                this.cache[process.id] = true;
+                resultProcess = this.cache[process.id] = this.graph.newCompositionProcess(subProcesses);
             }
-            return process;
+            return resultProcess;
         }
 
         dispatchActionPrefixProcess(process : ccs.ActionPrefixProcess) {
-            if (!this.cache[process.id]) {
-                process.nextProcess = process.nextProcess.dispatchOn(this);
-                this.cache[process.id] = true;
+            var resultProcess = this.cache[process.id];
+            if (!resultProcess) {
+                var nextProcess = process.nextProcess.dispatchOn(this);
+                resultProcess = this.cache[process.id] = this.graph.newActionPrefixProcess(process.action, nextProcess);
             }
-            return process;
+            return resultProcess;
         }
 
         dispatchRestrictionProcess(process : ccs.RestrictionProcess) {
-            if (!this.cache[process.id]) {
-                process.subProcess = process.subProcess.dispatchOn(this);
+            var resultProcess = this.cache[process.id];
+            if (!resultProcess) {
+                var subProcess = process.subProcess.dispatchOn(this);
+                var tempProcess;
                 // (P \ L1) \L2 => P \ (L1 Union L2)
-                if (process.subProcess instanceof ccs.RestrictionProcess) {
-                    var subRestriction = <ccs.RestrictionProcess>process.subProcess;
+                if (subProcess instanceof ccs.RestrictionProcess) {
+                    var subRestriction = <ccs.RestrictionProcess>subProcess;
                     var mergedLabels = subRestriction.restrictedLabels.union(process.restrictedLabels);
-                    process = this.graph.newRestrictedProcess(subRestriction.subProcess, mergedLabels);
+                    tempProcess = this.graph.newRestrictedProcess(subRestriction.subProcess, mergedLabels);
+                } else {
+                    tempProcess = this.graph.newRestrictedProcess(subProcess, process.restrictedLabels);
                 }
                 // 0 \ L => 0
-                if (process.subProcess instanceof ccs.NullProcess) {
-                    return process.subProcess;
+                if (tempProcess.subProcess instanceof ccs.NullProcess) {
+                    return tempProcess.subProcess;
                 }
                 // P \ Ø => P
-                if (process.restrictedLabels.empty()) {
-                    return process.subProcess;
+                if (tempProcess.restrictedLabels.empty()) {
+                    return tempProcess.subProcess;
                 }
-                this.cache[process.id] = true;
+                resultProcess = this.cache[process.id] = tempProcess;
             }
-            return process;
+            return resultProcess;
         }
 
         dispatchRelabellingProcess(process : ccs.RelabellingProcess) {
-            if (!this.cache[process.id]) {
-                process.subProcess = process.subProcess.dispatchOn(this);
-                if (process.subProcess instanceof ccs.NullProcess) return process.subProcess; // 0 [f] => 0
-                this.cache[process.id] = true;
+            var resultProcess = this.cache[process.id];
+            if (!resultProcess) {
+                var subProcess = process.subProcess.dispatchOn(this);
+                if (subProcess instanceof ccs.NullProcess) return subProcess; // 0 [f] => 0
+                resultProcess = this.cache[process.id] = this.graph.newRelabelingProcess(subProcess, process.relabellings);
             }
-            return process;
+            return resultProcess;
         }
     }
 
@@ -124,11 +106,15 @@ module Traverse {
             this.cache = cache || {};
         }
 
-        getProcessById(processId : number) : ccs.Process { 
+        getProcessByName(processName : string) : ccs.Process {
+            return this.strictSuccGenerator.getProcessByName(processName);
+        }
+
+        getProcessById(processId : ccs.ProcessId) : ccs.Process { 
             return this.strictSuccGenerator.getProcessById(processId);
         }
 
-        getSuccessors(processId : number) : ccs.TransitionSet {
+        getSuccessors(processId : ccs.ProcessId) : ccs.TransitionSet {
             if (this.cache[processId]) return this.cache[processId];
 
             var result = new ccs.TransitionSet(),
@@ -193,11 +179,17 @@ module Traverse {
         
         constructor(public succGenerator : ccs.SuccessorGenerator, public reducer : ProcessTreeReducer) { }
 
-        getProcessById(processId) : ccs.Process {
-            return this.succGenerator.getProcessById(processId);
+        getProcessByName(processName : string) : ccs.Process {
+            var namedProcess = this.succGenerator.getProcessByName(processName);
+            return this.reducer.visit(namedProcess);
         }
 
-        getSuccessors(processId) : ccs.TransitionSet {
+        getProcessById(processId : ccs.ProcessId) : ccs.Process {
+            var proc = this.succGenerator.getProcessById(processId);
+            return this.reducer.visit(proc);
+        }
+
+        getSuccessors(processId : ccs.ProcessId) : ccs.TransitionSet {
             var transitionSet = this.succGenerator.getSuccessors(processId);
             return this.reduceSuccessors(transitionSet);
         }

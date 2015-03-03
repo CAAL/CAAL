@@ -3,7 +3,8 @@
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="activity.ts" />
-/// <reference path="../../lib/suppressWarnings.d.ts" />
+/// <reference path="fullscreen.ts" />
+/// <reference path="tooltip.ts" />
 
 module Activity {
 
@@ -31,8 +32,6 @@ module Activity {
         private $playerType : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
-        private $fullscreenBtn : JQuery;
-        private $fullScreenContainer;
         private $leftContainer : JQuery;
         private $rightContainer : JQuery;
         private $leftZoom : JQuery;
@@ -45,24 +44,26 @@ module Activity {
         private rightGraph: GUI.ProcessGraphUI;
         private dgGame : DgGame;
         private ccsNotationVisitor = new Traverse.CCSNotationVisitor();
+        private fullscreen : Fullscreen;
+        private tooltip : TooltipNotation;
         
         constructor(container : string, button : string) {
             super(container, button);
 
             this.project = Project.getInstance();
 
-            this.$gameType = $("#game-type");
+            this.$gameType = $("#game-type > select");
             this.$playerType = $("input[name=player-type]");
             this.$leftProcessList = $("#game-left-process");
             this.$rightProcessList = $("#game-right-process");
             this.$leftContainer = $("#game-left-canvas");
             this.$rightContainer = $("#game-right-canvas");
-            this.$fullscreenBtn = $("#game-fullscreen");
-            this.$fullScreenContainer = $("#game-container")[0];
             this.$leftZoom = $("#zoom-left");
             this.$rightZoom = $("#zoom-right");
             this.leftCanvas = <HTMLCanvasElement> this.$leftContainer.find("canvas")[0];
             this.rightCanvas = <HTMLCanvasElement> this.$rightContainer.find("canvas")[0];
+
+            this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize());
 
             this.leftRenderer = new Renderer(this.leftCanvas);
             this.rightRenderer = new Renderer(this.rightCanvas);
@@ -73,9 +74,6 @@ module Activity {
             this.$playerType.on("change", () => this.newGame(false, false));
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
-            this.$fullscreenBtn.on("click", () => this.toggleFullscreen());
-            
-            this.$leftContainer.add(this.$rightContainer).on("scroll", () => this.positionSliders());
             
             if (this.isInternetExplorer()) {
                 this.$leftZoom.on("change", () => this.zoom(this.$leftZoom.val(), "left"));
@@ -87,63 +85,12 @@ module Activity {
 
             $(document).on("ccs-changed", () => this.changed = true);
             
-            // Set tooltip handler
-            var getCCSNotation = this.ccsNotationForProcessId.bind(this);
-            $("#game-status").tooltip({
-                title: function() {
-                    var process = $(this).text();
-                    return process + " = " + getCCSNotation(process);
-                },
-                selector: "span.ccs-tooltip-constant"
-            });
+            this.tooltip = new TooltipNotation($("#game-status"));
         }
         
         private isInternetExplorer() : boolean {
             var msie = window.navigator.userAgent.indexOf("MSIE ");
             return msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./);
-        }
-        
-        private isFullscreen(): boolean {
-            return !!document.fullscreenElement ||
-                   !!document.mozFullScreenElement ||
-                   !!document.webkitFullscreenElement ||
-                   !!document.msFullscreenElement;
-        }
-        
-        private toggleFullscreen() {
-            if (!this.isFullscreen()) {
-                if (this.$fullScreenContainer.requestFullscreen) {
-                    this.$fullScreenContainer.requestFullscreen();
-                } else if (this.$fullScreenContainer.msRequestFullscreen) {
-                    this.$fullScreenContainer.msRequestFullscreen();
-                } else if (this.$fullScreenContainer.mozRequestFullScreen) {
-                    this.$fullScreenContainer.mozRequestFullScreen();
-                } else if (this.$fullScreenContainer.webkitRequestFullscreen) {
-                    this.$fullScreenContainer.webkitRequestFullscreen();
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                }
-            }
-        }
-
-        private fullscreenChanged() {
-            this.$fullscreenBtn.text(this.isFullscreen() ? "Exit" : "Fullscreen");
-            this.resize();
-        }
-        
-        private fullscreenError() {
-            console.log("Fullscreen error");
-            
-            // user might have entered fullscreen and gone out of it, treat as fullscreen changed
-            this.fullscreenChanged();
         }
 
         protected checkPreconditions(): boolean {
@@ -160,19 +107,6 @@ module Activity {
             return true;
         }
         
-        private ccsNotationForProcessId(id : string): string {
-            var process = this.graph.processById(id) || this.graph.processByName(id),
-                text = "Unknown definition";
-                
-            if (process) {
-                if (process instanceof ccs.NamedProcess)
-                    text = this.ccsNotationVisitor.visit((<ccs.NamedProcess>process).subProcess);
-                else
-                    text = this.ccsNotationVisitor.visit(process);
-            }
-            return text;
-        }
-        
         public onShow(configuration? : any) : void {
             $(window).on("resize", () => {
                 this.resize();
@@ -180,16 +114,8 @@ module Activity {
                 this.zoom(this.$rightZoom.val(), "right");
             });
             
-            $(document).on("fullscreenchange", () => this.fullscreenChanged());
-            $(document).on("webkitfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("mozfullscreenchange", () => this.fullscreenChanged());
-            $(document).on("MSFullscreenChange", () => this.fullscreenChanged());
+            this.fullscreen.onShow();
             
-            $(document).on("fullscreenerror", () => this.fullscreenError());
-            $(document).on("webkitfullscreenerror", () => this.fullscreenError());
-            $(document).on("mozfullscreenerror", () => this.fullscreenError());
-            $(document).on("MSFullscreenError", () => this.fullscreenError());
-
             if (this.changed || configuration) {
                 this.changed = false;
                 this.resize();
@@ -197,7 +123,9 @@ module Activity {
                 this.displayOptions();
                 this.newGame(true, true, configuration);
             }
-
+            
+            this.tooltip.setGraph(this.graph);
+            
             this.leftGraph.bindCanvasEvents();
             this.rightGraph.bindCanvasEvents();
             this.rightGraph.unfreeze();
@@ -207,15 +135,7 @@ module Activity {
         public onHide() : void {
             $(window).off("resize");
             
-            $(document).off("fullscreenchange");
-            $(document).off("webkitfullscreenchange");
-            $(document).off("mozfullscreenchange");
-            $(document).off("MSFullscreenChange");
-            
-            $(document).off("fullscreenerror");
-            $(document).off("webkitfullscreenerror");
-            $(document).off("mozfullscreenerror");
-            $(document).off("MSFullscreenError");
+            this.fullscreen.onHide();
 
             this.leftGraph.unbindCanvasEvents();
             this.rightGraph.unbindCanvasEvents();
@@ -274,10 +194,10 @@ module Activity {
                 options = this.getOptions();
             }
 
-            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
+            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
 
-            if (drawLeft) {this.draw(this.graph.processByName(options.leftProcess), this.leftGraph, "left")}
-            if (drawRight) {this.draw(this.graph.processByName(options.rightProcess), this.rightGraph, "right")}
+            if (drawLeft) {this.draw(this.succGen.getProcessByName(options.leftProcess), this.leftGraph, "left")}
+            if (drawRight) {this.draw(this.succGen.getProcessByName(options.rightProcess), this.rightGraph, "right")}
             
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
@@ -335,11 +255,12 @@ module Activity {
                 this.showProcess(fromProcess, graph);
                 var groupedByTargetProcessId = groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
 
-                Object.keys(groupedByTargetProcessId).forEach(tProcId => {
-                    var group = groupedByTargetProcessId[tProcId],
-                        data = group.map(t => { return {label: t.action.toString()}; });
-                    this.showProcess(this.graph.processById(tProcId), graph);
-                    graph.showTransitions(fromProcess.id, tProcId, data);
+                Object.keys(groupedByTargetProcessId).forEach(strProcId => {
+                    var group = groupedByTargetProcessId[strProcId],
+                        data = group.map(t => { return {label: t.action.toString()}; }),
+                        numId = parseInt(strProcId, 10);
+                    this.showProcess(this.graph.processById(numId), graph);
+                    graph.showTransitions(fromProcess.id, numId, data);
                 });
             }
 
@@ -429,25 +350,18 @@ module Activity {
             }
         }
 
-        private positionSliders() : void {
-            this.$leftZoom.css("top", this.$leftContainer.scrollTop() + 10);
-            this.$leftZoom.css("left", this.$leftContainer.scrollLeft() + 10);
-            this.$rightZoom.css("top", this.$rightContainer.scrollTop() + 10);
-            this.$rightZoom.css("left", this.$rightContainer.scrollLeft() + 10);
-        }
-
         private resize() : void {
-            var offsetTop = $("#game-main").offset().top + 20;
-            var offsetBottom = $("#game-status").height() + 3; // + border.
+            var offsetTop = $("#game-main").offset().top;
+            var offsetBottom = $("#game-status").height();
 
-            var availableHeight = window.innerHeight - offsetTop - offsetBottom;
+            var availableHeight = window.innerHeight - offsetTop - offsetBottom - 22; // 22 = margin bot + border.
             
-            if (this.isFullscreen())
+            if (this.fullscreen.isFullscreen())
                 availableHeight += 10;
 
-            // Minimum height 275 px.
-            this.$leftContainer.height(Math.max(275, availableHeight));
-            this.$rightContainer.height(Math.max(275, availableHeight));
+            // Minimum height 265 px.
+            this.$leftContainer.height(Math.max(265, availableHeight));
+            this.$rightContainer.height(Math.max(265, availableHeight));
 
             // Container height - 20 scrollbar size. 20px should be a safe value.
             this.leftCanvas.width = (this.$leftContainer.width() - 20);
@@ -474,7 +388,6 @@ module Activity {
         protected dependencyGraph : dg.DependencyGraph;
         protected marking : dg.LevelMarking;
         
-        private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
         protected gameLog : GameLog = new GameLog();
         
         protected attacker : Player;
@@ -492,8 +405,6 @@ module Activity {
             attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator,
             protected currentLeft : any, protected currentRight : any) {
             super();
-            
-            this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
             
             // create the dependency graph
             this.dependencyGraph = this.createDependencyGraph(this.graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight);
@@ -558,6 +469,7 @@ module Activity {
             
             this.attacker = attacker;
             this.defender = defender;
+            this.currentWinner = this.getUniversalWinner();
         }
         
         private saveCurrentProcess(process : any, move : Move) : void {
@@ -701,11 +613,6 @@ module Activity {
         protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph {
             
             return this.bisimulationDG = new dg.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
-        }
-        
-        public setPlayers(attacker : Player, defender : Player) : void {
-            super.setPlayers(attacker, defender);
-            this.currentWinner = this.getUniversalWinner();
         }
         
         public getUniversalWinner() : Player {
@@ -875,7 +782,6 @@ module Activity {
     
     class Human extends Player {
         
-        private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
         private $table;
         
         constructor(playType : PlayType, private gameActivity : Game) {
@@ -940,11 +846,7 @@ module Activity {
         }
         
         private labelFor(process : CCS.Process) : string {
-            if (process instanceof CCS.NamedProcess)
-                return this.htmlNotationVisitor.visit(process);
-            else 
-                // return process.id.toString();
-                return '<span class="ccs-tooltip-constant">' + process.id + '</span>';
+            return TooltipNotation.GetSpan(process instanceof CCS.NamedProcess ? process.name : process.id.toString());
         }
 
         private hightlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
@@ -1048,7 +950,6 @@ module Activity {
     }
 
     class GameLog {
-        private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
         private $log : JQuery;
 
         constructor() {

@@ -2,19 +2,134 @@
 /// <reference path="hml.ts" />
 /// <reference path="util.ts" />
 /// <reference path="collapse.ts" />
+/// <reference path="../util/array.ts" />
 
 module DependencyGraph {
 
     import ccs = CCS;
     import hml = HML;
 
-    function copyHyperEdges(hyperEdges) {
+    export type Hyperedge = Array<number>;
+    export type DgNodeId = number;
+
+    function copyHyperEdges(hyperEdges : Hyperedge[]) : Hyperedge[] {
         var result = [];
         for (var i=0; i < hyperEdges.length; i++) {
             result.push(hyperEdges[i].slice(0));
         }
         return result;
     }
+
+    export class TraceDG implements DependencyGraph {
+
+        private nextIdx;
+        private constructData = [];
+        private nodes = [];
+        private leftPairs = {};
+        private attackSuccGen;
+
+        constructor(leftNode, rightNode, attackSuccGen) {
+            this.constructData[0] = [0, leftNode, [rightNode]];
+            this.nextIdx = 1;
+            this.attackSuccGen = attackSuccGen;
+        }
+
+        public getHyperEdges(identifier) : any[][] {
+            var type, result;
+            //Have we already built this? Then return copy of the edges.
+            if (this.nodes[identifier]) {
+                result = this.nodes[identifier];
+            } else {
+                result = this.constructNode(identifier);
+            }
+
+            return copyHyperEdges(result);
+        }
+
+        public getAllHyperEdges() : any[] {
+            return undefined;
+        }
+
+        private constructNode(identifier) : any {
+            var data = this.constructData[identifier];
+
+            return this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
+        }
+
+        private getProcessPairStates(leftProcessId, rightProcessIds) {
+            var hyperedges = [];
+
+            var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
+            var rightTransitions = [];
+
+            rightProcessIds.forEach(rightProcessId => {
+                var succs = this.attackSuccGen.getSuccessors(rightProcessId);
+                succs.forEach(succ => {rightTransitions.push(succ) });
+            });
+            
+            leftTransitions.forEach(leftTransition => {
+                var rightTargets = [];
+                
+                rightTransitions.forEach(rightTransition => {
+                    if (rightTransition.action.equals(leftTransition.action)) {
+                        rightTargets.push(parseInt(rightTransition.targetProcess.id));
+
+                    }
+
+                });
+
+                if( !(rightTargets.length > 0) ) {
+                    hyperedges.push([]);
+                } else {
+
+                    rightTargets.sort(function(a, b){return a-b});
+
+                    rightTargets = ArrayUtil.removeConsecutiveDuplicates(rightTargets);
+
+                    if(this.leftPairs[leftTransition.targetProcess.id] === undefined)
+                        this.leftPairs[leftTransition.targetProcess.id] = [];
+
+                    if(this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] === undefined)
+                        this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] = [];
+                    
+                    var rightSets = this.leftPairs[leftTransition.targetProcess.id][rightTargets.length];
+                    var existing = false;
+
+                    if (rightSets) {
+
+                        for(var n = 0; n < rightSets.length; n++) {
+                            if(rightTargets.every((v,i)=> v === rightSets[n].set[i])) {
+                                existing = rightSets[n].index;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (existing) {
+                        hyperedges.push([existing]);                    
+                    } else {
+                        var newNodeIdx = this.nextIdx++;
+
+                        var rightSet = {set: rightTargets, index: newNodeIdx};
+                        
+                        this.leftPairs[leftTransition.targetProcess.id][rightTargets.length].push(rightSet);
+
+                        this.constructData[newNodeIdx] = [0, leftTransition.targetProcess.id, rightTargets];
+                        
+                        hyperedges.push([newNodeIdx]);
+                        
+                    }
+
+                }
+                
+            });
+            
+            return hyperedges;
+        }
+        
+    }
+
+
 
     export class BisimulationDG implements DependencyGraph {
 
@@ -36,7 +151,7 @@ module DependencyGraph {
             this.nextIdx = 1;
         }
 
-        getHyperEdges(identifier) {
+        getHyperEdges(identifier : DgNodeId) : Hyperedge[] {
             var type, result;
             //Have we already built this? Then return copy of the edges.
             if (this.nodes[identifier]) {
@@ -47,10 +162,10 @@ module DependencyGraph {
             return copyHyperEdges(result);
         }
 
-        private constructNode(identifier) {
+        private constructNode(identifier : DgNodeId) {
             var result,
-                data = this.constructData[identifier],
-                type = data[0];
+            data = this.constructData[identifier],
+            type = data[0];
             if (type === 0) { //It it a pair?
                 result = this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
             } else if (type === 1) { // The left action and destination is fixed?
@@ -61,7 +176,7 @@ module DependencyGraph {
             return result;
         }
 
-        getAllHyperEdges() : [any][] {
+        getAllHyperEdges() : [DgNodeId, Hyperedge][] {
             if (!this.isFullyConstructed) {
                 this.isFullyConstructed = true;
                 //All nodes have ids in order of creation, thus there are no gaps.
@@ -79,9 +194,9 @@ module DependencyGraph {
 
         private getNodeForLeftTransition(data) {
             var action = data[1],
-                toLeftId = data[2],
-                fromRightId = data[3],
-                result = [];
+            toLeftId = data[2],
+            fromRightId = data[3],
+            result = [];
             // for (s, fromRightId), s ----action---> toLeftId.
             // fromRightId must be able to match.
             var rightTransitions = this.defendSuccGen.getSuccessors(fromRightId);
@@ -112,9 +227,9 @@ module DependencyGraph {
 
         private getNodeForRightTransition(data) {
             var action = data[1],
-                toRightId = data[2],
-                fromLeftId = data[3],
-                result = [];
+            toRightId = data[2],
+            fromLeftId = data[3],
+            result = [];
             var leftTransitions = this.defendSuccGen.getSuccessors(fromLeftId);
             leftTransitions.forEach(leftTransition => {
                 var existing, toLeftId;
@@ -140,8 +255,8 @@ module DependencyGraph {
             return [result];
         }
 
-        private getProcessPairStates(leftProcessId, rightProcessId) {
-            var hyperedges = [];
+        private getProcessPairStates(leftProcessId : ccs.ProcessId, rightProcessId : ccs.ProcessId) : Hyperedge[] {
+            var hyperedges : Hyperedge[] = [];
             var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
             var rightTransitions = this.attackSuccGen.getSuccessors(rightProcessId);
             leftTransitions.forEach(leftTransition => {
@@ -157,11 +272,11 @@ module DependencyGraph {
             return hyperedges;
         }
 
-        public getAttackerOptions(currentDgNode : any) {
-            if (this.constructData[currentDgNode][0] !== 0)
+        public getAttackerOptions(dgNodeId : DgNodeId) : Hyperedge[] {
+            if (this.constructData[dgNodeId][0] !== 0)
                 throw "Bad node for attacker options";
             
-            var hyperedges = this.getHyperEdges(currentDgNode);
+            var hyperedges = this.getHyperEdges(dgNodeId);
             
             var result = [];
             
@@ -183,15 +298,15 @@ module DependencyGraph {
             return result;
         }
         
-        public getDefenderOptions(currentDgNode : any) {
-            if (this.constructData[currentDgNode][0] === 0)
+        public getDefenderOptions(dgNodeId : DgNodeId) {
+            if (this.constructData[dgNodeId][0] === 0)
                 throw "Bad node for defender options";
             
-            var hyperedge = this.getHyperEdges(currentDgNode)[0];
+            var hyperedge = this.getHyperEdges(dgNodeId)[0];
             
             var result = [];
             
-            var tcpi = this.constructData[currentDgNode][0] === 1 ? 2 : 1;
+            var tcpi = this.constructData[dgNodeId][0] === 1 ? 2 : 1;
             
             hyperedge.forEach(targetNode => {
                 var data = this.constructData[targetNode];
@@ -206,7 +321,7 @@ module DependencyGraph {
             return result;
         }
         
-        getBisimulationCollapse(marking) : Traverse.Collapse {
+        getBisimulationCollapse(marking : LevelMarking) : Traverse.Collapse {
 
             var sets = Object.create(null);
 
@@ -230,7 +345,7 @@ module DependencyGraph {
 
             function union(pId, qId) {
                 var pRoot = findRoot(pId),
-                    qRoot = findRoot(qId);
+                qRoot = findRoot(qId);
                 if (pRoot === qRoot) return;
                 if (pRoot.rank < qRoot.rank) pRoot.parent = qRoot;
                 else if (pRoot.rank > qRoot.rank) qRoot.parent = pRoot;
@@ -279,31 +394,28 @@ module DependencyGraph {
                 trace;
             if (marking.getMarking(0) !== marking.ONE) throw "Error: Processes are bisimilar";
 
-            function selectMinimaxLevel(node) {
+            function selectMinimaxLevel(node : DgNodeId) {
                 var hyperEdges = that.getHyperEdges(node),
-                    bestHyperEdge, bestNode;
+                    bestHyperEdge : Hyperedge,
+                    bestNode : DgNodeId;
 
                 //Why JavaScript... why????
                 function wrapMax(a, b) {
                     return Math.max(a, b);
                 }
 
-                function selectBest(array, isBetter) {
-                    return array.reduce((cur, check) => {
-                        return isBetter(check, cur) ? check : cur;
-                    });
-                }
-
                 if (hyperEdges.length === 0) return null;
-                var bestHyperEdge = selectBest(hyperEdges, (tNodesLeft, tNodesRight) => {
+                var bestHyperEdge = ArrayUtil.selectBest(hyperEdges, (tNodesLeft, tNodesRight) => {
                     var maxLevelLeft = tNodesLeft.map(marking.getLevel).reduce(wrapMax, 1),
                         maxLevelRight = tNodesRight.map(marking.getLevel).reduce(wrapMax, 1);
-                    return maxLevelLeft < maxLevelRight;
+                    if (maxLevelLeft < maxLevelRight) return true;
+                    if (maxLevelLeft > maxLevelRight) return false;
+                    return tNodesLeft.length < tNodesRight.length;
                 });
 
                 if (bestHyperEdge.length === 0) return null;
 
-                bestNode = selectBest(bestHyperEdge, (nodeLeft, nodeRight) => {
+                bestNode = ArrayUtil.selectBest(bestHyperEdge, (nodeLeft, nodeRight) => {
                     return marking.getLevel(nodeLeft) < marking.getLevel(nodeRight);
                 });
 
@@ -316,7 +428,7 @@ module DependencyGraph {
 
             var selectSuccessor = selectMinimaxLevel;
 
-            function formulaForBranch(node) : hml.Formula {
+            function formulaForBranch(node : DgNodeId) : hml.Formula {
                 var cData = that.constructData[node];
                 if (cData[0] === 0) {
                     var selectedNode = selectSuccessor(node);
@@ -346,13 +458,13 @@ module DependencyGraph {
     }
 
     export interface PartialDependencyGraph {
-        getHyperEdges(identifier) : any[][];
+        getHyperEdges(identifier : DgNodeId) : Hyperedge[];
     }
 
     export interface DependencyGraph extends PartialDependencyGraph {
-        getHyperEdges(identifier) : any[][];
-        getAllHyperEdges() : any[];
-    }
+        getHyperEdges(identifier : DgNodeId) : Hyperedge[];
+        getAllHyperEdges() : [number, Hyperedge][];
+    }1
 
     class MuCalculusMinModelCheckingDG implements PartialDependencyGraph, hml.FormulaDispatchHandler<any> {
         private TRUE_ID = 1;
@@ -374,7 +486,7 @@ module DependencyGraph {
             this.nextIdx = 3;
         }
 
-        getHyperEdges(identifier) {
+        getHyperEdges(identifier : DgNodeId) : Hyperedge[] {
             var data, nodeId, formula, result;
             if (this.nodes[identifier]) {
                 result = this.nodes[identifier];
@@ -418,9 +530,9 @@ module DependencyGraph {
             return this.nodes[this.FALSE_ID];
         }
 
-        private existsFormula(formula : any, succGen : ccs.SuccessorGenerator) {
+        private existsFormula(formula, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = succGen.getSuccessors(this.getForNodeId);
+            transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -431,9 +543,9 @@ module DependencyGraph {
             return hyperedges;            
         }
 
-        private forallFormula(formula : any, succGen : ccs.SuccessorGenerator) {
+        private forallFormula(formula, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = succGen.getSuccessors(this.getForNodeId);
+            transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -500,7 +612,7 @@ module DependencyGraph {
             this.nextIdx = 3;
         }
 
-        getHyperEdges(identifier) {
+        getHyperEdges(identifier : DgNodeId) : Hyperedge[] {
             var data, nodeId, formula, result;
             if (this.nodes[identifier]) {
                 result = this.nodes[identifier];
@@ -548,7 +660,7 @@ module DependencyGraph {
 
         private existsFormula(formula : any, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = succGen.getSuccessors(this.getForNodeId);
+            transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -561,7 +673,7 @@ module DependencyGraph {
 
         private forallFormula(formula : any, succGen : ccs.SuccessorGenerator) {
             var hyperedges = [],
-                transitionSet = succGen.getSuccessors(this.getForNodeId);
+            transitionSet = succGen.getSuccessors(this.getForNodeId);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
                     var newIdx = this.nextIdx++;
@@ -616,13 +728,13 @@ module DependencyGraph {
 
     export function solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, processId) : boolean {
         var dg = new MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, processId, formulaSet, formula),
-            marking = solveMuCalculusInternal(dg);
+        marking = solveMuCalculusInternal(dg);
         return marking.getMarking(0) === marking.ONE;
     }
 
     export function isBisimilar(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
         var dg = new BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
-            marking = liuSmolkaLocal2(0, dg);
+        marking = liuSmolkaLocal2(0, dg);
 
         //Bisimulation is maximal fixed point, the marking is reversed.
         // if (marking.getMarking(0) === marking.ONE && graph) {
@@ -638,19 +750,28 @@ module DependencyGraph {
         return marking.getMarking(0) === marking.ZERO;
     }
 
-    export function getBisimulationCollapse(
-                attackSuccGen : ccs.SuccessorGenerator,
-                defendSuccGen : ccs.SuccessorGenerator,
-                leftProcessId,
-                rightProcessId) : Traverse.Collapse {
-        var dg = new BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
-            marking = liuSmolkaGlobal(dg);
-        return dg.getBisimulationCollapse(marking);
+    export function isTraceIncluded(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
+        var dg = new TraceDG(leftProcessId, rightProcessId, attackSuccGen);
+        
+        var marking = liuSmolkaLocal2(0, dg);
+
+        return marking.getMarking(0) === marking.ZERO;
+        
     }
+
+    export function getBisimulationCollapse(
+        attackSuccGen : ccs.SuccessorGenerator,
+        defendSuccGen : ccs.SuccessorGenerator,
+        leftProcessId,
+        rightProcessId) : Traverse.Collapse {
+            var dg = new BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
+            marking = liuSmolkaGlobal(dg);
+            return dg.getBisimulationCollapse(marking);
+        }
 
     function prettyPrintTrace(graph, trace) {
         var notation = new Traverse.CCSNotationVisitor(),
-            stringParts = [];
+        stringParts = [];
         for (var i=0; i < trace.length; i++) {
             if (i % 2 == 1) stringParts.push("---- " + trace[i].toString() + " ---->");
             else stringParts.push(notation.visit(graph.processById(trace[i])));
@@ -668,7 +789,7 @@ module DependencyGraph {
         getLevel(any) : number;
     }
 
-    function liuSmolkaLocal2(m, graph : PartialDependencyGraph) : any {
+    function liuSmolkaLocal2(m : DgNodeId, graph : PartialDependencyGraph) : any {
         var S_ZERO = 1, S_ONE = 2, S_BOTTOM = 3;
 
         // A[k]
@@ -750,7 +871,7 @@ module DependencyGraph {
             }
         }
         return {
-            getMarking: function(dgNodeId) {
+            getMarking: function(dgNodeId : DgNodeId) {
                 return A.get(dgNodeId);
             },
             ZERO: S_ZERO,
@@ -822,7 +943,7 @@ module DependencyGraph {
         }
 
         return {
-            getMarking: function(dgNodeId) {
+            getMarking: function(dgNodeId : DgNodeId) {
                 return A.get(dgNodeId);
             },
             ZERO: S_ZERO,
@@ -904,10 +1025,10 @@ module DependencyGraph {
             }
         }
         return {
-            getMarking: function(dgNodeId) {
+            getMarking: function(dgNodeId : DgNodeId) {
                 return Level.get(dgNodeId) === Infinity ? S_ZERO : S_ONE;
             },
-            getLevel: function(dgNodeId) {
+            getLevel: function(dgNodeId : DgNodeId) {
                 return Level.get(dgNodeId);
             },
             ZERO: S_ZERO,
