@@ -86,9 +86,6 @@ module DependencyGraph {
 
                     rightTargets = ArrayUtil.removeConsecutiveDuplicates(rightTargets);
 
-                    console.log(rightTargets);
-                    console.log(rightTargets.length);
-
                     if(this.leftPairs[leftTransition.targetProcess.id] === undefined)
                         this.leftPairs[leftTransition.targetProcess.id] = [];
 
