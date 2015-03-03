@@ -233,7 +233,7 @@ module Property {
             this.firstProcess = options.firstProcess;
             this.secondProcess = options.secondProcess;
         }
-
+        
         public getFirstProcess(): string {
             return this.firstProcess;
         }
@@ -251,7 +251,18 @@ module Property {
             this.secondProcess = secondProcess;
             this.setUnknownStatus();
         }
-
+        
+        public toJSON(): any {
+            return {
+                type: this.getType(),
+                status: this.status,
+                options: {
+                    firstProcess: this.firstProcess,
+                    secondProcess: this.secondProcess
+                }
+            };
+        }
+        
         /**
          * Check whether both process(first and second) is defined, and it exists in the CCS program.
          * And property status must not be invalid.
@@ -279,6 +290,53 @@ module Property {
 
             return isReady
         }
+        
+        public verify(callback : Function) : void {
+            if (!this.isReadyForVerification()) {
+                console.log("something is wrong, please check the property");
+                this.stopTimer();
+                callback(this.status);
+                return;
+            }
+            
+            this.startTimer();
+            var program = Main.getProgram();
+            this.worker = getWorker(callback); /*on error*/
+            this.worker.postMessage({
+                type: "program",
+                program: program
+            });
+            this.worker.postMessage({
+                type: this.getWorkerHandler(),
+                leftProcess: this.firstProcess,
+                rightProcess: this.secondProcess
+            });
+            this.worker.addEventListener("error", (error) => {
+                /*display tooltip with error*/
+                this.setInvalidateStatus();
+                this.stopTimer();
+                callback(this.status)
+            }, false);
+            this.worker.addEventListener("message", event => {
+                var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
+                if (res === true) {
+                    this.status = PropertyStatus.satisfied;
+                }
+                else if (res === false) {
+                    this.status = PropertyStatus.unsatisfied; 
+                }
+                else {
+                    this.status = res;
+                }
+                this.worker.terminate();
+                this.worker = null; 
+                this.stopTimer()
+                callback(this.status); /* verification ended */
+            });
+        }
+        
+        public getType() : string {throw "Not implemented by subclass"}
+        protected getWorkerHandler() : string {throw "Not implemented by subclass"}
     }
 
     export class StrongBisimulation extends Equivalence {
@@ -290,15 +348,8 @@ module Property {
             return this.firstProcess + " &#8764; " + this.secondProcess;
         }
 
-        public toJSON(): any {
-            return {
-                type: "StrongBisimulation",
-                status: this.status,
-                options: {
-                    firstProcess: this.firstProcess,
-                    secondProcess: this.secondProcess
-                }
-            };
+        public getType() : string {
+            return "StrongBisimulation";
         }
 
         public verify(callback : Function): void {
@@ -355,61 +406,31 @@ module Property {
         public getDescription(): string {
             return this.firstProcess + " &#8776; " + this.secondProcess;
         }
-
-        public toJSON(): any {
-            return {
-                type: "WeakBisimulation",
-                status: this.status,
-                options: {
-                    firstProcess: this.firstProcess,
-                    secondProcess: this.secondProcess
-                }
-            };
+        
+        public getType() : string {
+            return "WeakBisimulation";
         }
 
-        public verify(callback : Function): void {
-            var isReady = this.isReadyForVerification();
-            if (isReady) {
-                this.startTimer()
-                var program = Main.getProgram();
-                this.worker = getWorker(callback);
-                this.worker.postMessage({
-                    type: "program",
-                    program: program
-                });
-                this.worker.postMessage({
-                    type: "isWeaklyBisimilar",
-                    leftProcess: this.firstProcess,
-                    rightProcess: this.secondProcess
-                });
-                this.worker.addEventListener("error", (error) => {
-                    /*display tooltip with error*/
-                    this.setInvalidateStatus();
-                    this.stopTimer()
-                    callback(this.status)
-                }, false);
-                this.worker.addEventListener("message", event => {
-                    var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
-                    if (res === true) {
-                        this.status = PropertyStatus.satisfied;
-                    }
-                    else if (res === false) {
-                        this.status = PropertyStatus.unsatisfied; 
-                    }
-                    else {
-                        this.status = res;
-                    }
-                    this.worker.terminate();
-                    this.worker = null;
-                    this.stopTimer()
-                    callback(this.status); /* verification ended */
-                });
-            } else {
-                // something is not defined or syntax error
-                console.log("something is wrong, please check the property");
-                this.stopTimer()
-                callback(this.status); /*verification ended*/
-            }
+        protected getWorkerHandler() : string {
+            return "isWeaklyBisimilar";
+        }
+    }
+
+    export class StrongTraceInclusion extends Equivalence {
+        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+        
+        public getDescription() : string {
+            return this.firstProcess + " &#8849; " + this.secondProcess;
+        }
+        
+        public getType() : string {
+            return "StrongTraceInclusion";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isStronglyTraceIncluded";
         }
     }
 
