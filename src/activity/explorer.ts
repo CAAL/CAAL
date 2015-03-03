@@ -302,7 +302,7 @@ module Activity {
 
         private onTransitionTableRowClick(event) {
             var targetId = $(event.currentTarget).data("targetId");
-            if (targetId) {
+            if (targetId != undefined) {
                 this.expand(this.graph.processById(targetId), this.expandDepth);
                 this.uiGraph.clearHover();
             }
