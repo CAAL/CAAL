@@ -4,7 +4,7 @@
 declare var CCSParser;
 declare var HMLParser;
 
-importScripts("../ccs_grammar.js", "../hml_grammar.js", "../ccs.js");
+importScripts("../ccs_grammar.js", "../hml_grammar.js", "../util.js", "../ccs.js");
 
 var messageHandlers : any = {};
 var graph;
@@ -107,7 +107,7 @@ messageHandlers.findDistinguishingFormula = data => {
     var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
         leftProcess = strongSuccGen.getProcessByName(data.leftProcess),
         rightProcess = strongSuccGen.getProcessByName(data.rightProcess),
-        bisimilarDg = new DependencyGraph.BisimulationDG(strongSuccGen, strongSuccGen, leftProcess.id, rightProcess.id),
+        bisimilarDg = new Bisimulation.BisimulationDG(strongSuccGen, strongSuccGen, leftProcess.id, rightProcess.id),
         marking = DependencyGraph.solveDgGlobalLevel(bisimilarDg),
         formula, hmlNotation;
     if (marking.getMarking(0) === marking.ZERO) {

@@ -10,19 +10,6 @@ module Activity {
 
     import dg = DependencyGraph;
 
-    function groupBy<T>(arr : T[], keyFn : (T) => any) : any {
-        var groupings = Object.create(null),
-            key, elem, group;
-        for (var i = 0; i < arr.length; i++) {
-            elem = arr[i];
-            key = keyFn(elem);
-            group = groupings[key];
-            if (!group) group = groupings[key] = [];
-            group.push(elem);
-        }
-        return groupings;
-    }
-
     export class Game extends Activity {
         private project : Project;
         private changed : boolean;
@@ -253,7 +240,7 @@ module Activity {
             for (var fromId in allTransitions) {
                 var fromProcess = this.graph.processById(fromId);
                 this.showProcess(fromProcess, graph);
-                var groupedByTargetProcessId = groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
+                var groupedByTargetProcessId = ArrayUtil.groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
 
                 Object.keys(groupedByTargetProcessId).forEach(strProcId => {
                     var group = groupedByTargetProcessId[strProcId],
@@ -585,7 +572,7 @@ module Activity {
         
         private leftProcessName : string;
         private rightProcessName : string;
-        private bisimulationDG : dg.BisimulationDG;
+        private bisimulationDG : Bisimulation.BisimulationDG;
         private bisimilar : boolean;
         private gameType : string;
         
@@ -612,7 +599,7 @@ module Activity {
         
         protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph {
             
-            return this.bisimulationDG = new dg.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
+            return this.bisimulationDG = new Bisimulation.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
         }
         
         public getUniversalWinner() : Player {
