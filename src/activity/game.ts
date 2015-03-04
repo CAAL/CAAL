@@ -79,7 +79,7 @@ module Activity {
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
             this.$playerType.on("change", () => this.newGame(false, false));
-            this.$restart.on("click", () => this.newGame(true, true));
+            this.$restart.on("click", () => this.newGame(false, false));
             this.$leftFreeze.on("click", (e) => this.toggleFreeze(this.leftGraph, !this.$leftFreeze.data("frozen"), $(e.currentTarget)));
             this.$rightFreeze.on("click", (e) => this.toggleFreeze(this.rightGraph, !this.$rightFreeze.data("frozen"), $(e.currentTarget)));
 
@@ -467,6 +467,8 @@ module Activity {
             this.cycleCache[this.getConfigurationStr(this.getCurrentConfiguration())] = this.currentNodeId;
 
             this.gameActivity.highlightNodes();
+            this.gameActivity.centerNode(this.currentLeft, Move.Left);
+            this.gameActivity.centerNode(this.currentRight, Move.Right);
             
             this.gameLog.printRound(this.round, this.getCurrentConfiguration());
             this.preparePlayer(this.attacker);
