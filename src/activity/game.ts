@@ -462,6 +462,7 @@ module Activity {
 
             this.gameActivity.highlightNodes();
             
+            this.gameLog.printRound(this.round, this.getCurrentConfiguration());
             this.preparePlayer(this.attacker);
         }
         
@@ -519,8 +520,10 @@ module Activity {
 
                 this.round++;
                 
-                if (!this.cycleExists())
+                if (!this.cycleExists()) {
+                    this.gameLog.printRound(this.round, this.getCurrentConfiguration());
                     this.preparePlayer(this.attacker);
+                }
             }
 
             this.gameActivity.highlightNodes();
@@ -757,12 +760,6 @@ module Activity {
         }
         
         public prepareTurn(choices : any, game : DgGame) : void {
-            // input list of processes
-            if (this.playType === PlayType.Attacker) {
-                this.gameLog.printRound(game.getRound());
-                this.gameLog.printConfiguration(game.getCurrentConfiguration());
-            }
-
             switch (this.playType)
             {
                 case PlayType.Attacker: {
@@ -1004,8 +1001,9 @@ module Activity {
             this.$log.find(".game-prompt").last().remove();
         }
 
-        public printRound(round : number) : void {
+        public printRound(round : number, configuration : any) : void {
             this.println("Round " + round, "<h4>");
+            this.printConfiguration(configuration);
         }
 
         public printConfiguration(configuration : any) : void {
