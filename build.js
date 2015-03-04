@@ -60,7 +60,7 @@ createTscFileTask(mainTargetFile, mainSourceFiles, {definitionFile: true, source
 
 task('grammars', [ccsGrammar, hmlGrammar]);
 
-task('all', ['ace', 'grammars', utilTargetFile, ccsTargetFile, workerVerifier, mainTargetFile], function() {
+task('all', [utilTargetFile, 'grammars', ccsTargetFile, 'ace', workerVerifier, mainTargetFile], function() {
     console.log('Done Building');
 });
 
