@@ -223,7 +223,7 @@ module Property {
 
         public getDescription(): string {throw "Not implemented by subclass"}
         public toJSON(): any {throw "Not implemented by subclass"}
-        public verify(callback?: () => any, queProperties? :() => any): void {throw "Not implemented by subclass"}
+        public verify(callback: () => any, queProperties? :() => any): void {throw "Not implemented by subclass"}
         protected isReadyForVerification() : boolean {throw "Not implemented by subclass"}
     }
 
@@ -294,13 +294,11 @@ module Property {
             return isReady
         }
         
-        public verify(callback? : Function) : void {
+        public verify(callback : Function) : void {
             if (!this.isReadyForVerification()) {
                 console.log("something is wrong, please check the property");
                 this.stopTimer();
-                if(callback){
-                    callback(this.status);
-                }
+                callback()
                 return;
             }
             
@@ -320,7 +318,7 @@ module Property {
                 /*display tooltip with error*/
                 this.setInvalidateStatus(error.message);
                 this.stopTimer();
-                callback(this.status)
+                callback()
             }, false);
             this.worker.addEventListener("message", event => {
                 var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
@@ -336,7 +334,7 @@ module Property {
                 this.stopTimer()
                 this.worker.terminate();
                 this.worker = null; 
-                callback(this.status); /* verification ended */
+                callback(); /* verification ended */
             });
         }
         
@@ -360,58 +358,6 @@ module Property {
         protected getWorkerHandler() : string {
             return "isStronglyBisimilar";
         }
-
-        // public verify(callback : Function): void {
-        //     if (!this.isReadyForVerification()) {
-        //         this.worker.terminate();
-        //         this.worker = null;
-                
-        //         console.log("something is wrong, please check the property");
-        //         this.stopTimer();
-        //         callback(this.status);
-        //         return;
-        //     }
-
-        //     this.startTimer()
-        //     var program = Main.getProgram();
-        //     this.worker = getWorker(callback); /*on error*/
-        //     this.worker.postMessage({
-        //         type: "program",
-        //         program: program
-        //     });
-        //     this.worker.postMessage({
-        //         type: "isStronglyBisimilar",
-        //         leftProcess: this.firstProcess,
-        //         rightProcess: this.secondProcess
-        //     });
-        //     this.worker.addEventListener("error", (error) => {
-        //         this.worker.terminate();
-        //         this.worker = null;
-
-        //         /*display tooltip with error*/
-        //         this.setInvalidateStatus(error.message);
-        //         this.stopTimer();
-        //         callback(this.status)
-        //     }, false);
-        //     this.worker.addEventListener("message", event => {
-        //         this.worker.terminate();
-        //         this.worker = null;
-
-        //         var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
-        //         if (res === true) {
-        //             this.status = PropertyStatus.satisfied;
-        //         }
-        //         else if (res === false) {
-        //             this.status = PropertyStatus.unsatisfied; 
-        //         }
-        //         else {
-        //             this.status = res;
-        //         }
-
-        //         this.stopTimer()
-        //         callback(this.status); /* verification ended */
-        //     });
-        // }
     }
 
     export class WeakBisimulation extends Equivalence {
@@ -582,17 +528,15 @@ module Property {
             return isReady
         }
 
-        public verify(callback? : Function): void {
+        public verify(callback : Function): void {
             if(!this.isReadyForVerification){
                 this.worker.terminate();
                 this.worker = null;
                 // something is not defined or syntax error
                 this.stopTimer()
-                if(callback){
-                    callback(this.status); /* verification ended */
-                }
+                callback()
                 console.log("something is wrong, please check the property");
-                return
+                return;
             }
 
             this.startTimer();
@@ -615,9 +559,7 @@ module Property {
 
                 this.setInvalidateStatus(error.message);
                 this.stopTimer();
-                if(callback){
-                    callback(this.status); /* verification ended */
-                }
+                callback()
             }, false);
             this.worker.addEventListener("message", event => {
                 this.worker.terminate();
@@ -635,9 +577,7 @@ module Property {
                 }
 
                 this.stopTimer()
-                if(callback){
-                    callback(this.status); /* verification ended */
-                }
+                callback()
             });
         }
     }
@@ -647,6 +587,10 @@ module Property {
         public secondHMLProperty: Property.HML;
         public distinguishingFormula : string;
         private isexpanded : boolean = true;
+        
+        private childPropertiesToVerify = [];
+        private currentVerifyingProperty = null;
+        private verificationEndedCallback : Function = null;
         
         public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
             super(status);
@@ -772,16 +716,40 @@ module Property {
                 this.setInvalidateStatus(error);
             }
             return isReady;
+        }  
+
+        public verificationEnded(){
+            this.currentVerifyingProperty = null;
+            this.doNextVerification();
         }
 
-        public verify(callback? : Function): void {
+        private verifyChildren(childProperties : any[]): void {
+            this.queuePropertiesToVerification(childProperties);
+            this.doNextVerification();
+        }
+
+        public queuePropertiesToVerification(properties : Property.Property[]) {
+            properties.forEach((property) => this.childPropertiesToVerify.push(property));
+        }
+
+        private doNextVerification() {
+            if (!this.currentVerifyingProperty && this.childPropertiesToVerify.length > 0) {
+                var property = this.childPropertiesToVerify.shift();
+                this.currentVerifyingProperty = property;
+                property.verify(this.verificationEnded.bind(this));
+            } else {
+                // verification has ended
+                this.verificationEndedCallback();
+            }
+        }
+
+        public verify(callback : Function): void {
+            this.verificationEndedCallback = callback;
             if(!this.isReadyForVerification()) {
                 // invalidate will be set in isReadyForVerification
                 console.log("something is wrong, please check the property");
                 this.stopTimer()
-                if(callback){
-                    callback(this.status); /* verification ended */
-                }
+                callback()
                 return;
             }
             this.startTimer()
@@ -803,9 +771,7 @@ module Property {
 
                 this.setInvalidateStatus(error.message);
                 this.stopTimer()
-                if(callback){
-                    callback(this.status); /* verification ended */
-                }
+                callback()
             }, false);
             this.worker.addEventListener("message", event => {
                 this.worker.terminate();
@@ -817,18 +783,12 @@ module Property {
                     var formula = event.data.result.formula;
                     this.firstHMLProperty.setFormula(formula);
                     this.secondHMLProperty.setFormula(formula);
-                    this.firstHMLProperty.verify();
-                    this.secondHMLProperty.verify();
-
-                    //queProperties([this.firstHMLProperty, this.secondHMLProperty]);
+                    this.verifyChildren([this.firstHMLProperty, this.secondHMLProperty]); // verify the two HML children.
                 } else {
                     this.setInvalidateStatus("The two selected processes are bisimular, and no distinguishing formula exists.")
                 }
 
                 this.stopTimer()
-                if(callback){
-                    callback(this.status); /* verification ended */
-                }
             });
         }
     }
