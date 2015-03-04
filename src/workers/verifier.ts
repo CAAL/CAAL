@@ -51,6 +51,38 @@ messageHandlers.isStronglyTraceIncluded = data => {
     self.postMessage(data);
 };
 
+messageHandlers.isWeaklyTraceIncluded = data => {
+    var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true});
+    var defendSuccGen = attackSuccGen;
+    var leftProcess = graph.processByName(data.leftProcess);
+    var rightProcess = graph.processByName(data.rightProcess);
+    var isTraceIncluded = DependencyGraph.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    data.result = isTraceIncluded;
+    self.postMessage(data);
+};
+
+messageHandlers.isStronglyTraceEq = data => {
+    var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true});
+    var defendSuccGen = attackSuccGen;
+    var leftProcess = graph.processByName(data.leftProcess);
+    var rightProcess = graph.processByName(data.rightProcess);
+    var isLeftTraceIncluded = DependencyGraph.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    var isRightTraceIncluded = DependencyGraph.isTraceIncluded(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id, graph);
+    data.result = (isLeftTraceIncluded && isRightTraceIncluded);
+    self.postMessage(data);
+};
+
+messageHandlers.isWeaklyTraceEq = data => {
+    var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true});
+    var defendSuccGen = attackSuccGen;
+    var leftProcess = graph.processByName(data.leftProcess);
+    var rightProcess = graph.processByName(data.rightProcess);
+    var isLeftTraceIncluded = DependencyGraph.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    var isRightTraceIncluded = DependencyGraph.isTraceIncluded(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id, graph);
+    data.result = (isLeftTraceIncluded && isRightTraceIncluded);
+    self.postMessage(data);
+};
+
 messageHandlers.checkFormula = data => {
     var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
         weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),

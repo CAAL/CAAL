@@ -422,7 +422,7 @@ module Property {
         }
         
         public getDescription() : string {
-            return this.firstProcess + " &#8849; " + this.secondProcess;
+            return this.firstProcess + " &#8849;<sub>S</sub> " + this.secondProcess;
         }
         
         public getType() : string {
@@ -431,6 +431,60 @@ module Property {
 
         protected getWorkerHandler() : string {
             return "isStronglyTraceIncluded";
+        }
+    }
+
+    export class WeakTraceInclusion extends Equivalence {
+        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+        
+        public getDescription() : string {
+            return this.firstProcess + " &#8849;<sub>W</sub> " + this.secondProcess;
+        }
+        
+        public getType() : string {
+            return "WeakTraceInclusion";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isWeaklyTraceIncluded";
+        }
+    }
+
+    export class StrongTraceEq extends Equivalence {
+        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+        
+        public getDescription() : string {
+            return "Traces<sub>S</sub>(" + this.firstProcess + ") = Traces<sub>S</sub>(" + this.secondProcess + ")";
+        }
+        
+        public getType() : string {
+            return "StrongTraceEq";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isStronglyTraceEq";
+        }
+    }
+
+    export class WeakTraceEq extends Equivalence {
+        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+        
+        public getDescription() : string {
+            return "Traces<sub>W</sub>(" + this.firstProcess + ") = Traces<sub>W</sub>(" + this.secondProcess + ")";
+        }
+        
+        public getType() : string {
+            return "WeakTraceEq";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isWeaklyTraceEq";
         }
     }
 
