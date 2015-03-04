@@ -51,7 +51,6 @@ module Activity {
             this.editor.getSession().setUseWrapMode(true);
             this.editor.setOptions({
                 enableBasicAutocompletion: true,
-                maxLines: Infinity,
                 showPrintMargin: false,
                 fontSize: 14,
                 fontFamily: "Inconsolata",
@@ -398,10 +397,12 @@ module Activity {
 
                 this.editor.removeAllListeners("change");
                 this.editor.setValue(property.getFormula(), 1);
+                this.updateHeight();
                 this.editor.focus();
                 this.editor.on("change", () => {
                     property.setFormula(this.editor.getValue());
                     this.displayProperties();
+                    this.updateHeight();
                 });
             } else if (property instanceof Property.DistinguishingFormula){
                 var distinguishingForm = this.showPropertyForm("distinguishing");
@@ -478,6 +479,21 @@ module Activity {
 
         public quePropertiesToVerification(properties : Property.Property[]) {
             properties.forEach((property) => this.propsToVerify.push(property));
+        }
+        
+        // http://stackoverflow.com/questions/11584061/
+        private updateHeight(): void {
+            var newHeight =
+                      this.editor.getSession().getScreenLength()
+                      * this.editor.renderer.lineHeight
+                      + this.editor.renderer.scrollBar.getWidth();
+
+            $('#hml-editor').height(newHeight.toString() + "px");
+            $('#hml-editor-section').height(newHeight.toString() + "px");
+
+            // This call is required for the editor to fix all of
+            // its inner structure for adapting to a change in size
+            this.editor.resize();
         }
     }
 }
