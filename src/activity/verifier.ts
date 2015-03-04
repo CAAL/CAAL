@@ -223,7 +223,15 @@ module Activity {
                     properties[i].setRowClickHandlers(rowClickHandlers)
                     properties[i].setToolMenuOptions(toolMenuOptions);
                     propertyRows = properties[i].toTableRow();
-                } else {
+                }
+                else if (properties[i] instanceof Property.StrongTraceInclusion) {
+                    toolMenuOptions.play.click = null;
+                    rowClickHandlers.status.click = null;
+                    properties[i].setRowClickHandlers(rowClickHandlers)
+                    properties[i].setToolMenuOptions(toolMenuOptions)
+                    propertyRows = properties[i].toTableRow();
+                }
+                else {
                     /* Strong/Weak bisim and HML*/
                     properties[i].setRowClickHandlers(rowClickHandlers)
                     properties[i].setToolMenuOptions(toolMenuOptions)
