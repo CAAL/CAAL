@@ -368,15 +368,13 @@ module Equivalence {
         private constructData = [];
         private nodes = [];
         private leftPairs = {};
-        private attackSuccGen;
 
-        constructor(leftNode, rightNode, attackSuccGen) {
+        constructor(leftNode, rightNode, private attackSuccGen : ccs.SuccessorGenerator) {
             this.constructData[0] = [0, leftNode, [rightNode]];
             this.nextIdx = 1;
-            this.attackSuccGen = attackSuccGen;
         }
 
-        public getHyperEdges(identifier) : any[][] {
+        public getHyperEdges(identifier : dg.DgNodeId) : dg.Hyperedge[] {
             var type, result;
             //Have we already built this? Then return copy of the edges.
             if (this.nodes[identifier]) {
@@ -392,13 +390,13 @@ module Equivalence {
             return undefined;
         }
 
-        private constructNode(identifier) : any {
+        private constructNode(identifier : dg.DgNodeId) {
             var data = this.constructData[identifier];
 
             return this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
         }
 
-        private getProcessPairStates(leftProcessId, rightProcessIds) {
+        private getProcessPairStates(leftProcessId : ccs.ProcessId, rightProcessIds : ccs.ProcessId[]) : dg.Hyperedge[] {
             var hyperedges = [];
 
             var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
@@ -424,7 +422,7 @@ module Equivalence {
                     hyperedges.push([]);
                 } else {
 
-                    rightTargets.sort(function(a, b){return a-b});
+                    rightTargets.sort( function(a, b){return a-b} );
 
                     rightTargets = ArrayUtil.removeConsecutiveDuplicates(rightTargets);
 
