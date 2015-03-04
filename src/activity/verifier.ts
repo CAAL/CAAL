@@ -29,8 +29,11 @@ module Activity {
             this.verifyAllButton = $("#verify-all");
             this.verifyStopButton = $("#verify-stop");
 
-            this.addPropertyList.find("li").on("click", (e) => this.addProperty(e));
-            this.verifyAllButton.on("click", () => this.verifyAll());
+            this.addPropertyList.find("li.property-item").on("click", (e) => this.addProperty(e));
+            this.verifyAllButton.on("click", () => {
+                this.verifyAllButton.prop("disabled", true);
+                this.verifyAll() 
+                });
             this.verifyStopButton.on("click", () => {
                 this.propsToVerify = [];
                 if (this.currentVerifyingProperty) {
@@ -55,6 +58,7 @@ module Activity {
                 fontSize: 14,
                 fontFamily: "Inconsolata",
             });
+
             this.propertyForms = 
             {
                 hml :
@@ -445,6 +449,7 @@ module Activity {
         }
 
         private verifactionEnded(result? : PropertyStatus) {
+            this.verifyAllButton.prop("disabled", false);
             this.verifyStopButton.prop("disabled", true);
             this.currentVerifyingProperty = null;
             this.displayProperties();
@@ -462,22 +467,19 @@ module Activity {
             var property = (e.data.property instanceof Property.Property) ? e.data.property : null;
 
             /* Start to verify a property row*/
+            this.verifyAllButton.prop("disabled", true);
             this.verifyStopButton.prop("disabled", false); // enable the stop button
             this.currentVerifyingProperty = property; // the current verifying property
-            if (property instanceof Property.DistinguishingFormula){
-                property.verify(this.verifactionEnded.bind(this), this.quePropertiesToVerification.bind(this));
-            } else{
-                property.verify(this.verifactionEnded.bind(this));
-            }
+            property.verify(this.verifactionEnded.bind(this));
         }
 
         public verifyAll(): void {
             var numProperties = this.project.getProperties();
-            this.quePropertiesToVerification(numProperties);
+            this.queuePropertiesToVerification(numProperties);
             this.doNextVerification();
         }
 
-        public quePropertiesToVerification(properties : Property.Property[]) {
+        public queuePropertiesToVerification(properties : Property.Property[]) {
             properties.forEach((property) => this.propsToVerify.push(property));
         }
         
