@@ -1,8 +1,8 @@
+/// <reference path="../../lib/util.d.ts" />
 /// <reference path="ccs.ts" />
 /// <reference path="hml.ts" />
 /// <reference path="util.ts" />
 /// <reference path="collapse.ts" />
-/// <reference path="../util/array.ts" />
 
 module DependencyGraph {
 

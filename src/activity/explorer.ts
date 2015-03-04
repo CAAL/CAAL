@@ -1,12 +1,13 @@
 /// <reference path="../../lib/jquery.d.ts" />
-/// <reference path="activity.ts" />
-/// <reference path="fullscreen.ts" />
+/// <reference path="../../lib/util.d.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
+/// <reference path="../../lib/suppressWarnings.d.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="../gui/gui.ts" />
-/// <reference path="../../lib/suppressWarnings.d.ts" />
 /// <reference path="../gui/project.ts" />
+/// <reference path="activity.ts" />
+/// <reference path="fullscreen.ts" />
 /// <reference path="tooltip.ts" />
 
 module Activity {
@@ -16,19 +17,6 @@ module Activity {
     import ArborGraph = GUI.ArborGraph;
     import TooltipHtmlCCSNotationVisitor = Traverse.TooltipHtmlCCSNotationVisitor;
     import CCSNotationVisitor = Traverse.CCSNotationVisitor;
-
-    function groupBy<T>(arr : T[], keyFn : (T) => any) : any {
-        var groupings = Object.create(null),
-            key, elem, group;
-        for (var i = 0; i < arr.length; i++) {
-            elem = arr[i];
-            key = keyFn(elem);
-            group = groupings[key];
-            if (!group) group = groupings[key] = [];
-            group.push(elem);
-        }
-        return groupings;
-    }
 
     export class Explorer extends Activity {
         private project: Project;
@@ -230,7 +218,7 @@ module Activity {
                 var fromProcess = this.graph.processById(fromId);
                 this.showProcess(fromProcess);
                 this.showProcessAsExplored(fromProcess);
-                var groupedByTargetProcessId = groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
+                var groupedByTargetProcessId = ArrayUtil.groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
 
                 Object.keys(groupedByTargetProcessId).forEach(strProcId => {
                     var group = groupedByTargetProcessId[strProcId],

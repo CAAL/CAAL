@@ -1,5 +1,5 @@
+/// <reference path="../../lib/util.d.ts" />
 /// <reference path="ccs.ts" />
-/// <reference path="../util/array.ts" />
 
 module HML {
     
