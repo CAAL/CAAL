@@ -1,4 +1,3 @@
-
 module ArrayUtil {
     
     export function removeConsecutiveDuplicates<T>(array : Array<T>, byKeyFn? : (val : T) => any) : Array<T> {
@@ -40,4 +39,18 @@ module ArrayUtil {
             return isBetter(check, cur) ? check : cur;
         });
     }
+
+    export function groupBy<T>(arr : T[], keyFn : (T) => any) : any {
+        var groupings = Object.create(null),
+            key, elem, group;
+        for (var i = 0; i < arr.length; i++) {
+            elem = arr[i];
+            key = keyFn(elem);
+            group = groupings[key];
+            if (!group) group = groupings[key] = [];
+            group.push(elem);
+        }
+        return groupings;
+    }
+
 }

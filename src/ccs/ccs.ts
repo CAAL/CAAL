@@ -1,5 +1,5 @@
+/// <reference path="../../lib/util.d.ts" />
 /// <reference path="unguarded_recursion.ts" />
-/// <reference path="../util/array.ts" />
 
 module CCS {
 

@@ -17,6 +17,11 @@ pegjs(ccsGrammar, _P('src/ccs/ccs_grammar.pegjs'), 'CCSParser');
 var hmlGrammar = _P('lib/hml_grammar.js');
 pegjs(hmlGrammar, _P('src/ccs/hml_grammar.pegjs'), 'HMLParser');
 
+// util.js
+var utilTargetFile = _P('lib/util.js');
+var utilSourceFiles = getFilesMatchingGlob('src/util/*.ts');
+createTscFileTask(utilTargetFile, utilSourceFiles, {definitionFile: true}, 'Compile ' + utilTargetFile);
+
 // ccs.js
 var ccsTargetFile = _P('lib/ccs.js');
 var ccsSourceFiles = new jake.FileList();
@@ -55,7 +60,7 @@ createTscFileTask(mainTargetFile, mainSourceFiles, {definitionFile: true, source
 
 task('grammars', [ccsGrammar, hmlGrammar]);
 
-task('all', ['ace', 'grammars', ccsTargetFile, workerVerifier, mainTargetFile], function() {
+task('all', ['ace', 'grammars', utilTargetFile, ccsTargetFile, workerVerifier, mainTargetFile], function() {
     console.log('Done Building');
 });
 
@@ -97,4 +102,10 @@ function addVersion(callback) {
         fs.appendFileSync(mainTargetFile, '\nvar Version = "' + tag + '";');
         callback();
     });
+}
+
+function getFilesMatchingGlob(glob) {
+    var list = new jake.FileList();
+    list.include(glob);
+    return list.map(_P);
 }
