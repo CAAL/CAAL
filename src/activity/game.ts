@@ -52,7 +52,7 @@ module Activity {
             super(container, button);
 
             this.project = Project.getInstance();
-            this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+            this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(null, null));
             this.tooltip = new TooltipNotation($("#game-status"));
 
             this.$gameType = $("#game-type > select");
@@ -82,11 +82,11 @@ module Activity {
 
             // Use onchange instead of oninput for IE.
             if (navigator.userAgent.indexOf("MSIE ") > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
-                this.$leftZoom.on("change", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
-                this.$rightZoom.on("change", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+                this.$leftZoom.on("change", () => this.resize(this.$leftZoom.val(), null));
+                this.$rightZoom.on("change", () => this.resize(null, this.$rightZoom.val()));
             } else {
-                this.$leftZoom.on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
-                this.$rightZoom.on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+                this.$leftZoom.on("input", () => this.resize(this.$leftZoom.val(), null));
+                this.$rightZoom.on("input", () => this.resize(null, this.$rightZoom.val()));
             }
 
             $(document).on("ccs-changed", () => this.changed = true);
@@ -200,13 +200,13 @@ module Activity {
 
             if (drawLeft) {
                 this.draw(this.succGen.getProcessByName(options.leftProcess), this.leftGraph);
-                this.resize(1, this.$rightZoom.val());
+                this.resize(1, null);
                 this.toggleFreeze(this.leftGraph, false, this.$leftFreeze);
             }
 
             if (drawRight) {
                 this.draw(this.succGen.getProcessByName(options.rightProcess), this.rightGraph)
-                this.resize(this.$leftZoom.val(), 1);
+                this.resize(null, 1);
                 this.toggleFreeze(this.rightGraph, false, this.$rightFreeze);
             }
             
@@ -356,33 +356,36 @@ module Activity {
             this.$leftContainer.height(height);
             this.$rightContainer.height(height);
 
-            this.$leftZoom.val(leftZoom.toString());
-            this.$rightZoom.val(rightZoom.toString());
+            if (leftZoom !== null) {
+                this.$leftZoom.val(leftZoom.toString());
+                this.leftCanvas.width = this.$leftContainer.width() * leftZoom;
+                this.leftCanvas.height = height * leftZoom;
+                this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
 
-            this.leftCanvas.width = this.$leftContainer.width() * leftZoom;
-            this.rightCanvas.width = this.$rightContainer.width() * rightZoom;
-            this.leftCanvas.height = height * leftZoom;
-            this.rightCanvas.height = height * rightZoom;
-
-            this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
-            this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
-
-            if (leftZoom > 1) {
-                this.$leftFreeze.css("right", 30);
-                this.$leftContainer.css("overflow", "auto");
-                this.centerNode(this.dgGame.getCurrentConfiguration().left, Move.Left);
-            } else {
-                this.$leftFreeze.css("right", 10);
-                this.$leftContainer.css("overflow", "hidden");
+                if (leftZoom > 1) {
+                    this.$leftFreeze.css("right", 30);
+                    this.$leftContainer.css("overflow", "auto");
+                    this.centerNode(this.dgGame.getCurrentConfiguration().left, Move.Left);
+                } else {
+                    this.$leftFreeze.css("right", 10);
+                    this.$leftContainer.css("overflow", "hidden");
+                }
             }
 
-            if (rightZoom > 1) {
-                this.$rightFreeze.css("right", 30);
-                this.$rightContainer.css("overflow", "auto");
-                this.centerNode(this.dgGame.getCurrentConfiguration().right, Move.Right);
-            } else {
-                this.$rightFreeze.css("right", 10);
-                this.$rightContainer.css("overflow", "hidden");
+            if (rightZoom !== null) {
+                this.$rightZoom.val(rightZoom.toString());
+                this.rightCanvas.width = this.$rightContainer.width() * rightZoom;
+                this.rightCanvas.height = height * rightZoom;
+                this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
+
+                if (rightZoom > 1) {
+                    this.$rightFreeze.css("right", 30);
+                    this.$rightContainer.css("overflow", "auto");
+                    this.centerNode(this.dgGame.getCurrentConfiguration().right, Move.Right);
+                } else {
+                    this.$rightFreeze.css("right", 10);
+                    this.$rightContainer.css("overflow", "hidden");
+                }
             }
         }
     }
