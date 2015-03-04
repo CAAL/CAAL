@@ -32,9 +32,10 @@ module Activity {
         private fullscreen : Fullscreen;
         private tooltip : TooltipNotation;
         private $gameType : JQuery;
-        private $playerType : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
+        private $playerType : JQuery;
+        private $restart : JQuery;
         private $leftContainer : JQuery;
         private $rightContainer : JQuery;
         private $leftZoom : JQuery;
@@ -55,10 +56,11 @@ module Activity {
             this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(null, null));
             this.tooltip = new TooltipNotation($("#game-status"));
 
-            this.$gameType = $("#game-type > select");
-            this.$playerType = $("input[name=player-type]");
+            this.$gameType = $("#game-type");
             this.$leftProcessList = $("#game-left-process");
             this.$rightProcessList = $("#game-right-process");
+            this.$playerType = $("input[name=player-type]");
+            this.$restart = $("#game-restart");
             this.$leftContainer = $("#game-left-canvas");
             this.$rightContainer = $("#game-right-canvas");
             this.$leftZoom = $("#zoom-left");
@@ -74,9 +76,10 @@ module Activity {
             this.rightGraph = new GUI.ArborGraph(this.rightRenderer);
 
             this.$gameType.on("change", () => this.newGame(true, true));
-            this.$playerType.on("change", () => this.newGame(false, false));
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
+            this.$playerType.on("change", () => this.newGame(false, false));
+            this.$restart.on("click", () => this.newGame(true, true));
             this.$leftFreeze.on("click", (e) => this.toggleFreeze(this.leftGraph, !this.$leftFreeze.data("frozen"), $(e.currentTarget)));
             this.$rightFreeze.on("click", (e) => this.toggleFreeze(this.rightGraph, !this.$rightFreeze.data("frozen"), $(e.currentTarget)));
 
@@ -95,10 +98,10 @@ module Activity {
         private toggleFreeze(graph : GUI.ProcessGraphUI, freeze : boolean, button : JQuery) {
             if (freeze) {
                 graph.freeze();
-                button.find("i").replaceWith("<i class='fa fa-unlock-alt fa-lg'></i>");
+                button.find("i").replaceWith("<i class='fa fa-lock fa-lg'></i>");
             } else {
                 graph.unfreeze();
-                button.find("i").replaceWith("<i class='fa fa-lock fa-lg'></i>");
+                button.find("i").replaceWith("<i class='fa fa-unlock-alt fa-lg'></i>");
             }
 
             button.data("frozen", freeze);
@@ -163,9 +166,9 @@ module Activity {
         private getOptions() : any {
             return {
                 gameType: this.$gameType.val(),
-                playerType: this.$playerType.filter(":checked").val(),
                 leftProcess: this.$leftProcessList.val(),
-                rightProcess: this.$rightProcessList.val()
+                rightProcess: this.$rightProcessList.val(),
+                playerType: this.$playerType.filter(":checked").val()
             };
         }
 

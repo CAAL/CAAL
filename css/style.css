@@ -368,8 +368,22 @@ p.small {
     margin-bottom: 20px;
 }
 
+#game-options div, #game-options select {
+    margin-right: 20px;
+}
+
+#game-options div:last-child, #game-options select:last-child {
+    margin-right: 0;
+}
+
 #game-type {
-    width: 215px;
+    width: 190px;
+    float: left;
+}
+
+#game-left-process, #game-right-process {
+    width: 150px;
+    float: left;
 }
 
 #game-left {
@@ -458,7 +472,7 @@ input[type=range] {
 }
 
 @media (max-width: 991px) {
-    #game-type {
+    #game-type, #game-left-process, #game-right-process {
         width: 100%;
     }
 
