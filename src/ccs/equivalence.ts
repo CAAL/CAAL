@@ -2,7 +2,7 @@
 /// <reference path="hml.ts" />
 /// <reference path="depgraph.ts" />
 
-module Bisimulation {
+module Equivalence {
 
     import ccs = CCS;
     import hml = HML;
@@ -332,6 +332,158 @@ module Bisimulation {
             }
             return formulaForBranch(0);
         }
+    }
+
+    export function isBisimilar(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
+        var bisimDG = new Equivalence.BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
+        marking = dg.liuSmolkaLocal2(0, bisimDG);
+
+        //Bisimulation is maximal fixed point, the marking is reversed.
+        // if (marking.getMarking(0) === marking.ONE && graph) {
+        //     var traceIterator = dg.getTraceIterator(marking)
+        //     while (traceIterator.hasNext()) {
+        //         var traces = traceIterator.next();            
+        //         console.log("Left does: ");
+        //         console.log(prettyPrintTrace(graph, traces.left));
+        //         console.log("Right does: ");
+        //         console.log(prettyPrintTrace(graph, traces.right));
+        //     }
+        // }
+        return marking.getMarking(0) === marking.ZERO;
+    }
+
+    export function getBisimulationCollapse(
+        attackSuccGen : ccs.SuccessorGenerator,
+        defendSuccGen : ccs.SuccessorGenerator,
+        leftProcessId,
+        rightProcessId) : Traverse.Collapse {
+            var bisimDG = new Equivalence.BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
+            marking = dg.liuSmolkaGlobal(bisimDG);
+            return bisimDG.getBisimulationCollapse(marking);
+    }
+
+    export class TraceDG implements dg.DependencyGraph {
+
+        private nextIdx;
+        private constructData = [];
+        private nodes = [];
+        private leftPairs = {};
+        private attackSuccGen;
+
+        constructor(leftNode, rightNode, attackSuccGen) {
+            this.constructData[0] = [0, leftNode, [rightNode]];
+            this.nextIdx = 1;
+            this.attackSuccGen = attackSuccGen;
+        }
+
+        public getHyperEdges(identifier) : any[][] {
+            var type, result;
+            //Have we already built this? Then return copy of the edges.
+            if (this.nodes[identifier]) {
+                result = this.nodes[identifier];
+            } else {
+                result = this.constructNode(identifier);
+            }
+
+            return dg.copyHyperEdges(result);
+        }
+
+        public getAllHyperEdges() : any[] {
+            return undefined;
+        }
+
+        private constructNode(identifier) : any {
+            var data = this.constructData[identifier];
+
+            return this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
+        }
+
+        private getProcessPairStates(leftProcessId, rightProcessIds) {
+            var hyperedges = [];
+
+            var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
+            var rightTransitions = [];
+
+            rightProcessIds.forEach(rightProcessId => {
+                var succs = this.attackSuccGen.getSuccessors(rightProcessId);
+                succs.forEach(succ => {rightTransitions.push(succ) });
+            });
+            
+            leftTransitions.forEach(leftTransition => {
+                var rightTargets = [];
+                
+                rightTransitions.forEach(rightTransition => {
+                    if (rightTransition.action.equals(leftTransition.action)) {
+                        rightTargets.push(parseInt(rightTransition.targetProcess.id));
+
+                    }
+
+                });
+
+                if( !(rightTargets.length > 0) ) {
+                    hyperedges.push([]);
+                } else {
+
+                    rightTargets.sort(function(a, b){return a-b});
+
+                    rightTargets = ArrayUtil.removeConsecutiveDuplicates(rightTargets);
+
+                    if(this.leftPairs[leftTransition.targetProcess.id] === undefined)
+                        this.leftPairs[leftTransition.targetProcess.id] = [];
+
+                    if(this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] === undefined)
+                        this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] = [];
+                    
+                    var rightSets = this.leftPairs[leftTransition.targetProcess.id][rightTargets.length];
+                    var existing = false;
+
+                    if (rightSets) {
+
+                        for(var n = 0; n < rightSets.length; n++) {
+                            if(rightTargets.every((v,i)=> v === rightSets[n].set[i])) {
+                                existing = rightSets[n].index;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (existing) {
+                        hyperedges.push([existing]);                    
+                    } else {
+                        var newNodeIdx = this.nextIdx++;
+
+                        var rightSet = {set: rightTargets, index: newNodeIdx};
+                        
+                        this.leftPairs[leftTransition.targetProcess.id][rightTargets.length].push(rightSet);
+
+                        this.constructData[newNodeIdx] = [0, leftTransition.targetProcess.id, rightTargets];
+                        
+                        hyperedges.push([newNodeIdx]);
+                        
+                    }
+
+                }
+                
+            });
+            
+            return hyperedges;
+        }   
+    }
+
+    export function isTraceIncluded(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
+        var traceDG = new TraceDG(leftProcessId, rightProcessId, attackSuccGen);
+        var marking = dg.liuSmolkaLocal2(0, traceDG);
+        return marking.getMarking(0) === marking.ZERO;    
+    }
+
+    function prettyPrintTrace(graph, trace) {
+        var notation = new Traverse.CCSNotationVisitor(),
+        stringParts = [];
+        for (var i=0; i < trace.length; i++) {
+            if (i % 2 == 1) stringParts.push("---- " + trace[i].toString() + " ---->");
+            else stringParts.push(notation.visit(graph.processById(trace[i])));
+        }
+        return stringParts.join("\n\t");
     }
 
 }

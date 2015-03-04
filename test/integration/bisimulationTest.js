@@ -19,7 +19,7 @@ QUnit.test("Simple not bisimilar", function ( assert ) {
         strongSuccGen = getStrictSuccGenerator(graph),
         processP = graph.processByName("P"),
         processQ = graph.processByName("Q");
-    assert.ok(!dgMod.isBisimilar(strongSuccGen, strongSuccGen, processP.id, processQ.id, graph), "P and Q should not be bisimilar");
+    assert.ok(!Equivalence.isBisimilar(strongSuccGen, strongSuccGen, processP.id, processQ.id, graph), "P and Q should not be bisimilar");
 });
 
 QUnit.test("Simple bisimilar", function ( assert ) {
@@ -27,7 +27,7 @@ QUnit.test("Simple bisimilar", function ( assert ) {
         strongSuccGen = getStrictSuccGenerator(graph),
         processP = graph.processByName("P"),
         processQ = graph.processByName("Q");
-    assert.ok(dgMod.isBisimilar(strongSuccGen, strongSuccGen, processP.id, processQ.id, graph), "P and Q should be bisimilar");
+    assert.ok(Equivalence.isBisimilar(strongSuccGen, strongSuccGen, processP.id, processQ.id, graph), "P and Q should be bisimilar");
 });
 
 QUnit.test("Weak bisimilar", function ( assert ) {
@@ -37,7 +37,7 @@ QUnit.test("Weak bisimilar", function ( assert ) {
         weakSuccGen = getWeakSuccGenerator(graph),
         processP = graph.processByName("S"),
         processQ = graph.processByName("T");
-    assert.ok(!dgMod.isBisimilar(strongSuccGen, weakSuccGen, processP.id, processQ.id, graph), "S and T are not weakly bisimilar");
+    assert.ok(!Equivalence.isBisimilar(strongSuccGen, weakSuccGen, processP.id, processQ.id, graph), "S and T are not weakly bisimilar");
 });
 
 
@@ -52,7 +52,7 @@ QUnit.test("Weak bisimilar 2", function ( assert ) {
     weakSuccGen = getWeakSuccGenerator(graph),
     processP = graph.processByName("S"),
     processQ = graph.processByName("T");
-    assert.ok(dgMod.isBisimilar(strongSuccGen, weakSuccGen, processP.id, processQ.id, graph), "S and T should be weakly bisimilar");
+    assert.ok(Equivalence.isBisimilar(strongSuccGen, weakSuccGen, processP.id, processQ.id, graph), "S and T should be weakly bisimilar");
 });
 
 QUnit.test("Tau Cycles", function ( assert ) {
@@ -64,7 +64,7 @@ QUnit.test("Tau Cycles", function ( assert ) {
         weakSuccGen = getWeakSuccGenerator(graph),
         processP = graph.processByName("P"),
         processQ = graph.processByName("Q");
-    assert.ok(dgMod.isBisimilar(strongSuccGen, weakSuccGen, processP.id, processQ.id, graph), "P and Q should be weakly bisimilar");
+    assert.ok(Equivalence.isBisimilar(strongSuccGen, weakSuccGen, processP.id, processQ.id, graph), "P and Q should be weakly bisimilar");
 });
 
 QUnit.test("Alternative Bit Protocol", function ( assert) {
@@ -98,7 +98,7 @@ QUnit.test("Alternative Bit Protocol", function ( assert) {
         defendSuccGen = getWeakSuccGenerator(graph),
         protocol = graph.processByName("Protocol").id,
         spec = graph.processByName("Spec").id;
-    assert.ok(dgMod.isBisimilar(attackSuccGen, defendSuccGen, protocol, spec, graph), "ABP Protocol should be bisimilar with Spec");
+    assert.ok(Equivalence.isBisimilar(attackSuccGen, defendSuccGen, protocol, spec, graph), "ABP Protocol should be bisimilar with Spec");
 });
 
 QUnit.test("Alternative Bit Protocol", function ( assert) {
@@ -132,7 +132,7 @@ QUnit.test("Alternative Bit Protocol", function ( assert) {
         defendSuccGen = getWeakSuccGenerator(graph),
         protocol = graph.processByName("Protocol").id,
         spec = graph.processByName("Spec").id;
-    assert.ok(dgMod.isBisimilar(attackSuccGen, defendSuccGen, protocol, spec, graph), "Modified ABP Protocol should be bisimilar with Spec");
+    assert.ok(Equivalence.isBisimilar(attackSuccGen, defendSuccGen, protocol, spec, graph), "Modified ABP Protocol should be bisimilar with Spec");
 });
 
 
@@ -187,7 +187,7 @@ QUnit.test("Performance Test ABP vs. ABP", function ( assert) {
         succGen = getStrictSuccGenerator(graph),
         protocol = graph.processByName("Protocol").id,
         spec = graph.processByName("ZProtocol").id;
-    assert.ok(dgMod.isBisimilar(succGen, succGen, protocol, spec, graph), "ABP Protocol should be bisimilar with Spec");
+    assert.ok(Equivalence.isBisimilar(succGen, succGen, protocol, spec, graph), "ABP Protocol should be bisimilar with Spec");
 });
 
 QUnit.test("Bad CM and CS", function ( assert) {
@@ -202,5 +202,5 @@ QUnit.test("Bad CM and CS", function ( assert) {
         defendSuccGen = getWeakSuccGenerator(graph),
         protocol = graph.processByName("System").id,
         spec = graph.processByName("Spec").id;
-    assert.ok(!dgMod.isBisimilar(attackSuccGen, defendSuccGen, protocol, spec, graph), "System and Spec is not be bisimilar");
+    assert.ok(!Equivalence.isBisimilar(attackSuccGen, defendSuccGen, protocol, spec, graph), "System and Spec is not be bisimilar");
 });

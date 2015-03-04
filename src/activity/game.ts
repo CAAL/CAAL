@@ -572,7 +572,7 @@ module Activity {
         
         private leftProcessName : string;
         private rightProcessName : string;
-        private bisimulationDG : Bisimulation.BisimulationDG;
+        private bisimulationDG : Equivalence.BisimulationDG;
         private bisimilar : boolean;
         private gameType : string;
         
@@ -599,7 +599,7 @@ module Activity {
         
         protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph {
             
-            return this.bisimulationDG = new Bisimulation.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
+            return this.bisimulationDG = new Equivalence.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
         }
         
         public getUniversalWinner() : Player {

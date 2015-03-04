@@ -164,7 +164,7 @@ module Activity {
             var initialProcess = this.succGenerator.getProcessByName(this.initialProcessName);
             if (options.collapse != "none") {
                 var otherSuccGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
-                var collapse = DependencyGraph.getBisimulationCollapse(this.succGenerator, otherSuccGenerator, initialProcess.id, initialProcess.id);
+                var collapse = Equivalence.getBisimulationCollapse(this.succGenerator, otherSuccGenerator, initialProcess.id, initialProcess.id);
                 this.succGenerator = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
             }
             this.htmlNotationVisitor.clearCache();

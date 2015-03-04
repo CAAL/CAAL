@@ -71,7 +71,7 @@ function bisimulation(graph) {
     var succGen = getStrictSuccGenerator(graph),
         protocol = graph.processByName("Protocol").id,
         spec = graph.processByName("ZProtocol").id;
-    dgMod.isBisimilar(succGen, succGen, protocol, spec, graph);
+    Equivalence.isBisimilar(succGen, succGen, protocol, spec, graph);
 };
 
 var benchParsing = new Benchmark("Parsing", function () {
