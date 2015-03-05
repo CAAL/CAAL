@@ -8,17 +8,22 @@ module MapUtil {
         forEach(f : (val : V, index: K) => void, thisArg? : any) : void;
     }
 
-    export var OrderedMap : {
+    export declare var OrderedMap : {
         new <K, V>(compare : (a : K, b : K) => number): Map<K, V>;
-    } = TreapMap;
+    };
 
     class TreapNode<K, V> {
         private left : TreapNode<K, V> = null;
         private right : TreapNode<K, V> = null;
         private priority : number;
+        private count : number = 1;
 
         constructor(private key, private value) {
             this.priority = treapPriority();
+        }
+
+        private updateSize() {
+            this.count = 1 + (this.left ? this.left.count : 0) + (this.right ? this.right.count : 0);
         }
 
         has(key : K, compare) {
@@ -52,6 +57,7 @@ module MapUtil {
                     var tempChild = parent.left;
                     parent.left = tempChild.right;
                     tempChild.right = parent;
+                    parent.updateSize();
                     parent = tempChild;
                 }
             } else {
@@ -65,9 +71,11 @@ module MapUtil {
                     var tempChild = parent.right;
                     parent.right = tempChild.left;
                     tempChild.left = parent;
+                    parent.updateSize();
                     parent = tempChild;
                 }
             }
+            parent.updateSize();
             return parent;
         }
 
@@ -75,6 +83,10 @@ module MapUtil {
             if (this.left) this.left.forEach(f, thisObject);
             f.call(thisObject, this.value, this.key);
             if (this.right) this.right.forEach(f, thisObject);
+        }
+
+        size() {
+            return this.count;
         }
     }
 
@@ -84,7 +96,6 @@ module MapUtil {
 
     class TreapMap<K, V> implements Map<K, V> {
         private root : TreapNode<K, V> = null;
-        private numKeys : number = 0;
         constructor(private compare : (a : K, b : K) => number) {
         }
 
@@ -95,7 +106,6 @@ module MapUtil {
         set(key : K, val : V) : void {
             if (!this.root) {
                 this.root = new TreapNode<K, V>(key, val);
-                this.numKeys = 1;
             } else {
                 this.root = this.root.set(key, val, this.compare);
             }
@@ -107,16 +117,13 @@ module MapUtil {
         }
 
         size() : number {
-            //Several options.
-            //1. Do the has check to check whether set will add a key. - this will mean two traversals
-            //2. Return a composite value in TreapNode.set - might also hurt performance
-            //3. Rewrite such that rotation start from the very bottom - requires parent pointer, since no implicit parent hierarchy like the stack had.
-            throw "Not implemented yet";
-            // return this.numKeys;
+            return this.root ? this.root.size() : 0;
         }
 
         forEach(f, thisObject?) {
             if (this.root) this.root.forEach(f, thisObject);
         }
     }
+
+    OrderedMap = TreapMap;
 }
