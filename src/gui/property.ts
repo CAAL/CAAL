@@ -785,10 +785,10 @@ module Property {
                     this.secondHMLProperty.setFormula(formula);
                     this.verifyChildren([this.firstHMLProperty, this.secondHMLProperty]); // verify the two HML children.
                 } else {
+                    this.stopTimer()
                     this.setInvalidateStatus("The two selected processes are bisimular, and no distinguishing formula exists.")
+                    callback();
                 }
-
-                this.stopTimer()
             });
         }
     }
