@@ -14,6 +14,8 @@ lib/main.js
 lib/main.d.ts
 lib/ccs.js
 lib/ccs.d.ts
+lib/util.js
+lib/util.d.ts
 lib/workers
 *.js.map
 release.tar.gz

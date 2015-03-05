@@ -223,7 +223,15 @@ module Activity {
                     properties[i].setRowClickHandlers(rowClickHandlers)
                     properties[i].setToolMenuOptions(toolMenuOptions);
                     propertyRows = properties[i].toTableRow();
-                } else {
+                }
+                else if (properties[i] instanceof Property.StrongTraceInclusion || properties[i] instanceof Property.WeakTraceInclusion || properties[i] instanceof Property.WeakTraceEq || properties[i] instanceof Property.StrongTraceEq) {
+                    toolMenuOptions.play.click = null;
+                    rowClickHandlers.status.click = null;
+                    properties[i].setRowClickHandlers(rowClickHandlers)
+                    properties[i].setToolMenuOptions(toolMenuOptions)
+                    propertyRows = properties[i].toTableRow();
+                }
+                else {
                     /* Strong/Weak bisim and HML*/
                     properties[i].setRowClickHandlers(rowClickHandlers)
                     properties[i].setToolMenuOptions(toolMenuOptions)
@@ -278,6 +286,18 @@ module Activity {
                     break;
                 case "weak":
                     property = new Property.WeakBisimulation({firstProcess: "", secondProcess: ""});
+                    break;
+                case "strongtraceinclusion":
+                    property = new Property.StrongTraceInclusion({firstProcess: "", secondProcess: ""});
+                    break;
+                case "weaktraceinclusion":
+                    property = new Property.WeakTraceInclusion({firstProcess: "", secondProcess: ""});
+                    break;
+                case "strongtraceeq":
+                    property = new Property.StrongTraceEq({firstProcess: "", secondProcess: ""});
+                    break;
+                case "weaktraceeq":
+                    property = new Property.WeakTraceEq({firstProcess: "", secondProcess: ""});
                     break;
                 case "hml":
                     property = new Property.HML({process: "", formula: ""});
