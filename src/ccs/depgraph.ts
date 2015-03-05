@@ -27,9 +27,14 @@ module DependencyGraph {
     export interface DependencyGraph extends PartialDependencyGraph {
         getHyperEdges(identifier : DgNodeId) : Hyperedge[];
         getAllHyperEdges() : [number, Hyperedge][];
-    }1
+    }
+    
+    export interface PlayableDependencyGraph extends PartialDependencyGraph {
+        getAttackerOptions(dgNodeId : DgNodeId) : Hyperedge[];
+        getDefenderOptions(dgNodeId : DgNodeId) : Hyperedge[];
+    }
 
-    class MuCalculusMinModelCheckingDG implements PartialDependencyGraph, hml.FormulaDispatchHandler<any> {
+    export class MuCalculusMinModelCheckingDG implements PartialDependencyGraph, PlayableDependencyGraph, hml.FormulaDispatchHandler<any> {
         private TRUE_ID = 1;
         private FALSE_ID = 2;
         // the 0th index is set in the constructor.
@@ -47,6 +52,14 @@ module DependencyGraph {
                     nodeId, private formulaSet : hml.FormulaSet, formula : hml.Formula) {
             this.constructData[0] = [nodeId, formula];
             this.nextIdx = 3;
+        }
+        
+        public getAttackerOptions(dgNodeId : DgNodeId) : Hyperedge[] {
+            return undefined; //TODO
+        }
+        
+        public getDefenderOptions(dgNodeId : DgNodeId) : Hyperedge[] {
+            return undefined; //TODO
         }
 
         getHyperEdges(identifier : DgNodeId) : Hyperedge[] {

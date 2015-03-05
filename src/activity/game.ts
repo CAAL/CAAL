@@ -391,7 +391,7 @@ module Activity {
     
     class DgGame extends Abstract {
         
-        protected dependencyGraph : dg.DependencyGraph;
+        protected dependencyGraph : dg.PlayableDependencyGraph;
         protected marking : dg.LevelMarking;
         
         protected gameLog : GameLog = new GameLog();
@@ -403,20 +403,23 @@ module Activity {
         private round : number = 1;
         protected lastMove : Move;
         protected lastAction : string;
-        protected currentNodeId : any = 0; // the DG node id
+        protected currentNodeId : dg.DgNodeId = 0; // the DG node id
         
         private cycleCache : any;
         
         constructor(private gameActivity : Game, protected graph : CCS.Graph,
-            attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator,
             protected currentLeft : any, protected currentRight : any) {
             super();
             
             // create the dependency graph
-            this.dependencyGraph = this.createDependencyGraph(this.graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight);
+            this.dependencyGraph = this.createDependencyGraph(this.graph, currentLeft, currentRight);
             
             // create markings
             this.marking = this.createMarking();
+        }
+        
+        protected createMarking() : dg.LevelMarking {
+            return dg.liuSmolkaLocal2(this.currentNodeId, this.dependencyGraph);
         }
         
         public getRound() : number {
@@ -489,14 +492,14 @@ module Activity {
             }
         }
         
-        public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) : void {
+        public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : string = this.lastAction, move? : Move) : void {
             var previousConfig = this.getCurrentConfiguration();
             
             // change the current node id to the next
             this.currentNodeId = nextNode;
             
             if (player.getPlayType() == PlayType.Attacker) {
-                var sourceProcess = move == Move.Left ? previousConfig.left : previousConfig.right;
+                var sourceProcess = move === Move.Left ? previousConfig.left : previousConfig.right;
                 this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, move);
 
                 this.lastAction = action;
@@ -506,9 +509,9 @@ module Activity {
                 this.preparePlayer(this.defender);
             } else {
                 // the play is a defense, flip the saved last move
-                this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
+                this.lastMove = this.lastMove === Move.Right ? Move.Left : Move.Right;
                 
-                var sourceProcess = this.lastMove == Move.Left ? previousConfig.left : previousConfig.right;
+                var sourceProcess = this.lastMove === Move.Left ? previousConfig.left : previousConfig.right;
                 this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove);
                 
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
@@ -580,6 +583,13 @@ module Activity {
             return result;
         }
         
+        public getCurrentChoices(playType : PlayType) : any {
+            if (playType == PlayType.Attacker)
+                return this.dependencyGraph.getAttackerOptions(this.currentNodeId);
+            else
+                return this.dependencyGraph.getDefenderOptions(this.currentNodeId);
+        }
+        
         /* Abstract methods */
         public getUniversalWinner() : Player { return this.abstract(); }
         public getCurrentWinner() : Player { return this.abstract(); }
@@ -587,9 +597,7 @@ module Activity {
         public getTryHardAttack(choices : any) : any { this.abstract(); }
         public getWinningDefend(choices : any) : any { this.abstract(); }
         public getTryHardDefend(choices : any) : any { this.abstract(); }
-        public getCurrentChoices(playType : PlayType) : any { this.abstract(); }
-        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph { return this.abstract(); }
-        protected createMarking() : dg.LevelMarking { return this.abstract(); }
+        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph { return this.abstract(); }
     }
 
     class BisimulationGame extends DgGame {
@@ -599,17 +607,21 @@ module Activity {
         private bisimulationDG : Equivalence.BisimulationDG;
         private bisimilar : boolean;
         private gameType : string;
+        private attackerSuccessorGen : CCS.SuccessorGenerator;
+        private defenderSuccessorGen : CCS.SuccessorGenerator;
         
-        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
-            // stupid compiler
+        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
+            
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
             this.gameType = gameType;
+            this.attackerSuccessorGen = attackerSuccessorGen;
+            this.defenderSuccessorGen = defenderSuccessorGen;
             
             var currentLeft  = graph.processByName(this.leftProcessName);
             var currentRight = graph.processByName(this.rightProcessName);
             
-            super(gameActivity, graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight); // creates dependency graph and marking
+            super(gameActivity, graph, currentLeft, currentRight); // creates dependency graph and marking
         }
         
         public startGame() : void {
@@ -621,9 +633,9 @@ module Activity {
             return this.bisimilar;
         }
         
-        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph {
+        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
             
-            return this.bisimulationDG = new Equivalence.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
+            return this.bisimulationDG = new Equivalence.BisimulationDG(this.attackerSuccessorGen, this.defenderSuccessorGen, this.currentLeft.id, this.currentRight.id);
         }
         
         public getUniversalWinner() : Player {
@@ -635,7 +647,7 @@ module Activity {
         }
         
         protected createMarking() : dg.LevelMarking {
-            var marking : dg.LevelMarking = dg.solveDgGlobalLevel(this.dependencyGraph);
+            var marking = dg.solveDgGlobalLevel(this.bisimulationDG);
             this.bisimilar = marking.getMarking(0) === marking.ZERO;
             return marking;
         }
@@ -733,16 +745,71 @@ module Activity {
             }
         }
         
-        public getCurrentChoices(playType : PlayType) : any {
-            if (playType == PlayType.Attacker)
-                return this.bisimulationDG.getAttackerOptions(this.currentNodeId);
-            else
-                return this.bisimulationDG.getDefenderOptions(this.currentNodeId);
-        }
-        
         private random(max) : number {
             // random integer between 0 and max
             return Math.floor((Math.random() * (max+1)));
+        }
+    }
+    
+    class HmlGame extends DgGame {
+        
+        private processName : string;
+        private formula : HML.Formula;
+        private formulaSet : HML.FormulaSet;
+        
+        private satisfied : boolean;
+        private hmlDg : dg.MuCalculusMinModelCheckingDG;
+        
+        constructor(gameActivity : Game, graph : CCS.Graph,
+            processName : string, formula : HML.Formula, formulaSet : HML.FormulaSet) {
+            
+            this.processName = processName;
+            this.formula = formula;
+            this.formulaSet = formulaSet;
+            
+            var currentProcess = graph.processByName(this.processName);
+            
+            super(gameActivity, graph, currentProcess, this.formula);
+        }
+        
+        public isSatisfied() : boolean {
+            return this.satisfied;
+        }
+        
+        public getUniversalWinner() : Player {
+            return this.satisfied ? this.defender : this.attacker;
+        }
+        
+        public getCurrentWinner() : Player {
+            return this.marking.getMarking(this.currentNodeId) === this.marking.ZERO ? this.attacker : this.defender;
+        }
+        
+        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
+            var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
+            var weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: false});
+            return new dg.MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, currentLeft.id, this.formulaSet, currentRight);
+        }
+        
+        protected createMarking() : dg.LevelMarking {
+            var marking = super.createMarking();
+            this.satisfied = marking.getMarking(0) === marking.ONE;
+            return marking;
+        }
+        
+        public getBestWinningAttack(choices : any) : any {
+            return undefined; //TODO
+        }
+        
+        public getTryHardAttack(choices : any) : any {
+            return undefined; //TODO
+        }
+        
+        public getWinningDefend(choices : any) : any {
+            return undefined; //TODO
+        }
+        
+        public getTryHardDefend(choices : any) : any {
+            return undefined; //TODO
         }
     }
 
