@@ -297,7 +297,6 @@ module Property {
         public verify(callback : Function) : void {
             if (!this.isReadyForVerification()) {
                 console.log("something is wrong, please check the property");
-                this.stopTimer();
                 callback()
                 return;
             }
@@ -331,9 +330,9 @@ module Property {
                 else {
                     this.status = res;
                 }
-                this.stopTimer()
                 this.worker.terminate();
                 this.worker = null; 
+                this.stopTimer()
                 callback(); /* verification ended */
             });
         }
@@ -530,10 +529,7 @@ module Property {
 
         public verify(callback : Function): void {
             if(!this.isReadyForVerification){
-                this.worker.terminate();
-                this.worker = null;
                 // something is not defined or syntax error
-                this.stopTimer()
                 callback()
                 console.log("something is wrong, please check the property");
                 return;
@@ -739,6 +735,7 @@ module Property {
                 property.verify(this.verificationEnded.bind(this));
             } else {
                 // verification has ended
+                this.stopTimer();
                 this.verificationEndedCallback();
             }
         }
@@ -748,7 +745,6 @@ module Property {
             if(!this.isReadyForVerification()) {
                 // invalidate will be set in isReadyForVerification
                 console.log("something is wrong, please check the property");
-                this.stopTimer()
                 callback()
                 return;
             }
@@ -785,8 +781,8 @@ module Property {
                     this.secondHMLProperty.setFormula(formula);
                     this.verifyChildren([this.firstHMLProperty, this.secondHMLProperty]); // verify the two HML children.
                 } else {
-                    this.stopTimer()
                     this.setInvalidateStatus("The two selected processes are bisimular, and no distinguishing formula exists.")
+                    this.stopTimer()
                     callback();
                 }
             });
