@@ -38,12 +38,13 @@ task('ace-integration', [ccsTargetFile, ccsGrammar, hmlGrammar], function () {
     jake.mkdirP('modules/ace/lib/ace/mode/ccs');
     var moduleHeader = 'define(function(require, exports, module) {\n';
         toWrap = [
-            {source: ccsTargetFile, target: _P('modules/ace/lib/ace/mode/ccs/ccs.js'), footer: '\nmodule.exports.CCS = CCS; module.exports.HML = HML; });'},
-            {source: ccsGrammar, target: _P('modules/ace/lib/ace/mode/ccs/ccs_grammar.js'), footer: '\nmodule.exports.CCSParser = CCSParser; });'},
-            {source: hmlGrammar, target: _P('modules/ace/lib/ace/mode/ccs/hml_grammar.js'), footer: '\nmodule.exports.HMLParser = HMLParser; });'}
+            {source: utilTargetFile, header: moduleHeader, target: _P('modules/ace/lib/ace/mode/ccs/util.js'), footer: '\nmodule.exports.ArrayUtil = ArrayUtil; });'},
+            {source: ccsTargetFile, header: moduleHeader + 'var ArrayUtil = require("./util").ArrayUtil;\n', target: _P('modules/ace/lib/ace/mode/ccs/ccs.js'), footer: '\nmodule.exports.CCS = CCS; module.exports.HML = HML; });'},
+            {source: ccsGrammar, header: moduleHeader, target: _P('modules/ace/lib/ace/mode/ccs/ccs_grammar.js'), footer: '\nmodule.exports.CCSParser = CCSParser; });'},
+            {source: hmlGrammar, header: moduleHeader, target: _P('modules/ace/lib/ace/mode/ccs/hml_grammar.js'), footer: '\nmodule.exports.HMLParser = HMLParser; });'}
         ];
     toWrap.forEach(function (data) {
-        fs.writeFileSync(data.target, moduleHeader);
+        fs.writeFileSync(data.target, data.header);
         fs.appendFileSync(data.target, fs.readFileSync(data.source));
         fs.appendFileSync(data.target, data.footer);
     });

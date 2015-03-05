@@ -6,12 +6,12 @@ enum PropertyStatus {satisfied, unsatisfied, invalid, unknown};
 
 module Property {
 
-    function getWorker(callback? : Function) : Worker {
+    function getWorker() : Worker {
         var worker = new Worker("lib/workers/verifier.js");
-        worker.addEventListener("error", (error) => {
-            console.log("Verifier Worker Error at line " + error.lineno +
-                " in " + error.filename + ": " + error.message);
-        }, false);
+        // worker.addEventListener("error", (error) => {
+        //     console.log("Verifier Worker Error at line " + error.lineno +
+        //         " in " + error.filename + ": " + error.message);
+        // }, false);
         return worker;
     }
 
@@ -180,6 +180,9 @@ module Property {
 
         public abortVerification(): void {
             this.worker.terminate();
+            this.worker = null;
+            this.stopTimer(); // if aborted stop the time
+            this.setUnknownStatus();
         }
 
         public toTableRow() : any[] {
@@ -295,13 +298,13 @@ module Property {
             if (!this.isReadyForVerification()) {
                 console.log("something is wrong, please check the property");
                 this.stopTimer();
-                callback(this.status);
+                callback()
                 return;
             }
             
             this.startTimer();
             var program = Main.getProgram();
-            this.worker = getWorker(callback); /*on error*/
+            this.worker = getWorker();
             this.worker.postMessage({
                 type: "program",
                 program: program
@@ -313,9 +316,9 @@ module Property {
             });
             this.worker.addEventListener("error", (error) => {
                 /*display tooltip with error*/
-                this.setInvalidateStatus();
+                this.setInvalidateStatus(error.message);
                 this.stopTimer();
-                callback(this.status)
+                callback()
             }, false);
             this.worker.addEventListener("message", event => {
                 var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
@@ -328,10 +331,10 @@ module Property {
                 else {
                     this.status = res;
                 }
+                this.stopTimer()
                 this.worker.terminate();
                 this.worker = null; 
-                this.stopTimer()
-                callback(this.status); /* verification ended */
+                callback(); /* verification ended */
             });
         }
         
@@ -352,49 +355,8 @@ module Property {
             return "StrongBisimulation";
         }
 
-        public verify(callback : Function): void {
-            var isReady = this.isReadyForVerification() 
-            if (isReady) {
-                this.startTimer()
-                var program = Main.getProgram();
-                this.worker = getWorker(callback); /*on error*/
-                this.worker.postMessage({
-                    type: "program",
-                    program: program
-                });
-                this.worker.postMessage({
-                    type: "isStronglyBisimilar",
-                    leftProcess: this.firstProcess,
-                    rightProcess: this.secondProcess
-                });
-                this.worker.addEventListener("error", (error) => {
-                    /*display tooltip with error*/
-                    this.setInvalidateStatus(error.message);
-                    this.stopTimer();
-                    callback(this.status)
-                }, false);
-                this.worker.addEventListener("message", event => {
-                    var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
-                    if (res === true) {
-                        this.status = PropertyStatus.satisfied;
-                    }
-                    else if (res === false) {
-                        this.status = PropertyStatus.unsatisfied; 
-                    }
-                    else {
-                        this.status = res;
-                    }
-                    this.worker.terminate();
-                    this.worker = null; 
-                    this.stopTimer()
-                    callback(this.status); /* verification ended */
-                });
-            } else {
-                // something is not defined or syntax error
-                console.log("something is wrong, please check the property");
-                this.stopTimer()
-                callback(this.status); /*verification ended*/
-            }
+        protected getWorkerHandler() : string {
+            return "isStronglyBisimilar";
         }
     }
 
@@ -567,49 +529,56 @@ module Property {
         }
 
         public verify(callback : Function): void {
-            var isReady = this.isReadyForVerification() 
-            if (isReady) {
-                this.startTimer();
-                var program = Main.getProgram();
-                this.worker = getWorker(callback);
-                this.worker.postMessage({
-                    type: "program",
-                    program: program
-                });
-                this.worker.postMessage({
-                    type: "checkFormula",
-                    processName: this.process,
-                    useStrict: false,
-                    formula: this.formula
-                });
-                this.worker.addEventListener("error", (error) => {
-                    /* HML syntax error */
-                    this.setInvalidateStatus(error.message);
-                    this.stopTimer();
-                    callback(this.status) 
-                }, false);
-                this.worker.addEventListener("message", event => {
-                    var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
-                    if (res === true) {
-                        this.status = PropertyStatus.satisfied;
-                    }
-                    else if (res === false) {
-                        this.status = PropertyStatus.unsatisfied; 
-                    }
-                    else {
-                        this.status = res;
-                    }
-                    this.worker.terminate();
-                    this.worker = null;
-                    this.stopTimer()
-                    callback(this.status); /* verification ended */
-                });
-            } else {
+            if(!this.isReadyForVerification){
+                this.worker.terminate();
+                this.worker = null;
                 // something is not defined or syntax error
                 this.stopTimer()
-                callback(this.status); /* verification ended */
+                callback()
                 console.log("something is wrong, please check the property");
+                return;
             }
+
+            this.startTimer();
+            var program = Main.getProgram();
+            this.worker = getWorker();
+            this.worker.postMessage({
+                type: "program",
+                program: program
+            });
+            this.worker.postMessage({
+                type: "checkFormula",
+                processName: this.process,
+                useStrict: false,
+                formula: this.formula
+            });
+            this.worker.addEventListener("error", (error) => {
+                /* HML syntax error */
+                this.worker.terminate();
+                this.worker = null;
+
+                this.setInvalidateStatus(error.message);
+                this.stopTimer();
+                callback()
+            }, false);
+            this.worker.addEventListener("message", event => {
+                this.worker.terminate();
+                this.worker = null;
+
+                var res = (typeof event.data.result === "boolean") ? event.data.result : PropertyStatus.unknown;
+                if (res === true) {
+                    this.status = PropertyStatus.satisfied;
+                }
+                else if (res === false) {
+                    this.status = PropertyStatus.unsatisfied; 
+                }
+                else {
+                    this.status = res;
+                }
+
+                this.stopTimer()
+                callback()
+            });
         }
     }
 
@@ -618,6 +587,10 @@ module Property {
         public secondHMLProperty: Property.HML;
         public distinguishingFormula : string;
         private isexpanded : boolean = true;
+        
+        private childPropertiesToVerify = [];
+        private currentVerifyingProperty = null;
+        private verificationEndedCallback : Function = null;
         
         public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
             super(status);
@@ -720,7 +693,6 @@ module Property {
         protected isReadyForVerification() : boolean {
             var isReady = true;
             var error = "";
-            
             if(!this.getFirstProcess() && !this.getSecondProcess()) {
                 isReady = false;
                 error = "Two processes must be selected"
@@ -744,51 +716,80 @@ module Property {
                 this.setInvalidateStatus(error);
             }
             return isReady;
+        }  
+
+        public verificationEnded(){
+            this.currentVerifyingProperty = null;
+            this.doNextVerification();
         }
 
-        public verify(callback : Function, queProperties : Function): void {
-            var isReady = this.isReadyForVerification() 
-            if (isReady) {
-                this.startTimer()
-                var program = Main.getProgram();
-                this.worker = getWorker(callback);
-                this.worker.postMessage({
-                    type: "program",
-                    program: program
-                });
-                this.worker.postMessage({
-                    type: "findDistinguishingFormula",
-                    leftProcess: this.firstHMLProperty.getProcess(),
-                    rightProcess: this.secondHMLProperty.getProcess()
-                });
-                this.worker.addEventListener("error", (error) => {
-                    /*display tooltip with error*/
-                    console.log(error);
-                    this.setInvalidateStatus(error.message);
-                    this.stopTimer()
-                    callback(this.status)
-                }, false);
-                this.worker.addEventListener("message", event => {
-                    var goodResult = !event.data.result.isBisimilar; //this should be false, for there to be distinguishing formula
-                    this.status = goodResult ? PropertyStatus.satisfied : PropertyStatus.invalid;
-                    if (goodResult) {
-                        var formula = event.data.result.formula;
-                        this.firstHMLProperty.setFormula(formula);
-                        this.secondHMLProperty.setFormula(formula);
-                        queProperties([this.firstHMLProperty, this.secondHMLProperty]);
-                    }
-                    this.worker.terminate();
-                    this.worker = null;
+        private verifyChildren(childProperties : any[]): void {
+            this.queuePropertiesToVerification(childProperties);
+            this.doNextVerification();
+        }
 
-                    this.stopTimer()
-                    callback(this.status); /* verification ended */
-                });
+        public queuePropertiesToVerification(properties : Property.Property[]) {
+            properties.forEach((property) => this.childPropertiesToVerify.push(property));
+        }
+
+        private doNextVerification() {
+            if (!this.currentVerifyingProperty && this.childPropertiesToVerify.length > 0) {
+                var property = this.childPropertiesToVerify.shift();
+                this.currentVerifyingProperty = property;
+                property.verify(this.verificationEnded.bind(this));
             } else {
-                // something is not defined or syntax error
+                // verification has ended
+                this.verificationEndedCallback();
+            }
+        }
+
+        public verify(callback : Function): void {
+            this.verificationEndedCallback = callback;
+            if(!this.isReadyForVerification()) {
+                // invalidate will be set in isReadyForVerification
                 console.log("something is wrong, please check the property");
                 this.stopTimer()
-                callback(this.status); /*verification ended*/
+                callback()
+                return;
             }
+            this.startTimer()
+            var program = Main.getProgram();
+            this.worker = getWorker();
+            this.worker.postMessage({
+                type: "program",
+                program: program
+            });
+            this.worker.postMessage({
+                type: "findDistinguishingFormula",
+                leftProcess: this.firstHMLProperty.getProcess(),
+                rightProcess: this.secondHMLProperty.getProcess()
+            });
+            this.worker.addEventListener("error", (error) => {
+                /*display tooltip with error*/
+                this.worker.terminate();
+                this.worker = null;
+
+                this.setInvalidateStatus(error.message);
+                this.stopTimer()
+                callback()
+            }, false);
+            this.worker.addEventListener("message", event => {
+                this.worker.terminate();
+                this.worker = null;
+
+                var goodResult = !event.data.result.isBisimilar; //this should be false, for there to be distinguishing formula
+                if (goodResult) {
+                    this.status = PropertyStatus.satisfied;
+                    var formula = event.data.result.formula;
+                    this.firstHMLProperty.setFormula(formula);
+                    this.secondHMLProperty.setFormula(formula);
+                    this.verifyChildren([this.firstHMLProperty, this.secondHMLProperty]); // verify the two HML children.
+                } else {
+                    this.stopTimer()
+                    this.setInvalidateStatus("The two selected processes are bisimular, and no distinguishing formula exists.")
+                    callback();
+                }
+            });
         }
     }
 }

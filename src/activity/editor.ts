@@ -30,9 +30,6 @@ module Activity {
                 fontSize: 16,
                 fontFamily: "Inconsolata",
             });
-
-            // Focus editor whenever its parent element is clicked.
-            this.$container.find("#editor").on("click", () => {this.editor.focus()});
             
             this.$container.find("#parse-btn").on("click", () => {this.parse()});
             this.$statusArea.children("button").on("click", () => {this.$statusArea.hide()});
