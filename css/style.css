@@ -28,6 +28,10 @@ textarea {
     font: normal 14px "Inconsolata";
 }
 
+.small-caps {
+    font-variant: small-caps;
+}
+
 .no-highlight {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -403,10 +407,6 @@ input[type=range] {
 #version {
     float: left;
     font-family: normal 14px "Inconsolata";
-}
-
-.modal-dialog .modal-header  > #help-dialog-title{
-    font-variant: small-caps;
 }
 
 table.helpTable td {
