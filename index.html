@@ -314,7 +314,7 @@
                     <div style="position: relative">
                         <input id="zoom-left" data-side="left" min="1" max="3" step="0.2" value="1" type="range" />
                         <div class="btn-group pull-right">
-                        	<button id="freeze-left" type="button" class="btn btn-default btn-sm" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                            <button id="freeze-left" type="button" class="btn btn-default btn-sm" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
                         </div>
                     </div>
                     <div id="game-left-canvas">
@@ -325,7 +325,7 @@
                     <div style="position: relative">
                         <input id="zoom-right" data-side="right" min="1" max="3" step="0.2" value="1" type="range" />
                         <div class="btn-group pull-right">
-                        	<button id="freeze-right" type="button" class="btn btn-default btn-sm" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                            <button id="freeze-right" type="button" class="btn btn-default btn-sm" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
                         </div>
                     </div>
                     <div id="game-right-canvas">
@@ -416,84 +416,96 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                        <h4 class="modal-title" id="help-dialog-title">Caal</h4>
+                        <h4 class="modal-title" id="help-dialog-title">Caal Specification Language</h4>
                     </div>
                     <div class="modal-body">
                         <p id="help-dialog-body-par">
-                            The table listed contains the allowed CCS expressions along with the syntax
+                            Process constants start with capital letters, channel names with small letters
+
+                            and dual channels begin with an apostrophe (like e.g. 'out). The silent action
+
+                            is denoted as tau.
                             <table style="width:100%" class="helpTable ace-crisp">
                                 <col style="width:50%" span="2"/>
                                 <thead>
                                     <tr>
-                                        <th>Expression</th>
+                                        <th>CCS Expression</th>
                                         <th>Syntax</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Comment</td>
-                                        <td class="inconsolata"><span class="ace_comment">* This is a comment</span></td>
+                                        <td>Nil process</td>
+                                        <td class ="inconsolata">0</td>
+                                    </tr>
+                                     <tr>
+                                        <td>Action prefixing</td>
+                                        <td class ="inconsolata">
+                                        a<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td>Process Definition</td>
-                                        <td class ="inconsolata">
-                                            <span class="ace_constant">A</span>
-                                            <span class="ace_keyword ace_operator">=</span> 
-                                            a<span class="ace_keyword ace_operator">.</span><span class="ace_constant">B</span>;
-                                        </td>
-                                    </tr>       
-                                    <tr>
-                                        <td>Parallel Composition</td>
+                                        <td>Parallel composition</td>
                                         <td class ="inconsolata">
                                             <span class="ace_constant">P</span>
                                             <span class="ace_keyword ace_operator">|</span>
-                                            <span class="ace_constant">Q</span>;
+                                            <span class="ace_constant">Q</span>
                                         </td>
                                     </tr>           
                                     <tr>
-                                        <td>Choice</td>
+                                        <td>Choice operator</td>
                                         <td class ="inconsolata">
                                             <span class="ace_constant">P</span>
                                             <span class="ace_keyword ace_operator">+</span> 
-                                            <span class="ace_constant">Q</span>;
+                                            <span class="ace_constant">Q</span>
                                         </td>
                                     </tr>           
                                     <tr>
                                         <td>Restriction</td>
                                         <td class ="inconsolata">
-                                            <span class="ace_constant">A</span> 
-                                            <span class="ace_keyword ace_operator">\</span> {a,b};
+                                            <span class="ace_constant">P</span> 
+                                            <span class="ace_keyword ace_operator">\</span> {a,b}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Renaming</td>
+                                        <td>Renaming of channels</td>
                                         <td class ="inconsolata">
-                                            <span class="ace_constant">A</span>[b/a];
+                                            <span class="ace_constant">P</span>[b/a, d/c]
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Set</td>
+                                        <td>Set definition</td>
                                         <td class ="inconsolata">
-                                            set <span class="ace_constant">L</span> 
-                                            <span class="ace_keyword ace_operator">=</span> {a,b,c};
+                                        set <span class="ace_constant">L</span> 
+                                            <span class="ace_keyword ace_operator">=</span> {a,b,c}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Empty Process</td>
-                                        <td class ="inconsolata">0;</td>
+                                        <td>Process definition</td>
+                                        <td class ="inconsolata">
+                                            <span class="ace_constant">A</span>
+                                            <span class="ace_keyword ace_operator">=</span>
+                                            a<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>;
+                                        </td>
                                     </tr>
-                                </tbody>
+                                    <tr>
+                                        <td>Comment</td>
+                                        <td class="inconsolata"><span class="ace_comment">* This is a comment</span></td>
+                                    </tr>
+                               </tbody>
                             </table>
-                        </p>    
-
+                        </p>
                         <p id="help-dialog-body-par1">
                             <br/>
-                            The table listed contains the allowed HML formulas along with the syntax
+                            The property language supports multiple recursively defined HML formulae that
+
+                            are however not mutually recursive.
+
                             <table style="width:100%" class="helpTable ace-crisp">
                                 <col style="width:50%" span="2"/>
                                 <thead>
                                     <tr>
-                                        <th>Formula</th>
+                                        <th>HML Formula</th>
                                         <th>Syntax</th>
                                     </tr>
                                 </thead>
@@ -508,70 +520,64 @@
                                     </tr>       
                                     <tr>
                                         <td>Conjunction</td>
-                                        <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">and</span> <span class="ace_constant">G</span>;</td>
+                                        <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">and</span> <span class="ace_constant">G</span></td>
                                     </tr>           
                                     <tr>
                                         <td>Disjunction</td>
-                                        <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">or</span> <span class="ace_constant">G</span>;</td>
+                                        <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">or</span> <span class="ace_constant">G</span></td>
                                     </tr>           
                                     <tr>
-                                        <td>Strong Existential Modality</td>
+                                        <td>Strong existential modality</td>
                                         <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt</span>a,b<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span></td>
                                     </tr>
                                     <tr>
-                                        <td>Weak Existential Modality</td>
-                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt&lt</span>a,b<span class="ace_keyword ace_operator">&gt&gt</span><span class="ace_constant">H</span>;</td>
+                                        <td>Weak existential modality</td>
+                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt&lt</span>a,b<span class="ace_keyword ace_operator">&gt&gt</span><span class="ace_constant">H</span></td>
                                     </tr>
                                     <tr>
-                                        <td>Strong Forall Modality</td>
-                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">[</span>a,b<span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span>;</td>
+                                        <td>Strong universal modality</td>
+                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">[</span>a,b<span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span></td>
                                     </tr>
                                     <tr>
-                                        <td>Weak Forall Modality</td>
-                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">[[</span>a,b<span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span>;</td>
+                                        <td>Weak universal modality</td>
+                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">[[</span>a,b<span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span></td>
                                     </tr>
                                     <tr>
-                                        <td>All Actions</td>
-                                        <td class ="inconsolata">-, e.g <span class="ace_keyword ace_operator">&lt</span>-<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span>;</td>
+                                        <td>Wildcharacter for all actions</td>
+                                        <td class ="inconsolata">-, e.g. <span class="ace_keyword ace_operator">&lt</span>-<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span></td>
                                     </tr>
                                     <tr>
-                                        <td>Minimum fix-point</td>
+                                        <td>Minimum fixed-point definition</td>
                                         <td class ="inconsolata">
                                             <span class="ace_constant">X</span>
-                                            <span class="ace_keyword ace_operator">min= &lt</span>a<span class="ace_keyword ace_operator">&gt</span>
-                                            <span class="ace_constant">tt</span>
-                                            <span class="ace_keyword ace_operator">or [</span>-<span class="ace_keyword ace_operator">]</span><span class="ace_constant">X</span>;
+                                            <span class="ace_keyword ace_operator">min= &lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
+                                            <span class="ace_keyword ace_operator">or <</span>-<span class="ace_keyword ace_operator">></span><span class="ace_constant">X</span>;
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Maximum fix-point</td>
+                                        <td>Maximum fixed-point definition</td>
                                         <td class ="inconsolata">
                                             <span class="ace_constant">X</span>
-                                            <span class="ace_keyword ace_operator">max= &lt</span>a<span class="ace_keyword ace_operator">&gt</span>
-                                            <span class="ace_constant">tt</span>
-                                            <span class="ace_keyword ace_operator">and</span>
-                                            <span class="ace_constant">X</span>;
+                                            <span class="ace_keyword ace_operator">max= &lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
+                                            <span class="ace_keyword ace_operator">and [-]</span><span class="ace_constant">X</span>;
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Recursive Variable</td>
+                                        <td>Several recursively defined variables</td>
                                         <td class ="inconsolata">
                                             <span class="ace_constant">X</span>
-                                            <span class="ace_keyword ace_operator">max= &lt</span>a<span class="ace_keyword ace_operator">&gt</span>
-                                            <span class="ace_constant">tt</span>
+                                            <span class="ace_keyword ace_operator">max= &lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
                                             <span class="ace_keyword ace_operator">and</span> 
                                             <span class="ace_constant">Y</span>
                                             <span class="ace_keyword ace_operator">and [</span>-<span class="ace_keyword ace_operator">]</span><span class="ace_constant">X</span>;
                                             <br/>
                                             <span class="ace_constant">Y</span> 
-                                            <span class="ace_keyword ace_operator">min= &lt</span>b<span class="ace_keyword ace_operator">&gt</span>
-                                            <span class="ace_constant">tt</span> 
-                                            <span class="ace_keyword ace_operator">or</span> 
-                                            <span class="ace_constant">Y</span>;
+                                            <span class="ace_keyword ace_operator">min= &lt</span>b<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span> 
+                                            <span class="ace_keyword ace_operator">or <-></span><span class="ace_constant">Y</span>;
                                         </td>
                                     </tr>
                                 </tbody>
-                            </table>    
+                            </table>
                         </p>
                     </div>
                     <div class="modal-footer">
