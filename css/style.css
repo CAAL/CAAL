@@ -28,17 +28,28 @@ textarea {
     font: normal 14px "Inconsolata";
 }
 
+.no-highlight {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 
 /*
  * Custom Bootstrap styles
  */
 
-.btn-default:focus {
+/* Remove focus from buttons */
+.btn:focus {
     background-color: #fff;
     border-color: #ccc;
 }
 
-.btn-default:focus:hover {
+/* Restore hover effect on focused buttons */
+.btn:focus:hover {
     background-color: #e6e6e6;
     border-color: #adadad;
 }
@@ -66,17 +77,6 @@ textarea {
     }
 }
 
-.col-border {
-    padding-right: 15px;
-    border-right: 1px solid #e7e7e7;
-}
-
-@media (max-width: 991px) {
-    .col-border {
-        border: none;
-    }
-}
-
 .dropdown-menu {
     min-width: 0px;
 }
@@ -94,7 +94,7 @@ textarea {
     z-index: 10001;
 }
 
-.table-hover td {
+.table-hover > tbody {
     cursor: pointer;
 }
 
@@ -146,6 +146,7 @@ textarea {
     position: absolute; top: 10px; left: 10px; right: 10px; background-color: transparent; border-color: transparent;
 }
 
+
 /*
  * Editor activity styles
  */
@@ -194,134 +195,21 @@ textarea {
 
 #status-table-container {
     height: 230px;
-    max-height: 230px;
-    overflow-y: auto;
+    overflow: auto;
 }
 
-#status-table,
-#actions-table {
-    cursor: pointer;
-    table-layout: fixed;
+#status-table-container p {
+    margin-left: 20px;
 }
 
-#status-table th, #status-table td,
-#actions-table th, #actions-table td {
-    text-align: left;
-}
-
-#status-table th.col-1,
-#actions-table th.col-1 {
-    width: 15%;
-    min-width: 140px;
-}
-
-#status-table th.col-2,
-#actions-table th.col-2 {
-    width: 15%;
-    min-width: 140px;
-}
-
-#status-table th.col-3,
-#actions-table th.col-3 {
-    width: auto;
-}
-
-#explorer-container table {
-    margin: 0;
-}
-
-#explorer-container tbody,
-#explorer-source-definition,
-#actions-table tbody {
+#status-table-container p, #status-table-container .tooltip, #status-table tbody {
     font: normal 14px "Inconsolata";
+    color: #333;
 }
 
-#tracesvg {
-    width: 100%;
-    height: 300px;
-    float: left;
-    margin-top: 15px;
-}
-
-#game-console{
-    cursor: pointer;
-    max-height: 100px;
-    overflow: hidden;
-}
-
-#game-console ul{
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    font: normal 14px "Inconsolata";            
-    
-}
-
-#game-console li{
-    margin-bottom: 7px;
-}
-
-#game-actions-table-container tbody > tr{
-    cursor: pointer;
-}
-
-#game-mode-dialog-succ-list > .btn-group {
-    width: 100%;    
-}
-
-#game-mode-dialog-succ-list > .btn-group > .btn {
-    border-radius: 6px;
-}
-
-#about-dialog .modal-footer {
-    padding: 15px;
-    border-top: 1px solid #e5e5e5;
-    text-align: initial;
-}
-#aboutok {
-    float: right;
-}
-#version {
-    float: left;
-    font-family: normal 14px "Inconsolata";
-}
-
-.modal-footer > #game-btn-group {
-    width: 100%;
-}
-
-.modal-footer > #game-btn-group > #cancel-btn {
-    width: 20%;
-}
-
-.modal-footer > #game-btn-group > #start-btn {
-    width: 80%;
-}
-.modal-dialog .modal-header  > #help-dialog-title{
-	font-variant: small-caps;
-}
-
-table.helpTable td {
-  border: 1px solid #999;
-  padding: 0.5rem;
-  text-align: left;
-}
-
-td.inconsolata{
-  font: normal 14px "Inconsolata";   
-}
-
-p.small {
-  font-variant: small-caps;
-}
-
-.noHighlight {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+#status-table th.narrow {
+    width: 15%;
+    min-width: 140px;
 }
 
 
@@ -358,8 +246,6 @@ p.small {
 }
 
 
-
-
 /*
  * Game activity styles
  */
@@ -368,8 +254,22 @@ p.small {
     margin-bottom: 20px;
 }
 
+#game-options div, #game-options select {
+    margin-right: 20px;
+}
+
+#game-options div:last-child, #game-options select:last-child {
+    margin-right: 0;
+}
+
 #game-type {
-    width: 215px;
+    width: 190px;
+    float: left;
+}
+
+#game-left-process, #game-right-process {
+    width: 150px;
+    float: left;
 }
 
 #game-left {
@@ -411,6 +311,11 @@ input[type=range] {
     padding-left: 0;
 }
 
+#game-status .tooltip, #game-transitions-table tbody {
+    font: normal 14px "Inconsolata";
+    color: #333;
+}
+
 #game-log {
     height: 225px;
     padding: 10px;
@@ -439,10 +344,6 @@ input[type=range] {
     margin: 20px 0 10px 0;
 }
 
-#game-log .tooltip {
-    font: normal 14px "Inconsolata";
-}
-
 #game-transitions {
     height: 225px;
     padding: 10px;
@@ -452,13 +353,8 @@ input[type=range] {
     border-left: none;
 }
 
-#game-transitions-table tbody {
-    font: normal 14px "Inconsolata";
-    cursor: pointer;
-}
-
 @media (max-width: 991px) {
-    #game-type {
+    #game-type, #game-left-process, #game-right-process {
         width: 100%;
     }
 
@@ -487,6 +383,44 @@ input[type=range] {
     #game-status .col-md-8 {
         padding-left: 15px;
     }
+}
+
+
+/*
+ * About/Help styles
+ */
+
+#about-dialog .modal-footer {
+    padding: 15px;
+    border-top: 1px solid #e5e5e5;
+    text-align: initial;
+}
+
+#aboutok {
+    float: right;
+}
+
+#version {
+    float: left;
+    font-family: normal 14px "Inconsolata";
+}
+
+.modal-dialog .modal-header  > #help-dialog-title{
+    font-variant: small-caps;
+}
+
+table.helpTable td {
+  border: 1px solid #999;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+td.inconsolata{
+  font: normal 14px "Inconsolata";   
+}
+
+p.small {
+  font-variant: small-caps;
 }
 
 

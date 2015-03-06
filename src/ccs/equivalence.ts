@@ -8,7 +8,7 @@ module Equivalence {
     import hml = HML;
     import dg = DependencyGraph;
 
-    export class BisimulationDG implements dg.DependencyGraph {
+    export class BisimulationDG implements dg.DependencyGraph, dg.PlayableDependencyGraph {
 
         /** The dependency graph is constructed with disjunction
             as conjunction and vica versa, since bisimulation is

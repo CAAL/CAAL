@@ -19,9 +19,10 @@ module Activity {
         private fullscreen : Fullscreen;
         private tooltip : TooltipNotation;
         private $gameType : JQuery;
-        private $playerType : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
+        private $playerType : JQuery;
+        private $restart : JQuery;
         private $leftContainer : JQuery;
         private $rightContainer : JQuery;
         private $leftZoom : JQuery;
@@ -39,13 +40,14 @@ module Activity {
             super(container, button);
 
             this.project = Project.getInstance();
-            this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+            this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(null, null));
             this.tooltip = new TooltipNotation($("#game-status"));
 
-            this.$gameType = $("#game-type > select");
-            this.$playerType = $("input[name=player-type]");
+            this.$gameType = $("#game-type");
             this.$leftProcessList = $("#game-left-process");
             this.$rightProcessList = $("#game-right-process");
+            this.$playerType = $("input[name=player-type]");
+            this.$restart = $("#game-restart");
             this.$leftContainer = $("#game-left-canvas");
             this.$rightContainer = $("#game-right-canvas");
             this.$leftZoom = $("#zoom-left");
@@ -61,19 +63,20 @@ module Activity {
             this.rightGraph = new GUI.ArborGraph(this.rightRenderer);
 
             this.$gameType.on("change", () => this.newGame(true, true));
-            this.$playerType.on("change", () => this.newGame(false, false));
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
+            this.$playerType.on("change", () => this.newGame(false, false));
+            this.$restart.on("click", () => this.newGame(false, false));
             this.$leftFreeze.on("click", (e) => this.toggleFreeze(this.leftGraph, !this.$leftFreeze.data("frozen"), $(e.currentTarget)));
             this.$rightFreeze.on("click", (e) => this.toggleFreeze(this.rightGraph, !this.$rightFreeze.data("frozen"), $(e.currentTarget)));
 
             // Use onchange instead of oninput for IE.
             if (navigator.userAgent.indexOf("MSIE ") > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
-                this.$leftZoom.on("change", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
-                this.$rightZoom.on("change", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+                this.$leftZoom.on("change", () => this.resize(this.$leftZoom.val(), null));
+                this.$rightZoom.on("change", () => this.resize(null, this.$rightZoom.val()));
             } else {
-                this.$leftZoom.on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
-                this.$rightZoom.on("input", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
+                this.$leftZoom.on("input", () => this.resize(this.$leftZoom.val(), null));
+                this.$rightZoom.on("input", () => this.resize(null, this.$rightZoom.val()));
             }
 
             $(document).on("ccs-changed", () => this.changed = true);
@@ -82,10 +85,10 @@ module Activity {
         private toggleFreeze(graph : GUI.ProcessGraphUI, freeze : boolean, button : JQuery) {
             if (freeze) {
                 graph.freeze();
-                button.find("i").replaceWith("<i class='fa fa-unlock-alt fa-lg'></i>");
+                button.find("i").replaceWith("<i class='fa fa-lock fa-lg'></i>");
             } else {
                 graph.unfreeze();
-                button.find("i").replaceWith("<i class='fa fa-lock fa-lg'></i>");
+                button.find("i").replaceWith("<i class='fa fa-unlock-alt fa-lg'></i>");
             }
 
             button.data("frozen", freeze);
@@ -150,9 +153,9 @@ module Activity {
         private getOptions() : any {
             return {
                 gameType: this.$gameType.val(),
-                playerType: this.$playerType.filter(":checked").val(),
                 leftProcess: this.$leftProcessList.val(),
-                rightProcess: this.$rightProcessList.val()
+                rightProcess: this.$rightProcessList.val(),
+                playerType: this.$playerType.filter(":checked").val()
             };
         }
 
@@ -187,13 +190,13 @@ module Activity {
 
             if (drawLeft) {
                 this.draw(this.succGen.getProcessByName(options.leftProcess), this.leftGraph);
-                this.resize(1, this.$rightZoom.val());
+                this.resize(1, null);
                 this.toggleFreeze(this.leftGraph, false, this.$leftFreeze);
             }
 
             if (drawRight) {
                 this.draw(this.succGen.getProcessByName(options.rightProcess), this.rightGraph)
-                this.resize(this.$leftZoom.val(), 1);
+                this.resize(null, 1);
                 this.toggleFreeze(this.rightGraph, false, this.$rightFreeze);
             }
             
@@ -343,33 +346,36 @@ module Activity {
             this.$leftContainer.height(height);
             this.$rightContainer.height(height);
 
-            this.$leftZoom.val(leftZoom.toString());
-            this.$rightZoom.val(rightZoom.toString());
+            if (leftZoom !== null) {
+                this.$leftZoom.val(leftZoom.toString());
+                this.leftCanvas.width = this.$leftContainer.width() * leftZoom;
+                this.leftCanvas.height = height * leftZoom;
+                this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
 
-            this.leftCanvas.width = this.$leftContainer.width() * leftZoom;
-            this.rightCanvas.width = this.$rightContainer.width() * rightZoom;
-            this.leftCanvas.height = height * leftZoom;
-            this.rightCanvas.height = height * rightZoom;
-
-            this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
-            this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
-
-            if (leftZoom > 1) {
-                this.$leftFreeze.css("right", 30);
-                this.$leftContainer.css("overflow", "auto");
-                this.centerNode(this.dgGame.getCurrentConfiguration().left, Move.Left);
-            } else {
-                this.$leftFreeze.css("right", 10);
-                this.$leftContainer.css("overflow", "hidden");
+                if (leftZoom > 1) {
+                    this.$leftFreeze.css("right", 30);
+                    this.$leftContainer.css("overflow", "auto");
+                    this.centerNode(this.dgGame.getCurrentConfiguration().left, Move.Left);
+                } else {
+                    this.$leftFreeze.css("right", 10);
+                    this.$leftContainer.css("overflow", "hidden");
+                }
             }
 
-            if (rightZoom > 1) {
-                this.$rightFreeze.css("right", 30);
-                this.$rightContainer.css("overflow", "auto");
-                this.centerNode(this.dgGame.getCurrentConfiguration().right, Move.Right);
-            } else {
-                this.$rightFreeze.css("right", 10);
-                this.$rightContainer.css("overflow", "hidden");
+            if (rightZoom !== null) {
+                this.$rightZoom.val(rightZoom.toString());
+                this.rightCanvas.width = this.$rightContainer.width() * rightZoom;
+                this.rightCanvas.height = height * rightZoom;
+                this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
+
+                if (rightZoom > 1) {
+                    this.$rightFreeze.css("right", 30);
+                    this.$rightContainer.css("overflow", "auto");
+                    this.centerNode(this.dgGame.getCurrentConfiguration().right, Move.Right);
+                } else {
+                    this.$rightFreeze.css("right", 10);
+                    this.$rightContainer.css("overflow", "hidden");
+                }
             }
         }
     }
@@ -385,7 +391,7 @@ module Activity {
     
     class DgGame extends Abstract {
         
-        protected dependencyGraph : dg.DependencyGraph;
+        protected dependencyGraph : dg.PlayableDependencyGraph;
         protected marking : dg.LevelMarking;
         
         protected gameLog : GameLog = new GameLog();
@@ -397,20 +403,23 @@ module Activity {
         private round : number = 1;
         protected lastMove : Move;
         protected lastAction : string;
-        protected currentNodeId : any = 0; // the DG node id
+        protected currentNodeId : dg.DgNodeId = 0; // the DG node id
         
         private cycleCache : any;
         
         constructor(private gameActivity : Game, protected graph : CCS.Graph,
-            attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator,
             protected currentLeft : any, protected currentRight : any) {
             super();
             
             // create the dependency graph
-            this.dependencyGraph = this.createDependencyGraph(this.graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight);
+            this.dependencyGraph = this.createDependencyGraph(this.graph, currentLeft, currentRight);
             
             // create markings
             this.marking = this.createMarking();
+        }
+        
+        protected createMarking() : dg.LevelMarking {
+            return dg.liuSmolkaLocal2(this.currentNodeId, this.dependencyGraph);
         }
         
         public getRound() : number {
@@ -448,6 +457,8 @@ module Activity {
             this.cycleCache[this.getConfigurationStr(this.getCurrentConfiguration())] = this.currentNodeId;
 
             this.gameActivity.highlightNodes();
+            this.gameActivity.centerNode(this.currentLeft, Move.Left);
+            this.gameActivity.centerNode(this.currentRight, Move.Right);
             
             this.gameLog.printRound(this.round, this.getCurrentConfiguration());
             this.preparePlayer(this.attacker);
@@ -481,14 +492,14 @@ module Activity {
             }
         }
         
-        public play(player : Player, destinationProcess : any, nextNode : any, action : string = this.lastAction, move? : Move) : void {
+        public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : string = this.lastAction, move? : Move) : void {
             var previousConfig = this.getCurrentConfiguration();
             
             // change the current node id to the next
             this.currentNodeId = nextNode;
             
             if (player.getPlayType() == PlayType.Attacker) {
-                var sourceProcess = move == Move.Left ? previousConfig.left : previousConfig.right;
+                var sourceProcess = move === Move.Left ? previousConfig.left : previousConfig.right;
                 this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, move);
 
                 this.lastAction = action;
@@ -498,9 +509,9 @@ module Activity {
                 this.preparePlayer(this.defender);
             } else {
                 // the play is a defense, flip the saved last move
-                this.lastMove = this.lastMove == Move.Right ? Move.Left : Move.Right;
+                this.lastMove = this.lastMove === Move.Right ? Move.Left : Move.Right;
                 
-                var sourceProcess = this.lastMove == Move.Left ? previousConfig.left : previousConfig.right;
+                var sourceProcess = this.lastMove === Move.Left ? previousConfig.left : previousConfig.right;
                 this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove);
                 
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
@@ -572,6 +583,13 @@ module Activity {
             return result;
         }
         
+        public getCurrentChoices(playType : PlayType) : any {
+            if (playType == PlayType.Attacker)
+                return this.dependencyGraph.getAttackerOptions(this.currentNodeId);
+            else
+                return this.dependencyGraph.getDefenderOptions(this.currentNodeId);
+        }
+        
         /* Abstract methods */
         public getUniversalWinner() : Player { return this.abstract(); }
         public getCurrentWinner() : Player { return this.abstract(); }
@@ -579,9 +597,7 @@ module Activity {
         public getTryHardAttack(choices : any) : any { this.abstract(); }
         public getWinningDefend(choices : any) : any { this.abstract(); }
         public getTryHardDefend(choices : any) : any { this.abstract(); }
-        public getCurrentChoices(playType : PlayType) : any { this.abstract(); }
-        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph { return this.abstract(); }
-        protected createMarking() : dg.LevelMarking { return this.abstract(); }
+        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph { return this.abstract(); }
     }
 
     class BisimulationGame extends DgGame {
@@ -591,17 +607,21 @@ module Activity {
         private bisimulationDG : Equivalence.BisimulationDG;
         private bisimilar : boolean;
         private gameType : string;
+        private attackerSuccessorGen : CCS.SuccessorGenerator;
+        private defenderSuccessorGen : CCS.SuccessorGenerator;
         
-        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
-            // stupid compiler
+        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
+            
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
             this.gameType = gameType;
+            this.attackerSuccessorGen = attackerSuccessorGen;
+            this.defenderSuccessorGen = defenderSuccessorGen;
             
             var currentLeft  = graph.processByName(this.leftProcessName);
             var currentRight = graph.processByName(this.rightProcessName);
             
-            super(gameActivity, graph, attackerSuccessorGen, defenderSuccesorGen, currentLeft, currentRight); // creates dependency graph and marking
+            super(gameActivity, graph, currentLeft, currentRight); // creates dependency graph and marking
         }
         
         public startGame() : void {
@@ -613,9 +633,9 @@ module Activity {
             return this.bisimilar;
         }
         
-        protected createDependencyGraph(graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccesorGen : CCS.SuccessorGenerator, currentLeft : any, currentRight : any) : dg.DependencyGraph {
+        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
             
-            return this.bisimulationDG = new Equivalence.BisimulationDG(attackerSuccessorGen, defenderSuccesorGen, this.currentLeft.id, this.currentRight.id);
+            return this.bisimulationDG = new Equivalence.BisimulationDG(this.attackerSuccessorGen, this.defenderSuccessorGen, this.currentLeft.id, this.currentRight.id);
         }
         
         public getUniversalWinner() : Player {
@@ -627,7 +647,7 @@ module Activity {
         }
         
         protected createMarking() : dg.LevelMarking {
-            var marking : dg.LevelMarking = dg.solveDgGlobalLevel(this.dependencyGraph);
+            var marking = dg.solveDgGlobalLevel(this.bisimulationDG);
             this.bisimilar = marking.getMarking(0) === marking.ZERO;
             return marking;
         }
@@ -725,16 +745,71 @@ module Activity {
             }
         }
         
-        public getCurrentChoices(playType : PlayType) : any {
-            if (playType == PlayType.Attacker)
-                return this.bisimulationDG.getAttackerOptions(this.currentNodeId);
-            else
-                return this.bisimulationDG.getDefenderOptions(this.currentNodeId);
-        }
-        
         private random(max) : number {
             // random integer between 0 and max
             return Math.floor((Math.random() * (max+1)));
+        }
+    }
+    
+    class HmlGame extends DgGame {
+        
+        private processName : string;
+        private formula : HML.Formula;
+        private formulaSet : HML.FormulaSet;
+        
+        private satisfied : boolean;
+        private hmlDg : dg.MuCalculusMinModelCheckingDG;
+        
+        constructor(gameActivity : Game, graph : CCS.Graph,
+            processName : string, formula : HML.Formula, formulaSet : HML.FormulaSet) {
+            
+            this.processName = processName;
+            this.formula = formula;
+            this.formulaSet = formulaSet;
+            
+            var currentProcess = graph.processByName(this.processName);
+            
+            super(gameActivity, graph, currentProcess, this.formula);
+        }
+        
+        public isSatisfied() : boolean {
+            return this.satisfied;
+        }
+        
+        public getUniversalWinner() : Player {
+            return this.satisfied ? this.defender : this.attacker;
+        }
+        
+        public getCurrentWinner() : Player {
+            return this.marking.getMarking(this.currentNodeId) === this.marking.ZERO ? this.attacker : this.defender;
+        }
+        
+        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
+            var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
+            var weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: false});
+            return new dg.MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, currentLeft.id, this.formulaSet, currentRight);
+        }
+        
+        protected createMarking() : dg.LevelMarking {
+            var marking = super.createMarking();
+            this.satisfied = marking.getMarking(0) === marking.ONE;
+            return marking;
+        }
+        
+        public getBestWinningAttack(choices : any) : any {
+            return undefined; //TODO
+        }
+        
+        public getTryHardAttack(choices : any) : any {
+            return undefined; //TODO
+        }
+        
+        public getWinningDefend(choices : any) : any {
+            return undefined; //TODO
+        }
+        
+        public getTryHardDefend(choices : any) : any {
+            return undefined; //TODO
         }
     }
 

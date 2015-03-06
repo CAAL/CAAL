@@ -26,7 +26,7 @@
                     <a class="navbar-brand">Caal</a>
                 </div>
                 <div class="collapse navbar-collapse" id="navbar-collapse">
-                    <ul class="nav navbar-nav noHighlight">
+                    <ul class="nav navbar-nav no-highlight">
                         <li class="divider-vertical"></li>
                         <li><a>Project</a>
                             <ul class="dropdown-menu">
@@ -65,7 +65,7 @@
                         <li id="verify-btn"><a>Verify</a></li>
                         <li id="game-btn"><a>Games</a></li>
                     </ul>
-                    <ul class="nav navbar-nav navbar-right noHighlight">
+                    <ul class="nav navbar-nav navbar-right no-highlight">
                         <li button onclick="$('#about-dialog').modal('show');"><a>About</a></li>
                         <li button onclick="$('#help-dialog').modal('show')"><a>Help</a></button li>
                         <li><a href="https://github.com/CAAL/CAAL"><i class="fa fa-github fa-lg"></i></a></li>
@@ -186,14 +186,14 @@
             </div>
             <div id="status-table-container">
                 <h4>Source Process</h4>
-                <p id="explorer-source-definition" style="margin-left: 2em"></p>
+                <p id="explorer-source-definition"></p>
                 <h4>Target Processes</h4>
-                <table id="status-table" class="table table-responsive table-striped table-condensed table-hover noHighlight" >
+                <table id="status-table" class="table table-responsive table-striped table-condensed table-hover no-highlight">
                     <thead>
                         <tr>
-                            <th class="col-1">Action</th>
-                            <th class="col-2">Target</th>
-                            <th class="col-3">Target Definition</th>
+                            <th class="narrow">Action</th>
+                            <th class="narrow">Target</th>
+                            <th>Target Definition</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -286,19 +286,13 @@
         <!-- Game -->
         <div id="game-container" class="container">
             <div id="game-options" class="row">
-                <div id="game-type" class="col-md-3">
-                    <select class="form-control">
+                <div class="col-md-12">
+                    <select id="game-type" class="form-control">
                         <option value="strong" selected>Strong Bisimulation</option>
                         <option value="weak">Weak Bisimulation</option>
                     </select>
-                </div>
-                <div class="col-md-2">
                     <select id="game-left-process" class="form-control"></select>
-                </div>
-                <div class="col-md-2">
                     <select id="game-right-process" class="form-control"></select>
-                </div>
-                <div class="col-md-3">
                     <div class="btn-group" data-toggle="buttons">
                         <label class="btn btn-default">
                             <input name="player-type" value="attacker" type="radio"> Attacker
@@ -307,9 +301,10 @@
                             <input name="player-type" value="defender" type="radio" checked> Defender
                         </label>
                     </div>
-                </div>
-                <div class="col-md-2 pull-right text-right ">
                     <div class="btn-group">
+                        <button id="game-restart" type="button" class="btn btn-default">Restart</button>
+                    </div>
+                    <div class="btn-group pull-right">
                         <button id="game-fullscreen" type="button" class="btn btn-default">Fullscreen</button>
                     </div>
                 </div>
@@ -344,7 +339,7 @@
                 </div>
                 <div class="col-md-8">
                     <div id="game-transitions">
-                        <table id="game-transitions-table" class="table table-responsive table-striped table-condensed table-hover noHighlight">
+                        <table id="game-transitions-table" class="table table-responsive table-striped table-condensed table-hover no-highlight">
                             <thead>
                                 <tr>
                                     <th class="col-md-4">Source</th>
