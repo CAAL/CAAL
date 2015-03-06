@@ -383,7 +383,7 @@ module Property {
         }
         
         public getDescription() : string {
-            return this.firstProcess + " &#8849;<sub>S</sub> " + this.secondProcess;
+            return "Traces<sub>S</sub>(" + this.firstProcess + ") &sube; Traces<sub>S</sub>(" + this.secondProcess + ")";
         }
         
         public getType() : string {
@@ -401,7 +401,7 @@ module Property {
         }
         
         public getDescription() : string {
-            return this.firstProcess + " &#8849;<sub>W</sub> " + this.secondProcess;
+            return "Traces<sub>W</sub>(" + this.firstProcess + ") &sube; Traces<sub>W</sub>(" + this.secondProcess + ")";
         }
         
         public getType() : string {
