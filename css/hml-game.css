@@ -1,0 +1,127 @@
+
+/*
+ * HML Game activity styles
+ */
+
+#hml-game-options {
+    margin-bottom: 20px;
+}
+
+#hml-game-options div, #hml-game-options select {
+    margin-right: 20px;
+}
+
+#hml-game-options div:last-child, #hml-game-options select:last-child {
+    margin-right: 0;
+}
+
+#hml-game-type {
+    width: 190px;
+    float: left;
+}
+
+#hml-game-process, #hml-game-formula {
+    width: 150px;
+    float: left;
+}
+
+#hml-game-left {
+    padding-right: 0;
+}
+
+#hml-game-right {
+    padding-left: 0;
+}
+
+#hml-game-left button, #hml-game-right button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+#hml-game-left-canvas {
+    border: 1px solid #e7e7e7;
+    overflow: auto;
+}
+
+
+#hml-game-status .col-md-4 {
+    padding-right: 0;
+}
+
+#hml-game-status .col-md-8 {
+    padding-left: 0;
+}
+
+#hml-game-status .tooltip, #hml-game-transitions-table tbody {
+    font: normal 14px "Inconsolata";
+    color: #333;
+}
+
+#hml-game-log {
+    height: 225px;
+    padding: 10px;
+    overflow: auto;
+    border: 1px solid #e7e7e7;
+    border-top: none;
+}
+
+#hml-game-log p {
+    margin: 0 0 10px 20px;
+}
+
+#hml-game-log p:last-child {
+    margin-bottom: 0;
+}
+
+#hml-game-log p.intro, #hml-game-log p.outro {
+    margin-left: 0;
+}
+
+#hml-game-log p.outro {
+    margin-top: 20px;
+}
+
+#hml-game-log h4 {
+    margin: 20px 0 10px 0;
+}
+
+#hml-game-transitions {
+    height: 225px;
+    padding: 10px;
+    overflow: auto;
+    border: 1px solid #e7e7e7;
+    border-top: none;
+    border-left: none;
+}
+
+@media (max-width: 991px) {
+    #hml-game-type, #hml-game-process, #hml-game-formula {
+        width: 100%;
+    }
+
+    #hml-game-left {
+        padding-right: 15px;
+    }
+
+    #hml-game-right {
+        padding-left: 15px;
+    }
+
+    #hml-game-left-canvas {
+        border-top: none;
+    }
+
+    #hml-game-transitions {
+        border-left: 1px solid #e7e7e7;
+        margin-bottom: 20px;
+    }
+
+    #hml-game-status .col-md-4 {
+        padding-right: 15px;
+    }
+
+    #hml-game-status .col-md-8 {
+        padding-left: 15px;
+    }
+}

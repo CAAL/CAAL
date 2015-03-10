@@ -1,3 +1,6 @@
+@import url("hml-game.css");
+@import url("widget.transition-table.css");
+
 html, body {
     margin: 0;
     padding: 0;
@@ -103,9 +106,8 @@ textarea {
  * Activity styles
  */
 
-#editor-container, #explorer-container, #verifier-container, #game-container {
+#editor-container, #explorer-container, #verifier-container, #game-container, #hml-game-container {
     margin-bottom: 20px;
-    display: none;
 }
 
 #fullscreen-container:-webkit-full-screen {width: 100%; height: 100%; background-color: #fff;}
@@ -121,6 +123,13 @@ textarea {
 #game-container:-o-full-screen      {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
 #game-container:full-screen         {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
 #game-container:fullscreen          {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
+
+#hml-game-container:-webkit-full-screen {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
+#hml-game-container:-moz-full-screen    {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
+#hml-game-container:-ms-fullscreen      {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
+#hml-game-container:-o-full-screen      {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
+#hml-game-container:full-screen         {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
+#hml-game-container:fullscreen          {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
 
 #fullscreen-container:-webkit-full-screen nav {
     position: absolute; top: 10px; left: 10px; right: 10px; background-color: transparent; border-color: transparent;
@@ -247,7 +256,7 @@ textarea {
 
 
 /*
- * Game activity styles
+ * Bisim Game activity styles
  */
 
 #game-options {
@@ -422,7 +431,6 @@ td.inconsolata{
 p.small {
   font-variant: small-caps;
 }
-
 
 /*
  *  Tooltip styles

@@ -64,6 +64,7 @@
                         <li id="explore-btn"><a>Explore</a></li>
                         <li id="verify-btn"><a>Verify</a></li>
                         <li id="game-btn"><a>Games</a></li>
+                        <li id="hml-game-btn"><a>HML Games</a></li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right no-highlight">
                         <li button onclick="$('#about-dialog').modal('show');"><a>About</a></li>
@@ -340,6 +341,59 @@
                 <div class="col-md-8">
                     <div id="game-transitions">
                         <table id="game-transitions-table" class="table table-responsive table-striped table-condensed table-hover no-highlight">
+                            <thead>
+                                <tr>
+                                    <th class="col-md-4">Source</th>
+                                    <th class="col-md-4">Action</th>
+                                    <th class="col-md-4">Target</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HML Game -->
+        <div id="hml-game-container" class="container">
+            <div id="hml-game-options" class="row">
+                <div class="col-md-12">
+                    <div id="hml-game-inject-options" style="display: inline-block;">
+                        <!-- Controls are dynamically added and removed here -->
+                    </div>
+                    <div class="btn-group">
+                        <button id="hml-game-restart" type="button" class="btn btn-default">Restart</button>
+                    </div>
+                    <div class="btn-group pull-right">
+                        <button id="hml-game-fullscreen" type="button" class="btn btn-default">Fullscreen</button>
+                    </div>
+                </div>
+            </div>
+            <div id="hml-game-main" class="row">
+                <div id="hml-game-left" class="col-md-6">
+                    <div style="position: relative">
+                        <input id="hml-game-zoom-left" data-side="left" min="1" max="3" step="0.2" value="1" type="range" />
+                        <div class="btn-group pull-right">
+                            <button id="hml-game-freeze-left" type="button" class="btn btn-default btn-sm" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                        </div>
+                    </div>
+                    <div id="hml-game-left-canvas">
+                        <canvas></canvas>
+                    </div>
+                </div>
+                <div id="hml-game-right" class="col-md-6">
+                    Formula thingy here
+                </div>
+            </div>
+            <div id="hml-game-status" class="row">
+                <div class="col-md-4">
+                    <div id="hml-game-log"></div>
+                </div>
+                <div class="col-md-8">
+                    <div id="hml-game-transitions">
+                        <table id="hml-game-transitions-table" class="table table-responsive table-striped table-condensed table-hover no-highlight">
                             <thead>
                                 <tr>
                                     <th class="col-md-4">Source</th>

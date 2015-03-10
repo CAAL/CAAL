@@ -12,6 +12,8 @@ module Activity {
             activity.getButton().on("click", () => {
                 this.selectActivity(name);
             });
+
+            activity.getContainer().hide();
         }
 
         public selectActivity(name: string, configuration?: any): void {
