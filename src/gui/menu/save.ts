@@ -31,7 +31,8 @@ class Save extends MenuItem {
     private saveToStorage() : void {
         var id = this.project.getId();
         var projects = this.storage.getObj("projects");
-
+        this.storage.setObj("autosave", null); // Reset the auto save.
+        
         if (id !== null) { // Has id. Overwrite existing project and save.
             for (var i = 0; i < projects.length; i++) {
                 if (projects[i].id === id) {

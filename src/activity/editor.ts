@@ -3,6 +3,7 @@
 /// <reference path="../gui/project.ts" />
 /// <reference path="../main.ts" />
 /// <reference path="activity.ts" />
+/// <reference path="../gui/autosave.ts" />
 
 module Activity {
 
@@ -12,6 +13,7 @@ module Activity {
         private initialCCS: string;
         private $statusArea: JQuery;
         private $fontSizeButton: JQuery;
+        private autosave: AutoSave;
 
         constructor(container: string, button: string) {
             super(container, button);
@@ -20,6 +22,7 @@ module Activity {
             this.editor = ace.edit("editor");
             this.$statusArea = this.$container.find("#status-area");
             this.$fontSizeButton = this.$container.find("#font-size-btn");
+            this.autosave = new AutoSave();
 
             this.editor.setTheme("ace/theme/crisp");
             this.editor.getSession().setMode("ace/mode/ccs");
@@ -41,7 +44,16 @@ module Activity {
             this.editor.on("change", (event) => {
                 this.project.setCCS(this.editor.getValue())
                 this.updateHeight();
+                this.autosave.resetTimer();
             });
+
+            if( this.autosave.checkAutosave() )
+                this.loadAutosave();
+        }
+
+        private loadAutosave() {
+            var autosaveProject = this.autosave.getAutosave();
+            this.project.update(0, autosaveProject.title, autosaveProject.ccs, autosaveProject.properties);
         }
 
         public onShow(configuration?: any): void {
