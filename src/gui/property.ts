@@ -587,11 +587,14 @@ module Property {
         private childPropertiesToVerify = [];
         private currentVerifyingProperty = null;
         private verificationEndedCallback : Function = null;
+
+        private succGenType : string;
         
         public constructor(options: any, status: PropertyStatus = PropertyStatus.unknown) {
             super(status);
             this.firstHMLProperty = new HML(options.firstHMLProperty);
             this.secondHMLProperty = new HML(options.secondHMLProperty);
+            this.succGenType = options.succGenType;
         }
 
         public isExpanded(){
@@ -643,7 +646,8 @@ module Property {
                 status: this.status,
                 options: {
                     firstHMLProperty: this.firstHMLProperty.toJSON().options,
-                    secondHMLProperty: this.secondHMLProperty.toJSON().options
+                    secondHMLProperty: this.secondHMLProperty.toJSON().options,
+                    succGenType: this.succGenType
                 }
             };
         }
@@ -758,7 +762,8 @@ module Property {
             this.worker.postMessage({
                 type: "findDistinguishingFormula",
                 leftProcess: this.firstHMLProperty.getProcess(),
-                rightProcess: this.secondHMLProperty.getProcess()
+                rightProcess: this.secondHMLProperty.getProcess(),
+                succGenType: this.succGenType
             });
             this.worker.addEventListener("error", (error) => {
                 /*display tooltip with error*/

@@ -305,11 +305,20 @@ module Activity {
                 case "hml":
                     property = new Property.HML({process: "", formula: ""});
                     break;
-                case "distinguishing":
+                case "distinguishing-strong":
                     property = new Property.DistinguishingFormula(
                         {
                             firstHMLProperty: {process: "", formula: ""}, 
-                            secondHMLProperty: {process: "", formula: ""}
+                            secondHMLProperty: {process: "", formula: ""},
+                            succGenType: "strong"
+                        });
+                    break;
+                case "distinguishing-weak":
+                    property = new Property.DistinguishingFormula(
+                        {
+                            firstHMLProperty: {process: "", formula: ""}, 
+                            secondHMLProperty: {process: "", formula: ""},
+                            succGenType: "weak"
                         });
                     break;
             }

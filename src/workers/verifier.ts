@@ -105,9 +105,10 @@ messageHandlers.checkFormulaForVariable = data => {
 
 messageHandlers.findDistinguishingFormula = data => {
     var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        defendSuccGen = data.succGenType === "weak" ? CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}) : strongSuccGen,
         leftProcess = strongSuccGen.getProcessByName(data.leftProcess),
         rightProcess = strongSuccGen.getProcessByName(data.rightProcess),
-        bisimilarDg = new Equivalence.BisimulationDG(strongSuccGen, strongSuccGen, leftProcess.id, rightProcess.id),
+        bisimilarDg = new Equivalence.BisimulationDG(strongSuccGen, defendSuccGen, leftProcess.id, rightProcess.id),
         marking = DependencyGraph.solveDgGlobalLevel(bisimilarDg),
         formula, hmlNotation;
     if (marking.getMarking(0) === marking.ZERO) {
