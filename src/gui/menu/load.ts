@@ -29,6 +29,7 @@ class Load extends MenuItem {
     }
 
     private loadFromFile(e) : void {
+        this.storage.setObj("autosave", null); // Reset the auto save.
         var file = e.target.files[0];
         var reader = new FileReader();
         reader.readAsText(file);
@@ -42,7 +43,9 @@ class Load extends MenuItem {
     }
 
     private loadFromStorage(e) : void {
+        this.storage.setObj("autosave", null); // Reset the auto save.
         var projects = this.storage.getObj("projects");
+        
         var id = e.data.id;
         for (var i = 0; i < projects.length; i++) {
             if (projects[i].id === id) {
@@ -54,6 +57,7 @@ class Load extends MenuItem {
     }
 
     private loadExample(e) : void {
+        this.storage.setObj("autosave", null); // Reset the auto save.
         var title = e.data.title;
 
         for (var i = 0; i < examples.length; i++) {
