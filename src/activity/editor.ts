@@ -42,9 +42,13 @@ module Activity {
             this.updateHeight();
             
             this.editor.on("change", (event) => {
+                // if userinput:
+                if (this.editor.curOp && this.editor.curOp.command.name)
+                    this.autosave.resetTimer();
+                
                 this.project.setCCS(this.editor.getValue())
                 this.updateHeight();
-                this.autosave.resetTimer();
+                
             });
 
             if( this.autosave.checkAutosave() )

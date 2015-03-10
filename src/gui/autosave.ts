@@ -14,13 +14,16 @@ class AutoSave {
         window.onbeforeunload = () => {
             if ( this.checkAutosave() ) {
                 //this will alert user
-                this.setAutosave(null);
                 return 'You have unsaved data!';
             }
             else {
                 //this wont
                 window.onbeforeunload = undefined;
             }
+        };
+
+        window.onunload = () => {
+            this.setAutosave(null);
         };
     }
     
