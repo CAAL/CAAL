@@ -1,5 +1,6 @@
 /// <reference path="../gui/project.ts" />
 /// <reference path="../gui/gui.ts" />
+/// <reference path="../gui/widget/zoomable-process-explorer.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="activity.ts" />
@@ -11,37 +12,37 @@ module Activity {
     import dg = DependencyGraph;
 
     interface SubActivity {
-        configure(configuration : any);
-        onShow();
+        onShow(configuration : any);
         onHide();
         getUIDom();
+        getDefaultConfiguration();
     }
 
     export class HmlGame extends Activity {
         
         private currentSubActivity : SubActivity = null;
-        private hmlGameActivity : SubActivity = new HmlGameActivity("#hml-game-container");
+        private hmlGameActivity : SubActivity = new HmlGameActivity("#hml-game-main");
 
         constructor(container : string, button : string) {
             super(container, button);
         }
 
         onShow(configuration?) {
-            configuration = configuration || Object.create(null);
-            var type = configuration.type;
-            //TODO: Switch activity
+            // this.addDefaults(configuration);
+            var type = "strong";
+            if (configuration && configuration.type) {
+                type = configuration.type;
+            }
             var switchTo = this.hmlGameActivity;
             if (this.currentSubActivity !== switchTo) {
                 //TODO: Shutdown previous
             }
             this.currentSubActivity = switchTo;
             //Now have the right activity
-            if (configuration) {
-                this.currentSubActivity.configure(configuration);
-            }
             this.setOptionsDom(this.currentSubActivity);
+            configuration = configuration || this.currentSubActivity.getDefaultConfiguration();
+            this.currentSubActivity.onShow(configuration);
 
-            this.currentSubActivity.onShow();
         }
 
         private setOptionsDom(activity : SubActivity) {
@@ -58,22 +59,32 @@ module Activity {
                 activity.onHide();
             }
         }
+
+        protected checkPreconditions(): boolean {
+            var graph = Main.getGraph();
+
+            if (!graph) {
+                this.showExplainDialog("Syntax Error", "Your program contains one or more syntax errors.");
+                return false;
+            } else if (graph.getNamedProcesses().length === 0) {
+                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
+                return false;
+            }
+
+            return true;
+        }
     }
 
     class HmlGameActivity {
 
         private $container : JQuery;
-        private $leftContainer : JQuery;
-        private $leftZoom : JQuery;
-        private $rightContainer : JQuery;
-        private leftCanvas : HTMLCanvasElement;
-        private leftRenderer : Renderer;
-        private leftGraph : GUI.ArborGraph;
+        private processExplorer = new GUI.Widget.ZoomableProcessExplorer();
+
         private project : Project;
+        
         private configuration = {
             processName: undefined,
             formulaId: undefined,
-            graph: null,
             succGen: null
         };
 
@@ -92,53 +103,33 @@ module Activity {
             Only allow valid transitions.
         */
 
-
         constructor(container : string) {
             this.$container = $(container); 
             var c = this.$container;
 
             this.project = Project.getInstance();
-
-            this.$leftContainer = c.find("#hml-game-left");
-            this.$leftZoom = c.find("#hml-game-zoom-left");
-
-            this.$rightContainer = c.find("#hml-game-right");
-
-            this.leftCanvas = <HTMLCanvasElement> this.$leftContainer.find("canvas")[0];
-            this.leftRenderer = new Renderer(this.leftCanvas);
-            this.leftGraph = new GUI.ArborGraph(this.leftRenderer);
-
             this.constructOptionsDom();
 
-
-            // Use onchange instead of oninput for IE.
-            var zoomEvent = (navigator.userAgent.indexOf("MSIE ") > 0 || 
-                                !!navigator.userAgent.match(/Trident.*rv\:11\./))
-                            ? "change" : "input";
-            this.$leftZoom.on(zoomEvent, () => this.resize(this.$leftZoom.val()));
-
             this.$processList.on("change", () => {
-                this.loadGuiConfig(this.configuration);
+                this.loadGuiIntoConfig(this.configuration);
                 this.refresh(this.configuration);
             });
             this.$formulaList.on("change", () => {
-                this.loadGuiConfig(this.configuration);
+                this.loadGuiIntoConfig(this.configuration);
                 this.refresh(this.configuration);
             });
+
+            $("#hml-game-main").append(this.processExplorer.getRootElement());
         }
 
-        onShow() {
-            $(window).on("resize", () => this.resize(this.$leftZoom.val()));
-            //TODO
-            this.resize(1);
-            this.leftGraph.bindCanvasEvents();
+        onShow(configuration) {
+            $(window).on("resize", () => this.resize());
+            this.resize();
+            this.configure(configuration);
         }
 
         onHide() {
             $(window).off("resize");
-
-            //TODO
-            this.leftGraph.unbindCanvasEvents();
         }
 
         private constructOptionsDom() {
@@ -168,6 +159,15 @@ module Activity {
             return this.optionsDom;
         }
 
+        getDefaultConfiguration() : any {
+            var configuration = Object.create(null),
+                graph = Main.getGraph();
+            configuration.succGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
+            configuration.processName = this.getNamedProcessList()[0];
+            configuration.formulaId = "Howdy";
+            return configuration;
+        }
+
         private getCurrentProcess() : string {
             return this.$processList.val();
         }
@@ -176,7 +176,13 @@ module Activity {
             return this.$formulaList.val();
         }
 
-        private setProcesses(processNames, selectedProcessName) {
+        private getNamedProcessList() : string[] {
+            var namedProcesses = Main.getGraph().getNamedProcesses().slice(0);
+            namedProcesses.reverse();
+            return namedProcesses;
+        }
+
+        private setProcesses(processNames : string[], selectedProcessName? : string) : void {
             this.$processList.empty();
             processNames.forEach(pName => {
                 var optionsNode = $("<option></option>").append(pName);
@@ -187,138 +193,37 @@ module Activity {
             });
         }
 
-        private loadGuiConfig(configuration) {
+        private loadGuiIntoConfig(configuration) {
             configuration.processName = this.getCurrentProcess();
             configuration.formulaId = this.getCurrentFormula();
         }
 
-        private loadCurrentConfig(configuration) {
-            this.loadGuiConfig(configuration);
-            configuration.graph = this.project.getGraph();
-            configuration.succGen = CCS.getSuccGenerator(configuration.graph, {succGen: "strong", reduce: false});
-        }
-
-        configure(configuration) {
-            this.loadCurrentConfig(this.configuration);
-            overWriteConf(this.configuration, configuration);
-            this.refresh(this.configuration);
+        private configure(configuration) {
+            this.configuration = configuration;
+            this.setProcesses(this.getNamedProcessList(), configuration.processName);
+            //Fix method
+            this.refresh(configuration);
         }
 
         private refresh(configuration) {
-            var graph = configuration.graph,
-                namedProcesses = graph ? graph.getNamedProcesses().reverse() : [];
-
-            //Process list
-            this.setProcesses(namedProcesses, configuration.processName);
-
-            //Process graph
-            this.clearProcessGraph(this.leftGraph);
-            if (configuration.processName) {
-                var process = configuration.succGen.getProcessByName(configuration.processName);
-                this.drawProcesses(process, this.leftGraph);
-                this.resize(1);
-            }
-
-            //Formula list
+            var succGen = configuration.succGen,
+                processName = configuration.processName,
+                process = succGen.getProcessByName(processName);
+            this.processExplorer.setSuccGenerator(succGen);
+            this.processExplorer.exploreProcess(process);
         }
 
-        private clearProcessGraph(graph : GUI.ProcessGraphUI) : void {
-            graph.clearAll();
-        }
-
-        private expandBFS(process : CCS.Process, maxDepth) {
-            var result = {},
-                queue = [[1, process]], //non-emptying array as queue.
-                depth, qIdx, fromProcess, transitions;
-            for (qIdx = 0; qIdx < queue.length; qIdx++) {
-                depth = queue[qIdx][0];
-                fromProcess = queue[qIdx][1];
-                result[fromProcess.id] = transitions = this.configuration.succGen.getSuccessors(fromProcess.id);
-                transitions.forEach(t => {
-                    if (!result[t.targetProcess.id] && depth < maxDepth) {
-                        queue.push([depth + 1, t.targetProcess]);
-                    }
-                });
-            }
-            return result;
-        }
-
-        private drawProcesses(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
-            var config = this.configuration;
-            var allTransitions = this.expandBFS(process, 1000);
-
-            for (var fromId in allTransitions) {
-                var fromProcess = config.graph.processById(fromId);
-                this.showProcess(fromProcess, graph);
-                var groupedByTargetProcessId = ArrayUtil.groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
-
-                Object.keys(groupedByTargetProcessId).forEach(strProcId => {
-                    var group = groupedByTargetProcessId[strProcId],
-                        data = group.map(t => { return {label: t.action.toString()}; }),
-                        numId = parseInt(strProcId, 10);
-                    this.showProcess(config.graph.processById(numId), graph);
-                    graph.showTransitions(fromProcess.id, numId, data);
-                });
-            }
-
-            graph.setSelected(process.id.toString());
-        }
-
-        private showProcess(process : ccs.Process, graph : GUI.ProcessGraphUI) : void {
-            if (graph.getProcessDataObject(process.id)) return;
-            graph.showProcess(process.id, {label: this.labelForProcess(process)});
-        }
-
-        private labelForProcess(process : CCS.Process) : string {
-            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
-        }
-
-        private resize(leftZoom : number) : void {
-            var offsetTop = $("#hml-game-main").offset().top;
-            var offsetBottom = $("#hml-game-status").height();
-
-            var availableHeight = window.innerHeight - offsetTop - offsetBottom - 22; // Margin bot + border = 22px.
-            
-            // Only 10px margin bot in fullscreen.
-            // if (this.fullscreen.isFullscreen())
-            //     availableHeight += 10;
-
-            // Minimum height 265px.
-            var height = Math.max(265, availableHeight);
-            this.$leftContainer.height(height);
-            this.$rightContainer.height(height);
-
-            if (leftZoom !== null) {
-                this.$leftZoom.val(leftZoom.toString());
-                this.leftCanvas.width = this.$leftContainer.width() * leftZoom;
-                this.leftCanvas.height = height * leftZoom;
-                this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
-
-                if (leftZoom > 1) {
-                    // this.$leftFreeze.css("right", 30);
-                    this.$leftContainer.css("overflow", "auto");
-                    // this.centerNode(this.dgGame.getCurrentConfiguration().left);
-                } else {
-                    // this.$leftFreeze.css("right", 10);
-                    this.$leftContainer.css("overflow", "hidden");
-                }
-            }
-        }
-
-        private centerNode(process : CCS.Process) : void {
-            var position = this.leftGraph.getPosition(process.id.toString());
-            this.$leftContainer.scrollLeft(position.x - (this.$leftContainer.width() / 2));
-            this.$leftContainer.scrollTop(position.y - (this.$leftContainer.height() / 2));
+        private resize() : void {
+            var $processExplorerElem = $(this.processExplorer.getRootElement()),
+                explorerOffsetTop = $processExplorerElem.offset().top,
+                explorerOffsetBottom = $("#hml-game-status").height();
+            var explorerHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 22;
+            explorerHeight = Math.max(explorerHeight, 265);
+            this.processExplorer.resize(this.$container.width(), explorerHeight);
         }
 
         toString() {
             return "HML Game Activity";
-        }
-    }
-
-    function overWriteConf(conf, changes) {
-        for (var changeKey in changes) {
-            conf[changeKey] = changes[changeKey];
         }
     }
 }

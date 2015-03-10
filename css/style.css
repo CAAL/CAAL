@@ -1,5 +1,6 @@
 @import url("hml-game.css");
 @import url("widget.transition-table.css");
+@import url("widget.zoom-process-explorer.css");
 
 html, body {
     margin: 0;

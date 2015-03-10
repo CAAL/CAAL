@@ -25,14 +25,6 @@
     float: left;
 }
 
-#hml-game-left {
-    padding-right: 0;
-}
-
-#hml-game-right {
-    padding-left: 0;
-}
-
 #hml-game-left button, #hml-game-right button {
     position: absolute;
     top: 10px;
@@ -98,18 +90,6 @@
 @media (max-width: 991px) {
     #hml-game-type, #hml-game-process, #hml-game-formula {
         width: 100%;
-    }
-
-    #hml-game-left {
-        padding-right: 15px;
-    }
-
-    #hml-game-right {
-        padding-left: 15px;
-    }
-
-    #hml-game-left-canvas {
-        border-top: none;
     }
 
     #hml-game-transitions {
