@@ -517,11 +517,10 @@ module Activity {
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
 
                 this.round++;
+                this.gameLog.printRound(this.round, this.getCurrentConfiguration());
                 
-                if (!this.cycleExists()) {
-                    this.gameLog.printRound(this.round, this.getCurrentConfiguration());
+                if (!this.cycleExists())
                     this.preparePlayer(this.attacker);
-                }
             }
 
             this.gameActivity.highlightNodes();
@@ -1080,7 +1079,7 @@ module Activity {
         }
 
         public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process, move : Move) : void {
-            var template = "{1} played ({2}, {3}, {4}) on {5}.";
+            var template = "{1} played ({2}, {3}, {4}) on the {5}.";
 
             var context = {
                 1: {text: (player instanceof Computer) ? player.playTypeStr() : "You"},
@@ -1133,11 +1132,7 @@ module Activity {
 
             this.println(this.render(template, context), "<p class='intro'>");
 
-            if (attacker instanceof Computer) {
-                this.println("You are playing as defender.", "<p class='intro'>");
-            } else {
-                this.println("You are playing as attacker.", "<p class='intro'>");
-            }
+            this.println("You are playing " + (attacker instanceof Computer ? "defender." : "attacker."), "<p class='intro'>");
             
             if (winner instanceof Human){
                 this.println("You have a winning strategy.", "<p class='intro'>");
