@@ -267,14 +267,14 @@ module Equivalence {
 
         findDistinguishingFormula(marking : dg.LevelMarking, defendSuccGenType : string) : hml.Formula {
             var that = this,
-                formulaSet = new hml.FormulaSet(),
-                trace;
+            formulaSet = new hml.FormulaSet(),
+            trace;
             if (marking.getMarking(0) !== marking.ONE) throw "Error: Processes are bisimilar";
 
             function selectMinimaxLevel(node : dg.DgNodeId) {
                 var hyperEdges = that.getHyperEdges(node),
-                    bestHyperEdge : dg.Hyperedge,
-                    bestNode : dg.DgNodeId;
+                bestHyperEdge : dg.Hyperedge,
+                bestNode : dg.DgNodeId;
 
                 //Why JavaScript... why????
                 function wrapMax(a, b) {
@@ -284,7 +284,7 @@ module Equivalence {
                 if (hyperEdges.length === 0) return null;
                 var bestHyperEdge = ArrayUtil.selectBest(hyperEdges, (tNodesLeft, tNodesRight) => {
                     var maxLevelLeft = tNodesLeft.map(marking.getLevel).reduce(wrapMax, 1),
-                        maxLevelRight = tNodesRight.map(marking.getLevel).reduce(wrapMax, 1);
+                    maxLevelRight = tNodesRight.map(marking.getLevel).reduce(wrapMax, 1);
                     if (maxLevelLeft < maxLevelRight) return true;
                     if (maxLevelLeft > maxLevelRight) return false;
                     return tNodesLeft.length < tNodesRight.length;
@@ -366,7 +366,7 @@ module Equivalence {
             var bisimDG = new Equivalence.BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
             marking = dg.liuSmolkaGlobal(bisimDG);
             return bisimDG.getBisimulationCollapse(marking);
-    }
+        }
 
     export class TraceDG implements dg.DependencyGraph {
 
@@ -416,6 +416,9 @@ module Equivalence {
         }
 
         private getProcessPairStates(leftProcessId : ccs.ProcessId, rightProcessIds : ccs.ProcessId[]) : dg.Hyperedge[] {
+            if(rightProcessIds.length === 0)
+                return [[]];
+            
             var hyperedges = [];
 
             var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
@@ -435,39 +438,35 @@ module Equivalence {
                     }
                 });
 
-                if(rightProcessIds.length === 0) {
-                    hyperedges.push([]);
-                } else {
-                    rightTargets.sort( function(a, b){return a-b} );
-                    rightTargets = ArrayUtil.removeConsecutiveDuplicates(rightTargets);
+                rightTargets.sort( function(a, b){return a-b} );
+                rightTargets = ArrayUtil.removeConsecutiveDuplicates(rightTargets);
 
-                    if(this.leftPairs[leftTransition.targetProcess.id] === undefined)
-                        this.leftPairs[leftTransition.targetProcess.id] = [];
+                if(this.leftPairs[leftTransition.targetProcess.id] === undefined)
+                    this.leftPairs[leftTransition.targetProcess.id] = [];
 
-                    if(this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] === undefined)
-                        this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] = [];
+                if(this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] === undefined)
+                    this.leftPairs[leftTransition.targetProcess.id][rightTargets.length] = [];
+                
+                var rightSets = this.leftPairs[leftTransition.targetProcess.id][rightTargets.length];
+                var existing = false;
+
+                for(var n = 0; n < rightSets.length; n++) {
+                    if(rightTargets.every((v,i)=> v === rightSets[n].set[i])) {
+                        hyperedges.push([rightSets[n].index]);
+                        existing = true;
+                        break;
+                    }
+                }
+
+                if (!existing) {
+                    var newNodeIdx = this.nextIdx++;
+                    var rightSet = {set: rightTargets, index: newNodeIdx};
                     
-                    var rightSets = this.leftPairs[leftTransition.targetProcess.id][rightTargets.length];
-                    var existing = false;
+                    this.leftPairs[leftTransition.targetProcess.id][rightTargets.length].push(rightSet);
 
-                    for(var n = 0; n < rightSets.length; n++) {
-                        if(rightTargets.every((v,i)=> v === rightSets[n].set[i])) {
-                            hyperedges.push([rightSets[n].index]);
-                            existing = true;
-                            break;
-                        }
-                    }
-
-                    if (!existing) {
-                        var newNodeIdx = this.nextIdx++;
-                        var rightSet = {set: rightTargets, index: newNodeIdx};
-                        
-                        this.leftPairs[leftTransition.targetProcess.id][rightTargets.length].push(rightSet);
-
-                        this.constructData[newNodeIdx] = [0, leftTransition.action, leftTransition.targetProcess.id, rightTargets];
-                        
-                        hyperedges.push([newNodeIdx]);
-                    }
+                    this.constructData[newNodeIdx] = [0, leftTransition.action, leftTransition.targetProcess.id, rightTargets];
+                    
+                    hyperedges.push([newNodeIdx]);
                 }
             });
             
