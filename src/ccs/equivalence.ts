@@ -485,7 +485,7 @@ module Equivalence {
             
             while (!emptySetReached) {
                 
-                var bestTarget : dg.DgNodeId;
+                var bestTarget : dg.DgNodeId = 0;
                 var lowestLevel = Infinity;
                 
                 hyperedges.forEach( (hyperedge) => {
