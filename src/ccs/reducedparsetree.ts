@@ -164,7 +164,7 @@ module Traverse {
                 visitingProcess,
                 visitingAction,
                 strongSuccessors;
-
+            
             //Add  P --tau--> P
             result.add(new ccs.Transition(new ccs.Action("tau", false), process));
 
@@ -188,16 +188,17 @@ module Traverse {
 
                         if (transition.action.getLabel() === "tau") {
                             toVisitProcesses.push(transition.targetProcess);
-                            result.add(transition);
+                            result.add(transition);  // --tau--> x
                         } else {
                             toVisitStage2Processes.push(transition.targetProcess);
                             toVisitStage2Actions.push(transition.action);
                             visitedStage2[transition.action] = {};
-                            result.add(transition);
+                            result.add(transition); // --a--> x
                         }
                     });
                 }
             }
+
             //Stage 2
             //Find all continuing  P --tau-->* when already --tau->* --x--> P
             while (toVisitStage2Processes.length > 0) {
@@ -218,12 +219,14 @@ module Traverse {
 
                             toVisitStage2Processes.push(transition.targetProcess);
                             toVisitStage2Actions.push(visitingAction);
-                            result.add(new ccs.Transition(visitingAction, transition.targetProcess));
+                            var newTransition = new ccs.Transition(visitingAction, transition.targetProcess) 
+                            result.add(newTransition);
                         }
                     });
                 }
             }
-            
+
+
             this.cache[processId] = result;
             return result;
         }
@@ -246,7 +249,7 @@ module Traverse {
     }
 
     export class ReducingSuccessorGenerator implements ccs.SuccessorGenerator {
-        
+
         constructor(public succGenerator : ccs.SuccessorGenerator, public reducer : ProcessTreeReducer) { }
 
         getProcessByName(processName : string) : ccs.Process {
