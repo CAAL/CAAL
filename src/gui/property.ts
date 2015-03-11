@@ -377,77 +377,7 @@ module Property {
         }
     }
 
-    export class StrongTraceInclusion extends Equivalence {
-        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-        }
-        
-        public getDescription() : string {
-            return "Traces<sub>S</sub>(" + this.firstProcess + ") &sube; Traces<sub>S</sub>(" + this.secondProcess + ")";
-        }
-        
-        public getType() : string {
-            return "StrongTraceInclusion";
-        }
-
-        protected getWorkerHandler() : string {
-            return "isStronglyTraceIncluded";
-        }
-    }
-
-    export class WeakTraceInclusion extends Equivalence {
-        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-        }
-        
-        public getDescription() : string {
-            return "Traces<sub>W</sub>(" + this.firstProcess + ") &sube; Traces<sub>W</sub>(" + this.secondProcess + ")";
-        }
-        
-        public getType() : string {
-            return "WeakTraceInclusion";
-        }
-
-        protected getWorkerHandler() : string {
-            return "isWeaklyTraceIncluded";
-        }
-    }
-
-    export class StrongTraceEq extends Equivalence {
-        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-        }
-        
-        public getDescription() : string {
-            return "Traces<sub>S</sub>(" + this.firstProcess + ") = Traces<sub>S</sub>(" + this.secondProcess + ")";
-        }
-        
-        public getType() : string {
-            return "StrongTraceEq";
-        }
-
-        protected getWorkerHandler() : string {
-            return "isStronglyTraceEq";
-        }
-    }
-
-    export class WeakTraceEq extends Equivalence {
-        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-        }
-        
-        public getDescription() : string {
-            return "Traces<sub>W</sub>(" + this.firstProcess + ") = Traces<sub>W</sub>(" + this.secondProcess + ")";
-        }
-        
-        public getType() : string {
-            return "WeakTraceEq";
-        }
-
-        protected getWorkerHandler() : string {
-            return "isWeaklyTraceEq";
-        }
-    }
+    
 
     export class HML extends Property {
         private process: string;
@@ -586,7 +516,7 @@ module Property {
         
         private childPropertiesToVerify = [];
         private currentVerifyingProperty = null;
-        private verificationEndedCallback : Function = null;
+        protected verificationEndedCallback : Function = null;
 
         private succGenType : string;
         
@@ -723,7 +653,7 @@ module Property {
             this.doNextVerification();
         }
 
-        private verifyChildren(childProperties : any[]): void {
+        protected verifyChildren(childProperties : any[]): void {
             this.queuePropertiesToVerification(childProperties);
             this.doNextVerification();
         }
@@ -791,6 +721,248 @@ module Property {
                     callback();
                 }
             });
+        }
+    }
+    
+    export class StrongTraceInclusion extends DistinguishingFormula {
+        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+        
+        public getDescription() : string {
+            return "Traces<sub>S</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>S</sub>(" + this.getSecondProcess() + ")";
+        }
+        
+        public getType() : string {
+            return "StrongTraceInclusion";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isStronglyTraceIncluded";
+        }
+        
+        public toJSON() : any {
+            return {
+                type: "StrongTraceInclusion",
+                status: this.status,
+                options: {
+                    firstHMLProperty: this.firstHMLProperty.toJSON().options,
+                    secondHMLProperty: this.secondHMLProperty.toJSON().options
+                }
+            };
+        }
+        
+        protected isReadyForVerification() : boolean {
+            var isReady = true;
+            var error = "";
+            if(!this.getFirstProcess() && !this.getSecondProcess()) {
+                isReady = false;
+                error = "Two processes must be selected"
+            } else {
+                // if they are defined check whether they are defined in the CCS-program
+                var processList = Main.getGraph().getNamedProcesses()
+                if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
+                    error = "One of the processes selected is not defined in the CCS program."
+                    isReady = false;
+                }
+            }
+
+            // if is not ready invalidate the property
+            if (!isReady) {
+                this.setInvalidateStatus(error);
+            }
+            return isReady;
+        }  
+        
+        public verify(callback : Function) : void {
+            this.verificationEndedCallback = callback;
+            if(!this.isReadyForVerification()) {
+                // invalidate will be set in isReadyForVerification
+                console.log("something is wrong, please check the property");
+                callback()
+                return;
+            }
+            this.startTimer()
+            var program = Main.getProgram();
+            this.worker = getWorker();
+            this.worker.postMessage({
+                type: "program",
+                program: program
+            });
+            this.worker.postMessage({
+                type: "isStronglyTraceIncluded",
+                leftProcess: this.firstHMLProperty.getProcess(),
+                rightProcess: this.secondHMLProperty.getProcess()
+            });
+            this.worker.addEventListener("error", (error) => {
+                /*display tooltip with error*/
+                this.worker.terminate();
+                this.worker = null;
+
+                this.setInvalidateStatus(error.message);
+                this.stopTimer();
+                callback();
+            }, false);
+            this.worker.addEventListener("message", event => {
+                this.worker.terminate();
+                this.worker = null;
+
+                var goodResult = event.data.result.isTraceIncluded;
+                
+                if (goodResult === false) {
+                    this.status = PropertyStatus.unsatisfied;
+                    var formula = event.data.result.formula;
+                    this.firstHMLProperty.setFormula(formula);
+                    this.secondHMLProperty.setFormula(formula);
+                    this.verifyChildren([this.firstHMLProperty, this.secondHMLProperty]); // verify the two HML children.
+                } else if(goodResult === true) {
+                    this.status = PropertyStatus.satisfied;
+                    this.stopTimer();
+                    callback();
+                } else {
+                    this.stopTimer();
+                    callback();
+                }
+            });
+        }
+    }
+
+    export class WeakTraceInclusion extends DistinguishingFormula {
+        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+        
+        public getDescription() : string {
+            return "Traces<sub>W</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>W</sub>(" + this.getSecondProcess() + ")";
+        }
+        
+        public getType() : string {
+            return "WeakTraceInclusion";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isWeaklyTraceIncluded";
+        }
+        
+        public toJSON() : any {
+            return {
+                type: "WeakTraceInclusion",
+                status: this.status,
+                options: {
+                    firstHMLProperty: this.firstHMLProperty.toJSON().options,
+                    secondHMLProperty: this.secondHMLProperty.toJSON().options
+                }
+            };
+        }
+        
+        protected isReadyForVerification() : boolean {
+            var isReady = true;
+            var error = "";
+            if(!this.getFirstProcess() && !this.getSecondProcess()) {
+                isReady = false;
+                error = "Two processes must be selected"
+            } else {
+                // if they are defined check whether they are defined in the CCS-program
+                var processList = Main.getGraph().getNamedProcesses()
+                if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
+                    error = "One of the processes selected is not defined in the CCS program."
+                    isReady = false;
+                }
+            }
+
+            // if is not ready invalidate the property
+            if (!isReady) {
+                this.setInvalidateStatus(error);
+            }
+            return isReady;
+        }  
+        
+        public verify(callback : Function) : void {
+            this.verificationEndedCallback = callback;
+            if(!this.isReadyForVerification()) {
+                // invalidate will be set in isReadyForVerification
+                console.log("something is wrong, please check the property");
+                callback()
+                return;
+            }
+            this.startTimer()
+            var program = Main.getProgram();
+            this.worker = getWorker();
+            this.worker.postMessage({
+                type: "program",
+                program: program
+            });
+            this.worker.postMessage({
+                type: "isWeaklyTraceIncluded",
+                leftProcess: this.firstHMLProperty.getProcess(),
+                rightProcess: this.secondHMLProperty.getProcess()
+            });
+            this.worker.addEventListener("error", (error) => {
+                /*display tooltip with error*/
+                this.worker.terminate();
+                this.worker = null;
+
+                this.setInvalidateStatus(error.message);
+                this.stopTimer();
+                callback();
+            }, false);
+            this.worker.addEventListener("message", event => {
+                this.worker.terminate();
+                this.worker = null;
+
+                var goodResult = event.data.result.isTraceIncluded;
+                
+                if (goodResult === false) {
+                    this.status = PropertyStatus.unsatisfied;
+                    var formula = event.data.result.formula;
+                    this.firstHMLProperty.setFormula(formula);
+                    this.secondHMLProperty.setFormula(formula);
+                    this.verifyChildren([this.firstHMLProperty, this.secondHMLProperty]); // verify the two HML children.
+                } else if(goodResult === true) {
+                    this.status = PropertyStatus.satisfied;
+                    this.stopTimer();
+                    callback();
+                } else {
+                    this.stopTimer();
+                    callback();
+                }
+            });
+        }
+    }
+
+    export class StrongTraceEq extends Equivalence {
+        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+        
+        public getDescription() : string {
+            return "Traces<sub>S</sub>(" + this.firstProcess + ") = Traces<sub>S</sub>(" + this.secondProcess + ")";
+        }
+        
+        public getType() : string {
+            return "StrongTraceEq";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isStronglyTraceEq";
+        }
+    }
+
+    export class WeakTraceEq extends Equivalence {
+        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+        
+        public getDescription() : string {
+            return "Traces<sub>W</sub>(" + this.firstProcess + ") = Traces<sub>W</sub>(" + this.secondProcess + ")";
+        }
+        
+        public getType() : string {
+            return "WeakTraceEq";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isWeaklyTraceEq";
         }
     }
 }

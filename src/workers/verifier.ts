@@ -46,8 +46,14 @@ messageHandlers.isStronglyTraceIncluded = data => {
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
-    var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
-    data.result = isTraceIncluded;
+    // var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    var traceDg = new Equivalence.TraceDG(leftProcess.id, rightProcess.id, attackSuccGen);
+    var marking = DependencyGraph.solveDgGlobalLevel(traceDg);
+    
+    data.result = {
+        isTraceIncluded: marking.getMarking(0) === marking.ZERO,
+        formula: traceDg.getDistinguishingFormula(marking)
+    };
     self.postMessage(data);
 };
 
@@ -56,8 +62,14 @@ messageHandlers.isWeaklyTraceIncluded = data => {
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
-    var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
-    data.result = isTraceIncluded;
+    // var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    var traceDg = new Equivalence.TraceDG(leftProcess.id, rightProcess.id, attackSuccGen);
+    var marking = DependencyGraph.solveDgGlobalLevel(traceDg);
+    
+    data.result = {
+        isTraceIncluded: marking.getMarking(0) === marking.ZERO,
+        formula: traceDg.getDistinguishingFormula(marking)
+    };
     self.postMessage(data);
 };
 

@@ -291,10 +291,18 @@ module Activity {
                     property = new Property.WeakBisimulation({firstProcess: "", secondProcess: ""});
                     break;
                 case "strongtraceinclusion":
-                    property = new Property.StrongTraceInclusion({firstProcess: "", secondProcess: ""});
+                    property = new Property.StrongTraceInclusion(
+                        {
+                            firstHMLProperty: {process: "", formula: ""},
+                            secondHMLProperty: {process: "", formula: ""}
+                        });
                     break;
                 case "weaktraceinclusion":
-                    property = new Property.WeakTraceInclusion({firstProcess: "", secondProcess: ""});
+                    property = new Property.WeakTraceInclusion(
+                        {
+                            firstHMLProperty: {process: "", formula: ""},
+                            secondHMLProperty: {process: "", formula: ""}
+                        });
                     break;
                 case "strongtraceeq":
                     property = new Property.StrongTraceEq({firstProcess: "", secondProcess: ""});
