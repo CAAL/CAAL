@@ -435,7 +435,7 @@ module Equivalence {
                     }
                 });
 
-                if(rightTransitions.length === 0) {
+                if(rightProcessIds.length === 0) {
                     hyperedges.push([]);
                 } else {
                     rightTargets.sort( function(a, b){return a-b} );
