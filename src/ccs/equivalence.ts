@@ -376,7 +376,7 @@ module Equivalence {
         private leftPairs = {};
         private isFullyConstructed = false;
         
-        constructor(leftNode, rightNode, private attackSuccGen : ccs.SuccessorGenerator) {
+        constructor(leftNode : number, rightNode : number, private attackSuccGen : ccs.SuccessorGenerator) {
             this.constructData[0] = [0, null, leftNode, [rightNode]];
             this.nextIdx = 1;
         }
@@ -474,22 +474,19 @@ module Equivalence {
             return hyperedges;
         }
         
-        public getDistinguishingFormula(marking) : HML.Formula {
-            // var marking = dg.solveDgGlobalLevel(this);
+        public getDistinguishingFormula(marking : dg.LevelMarking) : string {
             if (marking.getMarking(0) === marking.ZERO)
-                return undefined;
+                return "";
             
-            var currentNode = 0;
-            var hyperedges = this.getHyperEdges(currentNode);
-            var test = "";
+            var hyperedges = this.getHyperEdges(0);
+            var formulaStr = "";
             var emptySetReached = false;
+            var isWeak = this.attackSuccGen instanceof Traverse.WeakSuccessorGenerator;
             
             while (!emptySetReached) {
                 
                 var bestTarget : dg.DgNodeId;
                 var lowestLevel = Infinity;
-
-//                console.log(hyperedges.length);
                 
                 hyperedges.forEach( (hyperedge) => {
                     var level;
@@ -504,31 +501,27 @@ module Equivalence {
                     }
                 });
                 
-                test += "<" + this.constructData[bestTarget][1].toString() + ">";
+                formulaStr += (isWeak ? "<<" : "<") + this.constructData[bestTarget][1].toString() + (isWeak ? ">>" : ">");
 
                 hyperedges = this.getHyperEdges(bestTarget);
 
                 for(var i = 0; i < hyperedges.length; i++) {
-                    if(hyperedges[i].length === 0) {
+                    if (hyperedges[i].length === 0) {
                         emptySetReached = true;
                         break;
                     }
                 }
-
             }
-            test += "tt;";
-
-            console.log(test);
             
-            return undefined;
+            formulaStr += "tt;";
+            return formulaStr;
         }
     }
 
     export function isTraceIncluded(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) : boolean {
         var traceDG = new TraceDG(leftProcessId, rightProcessId, attackSuccGen);
         // var marking = dg.liuSmolkaLocal2(0, traceDG);
-        var marking = dg.solveDgGlobalLevel(traceDG);
-        
+        var marking = dg.solveDgGlobalLevel(traceDG); //TODO use local with level
         traceDG.getDistinguishingFormula(marking);
         return marking.getMarking(0) === marking.ZERO;    
     }
