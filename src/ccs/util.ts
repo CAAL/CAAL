@@ -418,7 +418,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "<<" + 
-                    formula.actionMatcher.actionMatchingString() + ">>"
+                    formula.actionMatcher.actionMatchingString() + ">>" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -429,7 +429,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "[[" + 
-                    formula.actionMatcher.actionMatchingString() + "]]"
+                    formula.actionMatcher.actionMatchingString() + "]]" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;

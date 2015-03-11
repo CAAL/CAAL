@@ -107,8 +107,8 @@ messageHandlers.findDistinguishingFormula = data => {
     var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
         defendSuccGen = data.succGenType === "weak" ? CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}) : strongSuccGen,
         leftProcess = strongSuccGen.getProcessByName(data.leftProcess),
-        rightProcess = strongSuccGen.getProcessByName(data.rightProcess),
-        bisimilarDg = new Equivalence.BisimulationDG(strongSuccGen, defendSuccGen, leftProcess.id, rightProcess.id),
+        rightProcess = strongSuccGen.getProcessByName(data.rightProcess);
+        var bisimilarDg = new Equivalence.BisimulationDG(strongSuccGen, defendSuccGen, leftProcess.id, rightProcess.id),
         marking = DependencyGraph.solveDgGlobalLevel(bisimilarDg),
         formula, hmlNotation;
     if (marking.getMarking(0) === marking.ZERO) {
@@ -117,12 +117,12 @@ messageHandlers.findDistinguishingFormula = data => {
             formula: ""
         };
     } else {
-        formula = bisimilarDg.findDistinguishingFormula(marking),
+        formula = bisimilarDg.findDistinguishingFormula(marking, data.succGenType);
         hmlNotation = new Traverse.HMLNotationVisitor();
         data.result = {
             isBisimilar: false,
             formula: hmlNotation.visit(formula)
-        }
+        };
     }
     self.postMessage(data);
 };

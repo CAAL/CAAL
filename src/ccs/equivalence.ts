@@ -265,7 +265,7 @@ module Equivalence {
             }
         }
 
-        findDistinguishingFormula(marking : dg.LevelMarking) : hml.Formula {
+        findDistinguishingFormula(marking : dg.LevelMarking, defendSuccGenType : string) : hml.Formula {
             var that = this,
                 formulaSet = new hml.FormulaSet(),
                 trace;
@@ -304,6 +304,12 @@ module Equivalence {
             //Hyperedges of type 1/2, have the form: [ [P, Q, R, S, T] ]
 
             var selectSuccessor = selectMinimaxLevel;
+            var existConstructor = (matcher, sub) => formulaSet.newStrongExists(matcher, sub);
+            var forallConstructor = (matcher, sub) => formulaSet.newStrongForAll(matcher, sub);
+            if (defendSuccGenType === "weak") {
+                existConstructor = (matcher, sub) => formulaSet.newWeakExists(matcher, sub);
+                forallConstructor = (matcher, sub) => formulaSet.newWeakForAll(matcher, sub);
+            }
 
             function formulaForBranch(node : dg.DgNodeId) : hml.Formula {
                 var cData = that.constructData[node];
@@ -315,18 +321,18 @@ module Equivalence {
                     var actionMatcher = new hml.SingleActionMatcher(cData[1]);
                     if (targetPairNodes.length > 0) {
                         var subFormulas = targetPairNodes.map(formulaForBranch);
-                        return formulaSet.newStrongExists(actionMatcher, formulaSet.newConj(subFormulas));
+                        return existConstructor(actionMatcher, formulaSet.newConj(subFormulas));
                     } else {
-                        return formulaSet.newStrongExists(actionMatcher, formulaSet.newTrue());
+                        return existConstructor(actionMatcher, formulaSet.newTrue());
                     }
                 } else {
                     var targetPairNodes = that.getHyperEdges(node)[0];
                     var actionMatcher = new hml.SingleActionMatcher(cData[1]);
                     if (targetPairNodes.length > 0) {
                         var subFormulas = targetPairNodes.map(formulaForBranch);
-                        return formulaSet.newStrongForAll(actionMatcher, formulaSet.newDisj(subFormulas));
+                        return forallConstructor(actionMatcher, formulaSet.newDisj(subFormulas));
                     } else {
-                        return formulaSet.newStrongForAll(actionMatcher, formulaSet.newFalse());
+                        return forallConstructor(actionMatcher, formulaSet.newFalse());
                     }
                 }
             }
