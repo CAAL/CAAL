@@ -418,7 +418,7 @@ module Equivalence {
 
                 });
 
-                if( !(rightTargets.length > 0) ) {
+                if( !(rightTransitions.length > 0) ) {
                     hyperedges.push([]);
                 } else {
 
