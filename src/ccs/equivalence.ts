@@ -364,13 +364,14 @@ module Equivalence {
 
     export class TraceDG implements dg.DependencyGraph {
 
-        private nextIdx;
+        private nextIdx : dg.DgNodeId;
         private constructData = [];
         private nodes = [];
         private leftPairs = {};
-
+        private isFullyConstructed = false;
+        
         constructor(leftNode, rightNode, private attackSuccGen : ccs.SuccessorGenerator) {
-            this.constructData[0] = [0, leftNode, [rightNode]];
+            this.constructData[0] = [0, null, leftNode, [rightNode]];
             this.nextIdx = 1;
         }
 
@@ -382,18 +383,29 @@ module Equivalence {
             } else {
                 result = this.constructNode(identifier);
             }
-
+            
             return dg.copyHyperEdges(result);
         }
-
-        public getAllHyperEdges() : any[] {
-            return undefined;
+        
+        getAllHyperEdges() : [dg.DgNodeId, dg.Hyperedge][] {
+            if (!this.isFullyConstructed) {
+                this.isFullyConstructed = true;
+                //All nodes have ids in order of creation, thus there are no gaps.
+                for (var i=0; i < this.nextIdx; i++) {
+                    this.constructNode(i);
+                }
+            }
+            var result = [];
+            result.length = this.nextIdx;
+            for (var i=0; i < this.nextIdx; i++) {
+                result[i] = [i, dg.copyHyperEdges(this.nodes[i])];
+            }
+            return result;
         }
-
+        
         private constructNode(identifier : dg.DgNodeId) {
             var data = this.constructData[identifier];
-
-            return this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
+            return this.nodes[identifier] = this.getProcessPairStates(data[2], data[3]);
         }
 
         private getProcessPairStates(leftProcessId : ccs.ProcessId, rightProcessIds : ccs.ProcessId[]) : dg.Hyperedge[] {
@@ -413,17 +425,13 @@ module Equivalence {
                 rightTransitions.forEach(rightTransition => {
                     if (rightTransition.action.equals(leftTransition.action)) {
                         rightTargets.push(parseInt(rightTransition.targetProcess.id));
-
                     }
-
                 });
 
-                if( !(rightTransitions.length > 0) ) {
+                if(rightTransitions.length === 0) {
                     hyperedges.push([]);
                 } else {
-
                     rightTargets.sort( function(a, b){return a-b} );
-
                     rightTargets = ArrayUtil.removeConsecutiveDuplicates(rightTargets);
 
                     if(this.leftPairs[leftTransition.targetProcess.id] === undefined)
@@ -435,42 +443,77 @@ module Equivalence {
                     var rightSets = this.leftPairs[leftTransition.targetProcess.id][rightTargets.length];
                     var existing = false;
 
-                    if (rightSets) {
-
-                        for(var n = 0; n < rightSets.length; n++) {
-                            if(rightTargets.every((v,i)=> v === rightSets[n].set[i])) {
-                                existing = rightSets[n].index;
-                                break;
-                            }
+                    for(var n = 0; n < rightSets.length; n++) {
+                        if(rightTargets.every((v,i)=> v === rightSets[n].set[i])) {
+                            hyperedges.push([rightSets[n].index]);
+                            existing = true;
+                            break;
                         }
                     }
 
-                    if (existing) {
-                        hyperedges.push([existing]);                    
-                    } else {
+                    if (!existing) {
                         var newNodeIdx = this.nextIdx++;
-
                         var rightSet = {set: rightTargets, index: newNodeIdx};
                         
                         this.leftPairs[leftTransition.targetProcess.id][rightTargets.length].push(rightSet);
 
-                        this.constructData[newNodeIdx] = [0, leftTransition.targetProcess.id, rightTargets];
+                        this.constructData[newNodeIdx] = [0, leftTransition.action, leftTransition.targetProcess.id, rightTargets];
                         
                         hyperedges.push([newNodeIdx]);
-                        
                     }
-
                 }
-                
             });
             
             return hyperedges;
-        }   
+        }
+        
+        public getDistinguishingFormula(marking) : HML.Formula {
+            // var marking = dg.solveDgGlobalLevel(this);
+            if (marking.getMarking(0) === marking.ZERO)
+                return undefined;
+            
+            var currentNode = 0;
+            var hyperedges = this.getHyperEdges(currentNode);
+            var test = "";
+            
+            while (true) {
+                if (hyperedges.length === 1 && hyperedges[0].length === 0)
+                    break;
+                
+                var bestTarget : dg.DgNodeId;
+                var lowestLevel = Infinity;
+                
+                hyperedges.forEach( (hyperedge) => {
+                    var level;
+                    var edge = hyperedge[0];
+                    
+                    if (marking.getMarking(edge) === marking.ONE) {
+                        level = marking.getLevel(edge);
+                        if (level < lowestLevel) {
+                            lowestLevel = level;
+                            bestTarget = edge;
+                        }
+                    }
+                });
+                
+                test += "<" + this.constructData[bestTarget][1].toString() + ">";
+                
+                hyperedges = this.getHyperEdges(bestTarget);
+                
+            }
+            test += "tt;";
+            console.log(test);
+            
+            return undefined;
+        }
     }
 
-    export function isTraceIncluded(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
+    export function isTraceIncluded(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) : boolean {
         var traceDG = new TraceDG(leftProcessId, rightProcessId, attackSuccGen);
-        var marking = dg.liuSmolkaLocal2(0, traceDG);
+        // var marking = dg.liuSmolkaLocal2(0, traceDG);
+        var marking = dg.solveDgGlobalLevel(traceDG);
+        
+        //traceDG.getDistinguishingFormula(marking);
         return marking.getMarking(0) === marking.ZERO;    
     }
 
