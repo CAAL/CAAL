@@ -4,7 +4,7 @@
 declare var CCSParser;
 declare var HMLParser;
 
-importScripts("../ccs_grammar.js", "../hml_grammar.js", "../util.js", "../ccs.js");
+importScripts("../ccs_grammar.js", "../hml_grammar.js", "../data.js", "../util.js", "../ccs.js");
 
 var messageHandlers : any = {};
 var graph;
