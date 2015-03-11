@@ -1,3 +1,4 @@
+/// <reference path="../../lib/data.d.ts" />
 /// <reference path="../../lib/util.d.ts" />
 /// <reference path="ccs.ts" />
 
@@ -100,7 +101,35 @@ module Traverse {
         }
     }
 
+    class FullTransition {
+        constructor(public fromId : ccs.ProcessId, public action : ccs.Action, public toId : ccs.ProcessId) {
+        }
+    }
+
+    class FromData {
+        constructor(public prev : FromData, public action : ccs.Action, public toId : ccs.ProcessId) {
+        }
+    }
+
+    function compareAction(left : ccs.Action, right : ccs.Action) : number {
+        if (left.isComplement() !== right.isComplement()) return <any>left.isComplement() - <any>right.isComplement();
+        if (left.getLabel() < right.getLabel()) return -1;
+        if (right.getLabel() < left.getLabel()) return 1;
+        return 0;
+    }
+
+    function compareTransitionTuple(left : FullTransition, right : FullTransition) : number {
+        var fromIdDiff = left.fromId - right.fromId;
+        if (fromIdDiff !== 0) return fromIdDiff;
+        var toIdDiff = left.toId - right.toId;
+        if (toIdDiff !== 0) return toIdDiff;
+        return compareAction(left.action, right.action);
+    }
+
     export class WeakSuccessorGenerator implements ccs.SuccessorGenerator {
+
+        private renameMePlease : MapUtil.Map<FullTransition, FromData> =
+                new MapUtil.OrderedMap<FullTransition, FromData>(compareTransitionTuple);
 
         constructor(public strictSuccGenerator : ccs.SuccessorGenerator,  public cache?) {
             this.cache = cache || {};
@@ -116,6 +145,14 @@ module Traverse {
 
         getSuccessors(processId : ccs.ProcessId) : ccs.TransitionSet {
             if (this.cache[processId]) return this.cache[processId];
+
+            var tauAction = new ccs.Action("tau", false);
+            //Manuall add tau loop to from set:  P ==tau=> P, by P -- tau -> P
+            var sourceFullTransition = new FullTransition(processId, tauAction, processId);
+            if (!this.renameMePlease.has(sourceFullTransition)) {
+                var sourceFromData = new FromData(null, tauAction, processId);
+                this.renameMePlease.set(sourceFullTransition, sourceFromData);
+            }
 
             var result = new ccs.TransitionSet(),
                 process = this.strictSuccGenerator.getProcessById(processId),
@@ -138,8 +175,17 @@ module Traverse {
                 visitingProcess = toVisitProcesses.pop();
                 if (!visitedStage1[visitingProcess.id]) {
                     visitedStage1[visitingProcess.id] = true;
+                    var prevFromData = this.renameMePlease.get(new FullTransition(processId, tauAction, visitingProcess.id));
                     strongSuccessors = this.strictSuccGenerator.getSuccessors(visitingProcess.id);
                     strongSuccessors.forEach(transition => {
+
+                        //Remember how we got to P => Q to be able to get strict path P -> P1 -> P2 -> Q later.
+                        var fullTransition = new FullTransition(processId, transition.action, transition.targetProcess.id);
+                        if (!this.renameMePlease.has(fullTransition)) {
+                            var fromData = new FromData(prevFromData, transition.action, transition.targetProcess.id);
+                            this.renameMePlease.set(fullTransition, fromData);
+                        }
+
                         if (transition.action.getLabel() === "tau") {
                             toVisitProcesses.push(transition.targetProcess);
                             result.add(transition);
@@ -157,11 +203,19 @@ module Traverse {
             while (toVisitStage2Processes.length > 0) {
                 visitingProcess = toVisitStage2Processes.pop();
                 visitingAction = toVisitStage2Actions.pop();
+                var prevFromData = this.renameMePlease.get(new FullTransition(processId, visitingAction, visitingProcess.id));
                 if (!visitedStage2[visitingAction][visitingProcess.id]) {
                     visitedStage2[visitingAction][visitingProcess.id] = true;
                     strongSuccessors = this.strictSuccGenerator.getSuccessors(visitingProcess.id);
                     strongSuccessors.forEach(transition => {
                         if (transition.action.getLabel() === "tau") {
+
+                            var fullTransition = new FullTransition(processId, visitingAction, transition.targetProcess.id);
+                            if (!this.renameMePlease.has(fullTransition)) {
+                                var fromData = new FromData(prevFromData, visitingAction, transition.targetProcess.id);
+                                this.renameMePlease.set(fullTransition, fromData);
+                            }
+
                             toVisitStage2Processes.push(transition.targetProcess);
                             toVisitStage2Actions.push(visitingAction);
                             result.add(new ccs.Transition(visitingAction, transition.targetProcess));
@@ -171,6 +225,22 @@ module Traverse {
             }
             
             this.cache[processId] = result;
+            return result;
+        }
+
+        //Only call with arguments, for which getSuccessors(fromId) has yielded Transition(action, proces.toId)
+        getStrictPath(fromId : ccs.ProcessId, action : ccs.Action, toId : ccs.ProcessId) : ccs.Transition[] {
+            var result = [],
+                succGen = this.strictSuccGenerator;
+
+            var fromData = this.renameMePlease.get(new FullTransition(fromId, action, toId));
+            if (!fromData) throw "This should probably not happen!";
+            do {
+                result.push(new ccs.Transition(fromData.action, succGen.getProcessById(fromData.toId)));
+                fromData = fromData.prev;
+            } while (fromData && fromData.toId !== fromId);
+
+            result.reverse();
             return result;
         }
     }

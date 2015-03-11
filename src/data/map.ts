@@ -100,7 +100,7 @@ module MapUtil {
         }
 
         has(key : K) : boolean {
-            return this.root && this.root.has(key, this.compare);
+            return !!this.root && this.root.has(key, this.compare);
         }
 
         set(key : K, val : V) : void {
