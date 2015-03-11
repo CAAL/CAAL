@@ -383,7 +383,7 @@ module Equivalence {
             } else {
                 result = this.constructNode(identifier);
             }
-            
+
             return dg.copyHyperEdges(result);
         }
         
@@ -400,6 +400,7 @@ module Equivalence {
             for (var i=0; i < this.nextIdx; i++) {
                 result[i] = [i, dg.copyHyperEdges(this.nodes[i])];
             }
+
             return result;
         }
         
@@ -475,13 +476,14 @@ module Equivalence {
             var currentNode = 0;
             var hyperedges = this.getHyperEdges(currentNode);
             var test = "";
+            var emptySetReached = false;
             
-            while (true) {
-                if (hyperedges.length === 1 && hyperedges[0].length === 0)
-                    break;
+            while (!emptySetReached) {
                 
                 var bestTarget : dg.DgNodeId;
                 var lowestLevel = Infinity;
+
+//                console.log(hyperedges.length);
                 
                 hyperedges.forEach( (hyperedge) => {
                     var level;
@@ -489,7 +491,7 @@ module Equivalence {
                     
                     if (marking.getMarking(edge) === marking.ONE) {
                         level = marking.getLevel(edge);
-                        if (level < lowestLevel) {
+                        if (level <= lowestLevel) {
                             lowestLevel = level;
                             bestTarget = edge;
                         }
@@ -497,11 +499,19 @@ module Equivalence {
                 });
                 
                 test += "<" + this.constructData[bestTarget][1].toString() + ">";
-                
+
                 hyperedges = this.getHyperEdges(bestTarget);
-                
+
+                for(var i = 0; i < hyperedges.length; i++) {
+                    if(hyperedges[i].length === 0) {
+                        emptySetReached = true;
+                        break;
+                    }
+                }
+
             }
             test += "tt;";
+
             console.log(test);
             
             return undefined;
@@ -513,7 +523,7 @@ module Equivalence {
         // var marking = dg.liuSmolkaLocal2(0, traceDG);
         var marking = dg.solveDgGlobalLevel(traceDG);
         
-        //traceDG.getDistinguishingFormula(marking);
+        traceDG.getDistinguishingFormula(marking);
         return marking.getMarking(0) === marking.ZERO;    
     }
 
