@@ -111,90 +111,98 @@
         <!-- Explorer -->
         <div id="explorer-container" class="container">
             <div id="fullscreen-container">
-                <nav class="navbar yamm navbar-default controls" role="navigation">
-                    <div id="explorer-process-list" class="col-md-2">
-                        <select class="form-control">
-                        </select>
-                    </div>
-                    <ul class="nav navbar-nav">
-                        <li class="dropdown">
-                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                                Options <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <div class="yamm-content">
-                                        <div class="radio">
-                                            <label>
-                                                <input name="option-successor" value="strong" type="radio" checked>Strong Successors (&#x2192;)
-                                            </label>
-                                        </div>
-                                        <div class="radio">
-                                            <label>
-                                                <input name="option-successor" value="weak" type="radio">Weak Successors (&#x21D2;)
-                                            </label>
-                                        </div>
-                                        <div class="divider"></div>
-                                        <div class="form-inline">
-                                            <label>Expand Depth: </label>
-                                            <select id="option-depth" class="form-control">
-                                                <option>1</option>
-                                                <option>2</option>
-                                                <option>5</option>
-                                                <option selected>10</option>
-                                                <option>100</option>
-                                            </select>
-                                        </div>
-                                        <div class="divider"></div>
-                                        <div class="radio">
-                                            <label data-tooltip="collapse-none">
-                                                <input name="option-collapse" value="none" type="radio" checked>No Bisimulation Collapse
-                                        </div>
-                                        <div class="radio">
-                                            <label data-tooltip="collapse-strong">
-                                                <input name="option-collapse" value="strong" type="radio">Strong Bisimulation Collapse
-                                            </label>
-                                        </div>
-                                        <div class="radio">
-                                            <label data-tooltip="collapse-weak">
-                                                <input name="option-collapse" value="weak" type="radio">Weak Bisimulation Collapse
-                                            </label>
-                                        </div>
-                                        <div class="divider"></div>
-                                        <div class="checkbox">
-                                            <label>
-                                                <input id="option-simplify" type="checkbox" checked>Simplify
-                                            </label>
-                                        </div>
-                                    </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <nav class="navbar yamm navbar-default" role="navigation">
+                            <div id="explorer-process-list" class="col-md-2">
+                                <select class="form-control">
+                                </select>
+                            </div>
+                            <ul class="nav navbar-nav">
+                                <li class="dropdown">
+                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                        Options <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <div class="yamm-content">
+                                                <div class="radio">
+                                                    <label>
+                                                        <input name="option-successor" value="strong" type="radio" checked>Strong Successors (&#x2192;)
+                                                    </label>
+                                                </div>
+                                                <div class="radio">
+                                                    <label>
+                                                        <input name="option-successor" value="weak" type="radio">Weak Successors (&#x21D2;)
+                                                    </label>
+                                                </div>
+                                                <div class="divider"></div>
+                                                <div class="radio">
+                                                    <label data-tooltip="collapse-none">
+                                                        <input name="option-collapse" value="none" type="radio" checked>No Bisimulation Collapse
+                                                    </label>
+                                                </div>
+                                                <div class="radio">
+                                                    <label data-tooltip="collapse-strong">
+                                                        <input name="option-collapse" value="strong" type="radio">Strong Bisimulation Collapse
+                                                    </label>
+                                                </div>
+                                                <div class="radio">
+                                                    <label data-tooltip="collapse-weak">
+                                                        <input name="option-collapse" value="weak" type="radio">Weak Bisimulation Collapse
+                                                    </label>
+                                                </div>
+                                                <div class="divider"></div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input id="option-simplify" type="checkbox" checked>Simplify
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
                                 </li>
                             </ul>
-                        </li>
-                    </ul>
-                    <div class="btn-group pull-right">
-                        <button id="explorer-freeze-btn" type="button" class="btn btn-default">Freeze</button>
-                        <a id="explorer-save-btn" class="btn btn-default">Save Image</a>
-                        <button id="explorer-fullscreen-btn" type="button" class="btn btn-default">Fullscreen</button>
+                            <div class="btn-group pull-right">
+                                <a id="explorer-save-btn" class="btn btn-default">Save Image</a>
+                                <button id="explorer-fullscreen-btn" type="button" class="btn btn-default">Fullscreen</button>
+                            </div>
+                        </nav>
                     </div>
-                </nav>
-                <div class="clearfix"></div>
-                <canvas id="arbor-canvas"></canvas>
+                </div>
+                <div id="explorer-main" class="row">
+                    <div class="col-md-12">
+                        <div style="position: relative">
+                            <input min="1" max="3" step="0.2" value="1" type="range" />
+                            <div class="input-group">
+                                <input class="form-control" value="5" type="text" />
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                                </span>
+                            </div>
+                        </div>
+                        <div id="explorer-canvas">
+                            <canvas></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="status-table-container">
-                <h4>Source Process</h4>
-                <p id="explorer-source-definition"></p>
-                <h4>Target Processes</h4>
-                <table id="status-table" class="table table-responsive table-striped table-condensed table-hover no-highlight">
-                    <thead>
-                        <tr>
-                            <th class="narrow">Action</th>
-                            <th class="narrow">Target</th>
-                            <th>Target Definition</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="explorer-transitions">
+                        <table class="table table-responsive table-striped table-condensed table-hover no-highlight">
+                            <thead>
+                                <tr>
+                                    <th class="narrow">Action</th>
+                                    <th class="narrow">Target</th>
+                                    <th>Target Definition</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -311,13 +319,13 @@
                     <div style="position: relative">
                         <input id="zoom-left" data-side="left" min="1" max="3" step="0.2" value="1" type="range" />
                         <div class="input-group">
-                            <input id="depth-left" class="form-control" value="5" type="text /">
+                            <input id="depth-left" class="form-control" value="5" type="text" />
                             <span class="input-group-btn">
                                 <button id="freeze-left" type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
                             </span>
                         </div>
                     </div>
-                    <div id="game-left-canvas" style="z-index: 10000">
+                    <div id="game-left-canvas">
                         <canvas></canvas>
                     </div>
                 </div>

@@ -186,32 +186,59 @@ textarea {
  * Explorer activity styles
  */
 
-.controls {
+.yamm {
     min-height: 0;
     background-color: #fff;
-    border-color: #fff;
-    margin: 0;
+    border: none;
+    margin-bottom: 20px;
 }
 
 #explorer-process-list {
     padding-left: 0;
 }
 
-#status-table-container {
-    height: 230px;
+#explorer-main input[type=range] {
+    position: absolute;
+    top: 16px;
+    left: 10px;
+    width: 100px;
+    cursor: pointer;
+}
+
+#explorer-main .input-group {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 88px;
+}
+
+#explorer-main input[type=text] {
+    text-align: center;
+}
+
+#explorer-canvas {
+    border: 1px solid #e7e7e7;
     overflow: auto;
 }
 
-#status-table-container p {
-    margin-left: 20px;
+#explorer-transitions {
+    height: 150px;
+    padding: 10px;
+    border: 1px solid #e7e7e7;
+    border-top: none;
+    overflow: auto;
 }
 
-#status-table-container p, #status-table-container .tooltip, #status-table tbody {
+#explorer-transitions .tooltip, #explorer-transitions table tbody {
     font: normal 14px "Inconsolata";
     color: #333;
 }
 
-#status-table th.narrow {
+#explorer-transitions table {
+    margin: 0;
+}
+
+#explorer-transitions table th.narrow {
     width: 15%;
     min-width: 140px;
 }
@@ -304,9 +331,9 @@ textarea {
     border-left: none;
 }
 
-input[type=range] {
+#game-main input[type=range] {
     position: absolute;
-    top: 15px;
+    top: 16px;
     left: 10px;
     width: 100px;
     cursor: pointer;

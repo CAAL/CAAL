@@ -310,7 +310,7 @@ module Activity {
 
                 Object.keys(groupedByTargetProcessId).forEach(strProcId => {
                     var group = groupedByTargetProcessId[strProcId],
-                        data = group.map(t => { return {label: t.action.toString()}; }),
+                        data = group.map(t => {return {label: t.action.toString()}}),
                         numId = parseInt(strProcId, 10);
                     this.showProcess(this.graph.processById(numId), graph);
                     graph.showTransitions(fromProcess.id, numId, data);
@@ -367,7 +367,7 @@ module Activity {
             graph.clearAll();
         }
 
-        private expandBFS(process : CCS.Process, maxDepth) {
+        private expandBFS(process : CCS.Process, maxDepth : number) : any {
             var result = {},
                 queue = [[1, process]], //non-emptying array as queue.
                 depth, qIdx, fromProcess, transitions;
