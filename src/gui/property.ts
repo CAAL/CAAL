@@ -541,6 +541,7 @@ module Property {
 
         public setFirstProcess(firstProcess: string): void {
             this.firstHMLProperty.setProcess(firstProcess)
+            this.setUnknownStatus()
             this.clearFormulas()
         }
 
@@ -550,6 +551,7 @@ module Property {
 
         public setSecondProcess(secondProcess: string): void {
             this.secondHMLProperty.setProcess(secondProcess)
+            this.setUnknownStatus()
             this.clearFormulas()
         }
 
