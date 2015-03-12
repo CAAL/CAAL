@@ -605,11 +605,10 @@ module Property {
         protected verifyHml(formula : string) : void {
             this.firstHMLProperty.setFormula(formula);
             this.secondHMLProperty.setFormula(formula);
-            this.verifyChildren([this.firstHMLProperty, this.secondHMLProperty]);
-        }
-
-        private verifyChildren(childProperties : any[]) : void {
-            childProperties.forEach((property) => this.childPropertiesToVerify.push(property)); //queue
+            
+            this.childPropertiesToVerify.push(this.firstHMLProperty):
+            this.childPropertiesToVerify.push(this.secondHMLProperty):
+            
             this.doNextVerification();
         }
 
@@ -617,16 +616,16 @@ module Property {
             if (!this.currentVerifyingProperty && this.childPropertiesToVerify.length > 0) {
                 var property = this.childPropertiesToVerify.shift();
                 this.currentVerifyingProperty = property;
-                property.verify( () => this.verificationEnded() );
+                
+                // verify the property, and have the callback start the next.
+                property.verify( () => {
+                    this.currentVerifyingProperty = null;
+                    this.doNextVerification();
+                });
             } else {
                 this.stopTimer();
                 this.verificationEndedCallback();
             }
-        }
-        
-        private verificationEnded() {
-            this.currentVerifyingProperty = null;
-            this.doNextVerification();
         }
     }
     
