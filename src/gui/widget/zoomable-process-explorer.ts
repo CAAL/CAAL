@@ -36,7 +36,7 @@ module GUI.Widget {
             this.setupFreezeBtn();
 
             var $pullRight = $('<div class="btn-group pull-right button-row"></div>').append(this.$freezeBtn);
-            var $buttonDiv = $('<div></div>').append(this.$zoomRange, $pullRight)
+            var $buttonDiv = $('<div class="widget-zoom-proces-explorer-toolbar"></div>').append(this.$zoomRange, $pullRight)
             $(this.root).append($buttonDiv, this.canvas);
 
             this.graphUI.bindCanvasEvents();
@@ -116,8 +116,6 @@ module GUI.Widget {
         }
 
         private drawProcess(process : CCS.Process) {
-            this.graphUI.clearAll();
-
             this.showProcess(process);
 
             var allTransitions = CCS.expandBFS(process, this.succGen, this.expandDepth);

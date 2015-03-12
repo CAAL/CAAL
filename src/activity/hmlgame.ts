@@ -1,6 +1,7 @@
 /// <reference path="../gui/project.ts" />
 /// <reference path="../gui/gui.ts" />
 /// <reference path="../gui/widget/zoomable-process-explorer.ts" />
+/// <reference path="../gui/widget/transition-table.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="activity.ts" />
@@ -79,6 +80,8 @@ module Activity {
 
         private $container : JQuery;
         private processExplorer = new GUI.Widget.ZoomableProcessExplorer();
+        private transitionTable = new GUI.Widget.TransitionTable();
+        private currentProcess = null;
 
         private project : Project;
         
@@ -105,14 +108,14 @@ module Activity {
 
         constructor(container : string) {
             this.$container = $(container); 
-            var c = this.$container;
 
             this.project = Project.getInstance();
             this.constructOptionsDom();
 
             this.$processList.on("change", () => {
                 this.loadGuiIntoConfig(this.configuration);
-                this.refresh(this.configuration);
+                this.setCurrentProcToSelected();
+                this.configure(this.configuration);
             });
             this.$formulaList.on("change", () => {
                 this.loadGuiIntoConfig(this.configuration);
@@ -120,6 +123,13 @@ module Activity {
             });
 
             $("#hml-game-main").append(this.processExplorer.getRootElement());
+            $("#hml-game-status-right").append(this.transitionTable.getRootElement());
+
+            this.transitionTable.onSelectListener = (transition => {
+                this.currentProcess = transition.targetProcess;
+                this.refresh(this.configuration);
+                this.processExplorer.focusOnProcess(transition.targetProcess);
+            });
         }
 
         onShow(configuration) {
@@ -198,19 +208,22 @@ module Activity {
             configuration.formulaId = this.getCurrentFormula();
         }
 
+        private setCurrentProcToSelected() : void {
+            this.currentProcess = this.configuration.succGen.getProcessByName(this.getCurrentProcess());
+        }
+
         private configure(configuration) {
+            //This is/should-only-be called for change in either process, formula or succ generator.
             this.configuration = configuration;
+            this.currentProcess = configuration.succGen.getProcessByName(configuration.processName);
             this.setProcesses(this.getNamedProcessList(), configuration.processName);
-            //Fix method
+            this.processExplorer.setSuccGenerator(this.configuration.succGen);
             this.refresh(configuration);
         }
 
         private refresh(configuration) {
-            var succGen = configuration.succGen,
-                processName = configuration.processName,
-                process = succGen.getProcessByName(processName);
-            this.processExplorer.setSuccGenerator(succGen);
-            this.processExplorer.exploreProcess(process);
+            this.processExplorer.exploreProcess(this.currentProcess);
+            this.transitionTable.setTransitions(this.configuration.succGen.getSuccessors(this.currentProcess.id).toArray());
         }
 
         private resize() : void {
