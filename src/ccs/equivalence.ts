@@ -336,7 +336,8 @@ module Equivalence {
                     }
                 }
             }
-            return formulaForBranch(0);
+
+            return new Traverse.HMLSimplifier().visitFormula(formulaForBranch(0));
         }
     }
 
