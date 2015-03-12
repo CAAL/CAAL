@@ -461,4 +461,97 @@ module Traverse {
             return result;
         }
     }
+
+    /*
+        This class should hold any simplications that can be done to the HML formulas.
+
+        Since simplifying conjunction and disjunction is done on construction of formulas,
+        this class currently only remove redundan taus.
+    */
+    export class HMLSimplifier implements hml.FormulaDispatchHandler<hml.Formula> {
+
+        private prevSet : hml.FormulaSet;
+
+        visit(formulaSet : hml.FormulaSet) : hml.FormulaSet {
+            this.prevSet = formulaSet;
+            return formulaSet.map(formula => formula.dispatchOn(this));
+        }
+
+        visitFormula(formula : hml.Formula) : hml.Formula {
+            var tempFormulaSet = new hml.FormulaSet();
+            tempFormulaSet.addFormula(formula);
+            tempFormulaSet = this.visit(tempFormulaSet);
+            return tempFormulaSet.getAllFormulas()[0];
+        }
+
+        dispatchDisjFormula(formula : hml.DisjFormula) {
+            var subFormulas = formula.subFormulas.map(subF => subF.dispatchOn(this));
+            return this.prevSet.newDisj(subFormulas);
+        }
+
+        dispatchConjFormula(formula : hml.ConjFormula) {
+            var subFormulas = formula.subFormulas.map(subF => subF.dispatchOn(this));
+            return this.prevSet.newConj(subFormulas);
+        }
+
+        dispatchTrueFormula(formula : hml.TrueFormula) {
+            return this.prevSet.newTrue();
+        }
+
+        dispatchFalseFormula(formula : hml.FalseFormula) {
+            return this.prevSet.newFalse();
+        }
+
+        dispatchStrongExistsFormula(formula : hml.StrongExistsFormula) {
+            var subFormula = formula.subFormula.dispatchOn(this);
+            return this.prevSet.newStrongExists(formula.actionMatcher, subFormula);
+        }
+
+        dispatchStrongForAllFormula(formula : hml.StrongForAllFormula) {
+            var subFormula = formula.subFormula.dispatchOn(this);
+            return this.prevSet.newStrongForAll(formula.actionMatcher, subFormula);
+        }
+
+        dispatchWeakExistsFormula(formula : hml.WeakExistsFormula) {
+            var subFormula = formula.subFormula.dispatchOn(this);
+            //Todo: this should probably be more robust
+            //Check if  <<X>> <<Y>> ...
+            if (subFormula instanceof hml.WeakExistsFormula) {
+                //  <<tau>> <<X>> ...
+                if (formula.actionMatcher instanceof hml.SingleActionMatcher &&
+                    formula.actionMatcher.matches(new CCS.Action("tau", false))) {
+                    return subFormula;
+                }
+            }
+            return this.prevSet.newWeakExists(formula.actionMatcher, subFormula);
+        }
+
+        dispatchWeakForAllFormula(formula : hml.WeakForAllFormula) {
+            var subFormula = formula.subFormula.dispatchOn(this);
+            //Todo: this should probably be more robust
+            //Check if  [[X]] [[Y]] ...
+            if (subFormula instanceof hml.WeakForAllFormula) {
+                //  [[tau]] [[X]] ...
+                if (formula.actionMatcher instanceof hml.SingleActionMatcher &&
+                    formula.actionMatcher.matches(new CCS.Action("tau", false))) {
+                    return subFormula;
+                }
+            }
+            return this.prevSet.newWeakForAll(formula.actionMatcher, subFormula);
+        }
+
+        dispatchMinFixedPointFormula(formula : hml.MinFixedPointFormula) {
+            var subFormula = formula.subFormula.dispatchOn(this);
+            return this.prevSet.newMinFixedPoint(formula.variable, subFormula);
+        }
+
+        dispatchMaxFixedPointFormula(formula : hml.MaxFixedPointFormula) {
+            var subFormula = formula.subFormula.dispatchOn(this);
+            return this.prevSet.newMaxFixedPoint(formula.variable, subFormula);
+        }
+
+        dispatchVariableFormula(formula : hml.VariableFormula) {
+            return this.prevSet.referVariable(formula.variable);
+        }
+    }
 }

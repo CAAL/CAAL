@@ -153,7 +153,6 @@ module HML {
 
     export class FormulaSet {
         private allFormulas = [];
-        private namedFormulas = Object.create(null);
         private undefinedVariables = [];
         private errors = [];
         private falseFormula = new FalseFormula(0);
@@ -224,10 +223,9 @@ module HML {
 
         newMinFixedPoint(variable : string, subFormula : Formula) {
             var result = new MinFixedPointFormula(this.nextId++, variable, subFormula);
-            if (this.namedFormulas[variable]) {
+            if (this.formulaByName(variable)) {
                 this.errors.push({name: "DuplicateDefinition", message: "The variable '" + variable + "' is defined multiple times."});
             } else {
-                this.namedFormulas[variable] = result;
                 this.allFormulas.push(result);
                 var undefinedIndex = this.undefinedVariables.indexOf(variable);
                 if (undefinedIndex !== -1) {
@@ -239,10 +237,9 @@ module HML {
 
         newMaxFixedPoint(variable : string, subFormula : Formula) {
             var result = new MaxFixedPointFormula(this.nextId++, variable, subFormula);
-            if (this.namedFormulas[variable]) {
+            if (this.formulaByName(variable)) {
                 this.errors.push({name: "DuplicateDefinition", message: "The variable '" + variable + "' is defined multiple times."});
             } else {
-                this.namedFormulas[variable] = result;
                 this.allFormulas.push(result);
                 var undefinedIndex = this.undefinedVariables.indexOf(variable);
                 if (undefinedIndex !== -1) {
@@ -258,7 +255,7 @@ module HML {
         }
 
         referVariable(variable : string) {
-            if (!this.namedFormulas[variable] && this.undefinedVariables.indexOf(variable) === -1) {
+            if (!this.formulaByName(variable) && this.undefinedVariables.indexOf(variable) === -1) {
                 this.undefinedVariables.push(variable);
             }
             return new VariableFormula(this.nextId++, variable);
@@ -281,16 +278,36 @@ module HML {
         }
 
         formulaByName(variable) : Formula {
-            var result = this.namedFormulas[variable];
-            return result ? result : null;
+            for (var i=0; i < this.allFormulas.length; i++) {
+                var allVariable = this.allFormulas[i].variable;
+                if (allVariable === variable) {
+                    return this.allFormulas[i];
+                }
+            }
+            return null;
         }
 
         getVariables() : string[] {
-            return Object.keys(this.namedFormulas);
+            var variables = [];
+            for (var i=0; i < this.allFormulas.length; i++) {
+                var variable = this.allFormulas[i].variable;
+                if (variable) {
+                    variables.push(variable);
+                }
+            }
+            return variables;
         }
 
-        getAllFormulas() {
+        getAllFormulas() : Formula[] {
             return this.allFormulas.slice(0);
+        }
+
+        map(fn : (formula : Formula) => Formula) : FormulaSet {
+            var newSet = new FormulaSet();
+            this.allFormulas.forEach(formula => {
+                newSet.addFormula(fn(formula));
+            });
+            return newSet;
         }
     }
 
