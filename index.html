@@ -126,14 +126,12 @@
                                     <div class="yamm-content">
                                         <div class="radio">
                                             <label>
-                                                <input name="option-successor" value="strong" type="radio" checked>
-                                                    Strong Successors (&#x2192;)
+                                                <input name="option-successor" value="strong" type="radio" checked>Strong Successors (&#x2192;)
                                             </label>
                                         </div>
                                         <div class="radio">
                                             <label>
-                                                <input name="option-successor" value="weak" type="radio">
-                                                    Weak Successors (&#x21D2;)
+                                                <input name="option-successor" value="weak" type="radio">Weak Successors (&#x21D2;)
                                             </label>
                                         </div>
                                         <div class="divider"></div>
@@ -141,6 +139,7 @@
                                             <label>Expand Depth: </label>
                                             <select id="option-depth" class="form-control">
                                                 <option>1</option>
+                                                <option>2</option>
                                                 <option>5</option>
                                                 <option selected>10</option>
                                                 <option>100</option>
@@ -149,26 +148,22 @@
                                         <div class="divider"></div>
                                         <div class="radio">
                                             <label data-tooltip="collapse-none">
-                                                <input name="option-collapse" value="none" type="radio" checked>
-                                                    No Bisimulation Collapse
+                                                <input name="option-collapse" value="none" type="radio" checked>No Bisimulation Collapse
                                         </div>
                                         <div class="radio">
                                             <label data-tooltip="collapse-strong">
-                                                <input name="option-collapse" value="strong" type="radio">
-                                                    Strong Bisimulation Collapse
+                                                <input name="option-collapse" value="strong" type="radio">Strong Bisimulation Collapse
                                             </label>
                                         </div>
                                         <div class="radio">
                                             <label data-tooltip="collapse-weak">
-                                                <input name="option-collapse" value="weak" type="radio">
-                                                    Weak Bisimulation Collapse
+                                                <input name="option-collapse" value="weak" type="radio">Weak Bisimulation Collapse
                                             </label>
                                         </div>
                                         <div class="divider"></div>
                                         <div class="checkbox">
                                             <label>
-                                                <input id="option-simplify" type="checkbox" checked>
-                                                Simplify
+                                                <input id="option-simplify" type="checkbox" checked>Simplify
                                             </label>
                                         </div>
                                     </div>
@@ -315,19 +310,25 @@
                 <div id="game-left" class="col-md-6">
                     <div style="position: relative">
                         <input id="zoom-left" data-side="left" min="1" max="3" step="0.2" value="1" type="range" />
-                        <div class="btn-group pull-right">
-                            <button id="freeze-left" type="button" class="btn btn-default btn-sm" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                        <div class="input-group">
+                            <input id="depth-left" class="form-control" value="5" type="text /">
+                            <span class="input-group-btn">
+                                <button id="freeze-left" type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                            </span>
                         </div>
                     </div>
-                    <div id="game-left-canvas">
+                    <div id="game-left-canvas" style="z-index: 10000">
                         <canvas></canvas>
                     </div>
                 </div>
                 <div id="game-right" class="col-md-6">
                     <div style="position: relative">
                         <input id="zoom-right" data-side="right" min="1" max="3" step="0.2" value="1" type="range" />
-                        <div class="btn-group pull-right">
-                            <button id="freeze-right" type="button" class="btn btn-default btn-sm" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                        <div class="input-group">
+                            <input id="depth-right" class="form-control" value="5" type="text" />
+                            <span class="input-group-btn">
+                                <button id="freeze-right" type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                            </span>
                         </div>
                     </div>
                     <div id="game-right-canvas">
