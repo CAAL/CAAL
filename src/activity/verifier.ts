@@ -371,13 +371,14 @@ module Activity {
         public editProperty(e): void {
             var property = e.data.property;
 
+            var CCSProcessList = Main.getGraph().getNamedProcesses();
+            CCSProcessList.reverse();
+
             if (property instanceof Property.Equivalence) {
                 var equivalenceForm = this.showPropertyForm("equivalence");
 
-                var processes = Main.getGraph().getNamedProcesses();
-                processes.reverse() // reverse the list since the most used processes are at the buttom.
-                this.displayProcessList(processes, equivalenceForm.firstProcessList, property.getFirstProcess());
-                this.displayProcessList(processes, equivalenceForm.secondProcessList, property.getSecondProcess());
+                this.displayProcessList(CCSProcessList, equivalenceForm.firstProcessList, property.getFirstProcess());
+                this.displayProcessList(CCSProcessList, equivalenceForm.secondProcessList, property.getSecondProcess());
 
                 if (property.getFirstProcess() !== equivalenceForm.firstProcessList.val()){
                     property.setFirstProcess(equivalenceForm.firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
@@ -403,7 +404,7 @@ module Activity {
             } else if (property instanceof Property.HML) {
                 var hmlForm = this.showPropertyForm("hml");
 
-                this.displayProcessList(Main.getGraph().getNamedProcesses(), hmlForm.processList, property.getProcess());
+                this.displayProcessList(CCSProcessList, hmlForm.processList, property.getProcess());
 
                 if (property.getProcess() !== hmlForm.processList.val()) {
                     property.setProcess(hmlForm.processList.val()); // Re-set the chosen process, since the process might have been deleted
@@ -427,9 +428,6 @@ module Activity {
                 });
             } else if (property instanceof Property.DistinguishingFormula){
                 var distinguishingForm = this.showPropertyForm("distinguishing");
-
-                var CCSProcessList = Main.getGraph().getNamedProcesses();
-                CCSProcessList.reverse();
 
                 this.displayProcessList(CCSProcessList, distinguishingForm.firstProcessList, property.getFirstProcess());
                 this.displayProcessList(CCSProcessList, distinguishingForm.secondProcessList, property.getSecondProcess());
