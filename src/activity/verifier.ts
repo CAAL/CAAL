@@ -140,12 +140,9 @@ module Activity {
         }
 
         public onHide() : void {
-            $("#equivalence-first-process").empty(); // empty the process selector (Equivalence)
-            $("#equivalence-second-process").empty(); // empty the process selector (Equivalence)
-            $("#hml-process").empty(); // empty the process selector (HML)
-            
-            $("#equivalence").hide(); // hide the equivalence box(process selector), since it might have the wrong data 
-            $("#model-checking").hide(); // hide the model-checking(HMl process selector) box, since it might have the wrong data
+            for (var propertyForm in this.propertyForms) {
+                this.propertyForms[propertyForm].container.hide();
+            }
         }
 
         public displayProcessList(processes: string[], list: JQuery, selected: string): void {
