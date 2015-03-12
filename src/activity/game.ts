@@ -1,3 +1,4 @@
+/// <reference path="../../lib/util.d.ts" />
 /// <reference path="../gui/project.ts" />
 /// <reference path="../gui/gui.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
@@ -18,6 +19,7 @@ module Activity {
         private dgGame : DgGame;
         private fullscreen : Fullscreen;
         private tooltip : TooltipNotation;
+        private notationVisitor : Traverse.CCSNotationVisitor;
         private $gameType : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
@@ -44,6 +46,7 @@ module Activity {
             this.project = Project.getInstance();
             this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(null, null));
             this.tooltip = new TooltipNotation($("#game-status"));
+            this.notationVisitor = new Traverse.CCSNotationVisitor();
 
             this.$gameType = $("#game-type");
             this.$leftProcessList = $("#game-left-process");
@@ -152,6 +155,7 @@ module Activity {
             if (this.changed || configuration) {
                 this.changed = false;
                 this.graph = this.project.getGraph();
+                this.notationVisitor.clearCache();
                 this.displayOptions();
                 this.newGame(true, true, configuration);
             }
@@ -167,6 +171,24 @@ module Activity {
                 if (this.rightGraph.getProcessDataObject(processId.toString()).status === "unexpanded")
                     this.draw(this.graph.processById(processId), this.rightGraph, this.$rightDepth.val());
             });
+
+            this.leftGraph.setHoverOnListener((processId) => {
+                var process = this.graph.processById(processId);
+                console.log(this.labelFor(process) + " = " + this.notationVisitor.visit(process));
+            });
+
+            this.rightGraph.setHoverOnListener((processId) => {
+                var process = this.graph.processById(processId);
+                console.log(this.labelFor(process) + " = " + this.notationVisitor.visit(process));
+            });
+
+            this.leftGraph.setHoverOutListener(() => {
+                this.leftGraph.clearHover();
+            });
+
+            this.rightGraph.setHoverOutListener(() => {
+                this.rightGraph.clearHover();
+            });
             
             this.leftGraph.bindCanvasEvents();
             this.rightGraph.bindCanvasEvents();
@@ -179,6 +201,10 @@ module Activity {
 
             this.leftGraph.clearOnSelectListener();
             this.rightGraph.clearOnSelectListener();
+            this.leftGraph.clearHoverOnListener();
+            this.rightGraph.clearHoverOnListener();
+            this.leftGraph.clearHoverOutListener();
+            this.rightGraph.clearHoverOutListener();
 
             this.leftGraph.unbindCanvasEvents();
             this.rightGraph.unbindCanvasEvents();
@@ -312,10 +338,8 @@ module Activity {
             var rightData = this.rightGraph.getProcessDataObject(configuration.right.id.toString());
 
             if (leftData && leftData.status === "unexpanded") {
-                console.log("left");
                 this.draw(configuration.left, this.leftGraph, this.$leftDepth.val());
             } else if (rightData && rightData.status === "unexpanded") {
-                console.log("right");
                 this.draw(configuration.right, this.rightGraph, this.$rightDepth.val());
             }
 
