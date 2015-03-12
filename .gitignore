@@ -17,5 +17,7 @@ lib/ccs.d.ts
 lib/util.js
 lib/util.d.ts
 lib/workers
+lib/data.d.ts
+lib/data.js
 *.js.map
 release.tar.gz
