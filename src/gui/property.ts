@@ -567,7 +567,8 @@ module Property {
         }
 
         public getDescription(): string {
-            return "Distinguishing formula for: " + this.firstHMLProperty.getProcess() + " and " + this.secondHMLProperty.getProcess();
+            var type = (this.succGenType === "strong") ? "Strong" : "Weak"; 
+            return type + " distinguishing formula for: " + this.firstHMLProperty.getProcess() + " and " + this.secondHMLProperty.getProcess();
         }
 
         public toJSON(): any {
