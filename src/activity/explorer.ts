@@ -21,8 +21,8 @@ module Activity {
         private tooltip : TooltipNotation;
         private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
         private $transitionsTable : JQuery
-        private freezeBtn : any;
-        private saveBtn : any;
+        private $freeze : JQuery;
+        private $save : JQuery;
         private canvas : HTMLCanvasElement;
         private renderer: Renderer;
         private uiGraph: GUI.ProcessGraphUI;
@@ -34,22 +34,21 @@ module Activity {
             this.project = Project.getInstance();
             this.fullscreen = new Fullscreen(this.$container.find("#fullscreen-container")[0], this.$container.find("#explorer-fullscreen-btn"), () => this.resize());
             this.$transitionsTable = $("#explorer-transitions").find("tbody");
-            this.freezeBtn = $("#explorer-freeze-btn")[0];
-            this.saveBtn = $("#explorer-save-btn")[0];
+            this.$freeze = $("#explorer-freeze");
+            this.$save = $("#explorer-save");
             this.canvas = <HTMLCanvasElement> $("#explorer-canvas").find("canvas")[0];
             this.renderer = new Renderer(this.canvas);
             this.uiGraph = new GUI.ArborGraph(this.renderer);
 
             this.tooltip = new TooltipNotation(this.$transitionsTable);
             this.htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
-            
-            $(this.freezeBtn).on("click", () => this.toggleFreeze());
-            $(this.saveBtn).on("click", () => this.saveCanvas(this.getOptions().process));
 
             this.$transitionsTable
                 .on("click", "tr", this.onTransitionTableRowClick.bind(this))
                 .on("mouseenter", "tr", this.onTransitionTableRowHover.bind(this, true))
                 .on("mouseleave", "tr", this.onTransitionTableRowHover.bind(this, false));
+
+            this.$freeze.on("click", (e) => this.toggleFreeze(!this.$freeze.data("frozen")));
 
             // Prevent options menu from closing when pressing form elements.
             $(document).on('click', '.yamm .dropdown-menu', e => e.stopPropagation());
@@ -80,41 +79,22 @@ module Activity {
         public onShow(configuration? : any) : void {
             $(window).on("resize", () => this.resize());
             this.resize();
-            
+
             this.fullscreen.onShow();
-            
+
             if (this.changed) {
                 this.changed = false;
-
                 this.graph = this.project.getGraph();
-
-                var processes = this.graph.getNamedProcesses().reverse();
-                var list = $("#explorer-process-list > select").empty();
-
-                for (var i = 0; i < processes.length; i++) {
-                    list.append($("<option></option>").append(processes[i]));
-                }
-
+                this.displayOptions();
                 this.draw();
             }
             
             this.tooltip.setGraph(this.graph);
 
             this.uiGraph.bindCanvasEvents();
-
-            this.uiGraph.setOnSelectListener((processId) => {
-                this.expand(this.graph.processById(processId), this.expandDepth);
-            });
-
-            this.uiGraph.setHoverOnListener((processId) => {
-                this.uiGraph.setHover(processId);
-            });
-
-            this.uiGraph.setHoverOutListener(() => {
-                this.uiGraph.clearHover();
-            });
-
-            this.uiGraph.unfreeze();
+            this.uiGraph.setOnSelectListener((processId) => this.expand(this.graph.processById(processId), this.expandDepth));
+            this.uiGraph.setHoverOnListener((processId) => this.uiGraph.setHover(processId));
+            this.uiGraph.setHoverOutListener(() => this.uiGraph.clearHover());
         }
 
         public onHide() : void {
@@ -126,8 +106,15 @@ module Activity {
             this.uiGraph.clearOnSelectListener();
             this.uiGraph.clearHoverOnListener();
             this.uiGraph.clearHoverOutListener();
+        }
 
-            this.uiGraph.freeze();
+        private displayOptions() : void {
+            var processes = this.graph.getNamedProcesses().reverse();
+            var list = $("#explorer-process-list > select").empty();
+
+            for (var i = 0; i < processes.length; i++) {
+                list.append($("<option></option>").append(processes[i]));
+            }
         }
 
         private getOptions() : any {
@@ -146,7 +133,7 @@ module Activity {
             var options = this.getOptions();
             this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.successor, reduce: options.simplify});
 
-            if (options.collapse != "none") {
+            if (options.collapse !== "none") {
                 var otherSuccGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
                 var initialProcess = this.succGenerator.getProcessByName(options.process);
                 var collapse = Equivalence.getBisimulationCollapse(this.succGenerator, otherSuccGenerator, initialProcess.id, initialProcess.id);
@@ -157,22 +144,27 @@ module Activity {
             this.expand(this.succGenerator.getProcessByName(options.process), options.depth);
         }
 
-        private saveCanvas(process : string) : void {
-            $(this.saveBtn).attr("href", this.canvas.toDataURL("image/png"));
-            $(this.saveBtn).attr("download", process + ".png");
+        private saveCanvas() : void {
+            this.$save.attr("href", this.canvas.toDataURL("image/png"));
+            this.$save.attr("download", this.getOptions().process + ".png");
         }
 
         private clear() : void {
             this.uiGraph.clearAll();
         }
 
-        private toggleFreeze() : void {
-            var $freezeBtn = $(this.freezeBtn),
-                isFreezing = $freezeBtn.text() === "Unfreeze",
-                newValueText = isFreezing ? "Freeze" : "Unfreeze",
-                doFreeze = !isFreezing;
-            $freezeBtn.text(newValueText);
-            doFreeze ? this.uiGraph.freeze() : this.uiGraph.unfreeze();
+        private toggleFreeze(freeze : boolean) : void {
+            var icon = this.$freeze.find("i");
+
+            if (freeze) {
+                this.uiGraph.freeze();
+                icon.replaceWith("<i class='fa fa-lock fa-lg'></i>");
+            } else {
+                this.uiGraph.unfreeze();
+                icon.replaceWith("<i class='fa fa-unlock-alt fa-lg'></i>");
+            }
+
+            this.$freeze.data("frozen", freeze);
         }
 
         private showProcess(process : CCS.Process) : void {
@@ -185,35 +177,29 @@ module Activity {
         }
 
         private expand(process : CCS.Process, depth) : void {
-            if (!process) return;
-
             var allTransitions = this.expandBFS(process, depth);
-            
-            var isExpanded = false;
-            if(this.uiGraph.getProcessDataObject(process.id)){
-                isExpanded = this.uiGraph.getProcessDataObject(process.id).status === 'expanded' ? true : false;
+            var data = this.uiGraph.getProcessDataObject(process.id.toString());
+
+            if (!data || data.status === "unexpanded") {
+                this.toggleFreeze(false);
+
+                for (var fromId in allTransitions) {
+                    var fromProcess = this.graph.processById(fromId);
+                    this.showProcess(fromProcess);
+                    this.showProcessAsExplored(fromProcess);
+                    var groupedByTargetProcessId = ArrayUtil.groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
+
+                    Object.keys(groupedByTargetProcessId).forEach(strProcId => {
+                        var group = groupedByTargetProcessId[strProcId],
+                            datas = group.map(t => { return {label: t.action.toString()}; }),
+                            numId = parseInt(strProcId, 10);
+                        this.showProcess(this.graph.processById(numId));
+                        this.uiGraph.showTransitions(fromProcess.id, numId, datas);
+                    });
+                }
             }
 
             this.updateStatusAreaTransitions(allTransitions[process.id]);
-
-            for (var fromId in allTransitions) {
-                var fromProcess = this.graph.processById(fromId);
-                this.showProcess(fromProcess);
-                this.showProcessAsExplored(fromProcess);
-                var groupedByTargetProcessId = ArrayUtil.groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
-
-                Object.keys(groupedByTargetProcessId).forEach(strProcId => {
-                    var group = groupedByTargetProcessId[strProcId],
-                        datas = group.map(t => { return {label: t.action.toString()}; }),
-                        numId = parseInt(strProcId, 10);
-                    this.showProcess(this.graph.processById(numId));
-                    this.uiGraph.showTransitions(fromProcess.id, numId, datas);
-                });
-            }
-
-            if (!isExpanded) {
-                $(this.freezeBtn).text("Freeze");
-            }
             this.uiGraph.setSelected(process.id.toString());
         }
 
@@ -254,7 +240,7 @@ module Activity {
                 row.append(action, name, target);
                 row.attr("data-target-id", t.targetProcess.id);
                 this.$transitionsTable.append(row);
-            });          
+            });
         }
 
         private onTransitionTableRowHover(entering : boolean, event) : void {
