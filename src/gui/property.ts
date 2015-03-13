@@ -8,17 +8,14 @@ module Property {
     export class Property {
         private static counter : number = 0;
         private id : number;
-        public status : PropertyStatus;
-        public worker;
-        public statistics = {elapsedTime: null};
-        public onVerify : Function;
+        protected status : PropertyStatus;
+        protected worker;
+        private statistics = {elapsedTime: null};
         //public onStatusHover : Function = () => {return""}; /*it is not allowed to be null?*/
-        public onToolMenuClick : Function;
-        public onPlayGame : Function;
         protected tdStatus;
-        protected clockInterval;
-        protected startTime;
-        protected error : string = "";
+        private clockInterval;
+        private startTime;
+        private error : string = "";
 
         public toolMenuOptions = {
             "edit":{
@@ -606,8 +603,8 @@ module Property {
             this.firstHMLProperty.setFormula(formula);
             this.secondHMLProperty.setFormula(formula);
             
-            this.childPropertiesToVerify.push(this.firstHMLProperty):
-            this.childPropertiesToVerify.push(this.secondHMLProperty):
+            this.childPropertiesToVerify.push(this.firstHMLProperty);
+            this.childPropertiesToVerify.push(this.secondHMLProperty);
             
             this.doNextVerification();
         }
