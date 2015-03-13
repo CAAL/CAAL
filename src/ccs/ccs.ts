@@ -437,12 +437,15 @@ module CCS {
         Always modifies inplace. Clone gives shallow clone
     */
     export class Transition {
+
         constructor(public action : Action, public targetProcess : Process) {
         }
+
         equals(other : Transition) {
             return (this.action.equals(other.action) &&
                     this.targetProcess.id == other.targetProcess.id);
         }
+
         toString() {
             if (this.targetProcess instanceof NamedProcess) {
                 return this.action.toString() + "->" + (<NamedProcess>this.targetProcess).name;
@@ -452,9 +455,9 @@ module CCS {
     }
 
     export class TransitionSet {
-        private transitions = [];
+        private transitions : Transition[] = [];
 
-        constructor(transitions?) {
+        constructor(transitions? : Transition[]) {
             if (transitions) {
                 this.addAll(transitions);
             }
@@ -471,7 +474,7 @@ module CCS {
             return this.indexOf(transition) !== -1;
         }
 
-        private indexOf(transition) : number {
+        private indexOf(transition : Transition) : number {
             var allCurrent = this.transitions;
             for (var i = 0, max = allCurrent.length; i < max; i++){
                 if (transition.equals(allCurrent[i])) return i;
@@ -503,7 +506,7 @@ module CCS {
                 allCurrent = this.transitions,
                 i = 0;
             while (i < count) {
-                if (labels.contains(allCurrent[i].action.label)) {
+                if (labels.contains(allCurrent[i].action.getLabel())) {
                     allCurrent[i] = allCurrent[--count];
                 } else {
                     ++i;

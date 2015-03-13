@@ -140,12 +140,9 @@ module Activity {
         }
 
         public onHide() : void {
-            $("#equivalence-first-process").empty(); // empty the process selector (Equivalence)
-            $("#equivalence-second-process").empty(); // empty the process selector (Equivalence)
-            $("#hml-process").empty(); // empty the process selector (HML)
-            
-            $("#equivalence").hide(); // hide the equivalence box(process selector), since it might have the wrong data 
-            $("#model-checking").hide(); // hide the model-checking(HMl process selector) box, since it might have the wrong data
+            for (var propertyForm in this.propertyForms) {
+                this.propertyForms[propertyForm].container.hide();
+            }
         }
 
         public displayProcessList(processes: string[], list: JQuery, selected: string): void {
@@ -291,10 +288,18 @@ module Activity {
                     property = new Property.WeakBisimulation({firstProcess: "", secondProcess: ""});
                     break;
                 case "strongtraceinclusion":
-                    property = new Property.StrongTraceInclusion({firstProcess: "", secondProcess: ""});
+                    property = new Property.StrongTraceInclusion(
+                        {
+                            firstHMLProperty: {process: "", formula: ""},
+                            secondHMLProperty: {process: "", formula: ""}
+                        });
                     break;
                 case "weaktraceinclusion":
-                    property = new Property.WeakTraceInclusion({firstProcess: "", secondProcess: ""});
+                    property = new Property.WeakTraceInclusion(
+                        {
+                            firstHMLProperty: {process: "", formula: ""},
+                            secondHMLProperty: {process: "", formula: ""}
+                        });
                     break;
                 case "strongtraceeq":
                     property = new Property.StrongTraceEq({firstProcess: "", secondProcess: ""});
@@ -306,7 +311,7 @@ module Activity {
                     property = new Property.HML({process: "", formula: ""});
                     break;
                 case "distinguishing-strong":
-                    property = new Property.DistinguishingFormula(
+                    property = new Property.DistinguishingBisimulationFormula(
                         {
                             firstHMLProperty: {process: "", formula: ""}, 
                             secondHMLProperty: {process: "", formula: ""},
@@ -314,7 +319,7 @@ module Activity {
                         });
                     break;
                 case "distinguishing-weak":
-                    property = new Property.DistinguishingFormula(
+                    property = new Property.DistinguishingBisimulationFormula(
                         {
                             firstHMLProperty: {process: "", formula: ""}, 
                             secondHMLProperty: {process: "", formula: ""},
@@ -363,13 +368,14 @@ module Activity {
         public editProperty(e): void {
             var property = e.data.property;
 
+            var CCSProcessList = Main.getGraph().getNamedProcesses();
+            CCSProcessList.reverse();
+
             if (property instanceof Property.Equivalence) {
                 var equivalenceForm = this.showPropertyForm("equivalence");
 
-                var processes = Main.getGraph().getNamedProcesses();
-                processes.reverse() // reverse the list since the most used processes are at the buttom.
-                this.displayProcessList(processes, equivalenceForm.firstProcessList, property.getFirstProcess());
-                this.displayProcessList(processes, equivalenceForm.secondProcessList, property.getSecondProcess());
+                this.displayProcessList(CCSProcessList, equivalenceForm.firstProcessList, property.getFirstProcess());
+                this.displayProcessList(CCSProcessList, equivalenceForm.secondProcessList, property.getSecondProcess());
 
                 if (property.getFirstProcess() !== equivalenceForm.firstProcessList.val()){
                     property.setFirstProcess(equivalenceForm.firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
@@ -395,7 +401,7 @@ module Activity {
             } else if (property instanceof Property.HML) {
                 var hmlForm = this.showPropertyForm("hml");
 
-                this.displayProcessList(Main.getGraph().getNamedProcesses(), hmlForm.processList, property.getProcess());
+                this.displayProcessList(CCSProcessList, hmlForm.processList, property.getProcess());
 
                 if (property.getProcess() !== hmlForm.processList.val()) {
                     property.setProcess(hmlForm.processList.val()); // Re-set the chosen process, since the process might have been deleted
@@ -419,9 +425,6 @@ module Activity {
                 });
             } else if (property instanceof Property.DistinguishingFormula){
                 var distinguishingForm = this.showPropertyForm("distinguishing");
-
-                var CCSProcessList = Main.getGraph().getNamedProcesses();
-                CCSProcessList.reverse();
 
                 this.displayProcessList(CCSProcessList, distinguishingForm.firstProcessList, property.getFirstProcess());
                 this.displayProcessList(CCSProcessList, distinguishingForm.secondProcessList, property.getSecondProcess());

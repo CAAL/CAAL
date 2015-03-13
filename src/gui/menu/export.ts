@@ -12,7 +12,9 @@ class Export extends MenuItem {
         this.doc.fontSize(26).font("Helvetica").fillColor("black").text(this.project.getTitle(), {align: "center"});
         this.doc.moveDown();
 
-        var splitted = this.project.getCCS().split("\n");
+        this.project.setCCS(this.project.getCCS().replace("\r", "")); // remove return characters.
+
+        var splitted = this.project.getCCS().split(/\n/);
 
         for(var line in splitted) {
             this.addLine(splitted[line]);

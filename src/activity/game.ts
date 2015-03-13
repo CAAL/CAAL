@@ -261,7 +261,7 @@ module Activity {
                 options = this.getOptions();
             }
 
-            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
+            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
 
             if (drawLeft || !this.leftGraph.getNode(this.succGen.getProcessByName(options.leftProcess).id.toString())) {
                 this.clear(this.leftGraph);
@@ -932,12 +932,12 @@ module Activity {
         
         protected prepareAttack(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, true);
-            this.gameLog.println("Pick a transition on left or right.", "<p class='game-prompt'>");
+            this.gameLog.println("Pick a transition on the left or the right.", "<p class='game-prompt'>");
         }
         
         protected prepareDefend(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, false);
-            this.gameLog.println("Pick a transition on " + ((game.getLastMove() === Move.Left) ? "right." : "left."), "<p class='game-prompt'>");
+            this.gameLog.println("Pick a transition on the " + ((game.getLastMove() === Move.Left) ? "right." : "left."), "<p class='game-prompt'>");
         }
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {

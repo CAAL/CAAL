@@ -22,6 +22,11 @@ var utilTargetFile = _P('lib/util.js');
 var utilSourceFiles = getFilesMatchingGlob('src/util/*.ts');
 createTscFileTask(utilTargetFile, utilSourceFiles, {definitionFile: true}, 'Compile ' + utilTargetFile);
 
+// data.js
+var dataTargetFile = _P('lib/data.js');
+var dataSourceFiles = getFilesMatchingGlob('src/data/*.ts');
+createTscFileTask(dataTargetFile, dataSourceFiles, {definitionFile: true}, 'Compile ' + dataTargetFile);
+
 // ccs.js
 var ccsTargetFile = _P('lib/ccs.js');
 var ccsSourceFiles = new jake.FileList();
@@ -38,6 +43,7 @@ task('ace-integration', [ccsTargetFile, ccsGrammar, hmlGrammar], function () {
     jake.mkdirP('modules/ace/lib/ace/mode/ccs');
     var moduleHeader = 'define(function(require, exports, module) {\n';
         toWrap = [
+            {source: dataTargetFile, header: moduleHeader, target: _P('modules/ace/lib/ace/mode/ccs/data.js'), footer: '\nmodule.exports.MapUtil = MapUtil;\nmodule.exports.SetUtil = SetUtil; });'},
             {source: utilTargetFile, header: moduleHeader, target: _P('modules/ace/lib/ace/mode/ccs/util.js'), footer: '\nmodule.exports.ArrayUtil = ArrayUtil; });'},
             {source: ccsTargetFile, header: moduleHeader + 'var ArrayUtil = require("./util").ArrayUtil;\n', target: _P('modules/ace/lib/ace/mode/ccs/ccs.js'), footer: '\nmodule.exports.CCS = CCS; module.exports.HML = HML; });'},
             {source: ccsGrammar, header: moduleHeader, target: _P('modules/ace/lib/ace/mode/ccs/ccs_grammar.js'), footer: '\nmodule.exports.CCSParser = CCSParser; });'},
@@ -61,7 +67,7 @@ createTscFileTask(mainTargetFile, mainSourceFiles, {definitionFile: true, source
 
 task('grammars', [ccsGrammar, hmlGrammar]);
 
-task('all', [utilTargetFile, 'grammars', ccsTargetFile, 'ace', workerVerifier, mainTargetFile], function() {
+task('all', [dataTargetFile, utilTargetFile, 'grammars', ccsTargetFile, 'ace', workerVerifier, mainTargetFile], function() {
     console.log('Done Building');
 });
 
