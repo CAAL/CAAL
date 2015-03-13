@@ -520,8 +520,7 @@ module Equivalence {
 
     export function isTraceIncluded(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) : boolean {
         var traceDG = new TraceDG(leftProcessId, rightProcessId, attackSuccGen);
-        // var marking = dg.liuSmolkaLocal2(0, traceDG);
-        var marking = dg.solveDgGlobalLevel(traceDG); //TODO use local with level
+        var marking = dg.liuSmolkaLocal2(0, traceDG);
         traceDG.getDistinguishingFormula(marking);
         return marking.getMarking(0) === marking.ZERO;    
     }

@@ -318,9 +318,22 @@ module DependencyGraph {
         getLevel(any) : number;
     }
 
-    export function liuSmolkaLocal2(m : DgNodeId, graph : PartialDependencyGraph) : any {
+    export function liuSmolkaLocal2(m : DgNodeId, graph : PartialDependencyGraph) : LevelMarking {
         var S_ZERO = 1, S_ONE = 2, S_BOTTOM = 3;
 
+        var Level = (function () {
+            var a = {};
+            var o = {
+                get: function(k) {
+                    return a[k] || Infinity;
+                },
+                set: function(k, level) {
+                    a[k] = level;
+                }
+            };
+            return o;
+        }());
+        
         // A[k]
         var A = (function () {
             var a = {};
@@ -377,16 +390,26 @@ module DependencyGraph {
             var k = next[0];
             var l = next[1];
             if (A.get(k) === S_ZERO) {
+                
+                var bestLevel : number = Level.get(k);
+                
                 if (l.length > 0) {
                     var headL = l[l.length-1];
                     while (l.length > 0 && A.get(headL) === S_ONE) {
-                        l.pop();
+                        var v_prime = l.pop();
                         headL = l[l.length-1];
+                        
+                        var level = Level.get(v_prime) + 1;
+                        if (level < bestLevel)
+                            bestLevel = level;
                     }
                 }
                 if (l.length === 0) {
                     A.set(k, S_ONE);
                     W = W.concat(D.get(k));
+                    
+                    if (bestLevel === Infinity) bestLevel = 1;
+                    Level.set(k, bestLevel);
                 }
                 else if (A.get(headL) === S_ZERO) {
                     D.add(headL, [k, l]);
@@ -402,6 +425,9 @@ module DependencyGraph {
         return {
             getMarking: function(dgNodeId : DgNodeId) {
                 return A.get(dgNodeId);
+            },
+            getLevel: function(dgNodeId : DgNodeId) {
+                return Level.get(dgNodeId);
             },
             ZERO: S_ZERO,
             ONE: S_ONE,
