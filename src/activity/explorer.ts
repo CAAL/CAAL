@@ -17,10 +17,12 @@ module Activity {
         private changed: boolean;
         private graph : CCS.Graph;
         private succGenerator : CCS.SuccessorGenerator;
+        private selectedProcess : CCS.Process;
         private fullscreen : Fullscreen;
         private tooltip : TooltipNotation;
         private htmlNotationVisitor : Traverse.TooltipHtmlCCSNotationVisitor;
         private $transitionsTable : JQuery
+        private $zoom : JQuery;
         private $freeze : JQuery;
         private $save : JQuery;
         private canvas : HTMLCanvasElement;
@@ -32,8 +34,9 @@ module Activity {
             super(container, button);
 
             this.project = Project.getInstance();
-            this.fullscreen = new Fullscreen(this.$container.find("#fullscreen-container")[0], this.$container.find("#explorer-fullscreen-btn"), () => this.resize());
+            this.fullscreen = new Fullscreen(this.$container.find("#fullscreen-container")[0], this.$container.find("#explorer-fullscreen-btn"), () => this.resize(this.$zoom.val()));
             this.$transitionsTable = $("#explorer-transitions").find("tbody");
+            this.$zoom = $("#explorer-zoom");
             this.$freeze = $("#explorer-freeze");
             this.$save = $("#explorer-save");
             this.canvas = <HTMLCanvasElement> $("#explorer-canvas").find("canvas")[0];
@@ -47,6 +50,13 @@ module Activity {
                 .on("click", "tr", this.onTransitionTableRowClick.bind(this))
                 .on("mouseenter", "tr", this.onTransitionTableRowHover.bind(this, true))
                 .on("mouseleave", "tr", this.onTransitionTableRowHover.bind(this, false));
+
+            // Use onchange instead of oninput for IE.
+            if (navigator.userAgent.indexOf("MSIE ") > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
+                this.$zoom.on("change", () => this.resize(this.$zoom.val()));
+            } else {
+                this.$zoom.on("input", () => this.resize(this.$zoom.val()));
+            }
 
             this.$freeze.on("click", (e) => this.toggleFreeze(!this.$freeze.data("frozen")));
 
@@ -77,8 +87,7 @@ module Activity {
         }
 
         public onShow(configuration? : any) : void {
-            $(window).on("resize", () => this.resize());
-            this.resize();
+            $(window).on("resize", () => this.resize(this.$zoom.val()));
 
             this.fullscreen.onShow();
 
@@ -128,20 +137,26 @@ module Activity {
         }
 
         private draw() : void {
+            this.$zoom.val("1");
+            this.resize(1);
+
             this.clear();
 
             var options = this.getOptions();
+
             this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.successor, reduce: options.simplify});
+
+            var process = this.succGenerator.getProcessByName(options.process);
+            this.selectedProcess = process;
 
             if (options.collapse !== "none") {
                 var otherSuccGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
-                var initialProcess = this.succGenerator.getProcessByName(options.process);
-                var collapse = Equivalence.getBisimulationCollapse(this.succGenerator, otherSuccGenerator, initialProcess.id, initialProcess.id);
+                var collapse = Equivalence.getBisimulationCollapse(this.succGenerator, otherSuccGenerator, process.id, process.id);
                 this.succGenerator = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
             }
 
             this.htmlNotationVisitor.clearCache();
-            this.expand(this.succGenerator.getProcessByName(options.process), options.depth);
+            this.expand(process, options.depth);
         }
 
         private saveCanvas() : void {
@@ -255,7 +270,10 @@ module Activity {
             var targetId = $(e.currentTarget).data("targetId");
 
             if (targetId) {
-                this.expand(this.graph.processById(targetId), this.expandDepth);
+                var process = this.graph.processById(targetId);
+                this.selectedProcess = process;
+                this.expand(process, this.expandDepth);
+                this.centerProcess(process);
                 this.uiGraph.clearHover();
             }
         }
@@ -264,7 +282,14 @@ module Activity {
             this.uiGraph.getProcessDataObject(process.id).status = "expanded";
         }
 
-        private resize() : void {
+        private centerProcess(process : CCS.Process) : void {
+            var $container = $("#explorer-canvas");
+            var position = this.uiGraph.getPosition(process.id.toString());
+            $container.scrollLeft(position.x - ($container.width() / 2));
+            $container.scrollTop(position.y - ($container.height() / 2));
+        }
+
+        private resize(zoom : number) : void {
             var $container = $("#explorer-canvas");
 
             var offsetTop = $container.offset().top;
@@ -277,10 +302,19 @@ module Activity {
 
             $container.height(height);
 
-            this.canvas.width = width;
-            this.canvas.height = height; // Minimum height 265px.
+            this.canvas.width = width * zoom;
+            this.canvas.height = height * zoom; // Minimum height 265px.
 
-            this.renderer.resize(width, height);
+            this.renderer.resize(this.canvas.width, this.canvas.height);
+
+            if (zoom > 1) {
+                $("#explorer-main .input-group").css("right", 30);
+                $container.css("overflow", "auto");
+                this.centerProcess(this.selectedProcess);
+            } else {
+                $("#explorer-main .input-group").css("right", 10);
+                $container.css("overflow", "hidden");
+            }
         }
     }
 }
