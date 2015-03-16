@@ -19,6 +19,7 @@ module Activity {
         private propsToVerify = [];
         private startTime;
         private propertyForms = {};
+        private formulaEditor : any;
 
         constructor(container: string, button: string) {
             super(container, button);
@@ -56,7 +57,21 @@ module Activity {
                 enableBasicAutocompletion: true,
                 showPrintMargin: false,
                 fontSize: 14,
+                fontFamily: "Inconsolata"
+            });
+
+            this.formulaEditor = ace.edit("hml-formula");
+            this.formulaEditor.setTheme("ace/theme/crisp");
+            this.formulaEditor.getSession().setMode("ace/mode/hml");
+            this.formulaEditor.getSession().setUseWrapMode(true);
+            this.formulaEditor.setOptions({
+                enableBasicAutocompletion: true,
+                showPrintMargin: false,
+                fontSize: 14,
                 fontFamily: "Inconsolata",
+                showLineNumbers: false,
+                minLines: 1,
+                maxLines: 1
             });
 
             this.propertyForms = 
@@ -290,15 +305,15 @@ module Activity {
                 case "strongtraceinclusion":
                     property = new Property.StrongTraceInclusion(
                         {
-                            firstHMLProperty: {process: "", formula: ""},
-                            secondHMLProperty: {process: "", formula: ""}
+                            firstHMLProperty: {process: "", topFormula: "", definitions: ""},
+                            secondHMLProperty: {process: "", topFormula: "", definitions: ""}
                         });
                     break;
                 case "weaktraceinclusion":
                     property = new Property.WeakTraceInclusion(
                         {
-                            firstHMLProperty: {process: "", formula: ""},
-                            secondHMLProperty: {process: "", formula: ""}
+                            firstHMLProperty: {process: "", topFormula: "", definitions: ""}, 
+                            secondHMLProperty: {process: "", topFormula: "", definitions: ""}
                         });
                     break;
                 case "strongtraceeq":
@@ -308,21 +323,21 @@ module Activity {
                     property = new Property.WeakTraceEq({firstProcess: "", secondProcess: ""});
                     break;
                 case "hml":
-                    property = new Property.HML({process: "", formula: ""});
+                    property = new Property.HML({process: "", topFormula: "", definitions: ""});
                     break;
                 case "distinguishing-strong":
                     property = new Property.DistinguishingFormula(
                         {
-                            firstHMLProperty: {process: "", formula: ""}, 
-                            secondHMLProperty: {process: "", formula: ""},
+                            firstHMLProperty: {process: "", topFormula: "", definitions: ""}, 
+                            secondHMLProperty: {process: "", topFormula: "", definitions: ""},
                             succGenType: "strong"
                         });
                     break;
                 case "distinguishing-weak":
                     property = new Property.DistinguishingFormula(
                         {
-                            firstHMLProperty: {process: "", formula: ""}, 
-                            secondHMLProperty: {process: "", formula: ""},
+                            firstHMLProperty: {process: "", topFormula: "", definitions: ""}, 
+                            secondHMLProperty: {process: "", topFormula: "", definitions: ""},
                             succGenType: "weak"
                         });
                     break;
@@ -415,11 +430,21 @@ module Activity {
                 });
 
                 this.editor.removeAllListeners("change");
-                this.editor.setValue(property.getFormula(), 1);
+                this.formulaEditor.removeAllListeners("change");
+                this.editor.setValue(property.getDefinitions(), 1);
+                this.formulaEditor.setValue(property.getTopFormula(), 1);
+
                 this.updateHeight();
                 this.editor.focus();
+
                 this.editor.on("change", () => {
-                    property.setFormula(this.editor.getValue());
+                    property.setDefinitions(this.editor.getValue());
+                    this.displayProperties();
+                    this.updateHeight();
+                });
+
+                this.formulaEditor.on("change", () => {
+                    property.setTopFormula(this.formulaEditor.getValue());
                     this.displayProperties();
                     this.updateHeight();
                 });
@@ -495,19 +520,30 @@ module Activity {
             properties.forEach((property) => this.propsToVerify.push(property));
         }
         
+        private updateHeightForEditor(editor, id) : void {
+            var newHeight = editor.getSession().getScreenLength() * editor.renderer.lineHeight + editor.renderer.scrollBar.getWidth();
+            $("#" + id).height(newHeight.toString() + "px");
+            $("#" + id + "-section").height(newHeight.toString() + "px");
+            editor.resize();
+        }
+
         // http://stackoverflow.com/questions/11584061/
         private updateHeight(): void {
-            var newHeight =
-                      this.editor.getSession().getScreenLength()
-                      * this.editor.renderer.lineHeight
-                      + this.editor.renderer.scrollBar.getWidth();
+            this.updateHeightForEditor(this.editor, "hml-editor");
+            this.updateHeightForEditor(this.formulaEditor, "hml-formula");
 
-            $('#hml-editor').height(newHeight.toString() + "px");
-            $('#hml-editor-section').height(newHeight.toString() + "px");
+            // var newHeight =
+            //           this.editor.getSession().getScreenLength()
+            //           * this.editor.renderer.lineHeight
+            //           + this.editor.renderer.scrollBar.getWidth();
 
-            // This call is required for the editor to fix all of
-            // its inner structure for adapting to a change in size
-            this.editor.resize();
+            // $('#hml-editor').height(newHeight.toString() + "px");
+            // $('#hml-editor-section').height(newHeight.toString() + "px");
+
+            // // This call is required for the editor to fix all of
+            // // its inner structure for adapting to a change in size
+            // this.editor.resize();
+
         }
     }
 }

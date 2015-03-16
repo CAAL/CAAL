@@ -247,10 +247,6 @@ textarea {
     display: none;
 }
 
-#model-checking .editor-border {
-    margin-top: 20px;
-}
-
 #hml-editor {
     min-height: 75px;
 }
