@@ -673,9 +673,9 @@ module Property {
                 }
             }
 
-            // if they are clearly bisimular then do nothing..
+            // if they are clearly bisimilar then do nothing..
             if (this.getFirstProcess() === this.getSecondProcess()) {
-                error = "The two selected processes are bisimular, and no distinguishing formula exists.";
+                error = "The two selected processes are bisimilar, and no distinguishing formula exists.";
                 isReady = false;
             }
 
@@ -705,7 +705,7 @@ module Property {
                 this.verificationEndedCallback = callback;
                 this.verifyHml(event.data.result.formula);
             } else {
-                this.setInvalidateStatus("The two selected processes are bisimular, and no distinguishing formula exists.");
+                this.setInvalidateStatus("The two selected processes are bisimilar, and no distinguishing formula exists.");
                 this.stopTimer()
                 callback();
             }
