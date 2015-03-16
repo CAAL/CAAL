@@ -171,7 +171,7 @@
                         <div style="position: relative">
                             <input id="explorer-zoom" min="1" max="3" step="0.2" value="1" type="range" />
                             <div class="input-group">
-                                <input id="explorer-depth" class="form-control" value="5" type="text" data-previous-depth="5" />
+                                <input id="explorer-depth" class="form-control" value="10" type="text" data-previous-depth="10" />
                                 <span class="input-group-btn">
                                     <button id="explorer-freeze" type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
                                     <a id="explorer-save" type="button" class="btn btn-default"><i class="fa fa-download"></i></a>
@@ -180,6 +180,7 @@
                         </div>
                         <div id="explorer-canvas">
                             <canvas></canvas>
+                            <div class="canvas-tooltip"></div>
                         </div>
                     </div>
                 </div>
@@ -324,6 +325,7 @@
                     </div>
                     <div id="game-left-canvas">
                         <canvas></canvas>
+                        <div id="canvas-tooltip-left" class="canvas-tooltip"></div>
                     </div>
                 </div>
                 <div id="game-right" class="col-md-6">
@@ -338,14 +340,15 @@
                     </div>
                     <div id="game-right-canvas">
                         <canvas></canvas>
+                        <div id="canvas-tooltip-right" class="canvas-tooltip"></div>
                     </div>
                 </div>
             </div>
             <div id="game-status" class="row">
-                <div class="col-md-4">
+                <div class="col-md-5">
                     <div id="game-log"></div>
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-7">
                     <div id="game-transitions">
                         <table id="game-transitions-table" class="table table-responsive table-striped table-condensed table-hover no-highlight">
                             <thead>

@@ -2,10 +2,13 @@
 
 module GUI {
 	export var Tooltips = {
-		"collapse-none": "Do not collapse processes.",
-		"collapse-strong": "Collapses processes that are strongly bisimilar (∼) into a single process.",
-		"collapse-weak": "Collapses processes that are weakly bisimilar (≈) into a single process.",
-        "simplify": "Simplifies the processes."
+		"collapse-none": "Do not collapse the labelled transition system.",
+		"collapse-strong": "Collapse all processes that are strongly bisimilar (∼) into a single process.",
+		"collapse-weak": "Collapse all processes that are weakly bisimilar (≈) into a single process.",
+        "simplify": "Simplify processes by applying structural congruence.",
+        "depth": "Set the unfolding depth of the labelled transition system.",
+        "freeze": "Lock/unlock the current location of states.",
+        "save-image": "Export the labelled transition system."
 	}
 
 	export function addTooltips() {
