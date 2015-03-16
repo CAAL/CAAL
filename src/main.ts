@@ -10,6 +10,7 @@
 /// <reference path="gui/menu/delete.ts" />
 /// <reference path="gui/menu/export.ts" />
 /// <reference path="gui/tooltips.ts" />
+/// <reference path="gui/hotkey.ts" />
 /// <reference path="activity/activityhandler.ts" />
 /// <reference path="activity/activity.ts" />
 /// <reference path="activity/editor.ts" />
@@ -40,10 +41,13 @@ module Main {
         $("#bug-report").attr("href", "mailto:caal@cs.aau.dk?Subject=CAAL%20Bug%20(" + Version + ")");
 
         new New("#new-btn", activityHandler);
-        new Save(null, activityHandler);
+        var save = new Save(null, activityHandler);
         new Load(null, activityHandler);
         new Delete(null, activityHandler);
         new Export("#export-pdf-btn", activityHandler);
+
+        new HotkeyHandler().setGlobalHotkeys(activityHandler, save);
+        
 
         GUI.addTooltips();
     });

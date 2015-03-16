@@ -28,7 +28,7 @@ class Save extends MenuItem {
      * Assigns a unique id to the project if it does not already have one.
      * Triggers the "save"-event after saving.
      */
-    private saveToStorage() : void {
+    public saveToStorage() : void {
         var id = this.project.getId();
         var projects = this.storage.getObj("projects");
         this.storage.setObj("autosave", null); // Reset the auto save.
