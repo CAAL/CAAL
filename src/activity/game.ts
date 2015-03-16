@@ -950,20 +950,8 @@ module Activity {
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
             var currentConfiguration = game.getCurrentConfiguration();
-            var source;
-            var action : string;
-            
-            if (!isAttack) {
-                if (game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak") {
-                    action = "=" + game.getLastAction() + "=>";
-                } else {
-                    action = "-" + game.getLastAction() + "->";
-                }
-                
-                var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
-                source = this.labelFor(sourceProcess);
-            }
-            
+            var action : string = game.getLastAction();
+
             this.$table.empty();
             choices.forEach( (choice) => {
                 var row = $("<tr></tr>");
@@ -971,8 +959,12 @@ module Activity {
 
                 if (isAttack) {
                     var sourceProcess = choice.move == 1 ? currentConfiguration.left : currentConfiguration.right;
-                    source = this.labelFor(sourceProcess);
-                    action = "-" + choice.action + "->";
+
+                    var source = this.labelFor(sourceProcess);
+                    action = choice.action;
+                } else {
+                    var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
+                    var source = this.labelFor(sourceProcess);
                 }
                 
                 var sourceTd = $("<td id='source'></td>").append(source);
