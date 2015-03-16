@@ -19,7 +19,7 @@ module Activity {
         private dgGame : DgGame;
         private fullscreen : Fullscreen;
         private tooltip : Tooltip;
-        private notationVisitor : Traverse.CCSNotationVisitor;
+        private timeout : any;
         private $gameType : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
@@ -46,7 +46,6 @@ module Activity {
             this.project = Project.getInstance();
             this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(null, null));
             this.tooltip = new Tooltip($("#game-status"));
-            this.notationVisitor = new Traverse.CCSNotationVisitor();
 
             this.$gameType = $("#game-type");
             this.$leftProcessList = $("#game-left-process");
@@ -155,7 +154,6 @@ module Activity {
             if (this.changed || configuration) {
                 this.changed = false;
                 this.graph = this.project.getGraph();
-                this.notationVisitor.clearCache();
                 this.displayOptions();
                 this.newGame(true, true, configuration);
             }
@@ -172,22 +170,39 @@ module Activity {
                     this.draw(this.graph.processById(processId), this.rightGraph, this.$rightDepth.val());
             });
 
+            // Ugly copy/paste. Fix later.
             this.leftGraph.setHoverOnListener((processId) => {
-                var process = this.graph.processById(processId);
-                console.log(this.labelFor(process) + " = " + this.notationVisitor.visit(process));
-            });
-
-            this.rightGraph.setHoverOnListener((processId) => {
-                var process = this.graph.processById(processId);
-                console.log(this.labelFor(process) + " = " + this.notationVisitor.visit(process));
+                this.timeout = setTimeout(() => {
+                    var tooltip = $("#canvas-tooltip-left");
+                    var process = this.graph.processById(parseInt(processId));
+                    var position = this.leftGraph.getPosition(processId);
+                    tooltip.css("top", position.y - 45);
+                    tooltip.css("left", position.x - 10);
+                    tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
+                    tooltip.show();
+                }, 1000);
             });
 
             this.leftGraph.setHoverOutListener(() => {
-                this.leftGraph.clearHover();
+                clearTimeout(this.timeout);
+                $("#canvas-tooltip-left").hide();
+            });
+
+            this.rightGraph.setHoverOnListener((processId) => {
+                this.timeout = setTimeout(() => {
+                    var tooltip = $("#canvas-tooltip-right");
+                    var process = this.graph.processById(parseInt(processId));
+                    var position = this.rightGraph.getPosition(processId);
+                    tooltip.css("top", position.y - 45);
+                    tooltip.css("left", position.x - 10);
+                    tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
+                    tooltip.show();
+                }, 1000);
             });
 
             this.rightGraph.setHoverOutListener(() => {
-                this.rightGraph.clearHover();
+                clearTimeout(this.timeout);
+                $("#canvas-tooltip-right").hide();
             });
             
             this.leftGraph.bindCanvasEvents();
@@ -950,18 +965,13 @@ module Activity {
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
             var currentConfiguration = game.getCurrentConfiguration();
-            var source;
-            var action : string;
             
             if (!isAttack) {
                 if (game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak") {
-                    action = "=" + game.getLastAction() + "=>";
+                    var action = "=" + game.getLastAction() + "=>";
                 } else {
-                    action = "-" + game.getLastAction() + "->";
+                    var action = "-" + game.getLastAction() + "->";
                 }
-                
-                var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
-                source = this.labelFor(sourceProcess);
             }
             
             this.$table.empty();
@@ -971,8 +981,11 @@ module Activity {
 
                 if (isAttack) {
                     var sourceProcess = choice.move == 1 ? currentConfiguration.left : currentConfiguration.right;
-                    source = this.labelFor(sourceProcess);
+                    var source = this.labelFor(sourceProcess);
                     action = "-" + choice.action + "->";
+                } else {
+                    var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
+                    var source = this.labelFor(sourceProcess);
                 }
                 
                 var sourceTd = $("<td id='source'></td>").append(source);
@@ -1207,18 +1220,15 @@ module Activity {
         }
 
         public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
-            var template = "{1} bisimulation game starting from ({2}, {3}).";
+            var template = "You are playing {1} in {2} bisimulation game.";
 
             var context = {
-                1: {text: this.capitalize(gameType)},
-                2: {text: this.labelFor(configuration.left), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
-                3: {text: this.labelFor(configuration.right), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]}
-            };
+                1: {text: (attacker instanceof Computer ? "defender" : "attacker")},
+                2: {text: gameType},
+            }
 
             this.println(this.render(template, context), "<p class='intro'>");
 
-            this.println("You are playing " + (attacker instanceof Computer ? "defender." : "attacker."), "<p class='intro'>");
-            
             if (winner instanceof Human){
                 this.println("You have a winning strategy.", "<p class='intro'>");
             } else {
