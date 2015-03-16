@@ -110,14 +110,11 @@
 
         <!-- Explorer -->
         <div id="explorer-container" class="container">
-            <div id="fullscreen-container">
+            <div id="explorer-fullscreen-container">
                 <div class="row">
                     <div class="col-md-12">
                         <nav class="navbar yamm navbar-default" role="navigation">
-                            <div id="explorer-process-list" class="col-md-2">
-                                <select class="form-control">
-                                </select>
-                            </div>
+                            <select id="explorer-process-list" class="form-control"></select>
                             <ul class="nav navbar-nav">
                                 <li class="dropdown">
                                     <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
@@ -164,7 +161,6 @@
                                 </li>
                             </ul>
                             <div class="btn-group pull-right">
-                                <a id="explorer-save" class="btn btn-default">Save Image</a>
                                 <button id="explorer-fullscreen" type="button" class="btn btn-default">Fullscreen</button>
                             </div>
                         </nav>
@@ -175,9 +171,10 @@
                         <div style="position: relative">
                             <input id="explorer-zoom" min="1" max="3" step="0.2" value="1" type="range" />
                             <div class="input-group">
-                                <input class="form-control" value="5" type="text" />
+                                <input id="explorer-depth" class="form-control" value="5" type="text" data-previous-depth="5" />
                                 <span class="input-group-btn">
                                     <button id="explorer-freeze" type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                                    <a id="explorer-save" type="button" class="btn btn-default"><i class="fa fa-download"></i></a>
                                 </span>
                             </div>
                         </div>
@@ -186,21 +183,21 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <div id="explorer-transitions">
-                        <table class="table table-responsive table-striped table-condensed table-hover no-highlight">
-                            <thead>
-                                <tr>
-                                    <th class="narrow">Action</th>
-                                    <th class="narrow">Target</th>
-                                    <th>Target Definition</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div id="explorer-transitions">
+                            <table class="table table-responsive table-striped table-condensed table-hover no-highlight">
+                                <thead>
+                                    <tr>
+                                        <th>Source</th>
+                                        <th>Action</th>
+                                        <th>Target</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

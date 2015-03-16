@@ -18,7 +18,7 @@ module Activity {
         private succGen : CCS.SuccessorGenerator;
         private dgGame : DgGame;
         private fullscreen : Fullscreen;
-        private tooltip : TooltipNotation;
+        private tooltip : Tooltip;
         private notationVisitor : Traverse.CCSNotationVisitor;
         private $gameType : JQuery;
         private $leftProcessList : JQuery;
@@ -45,7 +45,7 @@ module Activity {
 
             this.project = Project.getInstance();
             this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(null, null));
-            this.tooltip = new TooltipNotation($("#game-status"));
+            this.tooltip = new Tooltip($("#game-status"));
             this.notationVisitor = new Traverse.CCSNotationVisitor();
 
             this.$gameType = $("#game-type");
@@ -942,7 +942,7 @@ module Activity {
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
             var currentConfiguration = game.getCurrentConfiguration();
-            var source : string;
+            var source;
             var action : string = game.getLastAction();
             
             if (!isAttack) {
@@ -985,8 +985,8 @@ module Activity {
             });
         }
         
-        private labelFor(process : CCS.Process) : string {
-            return TooltipNotation.GetSpan(process instanceof CCS.NamedProcess ? process.name : process.id.toString());
+        private labelFor(process : CCS.Process) : JQuery {
+            return Tooltip.wrap(process instanceof CCS.NamedProcess ? process.name : process.id.toString());
         }
 
         private highlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
