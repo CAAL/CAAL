@@ -239,4 +239,73 @@ module Activity {
             return "HML Game Activity";
         }
     }
+
+    class HmlGameState {
+        constructor(public process : CCS.Process, 
+                public formula : HML.Formula, 
+                public isMinGame : boolean) {
+        }
+    }
+
+    enum Player {attacker, defender, judge};
+    enum ActionType {transition, formula, variable};
+    enum WinReason {minGameCycle, maxGameCycle, falseFormula, trueFormula};
+
+    class Pair<P,Q> {
+        constructor(public left : P, public right : Q) {
+        }
+    }
+
+    class HmlGameLogic {
+        
+        private state : HmlGameState;
+        private previousStates : HmlGameState[] = [];
+        private gameIsOver : boolean = false;
+
+        constructor(process, formula) {
+            this.state = new HmlGameState(process, formula, true);
+        }
+
+        selectedFormula(formula : HML.Formula) {
+            //The player selected a formula.
+            //Same as selectedTransition
+        }
+
+        selectedTransition(transition : CCS.Transition) {
+            //The player selected a transition
+            //Push current to previous
+            //Check for gameover including min/max cycle.
+        }
+
+        isGameOver() : Pair<Player, WinReason> {
+            //returns undefined/null if no winner.
+            //otherwise return who won, and why.
+        }
+
+        getNextActionType() : ActionType {
+            //Returns whether the next player is to select an action or formula or
+            //maybe the judge has to unfold variable.
+        }
+
+        getCurrentPlayer() : Player {
+            var attackerMoves = [HML.ConjFormula, HML.StrongExistsFormula, HML.WeakExistsFormula, HML.FalseFormula];
+            var defenderMoves = [HML.DisjFormula, HLM.StrongForAllFormula, HML.WeakForAllFormula, HML.TrueFormula];
+            var judgeMoves = [HML.MinFixedPointFormula, HLM.MaxFixedPointFormula, HML.VariableFormula];
+            var isPrototypeOfCurrentFormula = obj => this.state.formula instanceof obj;
+
+            if (attackerMoves.some(isPrototypeOfCurrentFormula)) return Player.attacker;
+            if (defenderMoves.some(isPrototypeOfCurrentFormula)) return Player.defender;
+            if (judgeMoves.some(isPrototypeOfCurrentFormula)) return Player.judge;
+            throw "Unhandled formula type in getCurrentPlayer";
+        }
+
+        getAvailableTransitions() : Pair<CCS.Transition, HML.Formula> {
+            //Not sure about interface. they all lead to the same subformula,
+            //but the transition may differ.
+        }
+
+        getAvailableFormulas() : HML.Formula[] {
+            //Get the possible formulas you can select amon
+        }
+    }
 }
