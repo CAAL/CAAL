@@ -48,7 +48,7 @@ messageHandlers.isStronglyTraceIncluded = data => {
     var rightProcess = graph.processByName(data.rightProcess);
     // var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
     var traceDg = new Equivalence.TraceDG(leftProcess.id, rightProcess.id, attackSuccGen);
-    var marking = DependencyGraph.solveDgGlobalLevel(traceDg);
+    var marking = DependencyGraph.liuSmolkaLocal2(0, traceDg);
     
     data.result = {
         isTraceIncluded: marking.getMarking(0) === marking.ZERO,
@@ -64,7 +64,7 @@ messageHandlers.isWeaklyTraceIncluded = data => {
     var rightProcess = graph.processByName(data.rightProcess);
     // var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
     var traceDg = new Equivalence.TraceDG(leftProcess.id, rightProcess.id, attackSuccGen);
-    var marking = DependencyGraph.solveDgGlobalLevel(traceDg);
+    var marking = DependencyGraph.liuSmolkaLocal2(0, traceDg);
     
     data.result = {
         isTraceIncluded: marking.getMarking(0) === marking.ZERO,
