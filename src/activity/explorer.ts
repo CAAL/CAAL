@@ -116,8 +116,8 @@ module Activity {
                     var tooltip = $(".canvas-tooltip");
                     var process = this.graph.processById(parseInt(processId));
                     var position = this.uiGraph.getPosition(processId);
-                    tooltip.css("top", position.y - 45);
-                    tooltip.css("left", position.x - 10);
+                    tooltip.css("top", position.y - 45 - this.$canvasContainer.scrollTop());
+                    tooltip.css("left", position.x - 10 - this.$canvasContainer.scrollLeft());
                     tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
                     tooltip.show();
                 }, 1000);
