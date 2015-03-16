@@ -14,23 +14,25 @@ module Activity {
             this.$container.tooltip({
                 title: function() {
                     var process = $(this).text();
-                    return process + " = " + getCCSNotation(process);
+                    return getCCSNotation(process);
                 },
                 selector: "span.ccs-tooltip-constant"
             });
         }
 
-        private ccsNotationForProcessId(id : string) : string {
-            var process = this.graph.processByName(id) || this.graph.processById(parseInt(id, 10));
+        public ccsNotationForProcessId(name : string) : string {
+            var process = this.graph.processByName(name) || this.graph.processById(parseInt(name, 10));
 
             if (process) {
-                if (process instanceof ccs.NamedProcess)
+                if (process instanceof ccs.NamedProcess) {
+                    name = process.name;
                     var text = this.visitor.visit((<ccs.NamedProcess>process).subProcess);
-                else
+                } else {
                     var text = this.visitor.visit(process);
+                }
             }
 
-            return text;
+            return name + " = " + text;
         }
 
         public setGraph(graph : CCS.Graph) : void {
