@@ -69,7 +69,8 @@
                     <ul class="nav navbar-nav navbar-right no-highlight">
                         <li button onclick="$('#about-dialog').modal('show');"><a>About</a></li>
                         <li button onclick="$('#help-dialog').modal('show')"><a>Help</a></button li>
-                        <li><a href="https://github.com/CAAL/CAAL"><i class="fa fa-github fa-lg"></i></a></li>
+                        <li><a id="bug-report" target="_top"><i class="fa fa-bug fa-lg"></i></a></li>
+                        <li><a href="https://github.com/CAAL/CAAL" target="_blank"><i class="fa fa-github fa-lg"></i></a></li>
                     </ul>
                 </div>
             </div>
@@ -110,96 +111,96 @@
 
         <!-- Explorer -->
         <div id="explorer-container" class="container">
-            <div id="fullscreen-container">
-                <nav class="navbar yamm navbar-default controls" role="navigation">
-                    <div id="explorer-process-list" class="col-md-2">
-                        <select class="form-control">
-                        </select>
-                    </div>
-                    <ul class="nav navbar-nav">
-                        <li class="dropdown">
-                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                                Options <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <div class="yamm-content">
-                                        <div class="radio">
-                                            <label>
-                                                <input name="option-successor" value="strong" type="radio" checked>
-                                                    Strong Successors (&#x2192;)
-                                            </label>
-                                        </div>
-                                        <div class="radio">
-                                            <label>
-                                                <input name="option-successor" value="weak" type="radio">
-                                                    Weak Successors (&#x21D2;)
-                                            </label>
-                                        </div>
-                                        <div class="divider"></div>
-                                        <div class="form-inline">
-                                            <label>Expand Depth: </label>
-                                            <select id="option-depth" class="form-control">
-                                                <option>1</option>
-                                                <option>5</option>
-                                                <option selected>10</option>
-                                                <option>100</option>
-                                            </select>
-                                        </div>
-                                        <div class="divider"></div>
-                                        <div class="radio">
-                                            <label data-tooltip="collapse-none">
-                                                <input name="option-collapse" value="none" type="radio" checked>
-                                                    No Bisimulation Collapse
-                                        </div>
-                                        <div class="radio">
-                                            <label data-tooltip="collapse-strong">
-                                                <input name="option-collapse" value="strong" type="radio">
-                                                    Strong Bisimulation Collapse
-                                            </label>
-                                        </div>
-                                        <div class="radio">
-                                            <label data-tooltip="collapse-weak">
-                                                <input name="option-collapse" value="weak" type="radio">
-                                                    Weak Bisimulation Collapse
-                                            </label>
-                                        </div>
-                                        <div class="divider"></div>
-                                        <div class="checkbox">
-                                            <label>
-                                                <input id="option-simplify" type="checkbox" checked>
-                                                Simplify
-                                            </label>
-                                        </div>
-                                    </div>
+            <div id="explorer-fullscreen-container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <nav class="navbar yamm navbar-default" role="navigation">
+                            <select id="explorer-process-list" class="form-control"></select>
+                            <ul class="nav navbar-nav">
+                                <li class="dropdown">
+                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                        Options <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <div class="yamm-content">
+                                                <div class="radio">
+                                                    <label>
+                                                        <input name="option-successor" value="strong" type="radio" checked>Strong Successors (&#x2192;)
+                                                    </label>
+                                                </div>
+                                                <div class="radio">
+                                                    <label>
+                                                        <input name="option-successor" value="weak" type="radio">Weak Successors (&#x21D2;)
+                                                    </label>
+                                                </div>
+                                                <div class="divider"></div>
+                                                <div class="radio">
+                                                    <label data-tooltip="collapse-none">
+                                                        <input name="option-collapse" value="none" type="radio" checked>No Bisimulation Collapse
+                                                    </label>
+                                                </div>
+                                                <div class="radio">
+                                                    <label data-tooltip="collapse-strong">
+                                                        <input name="option-collapse" value="strong" type="radio">Strong Bisimulation Collapse
+                                                    </label>
+                                                </div>
+                                                <div class="radio">
+                                                    <label data-tooltip="collapse-weak">
+                                                        <input name="option-collapse" value="weak" type="radio">Weak Bisimulation Collapse
+                                                    </label>
+                                                </div>
+                                                <div class="divider"></div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input id="option-simplify" type="checkbox" checked>Simplify
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
                                 </li>
                             </ul>
-                        </li>
-                    </ul>
-                    <div class="btn-group pull-right">
-                        <button id="explorer-freeze-btn" type="button" class="btn btn-default">Freeze</button>
-                        <a id="explorer-save-btn" class="btn btn-default">Save Image</a>
-                        <button id="explorer-fullscreen-btn" type="button" class="btn btn-default">Fullscreen</button>
+                            <div class="btn-group pull-right">
+                                <button id="explorer-fullscreen" type="button" class="btn btn-default">Fullscreen</button>
+                            </div>
+                        </nav>
                     </div>
-                </nav>
-                <div class="clearfix"></div>
-                <canvas id="arbor-canvas"></canvas>
-            </div>
-            <div id="status-table-container">
-                <h4>Source Process</h4>
-                <p id="explorer-source-definition"></p>
-                <h4>Target Processes</h4>
-                <table id="status-table" class="table table-responsive table-striped table-condensed table-hover no-highlight">
-                    <thead>
-                        <tr>
-                            <th class="narrow">Action</th>
-                            <th class="narrow">Target</th>
-                            <th>Target Definition</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
+                </div>
+                <div id="explorer-main" class="row">
+                    <div class="col-md-12">
+                        <div style="position: relative">
+                            <input id="explorer-zoom" min="1" max="3" step="0.2" value="1" type="range" />
+                            <div class="input-group">
+                                <input id="explorer-depth" class="form-control" value="5" type="text" data-previous-depth="5" />
+                                <span class="input-group-btn">
+                                    <button id="explorer-freeze" type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                                    <a id="explorer-save" type="button" class="btn btn-default"><i class="fa fa-download"></i></a>
+                                </span>
+                            </div>
+                        </div>
+                        <div id="explorer-canvas">
+                            <canvas></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div id="explorer-transitions">
+                            <table class="table table-responsive table-striped table-condensed table-hover no-highlight">
+                                <thead>
+                                    <tr>
+                                        <th>Source</th>
+                                        <th>Action</th>
+                                        <th>Target</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -233,12 +234,13 @@
                             <li id="weak" class="property-item"><a>Weak Bisimulation</a></li>
                             <li id="strongtraceinclusion" class="property-item"><a>Strong Trace Inclusion</a></li>
                             <li id="weaktraceinclusion" class="property-item"><a>Weak Trace Inclusion</a></li>
-                            <li id="strongtraceeq" class="property-item"><a>Strong Trace Equivalence</a></li>
-                            <li id="weaktraceeq" class="property-item"><a>Weak Trace Equivalence</a></li>
+                            <!-- <li id="strongtraceeq" class="property-item"><a>Strong Trace Equivalence</a></li>
+                            <li id="weaktraceeq" class="property-item"><a>Weak Trace Equivalence</a></li> -->
                             <li class="divider"></li>
                             <li class="dropdown-header" role="presentation">Model Checking</li>
                             <li id="hml" class="property-item"><a>HML</a></li>
-                            <li id="distinguishing" class="property-item"><a>Strong distinguishing formula</a></li>
+                            <li id="distinguishing-strong" class="property-item"><a>Strong distinguishing formula</a></li>
+                            <li id="distinguishing-weak" class="property-item"><a>Weak distinguishing formula</a></li>
                         </ul>
                     </div>
                     <div class="btn-group pull-right">
@@ -314,8 +316,11 @@
                 <div id="game-left" class="col-md-6">
                     <div style="position: relative">
                         <input id="zoom-left" data-side="left" min="1" max="3" step="0.2" value="1" type="range" />
-                        <div class="btn-group pull-right">
-                        	<button id="freeze-left" type="button" class="btn btn-default btn-sm" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                        <div class="input-group">
+                            <input id="depth-left" class="form-control" value="5" type="text" />
+                            <span class="input-group-btn">
+                                <button id="freeze-left" type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                            </span>
                         </div>
                     </div>
                     <div id="game-left-canvas">
@@ -325,8 +330,11 @@
                 <div id="game-right" class="col-md-6">
                     <div style="position: relative">
                         <input id="zoom-right" data-side="right" min="1" max="3" step="0.2" value="1" type="range" />
-                        <div class="btn-group pull-right">
-                        	<button id="freeze-right" type="button" class="btn btn-default btn-sm" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                        <div class="input-group">
+                            <input id="depth-right" class="form-control" value="5" type="text" />
+                            <span class="input-group-btn">
+                                <button id="freeze-right" type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                            </span>
                         </div>
                     </div>
                     <div id="game-right-canvas">
@@ -426,9 +434,19 @@
                         <h4 class="modal-title" id="about-dialog-title">About</h4>
                     </div>
                     <div class="modal-body">
-                        <p><span class="small">Caal</span> is a web-based tool for modelling and verification of concurrent systems developed at Aalborg University. Concurrent systems are modelled using the CCS language.<br/><br/>
-                        It can visualise CCS processes in the explorer and check for strong and weak bisimulation and HML properties in the verifier.<br/><br/>
-                        Authors: Jacob K. Wortmann, Jesper Riemer Andersen, Nicklas Andersen, Mathias Munk Hansen, Simon Reedtz Olesen, and Søren Enevoldsen.</p>
+                        <p><span class="small-caps">Caal</span> (Concurrency Workbench, Aalborg Edition) is a web-based tool for modelling, visualization and verification of concurrent processes expressed in the well-known CCS language (Calculus of Communicating Systems).</p>
+
+                        <p>The tool allows to edit CCS processes, explore the generated labelled transition systems and verify their correctness via the equivalence checking approach (e.g. strong and weak bisimulation, and strong and weak trace equivalence checking) and model checking approach (determining whether a given process satisfies a HML formulae with recursion, including a generation of distinguishing formulae). Both equivalence and model checking approaches support a visualization of counter examples via equivalence/model checking games.</p>
+
+                        <p>The tool was designed for educational purposes and all the verification algorithms support on-the-fly state space exploration based on the notion of dependency graphs. The main goal of <span class="small-caps">Caal</span> is to provide a modern tool support for teaching concurrency and it closely follows the approach described in the book Reactive Systems: Modelling, Specification and Verification (<a href="http://rsbook.cs.aau.dk/">http://rsbook.cs.aau.dk/</a>).</p>
+
+                        <p>The tool is distributed under the MIT License.</p>
+
+                        <p>Authors:<br>
+                        Jacob Karstensen Wortmann, Jesper Riemer Andersen, Mathias Munk Hansen, Nicklas Andersen, Simon Reedtz Olesen, and Søren Enevoldsen.</p>
+
+                        <p>Project supervisors:<br>
+                        Kim G. Larsen and Jiri Srba.</p>
                     </div>
                     <div class="modal-footer">
                         <span id="version"></span>
@@ -443,84 +461,96 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                        <h4 class="modal-title" id="help-dialog-title">Caal</h4>
+                        <h4 class="modal-title"><span class="small-caps">Caal</span> Specification Language</h4>
                     </div>
                     <div class="modal-body">
                         <p id="help-dialog-body-par">
-                            The table listed contains the allowed CCS expressions along with the syntax
+                            Process constants start with capital letters, channel names with small letters
+
+                            and dual channels begin with an apostrophe (e.g. 'out). The silent action
+
+                            is denoted as tau.
                             <table style="width:100%" class="helpTable ace-crisp">
                                 <col style="width:50%" span="2"/>
                                 <thead>
                                     <tr>
-                                        <th>Expression</th>
+                                        <th>CCS Expression</th>
                                         <th>Syntax</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Comment</td>
-                                        <td class="inconsolata"><span class="ace_comment">* This is a comment</span></td>
+                                        <td>Nil process</td>
+                                        <td class ="inconsolata">0</td>
+                                    </tr>
+                                     <tr>
+                                        <td>Action prefixing</td>
+                                        <td class ="inconsolata">
+                                        a<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td>Process Definition</td>
-                                        <td class ="inconsolata">
-                                            <span class="ace_constant">A</span>
-                                            <span class="ace_keyword ace_operator">=</span> 
-                                            a<span class="ace_keyword ace_operator">.</span><span class="ace_constant">B</span>;
-                                        </td>
-                                    </tr>       
-                                    <tr>
-                                        <td>Parallel Composition</td>
+                                        <td>Parallel composition</td>
                                         <td class ="inconsolata">
                                             <span class="ace_constant">P</span>
                                             <span class="ace_keyword ace_operator">|</span>
-                                            <span class="ace_constant">Q</span>;
+                                            <span class="ace_constant">Q</span>
                                         </td>
                                     </tr>           
                                     <tr>
-                                        <td>Choice</td>
+                                        <td>Choice operator</td>
                                         <td class ="inconsolata">
                                             <span class="ace_constant">P</span>
                                             <span class="ace_keyword ace_operator">+</span> 
-                                            <span class="ace_constant">Q</span>;
+                                            <span class="ace_constant">Q</span>
                                         </td>
                                     </tr>           
                                     <tr>
                                         <td>Restriction</td>
                                         <td class ="inconsolata">
-                                            <span class="ace_constant">A</span> 
-                                            <span class="ace_keyword ace_operator">\</span> {a,b};
+                                            <span class="ace_constant">P</span> 
+                                            <span class="ace_keyword ace_operator">\</span> {a,b}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Renaming</td>
+                                        <td>Renaming of channels</td>
                                         <td class ="inconsolata">
-                                            <span class="ace_constant">A</span>[b/a];
+                                            <span class="ace_constant">P</span>[b/a, d/c]
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Set</td>
+                                        <td>Set definition</td>
                                         <td class ="inconsolata">
-                                            set <span class="ace_constant">L</span> 
-                                            <span class="ace_keyword ace_operator">=</span> {a,b,c};
+                                        set <span class="ace_constant">L</span> 
+                                            <span class="ace_keyword ace_operator">=</span> {a,b,c}
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Empty Process</td>
-                                        <td class ="inconsolata">0;</td>
+                                        <td>Process definition</td>
+                                        <td class ="inconsolata">
+                                            <span class="ace_constant">A</span>
+                                            <span class="ace_keyword ace_operator">=</span>
+                                            a<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>;
+                                        </td>
                                     </tr>
-                                </tbody>
+                                    <tr>
+                                        <td>Comment</td>
+                                        <td class="inconsolata"><span class="ace_comment">* This is a comment</span></td>
+                                    </tr>
+                               </tbody>
                             </table>
-                        </p>    
-
+                        </p>
                         <p id="help-dialog-body-par1">
                             <br/>
-                            The table listed contains the allowed HML formulas along with the syntax
+                            The property language supports multiple recursively defined HML formulae that
+
+                            are however not mutually recursive.
+
                             <table style="width:100%" class="helpTable ace-crisp">
                                 <col style="width:50%" span="2"/>
                                 <thead>
                                     <tr>
-                                        <th>Formula</th>
+                                        <th>HML Formula</th>
                                         <th>Syntax</th>
                                     </tr>
                                 </thead>
@@ -535,70 +565,64 @@
                                     </tr>       
                                     <tr>
                                         <td>Conjunction</td>
-                                        <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">and</span> <span class="ace_constant">G</span>;</td>
+                                        <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">and</span> <span class="ace_constant">G</span></td>
                                     </tr>           
                                     <tr>
                                         <td>Disjunction</td>
-                                        <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">or</span> <span class="ace_constant">G</span>;</td>
+                                        <td class ="inconsolata"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">or</span> <span class="ace_constant">G</span></td>
                                     </tr>           
                                     <tr>
-                                        <td>Strong Existential Modality</td>
+                                        <td>Strong existential modality</td>
                                         <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt</span>a,b<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span></td>
                                     </tr>
                                     <tr>
-                                        <td>Weak Existential Modality</td>
-                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt&lt</span>a,b<span class="ace_keyword ace_operator">&gt&gt</span><span class="ace_constant">H</span>;</td>
+                                        <td>Weak existential modality</td>
+                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt&lt</span>a,b<span class="ace_keyword ace_operator">&gt&gt</span><span class="ace_constant">H</span></td>
                                     </tr>
                                     <tr>
-                                        <td>Strong Forall Modality</td>
-                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">[</span>a,b<span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span>;</td>
+                                        <td>Strong universal modality</td>
+                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">[</span>a,b<span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span></td>
                                     </tr>
                                     <tr>
-                                        <td>Weak Forall Modality</td>
-                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">[[</span>a,b<span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span>;</td>
+                                        <td>Weak universal modality</td>
+                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">[[</span>a,b<span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span></td>
                                     </tr>
                                     <tr>
-                                        <td>All Actions</td>
-                                        <td class ="inconsolata">-, e.g <span class="ace_keyword ace_operator">&lt</span>-<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span>;</td>
+                                        <td>Wildcharacter for all actions</td>
+                                        <td class ="inconsolata">-, e.g. <span class="ace_keyword ace_operator">&lt</span>-<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span></td>
                                     </tr>
                                     <tr>
-                                        <td>Minimum fix-point</td>
+                                        <td>Minimum fixed-point definition</td>
                                         <td class ="inconsolata">
                                             <span class="ace_constant">X</span>
-                                            <span class="ace_keyword ace_operator">min= &lt</span>a<span class="ace_keyword ace_operator">&gt</span>
-                                            <span class="ace_constant">tt</span>
-                                            <span class="ace_keyword ace_operator">or [</span>-<span class="ace_keyword ace_operator">]</span><span class="ace_constant">X</span>;
+                                            <span class="ace_keyword ace_operator">min= &lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
+                                            <span class="ace_keyword ace_operator">or <</span>-<span class="ace_keyword ace_operator">></span><span class="ace_constant">X</span>;
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Maximum fix-point</td>
+                                        <td>Maximum fixed-point definition</td>
                                         <td class ="inconsolata">
                                             <span class="ace_constant">X</span>
-                                            <span class="ace_keyword ace_operator">max= &lt</span>a<span class="ace_keyword ace_operator">&gt</span>
-                                            <span class="ace_constant">tt</span>
-                                            <span class="ace_keyword ace_operator">and</span>
-                                            <span class="ace_constant">X</span>;
+                                            <span class="ace_keyword ace_operator">max= &lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
+                                            <span class="ace_keyword ace_operator">and [-]</span><span class="ace_constant">X</span>;
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Recursive Variable</td>
+                                        <td>Several recursively defined variables</td>
                                         <td class ="inconsolata">
                                             <span class="ace_constant">X</span>
-                                            <span class="ace_keyword ace_operator">max= &lt</span>a<span class="ace_keyword ace_operator">&gt</span>
-                                            <span class="ace_constant">tt</span>
+                                            <span class="ace_keyword ace_operator">max= &lt</span>a<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span>
                                             <span class="ace_keyword ace_operator">and</span> 
                                             <span class="ace_constant">Y</span>
                                             <span class="ace_keyword ace_operator">and [</span>-<span class="ace_keyword ace_operator">]</span><span class="ace_constant">X</span>;
                                             <br/>
                                             <span class="ace_constant">Y</span> 
-                                            <span class="ace_keyword ace_operator">min= &lt</span>b<span class="ace_keyword ace_operator">&gt</span>
-                                            <span class="ace_constant">tt</span> 
-                                            <span class="ace_keyword ace_operator">or</span> 
-                                            <span class="ace_constant">Y</span>;
+                                            <span class="ace_keyword ace_operator">min= &lt</span>b<span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">tt</span> 
+                                            <span class="ace_keyword ace_operator">or <-></span><span class="ace_constant">Y</span>;
                                         </td>
                                     </tr>
                                 </tbody>
-                            </table>    
+                            </table>
                         </p>
                     </div>
                     <div class="modal-footer">
@@ -617,6 +641,7 @@
         <script src="lib/hml_grammar.js"></script>
         <script src="lib/arbor.js"></script>
         <script src="lib/graphics.js"></script>
+        <script src="lib/data.js"></script>
         <script src="lib/util.js"></script>
         <script src="lib/ccs.js"></script>
         <script src="lib/blob-stream.js"></script>

@@ -32,6 +32,10 @@ textarea {
     font: normal 14px "Inconsolata";
 }
 
+.small-caps {
+    font-variant: small-caps;
+}
+
 .no-highlight {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -111,51 +115,12 @@ textarea {
     margin-bottom: 20px;
 }
 
-#fullscreen-container:-webkit-full-screen {width: 100%; height: 100%; background-color: #fff;}
-#fullscreen-container:-moz-full-screen    {width: 100%; height: 100%; background-color: #fff;}
-#fullscreen-container:-ms-fullscreen      {width: 100%; height: 100%; background-color: #fff;}
-#fullscreen-container:-o-full-screen      {width: 100%; height: 100%; background-color: #fff;}
-#fullscreen-container:full-screen         {width: 100%; height: 100%; background-color: #fff;}
-#fullscreen-container:fullscreen          {width: 100%; height: 100%; background-color: #fff;}
-
 #game-container:-webkit-full-screen {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
 #game-container:-moz-full-screen    {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
 #game-container:-ms-fullscreen      {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
 #game-container:-o-full-screen      {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
 #game-container:full-screen         {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
 #game-container:fullscreen          {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-
-#hml-game-container:-webkit-full-screen {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-#hml-game-container:-moz-full-screen    {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-#hml-game-container:-ms-fullscreen      {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-#hml-game-container:-o-full-screen      {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-#hml-game-container:full-screen         {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-#hml-game-container:fullscreen          {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-
-#fullscreen-container:-webkit-full-screen nav {
-    position: absolute; top: 10px; left: 10px; right: 10px; background-color: transparent; border-color: transparent;
-}
-
-#fullscreen-container:-moz-full-screen nav {
-    position: absolute; top: 10px; left: 10px; right: 10px; background-color: transparent; border-color: transparent;
-}
-
-#fullscreen-container:-ms-fullscreen nav {
-    position: absolute; top: 10px; left: 10px; right: 10px; background-color: transparent; border-color: transparent;
-}
-
-#fullscreen-container:-o-full-screen nav {
-    position: absolute; top: 10px; left: 10px; right: 10px; background-color: transparent; border-color: transparent;
-}
-
-#fullscreen-container:full-screen nav {
-    position: absolute; top: 10px; left: 10px; right: 10px; background-color: transparent; border-color: transparent;
-}
-
-#fullscreen-container:fullscreen nav {
-    position: absolute; top: 10px; left: 10px; right: 10px; background-color: transparent; border-color: transparent;
-}
-
 
 /*
  * Editor activity styles
@@ -192,35 +157,82 @@ textarea {
  * Explorer activity styles
  */
 
-.controls {
+.yamm {
     min-height: 0;
     background-color: #fff;
-    border-color: #fff;
-    margin: 0;
+    border: none;
+    margin-bottom: 20px;
 }
 
 #explorer-process-list {
-    padding-left: 0;
+    width: 150px;
+    float: left;
+    margin-right: 20px;
 }
 
-#status-table-container {
-    height: 230px;
+#explorer-main input[type=range] {
+    position: absolute;
+    top: 16px;
+    left: 10px;
+    width: 100px;
+    cursor: pointer;
+}
+
+#explorer-main .input-group {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 126px;
+}
+
+#explorer-main input[type=text] {
+    text-align: center;
+}
+
+#explorer-canvas {
+    border: 1px solid #e7e7e7;
     overflow: auto;
 }
 
-#status-table-container p {
-    margin-left: 20px;
+#explorer-transitions {
+    height: 176px; /* Fits four transitions */
+    padding: 10px;
+    border: 1px solid #e7e7e7;
+    border-top: none;
+    overflow: auto;
 }
 
-#status-table-container p, #status-table-container .tooltip, #status-table tbody {
+#explorer-transitions .tooltip, #explorer-transitions table tbody {
     font: normal 14px "Inconsolata";
     color: #333;
 }
 
-#status-table th.narrow {
+#explorer-transitions table {
+    margin: 0;
+}
+
+#explorer-transitions table th.narrow {
     width: 15%;
     min-width: 140px;
 }
+
+@media (max-width: 991px) {
+    #explorer-process-list {
+        width: 100%;
+    }
+
+    .yamm ul.nav {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+#explorer-fullscreen-container:-webkit-full-screen {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
+#explorer-fullscreen-container:-moz-full-screen    {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
+#explorer-fullscreen-container:-ms-fullscreen      {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
+#explorer-fullscreen-container:-o-full-screen      {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
+#explorer-fullscreen-container:full-screen         {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
+#explorer-fullscreen-container:fullscreen          {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
 
 
 /*
@@ -290,10 +302,15 @@ textarea {
     padding-left: 0;
 }
 
-#game-left button, #game-right button {
+#game-left .input-group, #game-right .input-group {
     position: absolute;
     top: 10px;
     right: 10px;
+    width: 88px;
+}
+
+#depth-left, #depth-right {
+    text-align: center;
 }
 
 #game-left-canvas, #game-right-canvas {
@@ -305,9 +322,9 @@ textarea {
     border-left: none;
 }
 
-input[type=range] {
+#game-main input[type=range] {
     position: absolute;
-    top: 15px;
+    top: 16px;
     left: 10px;
     width: 100px;
     cursor: pointer;
@@ -415,10 +432,6 @@ input[type=range] {
     font-family: normal 14px "Inconsolata";
 }
 
-.modal-dialog .modal-header  > #help-dialog-title{
-    font-variant: small-caps;
-}
-
 table.helpTable td {
   border: 1px solid #999;
   padding: 0.5rem;
@@ -443,7 +456,6 @@ p.small {
     border-radius: 5px;
     padding: 0px 2px 0px 2px;
     cursor: pointer;
-    font: normal 14px "Inconsolata";
 }
 
 .tooltip {

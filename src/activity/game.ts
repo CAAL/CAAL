@@ -1,3 +1,4 @@
+/// <reference path="../../lib/util.d.ts" />
 /// <reference path="../gui/project.ts" />
 /// <reference path="../gui/gui.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
@@ -17,7 +18,8 @@ module Activity {
         private succGen : CCS.SuccessorGenerator;
         private dgGame : DgGame;
         private fullscreen : Fullscreen;
-        private tooltip : TooltipNotation;
+        private tooltip : Tooltip;
+        private notationVisitor : Traverse.CCSNotationVisitor;
         private $gameType : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
@@ -27,6 +29,8 @@ module Activity {
         private $rightContainer : JQuery;
         private $leftZoom : JQuery;
         private $rightZoom : JQuery;
+        private $leftDepth : JQuery;
+        private $rightDepth : JQuery;
         private $leftFreeze : JQuery;
         private $rightFreeze : JQuery;
         private leftCanvas : HTMLCanvasElement;
@@ -41,7 +45,8 @@ module Activity {
 
             this.project = Project.getInstance();
             this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(null, null));
-            this.tooltip = new TooltipNotation($("#game-status"));
+            this.tooltip = new Tooltip($("#game-status"));
+            this.notationVisitor = new Traverse.CCSNotationVisitor();
 
             this.$gameType = $("#game-type");
             this.$leftProcessList = $("#game-left-process");
@@ -52,6 +57,8 @@ module Activity {
             this.$rightContainer = $("#game-right-canvas");
             this.$leftZoom = $("#zoom-left");
             this.$rightZoom = $("#zoom-right");
+            this.$leftDepth = $("#depth-left");
+            this.$rightDepth = $("#depth-right");
             this.$leftFreeze = $("#freeze-left");
             this.$rightFreeze = $("#freeze-right");
             this.leftCanvas = <HTMLCanvasElement> this.$leftContainer.find("canvas")[0];
@@ -67,8 +74,23 @@ module Activity {
             this.$rightProcessList.on("change", () => this.newGame(false, true));
             this.$playerType.on("change", () => this.newGame(false, false));
             this.$restart.on("click", () => this.newGame(false, false));
+            this.$rightDepth.on("change", () => this.setDepth(this.dgGame.getCurrentConfiguration().right, this.rightGraph, this.$rightDepth.val(), Move.Right));
             this.$leftFreeze.on("click", (e) => this.toggleFreeze(this.leftGraph, !this.$leftFreeze.data("frozen"), $(e.currentTarget)));
             this.$rightFreeze.on("click", (e) => this.toggleFreeze(this.rightGraph, !this.$rightFreeze.data("frozen"), $(e.currentTarget)));
+
+            // Manually remove focus from depth input when the canvas is clicked.
+            $(this.leftCanvas).on("click", () => {if (this.$leftDepth.is(":focus")) this.$leftDepth.blur()});
+            $(this.rightCanvas).on("click", () => {if (this.$rightDepth.is(":focus")) this.$rightDepth.blur()});
+
+            this.$leftDepth.on("change", () => {
+                this.validateDepth(this.$leftDepth);
+                this.setDepth(this.dgGame.getCurrentConfiguration().left, this.leftGraph, this.$leftDepth.val(), Move.Left);
+            });
+
+            this.$rightDepth.on("change", () => {
+                this.validateDepth(this.$rightDepth);
+                this.setDepth(this.dgGame.getCurrentConfiguration().right, this.rightGraph, this.$rightDepth.val(), Move.Right);
+            });
 
             // Use onchange instead of oninput for IE.
             if (navigator.userAgent.indexOf("MSIE ") > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
@@ -82,7 +104,24 @@ module Activity {
             $(document).on("ccs-changed", () => this.changed = true);
         }
 
-        private toggleFreeze(graph : GUI.ProcessGraphUI, freeze : boolean, button : JQuery) {
+        private setDepth(process : CCS.Process, graph : GUI.ProcessGraphUI, depth : number, move : Move) : void {
+            this.clear(graph);
+            this.draw(process, graph, depth);
+            this.centerNode(process, move);
+
+            if (move === Move.Left)
+                this.toggleFreeze(graph, false, this.$leftFreeze);
+            else
+                this.toggleFreeze(graph, false, this.$rightFreeze);
+        }
+
+        private validateDepth(input : JQuery) : void {
+            if (!/^[0-9]+$/.test(input.val())) {
+                input.val("5");
+            }
+        }
+
+        private toggleFreeze(graph : GUI.ProcessGraphUI, freeze : boolean, button : JQuery) : void {
             if (freeze) {
                 graph.freeze();
                 button.find("i").replaceWith("<i class='fa fa-lock fa-lg'></i>");
@@ -94,7 +133,7 @@ module Activity {
             button.data("frozen", freeze);
         }
 
-        protected checkPreconditions(): boolean {
+        protected checkPreconditions() : boolean {
             var graph = Main.getGraph();
 
             if (!graph) {
@@ -116,11 +155,40 @@ module Activity {
             if (this.changed || configuration) {
                 this.changed = false;
                 this.graph = this.project.getGraph();
+                this.notationVisitor.clearCache();
                 this.displayOptions();
                 this.newGame(true, true, configuration);
             }
             
             this.tooltip.setGraph(this.graph);
+
+            this.leftGraph.setOnSelectListener((processId) => {
+                if (this.leftGraph.getProcessDataObject(processId.toString()).status === "unexpanded")
+                    this.draw(this.graph.processById(processId), this.leftGraph, this.$leftDepth.val());
+            });
+
+            this.rightGraph.setOnSelectListener((processId) => {
+                if (this.rightGraph.getProcessDataObject(processId.toString()).status === "unexpanded")
+                    this.draw(this.graph.processById(processId), this.rightGraph, this.$rightDepth.val());
+            });
+
+            this.leftGraph.setHoverOnListener((processId) => {
+                var process = this.graph.processById(processId);
+                console.log(this.labelFor(process) + " = " + this.notationVisitor.visit(process));
+            });
+
+            this.rightGraph.setHoverOnListener((processId) => {
+                var process = this.graph.processById(processId);
+                console.log(this.labelFor(process) + " = " + this.notationVisitor.visit(process));
+            });
+
+            this.leftGraph.setHoverOutListener(() => {
+                this.leftGraph.clearHover();
+            });
+
+            this.rightGraph.setHoverOutListener(() => {
+                this.rightGraph.clearHover();
+            });
             
             this.leftGraph.bindCanvasEvents();
             this.rightGraph.bindCanvasEvents();
@@ -130,6 +198,13 @@ module Activity {
             $(window).off("resize");
             
             this.fullscreen.onHide();
+
+            this.leftGraph.clearOnSelectListener();
+            this.rightGraph.clearOnSelectListener();
+            this.leftGraph.clearHoverOnListener();
+            this.rightGraph.clearHoverOnListener();
+            this.leftGraph.clearHoverOutListener();
+            this.rightGraph.clearHoverOutListener();
 
             this.leftGraph.unbindCanvasEvents();
             this.rightGraph.unbindCanvasEvents();
@@ -186,16 +261,18 @@ module Activity {
                 options = this.getOptions();
             }
 
-            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
+            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
 
-            if (drawLeft) {
-                this.draw(this.succGen.getProcessByName(options.leftProcess), this.leftGraph);
+            if (drawLeft || !this.leftGraph.getNode(this.succGen.getProcessByName(options.leftProcess).id.toString())) {
+                this.clear(this.leftGraph);
+                this.draw(this.succGen.getProcessByName(options.leftProcess), this.leftGraph, this.$leftDepth.val());
                 this.resize(1, null);
                 this.toggleFreeze(this.leftGraph, false, this.$leftFreeze);
             }
 
-            if (drawRight) {
-                this.draw(this.succGen.getProcessByName(options.rightProcess), this.rightGraph)
+            if (drawRight || !this.rightGraph.getNode(this.succGen.getProcessByName(options.rightProcess).id.toString())) {
+                this.clear(this.rightGraph);
+                this.draw(this.succGen.getProcessByName(options.rightProcess), this.rightGraph, this.$rightDepth.val())
                 this.resize(null, 1);
                 this.toggleFreeze(this.rightGraph, false, this.$rightFreeze);
             }
@@ -222,58 +299,50 @@ module Activity {
             this.dgGame.startGame();
         }
 
-        /*private draw(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
-            this.resize();
-
-            this.$leftZoom.val("1");
-            this.$rightZoom.val("1");
-
-            this.clear(graph);
-
-            var allTransitions = this.expandBFS(process, 1000);
-
-            for (var sourceId in allTransitions) {
-                graph.showProcess(sourceId, {label: this.labelFor(this.graph.processById(sourceId))});
-
-                allTransitions[sourceId].forEach(t => {
-                    graph.showProcess(t.targetProcess.id, {label: this.labelFor(this.graph.processById(t.targetProcess.id))});
-                    graph.showTransitions(sourceId, t.targetProcess.id, [{label: t.action.toString()}]);
-                });
-            }
-
-            graph.setSelected(process.id.toString());
-        }*/
-
-        // Use this for now. Needs refactor.
-        private draw(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
-            this.clear(graph);
-
-            var allTransitions = this.expandBFS(process, 1000);
+        private draw(process : CCS.Process, graph : GUI.ProcessGraphUI, depth : number) : void {
+            var allTransitions = this.expandBFS(process, depth);
 
             for (var fromId in allTransitions) {
                 var fromProcess = this.graph.processById(fromId);
                 this.showProcess(fromProcess, graph);
+                this.showProcessAsExplored(fromProcess, graph);
                 var groupedByTargetProcessId = ArrayUtil.groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
 
                 Object.keys(groupedByTargetProcessId).forEach(strProcId => {
                     var group = groupedByTargetProcessId[strProcId],
-                        data = group.map(t => { return {label: t.action.toString()}; }),
+                        data = group.map(t => {return {label: t.action.toString()}}),
                         numId = parseInt(strProcId, 10);
                     this.showProcess(this.graph.processById(numId), graph);
                     graph.showTransitions(fromProcess.id, numId, data);
                 });
             }
 
-            graph.setSelected(process.id.toString());
+            this.highlightNodes();
         }
 
-        private showProcess(process : ccs.Process, graph : GUI.ProcessGraphUI) : void {
+        private showProcess(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
             if (graph.getProcessDataObject(process.id)) return;
-            graph.showProcess(process.id, {label: this.labelFor(process)});
+            graph.showProcess(process.id, {label: this.labelFor(process), status: "unexpanded"});
+        }
+
+        private showProcessAsExplored(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
+            graph.getProcessDataObject(process.id).status = "expanded";
         }
 
         public highlightNodes() : void {
+            if (!this.dgGame)
+                return;
+
             var configuration = this.dgGame.getCurrentConfiguration();
+            var leftData = this.leftGraph.getProcessDataObject(configuration.left.id.toString());
+            var rightData = this.rightGraph.getProcessDataObject(configuration.right.id.toString());
+
+            if (leftData && leftData.status === "unexpanded") {
+                this.draw(configuration.left, this.leftGraph, this.$leftDepth.val());
+            } else if (rightData && rightData.status === "unexpanded") {
+                this.draw(configuration.right, this.rightGraph, this.$rightDepth.val());
+            }
+
             this.leftGraph.setSelected(configuration.left.id.toString());
             this.rightGraph.setSelected(configuration.right.id.toString());
         }
@@ -298,7 +367,7 @@ module Activity {
             graph.clearAll();
         }
 
-        private expandBFS(process : CCS.Process, maxDepth) {
+        private expandBFS(process : CCS.Process, maxDepth : number) : any {
             var result = {},
                 queue = [[1, process]], //non-emptying array as queue.
                 depth, qIdx, fromProcess, transitions;
@@ -353,11 +422,11 @@ module Activity {
                 this.leftRenderer.resize(this.leftCanvas.width, this.leftCanvas.height);
 
                 if (leftZoom > 1) {
-                    this.$leftFreeze.css("right", 30);
+                    $("#game-left .input-group").css("right", 30);
                     this.$leftContainer.css("overflow", "auto");
                     this.centerNode(this.dgGame.getCurrentConfiguration().left, Move.Left);
                 } else {
-                    this.$leftFreeze.css("right", 10);
+                    $("#game-left .input-group").css("right", 10);
                     this.$leftContainer.css("overflow", "hidden");
                 }
             }
@@ -369,11 +438,11 @@ module Activity {
                 this.rightRenderer.resize(this.rightCanvas.width, this.rightCanvas.height);
 
                 if (rightZoom > 1) {
-                    this.$rightFreeze.css("right", 30);
+                    $("#game-right .input-group").css("right", 30);
                     this.$rightContainer.css("overflow", "auto");
                     this.centerNode(this.dgGame.getCurrentConfiguration().right, Move.Right);
                 } else {
-                    this.$rightFreeze.css("right", 10);
+                    $("#game-right .input-group").css("right", 10);
                     this.$rightContainer.css("overflow", "hidden");
                 }
             }
@@ -517,11 +586,10 @@ module Activity {
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
 
                 this.round++;
+                this.gameLog.printRound(this.round, this.getCurrentConfiguration());
                 
-                if (!this.cycleExists()) {
-                    this.gameLog.printRound(this.round, this.getCurrentConfiguration());
+                if (!this.cycleExists())
                     this.preparePlayer(this.attacker);
-                }
             }
 
             this.gameActivity.highlightNodes();
@@ -864,17 +932,17 @@ module Activity {
         
         protected prepareAttack(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, true);
-            this.gameLog.println("Pick a transition on left or right.", "<p class='game-prompt'>");
+            this.gameLog.println("Pick a transition on the left or the right.", "<p class='game-prompt'>");
         }
         
         protected prepareDefend(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, false);
-            this.gameLog.println("Pick a transition on " + ((game.getLastMove() === Move.Left) ? "right." : "left."), "<p class='game-prompt'>");
+            this.gameLog.println("Pick a transition on the " + ((game.getLastMove() === Move.Left) ? "right." : "left."), "<p class='game-prompt'>");
         }
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
             var currentConfiguration = game.getCurrentConfiguration();
-            var source : string;
+            var source;
             var action : string = game.getLastAction();
             
             if (!isAttack) {
@@ -917,8 +985,8 @@ module Activity {
             });
         }
         
-        private labelFor(process : CCS.Process) : string {
-            return TooltipNotation.GetSpan(process instanceof CCS.NamedProcess ? process.name : process.id.toString());
+        private labelFor(process : CCS.Process) : JQuery {
+            return Tooltip.wrap(process instanceof CCS.NamedProcess ? process.name : process.id.toString());
         }
 
         private highlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
@@ -1080,7 +1148,7 @@ module Activity {
         }
 
         public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process, move : Move) : void {
-            var template = "{1} played ({2}, {3}, {4}) on {5}.";
+            var template = "{1} played ({2}, {3}, {4}) on the {5}.";
 
             var context = {
                 1: {text: (player instanceof Computer) ? player.playTypeStr() : "You"},
@@ -1133,11 +1201,7 @@ module Activity {
 
             this.println(this.render(template, context), "<p class='intro'>");
 
-            if (attacker instanceof Computer) {
-                this.println("You are playing as defender.", "<p class='intro'>");
-            } else {
-                this.println("You are playing as attacker.", "<p class='intro'>");
-            }
+            this.println("You are playing " + (attacker instanceof Computer ? "defender." : "attacker."), "<p class='intro'>");
             
             if (winner instanceof Human){
                 this.println("You have a winning strategy.", "<p class='intro'>");

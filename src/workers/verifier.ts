@@ -4,7 +4,7 @@
 declare var CCSParser;
 declare var HMLParser;
 
-importScripts("../ccs_grammar.js", "../hml_grammar.js", "../util.js", "../ccs.js");
+importScripts("../ccs_grammar.js", "../hml_grammar.js", "../data.js", "../util.js", "../ccs.js");
 
 var messageHandlers : any = {};
 var graph;
@@ -46,8 +46,14 @@ messageHandlers.isStronglyTraceIncluded = data => {
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
-    var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
-    data.result = isTraceIncluded;
+    // var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    var traceDg = new Equivalence.TraceDG(leftProcess.id, rightProcess.id, attackSuccGen);
+    var marking = DependencyGraph.liuSmolkaLocal2(0, traceDg);
+    
+    data.result = {
+        isTraceIncluded: marking.getMarking(0) === marking.ZERO,
+        formula: traceDg.getDistinguishingFormula(marking)
+    };
     self.postMessage(data);
 };
 
@@ -56,8 +62,14 @@ messageHandlers.isWeaklyTraceIncluded = data => {
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
-    var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
-    data.result = isTraceIncluded;
+    // var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    var traceDg = new Equivalence.TraceDG(leftProcess.id, rightProcess.id, attackSuccGen);
+    var marking = DependencyGraph.liuSmolkaLocal2(0, traceDg);
+    
+    data.result = {
+        isTraceIncluded: marking.getMarking(0) === marking.ZERO,
+        formula: traceDg.getDistinguishingFormula(marking)
+    };
     self.postMessage(data);
 };
 
@@ -105,9 +117,10 @@ messageHandlers.checkFormulaForVariable = data => {
 
 messageHandlers.findDistinguishingFormula = data => {
     var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        defendSuccGen = data.succGenType === "weak" ? CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}) : strongSuccGen,
         leftProcess = strongSuccGen.getProcessByName(data.leftProcess),
-        rightProcess = strongSuccGen.getProcessByName(data.rightProcess),
-        bisimilarDg = new Equivalence.BisimulationDG(strongSuccGen, strongSuccGen, leftProcess.id, rightProcess.id),
+        rightProcess = strongSuccGen.getProcessByName(data.rightProcess);
+        var bisimilarDg = new Equivalence.BisimulationDG(strongSuccGen, defendSuccGen, leftProcess.id, rightProcess.id),
         marking = DependencyGraph.solveDgGlobalLevel(bisimilarDg),
         formula, hmlNotation;
     if (marking.getMarking(0) === marking.ZERO) {
@@ -116,12 +129,12 @@ messageHandlers.findDistinguishingFormula = data => {
             formula: ""
         };
     } else {
-        formula = bisimilarDg.findDistinguishingFormula(marking),
+        formula = bisimilarDg.findDistinguishingFormula(marking, data.succGenType);
         hmlNotation = new Traverse.HMLNotationVisitor();
         data.result = {
             isBisimilar: false,
             formula: hmlNotation.visit(formula)
-        }
+        };
     }
     self.postMessage(data);
 };
