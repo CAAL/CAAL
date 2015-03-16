@@ -643,7 +643,7 @@ module Property {
         
         public toJSON() : any {
             return {
-                type: "DistinguishingFormula",
+                type: "DistinguishingBisimulationFormula",
                 status: this.status,
                 options : {
                     firstHMLProperty: this.firstHMLProperty.toJSON().options,
