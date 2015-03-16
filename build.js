@@ -15,7 +15,7 @@ var ccsGrammar = _P('lib/ccs_grammar.js');
 pegjs(ccsGrammar, _P('src/ccs/ccs_grammar.pegjs'), 'CCSParser');
 
 var hmlGrammar = _P('lib/hml_grammar.js');
-pegjs(hmlGrammar, _P('src/ccs/hml_grammar.pegjs'), 'HMLParser');
+pegjs(hmlGrammar, _P('src/ccs/hml_grammar.pegjs'), 'HMLParser', ["--allowed-start-rules", "start,TopFormula"]);
 
 // util.js
 var utilTargetFile = _P('lib/util.js');
@@ -93,9 +93,10 @@ function createTscFileTask(targetFile, sourceFiles, options, comment, onFinish) 
     });
 }
 
-function pegjs(targetFile, sourceFile, variable) {
+function pegjs(targetFile, sourceFile, variable, extraOptions) {
+    extraOptions = extraOptions || [];
     file(targetFile, [sourceFile], {async: true}, function() {
-        var command = [PEGJS, '--cache', '-e', variable, sourceFile, targetFile].join(' ');
+        var command = [PEGJS, '--cache', '-e', variable].concat(extraOptions).concat([sourceFile, targetFile]).join(' ');
         jake.exec(command, {printStdout: true}, function () { complete(); });
     });
 }

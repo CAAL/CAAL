@@ -271,12 +271,14 @@ module Property {
     
     export class HML extends Property {
         private process : string;
-        private formula : string;
+        private definitions : string;
+        private topFormula : string;
 
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(status);
             this.process = options.process;
-            this.formula = options.formula;
+            this.definitions = options.definitions;
+            this.topFormula = options.topFormula;
         }
 
         public getProcess() : string {
@@ -288,17 +290,26 @@ module Property {
             this.setUnknownStatus(); /*When setting a new process, we don't know the result yet*/
         }
 
-        public getFormula() : string {
-            return this.formula;
+        public getTopFormula() : string {
+            return this.topFormula;
         }
 
-        public setFormula(formula : string) : void {
-            this.formula = formula;
+        public setTopFormula(formula : string) : void {
+            this.topFormula = formula;
             this.setUnknownStatus(); /*When setting a new formula, we don't know the result yet*/
         }
 
+        public getDefinitions() : string {
+            return this.definitions;
+        }
+
+        public setDefinitions(formula : string) : void {
+            this.definitions = formula;
+            this.setUnknownStatus();
+        }
+
         public getDescription() : string {
-            var escaped = this.formula.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            var escaped = this.topFormula.replace(/</g, "&lt;").replace(/>/g, "&gt;");
             return this.process + " &#8872; " + escaped;
         }
 
@@ -308,7 +319,8 @@ module Property {
                 status: this.status,
                 options : {
                     process: this.process,
-                    formula: this.formula
+                    definitions: this.definitions,
+                    topFormula: this.topFormula
                 }
             };
         }
@@ -335,7 +347,7 @@ module Property {
              * HML syntax check (simple)
              * complete syntax check are done by the worker, it will post a error if the hml syntax did not parse. 
              */
-            if(!this.formula || this.formula === "") {
+            if(!this.topFormula || this.topFormula === "") {
                 error = "Formula is not defined.";
                 isReady = false;
             }
@@ -352,7 +364,8 @@ module Property {
                 type: "checkFormula",
                 processName: this.process,
                 useStrict: false,
-                formula: this.formula
+                definitions: this.definitions,
+                formula: this.topFormula
             };
         }
     }
@@ -538,9 +551,9 @@ module Property {
         }
 
         public setFirstProcess(firstProcess: string) : void {
-            this.firstHMLProperty.setProcess(firstProcess)
-            this.setUnknownStatus()
-            this.clearFormulas()
+            this.firstHMLProperty.setProcess(firstProcess);
+            this.setUnknownStatus();
+            this.clearFormulas();
         }
 
         public getSecondProcess() : string {
@@ -548,14 +561,16 @@ module Property {
         }
 
         public setSecondProcess(secondProcess: string) : void {
-            this.secondHMLProperty.setProcess(secondProcess)
-            this.setUnknownStatus()
-            this.clearFormulas()
+            this.secondHMLProperty.setProcess(secondProcess);
+            this.setUnknownStatus();
+            this.clearFormulas();
         }
 
         private clearFormulas() {
-            this.firstHMLProperty.setFormula("")
-            this.secondHMLProperty.setFormula("")
+            this.firstHMLProperty.setTopFormula("");
+            this.firstHMLProperty.setDefinitions("");
+            this.secondHMLProperty.setTopFormula("");
+            this.secondHMLProperty.setDefinitions("");
         }
 
         public getFirstHML() : Property.HML {
@@ -600,8 +615,8 @@ module Property {
         }
 
         protected verifyHml(formula : string) : void {
-            this.firstHMLProperty.setFormula(formula);
-            this.secondHMLProperty.setFormula(formula);
+            this.firstHMLProperty.setTopFormula(formula);
+            this.secondHMLProperty.setTopFormula(formula);
             
             this.childPropertiesToVerify.push(this.firstHMLProperty);
             this.childPropertiesToVerify.push(this.secondHMLProperty);

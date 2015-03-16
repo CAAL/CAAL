@@ -7,19 +7,23 @@
 
     var ccs = options.ccs,
         hml = options.hml,
-        formulas = new hml.FormulaSet();
+        formulas = options.formulaSet || new hml.FormulaSet();
 }
 
 start
 	= Ps:Statements _ { return formulas; }
+	/ F:SimpleFormula _ ";" _ { return formulas; } //TODO: Hack until multiple versions of syntax checker.
 	/ _ { return formulas; }
 
 Statements = P:FixedPoint _ ";" Qs:Statements { return [P].concat(Qs); }
 		   / P:FixedPoint _ (";" _)? { return [P]; }
 
+TopFormula = F:SimpleFormula _ ";"_ { formulas.setTopFormula(F); return F;} 
+
+SimpleFormula = P:Disjunction _ { var f = formulas.unnamedMinFixedPoint(P); return f; }
+
 FixedPoint = _ V:Variable _ [mM][aA][xX] "=" _ P:Disjunction { return formulas.newMaxFixedPoint(V, P); }
 		   / _ V:Variable _ [mM][iI][nN] "=" _ P:Disjunction { return formulas.newMinFixedPoint(V, P); }
-		   / P:Disjunction { return formulas.unnamedMinFixedPoint(P); }
 
 Disjunction = P:Conjunction Whitespace _ "or" Whitespace _ Q:Disjunction { return Q instanceof hml.DisjFormula ? formulas.newDisj([P].concat(Q.subFormulas)) : formulas.newDisj([P, Q]); }
 			/ P:Conjunction { return P; }

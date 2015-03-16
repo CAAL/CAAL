@@ -152,6 +152,7 @@ module HML {
     }
 
     export class FormulaSet {
+        private topFormula : Formula = null;
         private allFormulas = [];
         private undefinedVariables = [];
         private errors = [];
@@ -300,6 +301,14 @@ module HML {
 
         getAllFormulas() : Formula[] {
             return this.allFormulas.slice(0);
+        }
+
+        getTopFormula() : Formula {
+            return this.topFormula;
+        }
+
+        setTopFormula(formula : Formula) {
+            this.topFormula = formula;
         }
 
         map(fn : (formula : Formula) => Formula) : FormulaSet {

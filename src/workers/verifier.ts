@@ -95,21 +95,29 @@ messageHandlers.isWeaklyTraceEq = data => {
     self.postMessage(data);
 };
 
+function readFormulaSet(data) : HML.FormulaSet {
+    var formulaSet = new HML.FormulaSet;
+    HMLParser.parse(data.definitions, {ccs: CCS, hml: HML, formulaSet: formulaSet});
+    HMLParser.parse(data.formula, {startRule: "TopFormula", ccs: CCS, hml: HML, formulaSet: formulaSet});
+    return formulaSet;
+}
+
 messageHandlers.checkFormula = data => {
     var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
         weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
-        formulaSet = HMLParser.parse(data.formula, {ccs: CCS, hml: HML}),
-        formula = formulaSet.getAllFormulas()[0],
+        formulaSet = readFormulaSet(data),
+        formula = formulaSet.getTopFormula(),
         result = DependencyGraph.solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, graph.processByName(data.processName).id);
     data.result = result;
+    console.log("Checking");
     self.postMessage(data);
 };
 
 messageHandlers.checkFormulaForVariable = data => {  
     var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
         weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
-        formulaSet = HMLParser.parse(data.formula, {ccs: CCS, hml: HML}),
-        formula = formulaSet.formulaByName(data.variable),
+        formulaSet = readFormulaSet(data),
+        formula = formulaSet.getTopFormula(),
         result = DependencyGraph.solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, graph.processByName(data.processName).id);
     data.result = result;
     self.postMessage(data);

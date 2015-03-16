@@ -13,6 +13,7 @@
   },
   "scripts": {
     "build": "./node_modules/.bin/jake -q -f build.js || exit 0",
+    "build-all": "./node_modules/.bin/jake -B -f build.js || exit 0",
     "test": "./node_modules/.bin/node-qunit-phantomjs ./test/test.html || exit 0",
     "release": "./node_modules/.bin/jake -q -f build.js || exit 1; ./node_modules/.bin/node-qunit-phantomjs ./test/test.html || exit 1; rm -f release.tar.gz; tar -zcf release.tar.gz lib/ css/ fonts/ index.html LICENSE README.md server.js;"
   },
