@@ -456,6 +456,7 @@ p.small {
     border-radius: 5px;
     padding: 0px 2px 0px 2px;
     cursor: pointer;
+    font: normal 14px "Inconsolata";
 }
 
 .tooltip {
