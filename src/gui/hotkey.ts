@@ -1,4 +1,5 @@
 /// <reference path="jquery.hotkeys.d.ts" />
+
 class HotkeyHandler {
 
     public setGlobalHotkeys(activityHandler : Activity.ActivityHandler, save : Save) {
