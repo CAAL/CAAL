@@ -311,7 +311,7 @@ module Activity {
                     property = new Property.HML({process: "", formula: ""});
                     break;
                 case "distinguishing-strong":
-                    property = new Property.DistinguishingBisimulationFormula(
+                    property = new Property.DistinguishingFormula(
                         {
                             firstHMLProperty: {process: "", formula: ""}, 
                             secondHMLProperty: {process: "", formula: ""},
@@ -319,7 +319,7 @@ module Activity {
                         });
                     break;
                 case "distinguishing-weak":
-                    property = new Property.DistinguishingBisimulationFormula(
+                    property = new Property.DistinguishingFormula(
                         {
                             firstHMLProperty: {process: "", formula: ""}, 
                             secondHMLProperty: {process: "", formula: ""},

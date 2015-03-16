@@ -509,7 +509,7 @@ module Property {
         }
     }
     
-    export class DistinguishingFormula extends Property {
+    export class DistinguishingFormulaSuper extends Property {
         protected firstHMLProperty : Property.HML;
         protected secondHMLProperty : Property.HML;
         private isexpanded : boolean = true;
@@ -626,7 +626,7 @@ module Property {
         }
     }
     
-    export class DistinguishingBisimulationFormula extends DistinguishingFormula {
+    export class DistinguishingFormula extends DistinguishingFormulaSuper {
         
         private succGenType : string;
         
@@ -643,7 +643,7 @@ module Property {
         
         public toJSON() : any {
             return {
-                type: "DistinguishingBisimulationFormula",
+                type: "DistinguishingFormula",
                 status: this.status,
                 options : {
                     firstHMLProperty: this.firstHMLProperty.toJSON().options,
@@ -712,7 +712,7 @@ module Property {
         }
     }
     
-    export class TraceInclusion extends DistinguishingFormula {
+    export class TraceInclusion extends DistinguishingFormulaSuper {
         constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
