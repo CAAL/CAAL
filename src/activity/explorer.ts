@@ -23,6 +23,7 @@ module Activity {
         private $statusContainer : JQuery;
         private $statusTable : JQuery;
         private tooltip : Tooltip;
+        private timeout : any;
         private $zoom : JQuery;
         private $depth : JQuery;
         private $freeze : JQuery;
@@ -107,9 +108,25 @@ module Activity {
             }
 
             this.uiGraph.bindCanvasEvents();
+
             this.uiGraph.setOnSelectListener((processId) => this.expand(this.graph.processById(processId)));
-            this.uiGraph.setHoverOnListener((processId) => this.uiGraph.setHover(processId));
-            this.uiGraph.setHoverOutListener(() => this.uiGraph.clearHover());
+
+            this.uiGraph.setHoverOnListener((processId) => {
+                this.timeout = setTimeout(() => {
+                    var tooltip = $(".canvas-tooltip");
+                    var process = this.graph.processById(parseInt(processId));
+                    var position = this.uiGraph.getPosition(processId);
+                    tooltip.css("top", position.y - 45 - this.$canvasContainer.scrollTop());
+                    tooltip.css("left", position.x - 10 - this.$canvasContainer.scrollLeft());
+                    tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
+                    tooltip.show();
+                }, 1000);
+            });
+
+            this.uiGraph.setHoverOutListener(() => {
+                clearTimeout(this.timeout);
+                $(".canvas-tooltip").hide();
+            });
         }
 
         public onHide() : void {

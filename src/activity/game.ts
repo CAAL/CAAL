@@ -19,7 +19,7 @@ module Activity {
         private dgGame : DgGame;
         private fullscreen : Fullscreen;
         private tooltip : Tooltip;
-        private notationVisitor : Traverse.CCSNotationVisitor;
+        private timeout : any;
         private $gameType : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
@@ -46,7 +46,6 @@ module Activity {
             this.project = Project.getInstance();
             this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(null, null));
             this.tooltip = new Tooltip($("#game-status"));
-            this.notationVisitor = new Traverse.CCSNotationVisitor();
 
             this.$gameType = $("#game-type");
             this.$leftProcessList = $("#game-left-process");
@@ -155,7 +154,6 @@ module Activity {
             if (this.changed || configuration) {
                 this.changed = false;
                 this.graph = this.project.getGraph();
-                this.notationVisitor.clearCache();
                 this.displayOptions();
                 this.newGame(true, true, configuration);
             }
@@ -172,22 +170,39 @@ module Activity {
                     this.draw(this.graph.processById(processId), this.rightGraph, this.$rightDepth.val());
             });
 
+            // Ugly copy/paste. Fix later.
             this.leftGraph.setHoverOnListener((processId) => {
-                var process = this.graph.processById(processId);
-                console.log(this.labelFor(process) + " = " + this.notationVisitor.visit(process));
-            });
-
-            this.rightGraph.setHoverOnListener((processId) => {
-                var process = this.graph.processById(processId);
-                console.log(this.labelFor(process) + " = " + this.notationVisitor.visit(process));
+                this.timeout = setTimeout(() => {
+                    var tooltip = $("#canvas-tooltip-left");
+                    var process = this.graph.processById(parseInt(processId));
+                    var position = this.leftGraph.getPosition(processId);
+                    tooltip.css("top", position.y - 45 - this.$leftContainer.scrollTop());
+                    tooltip.css("left", position.x - 10 - this.$leftContainer.scrollLeft());
+                    tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
+                    tooltip.show();
+                }, 1000);
             });
 
             this.leftGraph.setHoverOutListener(() => {
-                this.leftGraph.clearHover();
+                clearTimeout(this.timeout);
+                $("#canvas-tooltip-left").hide();
+            });
+
+            this.rightGraph.setHoverOnListener((processId) => {
+                this.timeout = setTimeout(() => {
+                    var tooltip = $("#canvas-tooltip-right");
+                    var process = this.graph.processById(parseInt(processId));
+                    var position = this.rightGraph.getPosition(processId);
+                    tooltip.css("top", position.y - 45 - this.$rightContainer.scrollTop());
+                    tooltip.css("left", position.x - 10 - this.$rightContainer.scrollLeft());
+                    tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
+                    tooltip.show();
+                }, 1000);
             });
 
             this.rightGraph.setHoverOutListener(() => {
-                this.rightGraph.clearHover();
+                clearTimeout(this.timeout);
+                $("#canvas-tooltip-right").hide();
             });
             
             this.leftGraph.bindCanvasEvents();
@@ -469,14 +484,14 @@ module Activity {
         protected defender : Player;
         protected currentWinner : Player;
         
-        private round : number = 1;
+        protected round : number = 1;
         protected lastMove : Move;
         protected lastAction : string;
         protected currentNodeId : dg.DgNodeId = 0; // the DG node id
         
         private cycleCache : any;
         
-        constructor(private gameActivity : Game, protected graph : CCS.Graph,
+        constructor(protected gameActivity : Game, protected graph : CCS.Graph,
             protected currentLeft : any, protected currentRight : any) {
             super();
             
@@ -553,7 +568,7 @@ module Activity {
             this.currentWinner = this.getUniversalWinner();
         }
         
-        private saveCurrentProcess(process : any, move : Move) : void {
+        protected saveCurrentProcess(process : any, move : Move) : void {
             switch (move)
             {
                 case Move.Left : this.currentLeft  = process; break;
@@ -562,41 +577,10 @@ module Activity {
         }
         
         public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : string = this.lastAction, move? : Move) : void {
-            var previousConfig = this.getCurrentConfiguration();
-            
-            // change the current node id to the next
-            this.currentNodeId = nextNode;
-            
-            if (player.getPlayType() == PlayType.Attacker) {
-                var sourceProcess = move === Move.Left ? previousConfig.left : previousConfig.right;
-                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, move);
-
-                this.lastAction = action;
-                this.lastMove = move;
-                
-                this.saveCurrentProcess(destinationProcess, this.lastMove);
-                this.preparePlayer(this.defender);
-            } else {
-                // the play is a defense, flip the saved last move
-                this.lastMove = this.lastMove === Move.Right ? Move.Left : Move.Right;
-                
-                var sourceProcess = this.lastMove === Move.Left ? previousConfig.left : previousConfig.right;
-                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove);
-                
-                this.saveCurrentProcess(destinationProcess, this.lastMove);
-
-                this.round++;
-                this.gameLog.printRound(this.round, this.getCurrentConfiguration());
-                
-                if (!this.cycleExists())
-                    this.preparePlayer(this.attacker);
-            }
-
-            this.gameActivity.highlightNodes();
-            this.gameActivity.centerNode(destinationProcess, this.lastMove);
+            this.abstract();
         }
         
-        private preparePlayer(player : Player) {
+        protected preparePlayer(player : Player) {
             var choices : any = this.getCurrentChoices(player.getPlayType());
             
             // determine if game is over
@@ -621,7 +605,7 @@ module Activity {
             }
         }
         
-        private cycleExists() : boolean {
+        protected cycleExists() : boolean {
             var configuration = this.getCurrentConfiguration();
             var cacheStr = this.getConfigurationStr(configuration);
             
@@ -692,9 +676,48 @@ module Activity {
             super(gameActivity, graph, currentLeft, currentRight); // creates dependency graph and marking
         }
         
+        public getGameType() : string {
+            return this.gameType;
+        }
+        
         public startGame() : void {
             this.gameLog.printIntro(this.gameType, this.getCurrentConfiguration(), this.getUniversalWinner(), this.attacker);
             super.startGame();
+        }
+        
+        public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : string = this.lastAction, move? : Move) : void {
+            var previousConfig = this.getCurrentConfiguration();
+            
+            // change the current node id to the next
+            this.currentNodeId = nextNode;
+            
+            if (player.getPlayType() == PlayType.Attacker) {
+                var sourceProcess = move === Move.Left ? previousConfig.left : previousConfig.right;
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, move, true);
+
+                this.lastAction = action;
+                this.lastMove = move;
+                
+                this.saveCurrentProcess(destinationProcess, this.lastMove);
+                this.preparePlayer(this.defender);
+            } else {
+                // the play is a defense, flip the saved last move
+                this.lastMove = this.lastMove === Move.Right ? Move.Left : Move.Right;
+                
+                var sourceProcess = this.lastMove === Move.Left ? previousConfig.left : previousConfig.right;
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove, this.gameType === "strong");
+                
+                this.saveCurrentProcess(destinationProcess, this.lastMove);
+
+                this.round++;
+                this.gameLog.printRound(this.round, this.getCurrentConfiguration());
+                
+                if (!this.cycleExists())
+                    this.preparePlayer(this.attacker);
+            }
+
+            this.gameActivity.highlightNodes();
+            this.gameActivity.centerNode(destinationProcess, this.lastMove);
         }
         
         public isBisimilar() : boolean {
@@ -942,12 +965,13 @@ module Activity {
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
             var currentConfiguration = game.getCurrentConfiguration();
-            var source;
-            var action : string = game.getLastAction();
             
             if (!isAttack) {
-                var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
-                source = this.labelFor(sourceProcess);
+                if (game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak") {
+                    var action = "=" + game.getLastAction() + "=>";
+                } else {
+                    var action = "-" + game.getLastAction() + "->";
+                }
             }
             
             this.$table.empty();
@@ -957,8 +981,11 @@ module Activity {
 
                 if (isAttack) {
                     var sourceProcess = choice.move == 1 ? currentConfiguration.left : currentConfiguration.right;
-                    source = this.labelFor(sourceProcess);
-                    action = choice.action;
+                    var source = this.labelFor(sourceProcess);
+                    action = "-" + choice.action + "->";
+                } else {
+                    var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
+                    var source = this.labelFor(sourceProcess);
                 }
                 
                 var sourceTd = $("<td id='source'></td>").append(source);
@@ -1147,15 +1174,17 @@ module Activity {
             this.println(this.render(template, context), "<p>");
         }
 
-        public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process, move : Move) : void {
-            var template = "{1} played ({2}, {3}, {4}) on the {5}.";
+        public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process, move : Move, isStrongMove : boolean) : void {
+            var template = "{1} played {2} {3}{4}{5} {6} on the {7}.";
 
             var context = {
                 1: {text: (player instanceof Computer) ? player.playTypeStr() : "You"},
                 2: {text: this.labelFor(source), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
-                3: {text: action, tag: "<span>", attr: [{name: "class", value: "monospace"}]},
-                4: {text: this.labelFor(destination), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
-                5: {text: (move === Move.Left) ? "left" : "right"}
+                3: {text: isStrongMove ? "-" : "=", tag: "<span>", attr: [{name: "class", value: "monospace"}]},
+                4: {text: action, tag: "<span>", attr: [{name: "class", value: "monospace"}]},
+                5: {text: isStrongMove ? "->" : "=>", tag: "<span>", attr: [{name: "class", value: "monospace"}]},
+                6: {text: this.labelFor(destination), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
+                7: {text: (move === Move.Left) ? "left" : "right"}
             };
 
             if (player instanceof Human) {
@@ -1191,18 +1220,15 @@ module Activity {
         }
 
         public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
-            var template = "{1} bisimulation game starting from ({2}, {3}).";
+            var template = "You are playing {1} in {2} bisimulation game.";
 
             var context = {
-                1: {text: this.capitalize(gameType)},
-                2: {text: this.labelFor(configuration.left), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
-                3: {text: this.labelFor(configuration.right), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]}
-            };
+                1: {text: (attacker instanceof Computer ? "defender" : "attacker")},
+                2: {text: gameType},
+            }
 
             this.println(this.render(template, context), "<p class='intro'>");
 
-            this.println("You are playing " + (attacker instanceof Computer ? "defender." : "attacker."), "<p class='intro'>");
-            
             if (winner instanceof Human){
                 this.println("You have a winning strategy.", "<p class='intro'>");
             } else {

@@ -324,11 +324,11 @@ textarea {
     cursor: pointer;
 }
 
-#game-status .col-md-4 {
+#game-status .col-md-5 {
     padding-right: 0;
 }
 
-#game-status .col-md-8 {
+#game-status .col-md-7 {
     padding-left: 0;
 }
 
@@ -397,11 +397,11 @@ textarea {
         margin-bottom: 20px;
     }
 
-    #game-status .col-md-4 {
+    #game-status .col-md-5 {
         padding-right: 15px;
     }
 
-    #game-status .col-md-8 {
+    #game-status .col-md-7 {
         padding-left: 15px;
     }
 }
@@ -451,6 +451,7 @@ p.small {
     border-radius: 5px;
     padding: 0px 2px 0px 2px;
     cursor: pointer;
+    font: normal 14px "Inconsolata";
 }
 
 .tooltip {
@@ -471,4 +472,16 @@ p.small {
 
 .tooltip-arrow {
     border-top-color: #bbb !important;
+}
+
+.canvas-tooltip {
+    max-width: 300px;
+    position: absolute;
+    display: none;
+    border: 1px solid #bbb;
+    overflow: visible;
+    background-color: #eee;
+    z-index: 1000;
+    font: normal 14px "Inconsolata";
+    padding: 5px;
 }

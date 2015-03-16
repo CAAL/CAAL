@@ -129,8 +129,8 @@ module Activity {
                             property.setUnknownStatus(); // Otherwise set the unknown status
                         }
                     }
-                    else if (property instanceof Property.DistinguishingFormula) {
-                        var temp : Property.DistinguishingFormula = <Property.DistinguishingFormula> property;
+                    else if (property instanceof Property.DistinguishingFormulaSuper) {
+                        var temp : Property.DistinguishingFormulaSuper = <Property.DistinguishingFormulaSuper> property;
                         if (processList.indexOf(temp.getFirstProcess()) === -1 || processList.indexOf(temp.getSecondProcess()) === -1 ) {
                             // If process is not in list of named processes, show the red triangle
                             temp.setInvalidateStatus("One of the processes selected is not defined in the CCS program.")
@@ -221,7 +221,7 @@ module Activity {
                 }
 
                 var propertyRows = null;
-                if (properties[i] instanceof Property.DistinguishingFormula) {
+                if (properties[i] instanceof Property.DistinguishingFormulaSuper) {
                     /* distinguishing formula */
                     var onCollapseClick = (e) => {
                         if(e.data.property.isExpanded()){
@@ -260,7 +260,7 @@ module Activity {
         }
 
         public onCollapse(e) {
-            if (e.data.property instanceof Property.DistinguishingFormula) {
+            if (e.data.property instanceof Property.DistinguishingFormulaSuper) {
                 var firstProperty = e.data.property.getFirstHML();
                 var firstHMLid = firstProperty.getId();
                 var firstHMLRow = this.propertyTableBody.find("#" + firstHMLid);
@@ -276,7 +276,7 @@ module Activity {
         }
 
         public onExpand(e) {
-            if (e.data.property instanceof Property.DistinguishingFormula) {
+            if (e.data.property instanceof Property.DistinguishingFormulaSuper) {
                 var firstHMLid = e.data.property.getFirstHML().getId();
                 var firstHMLRow = this.propertyTableBody.find("#" + firstHMLid);
                 firstHMLRow.show();
@@ -448,8 +448,7 @@ module Activity {
                     this.displayProperties();
                     this.updateHeight();
                 });
-
-            } else if (property instanceof Property.DistinguishingFormula){
+            } else if (property instanceof Property.DistinguishingFormulaSuper){
                 var distinguishingForm = this.showPropertyForm("distinguishing");
 
                 this.displayProcessList(CCSProcessList, distinguishingForm.firstProcessList, property.getFirstProcess());
