@@ -50,6 +50,16 @@ module Main {
         GUI.addTooltips();
     });
 
+    export function showInfoBox(text : string, time : number) : void {
+        $('#info-box').html(text);
+        $('#info-box').stop().animate({ top: '10%' }, 400);
+        
+        var timer = setTimeout(() => {
+            $('#info-box').stop().animate({ top: -100 }, 400);
+            window.clearTimeout(timer);
+        }, time);
+    }
+
     export function getProgram() : string {
         return Project.getInstance().getCCS();
     }

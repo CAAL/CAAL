@@ -51,6 +51,7 @@ class Save extends MenuItem {
             }
         }
 
+        Main.showInfoBox("The project has been saved!", 1250);
         $(document).trigger("save");
     }
 

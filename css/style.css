@@ -102,6 +102,19 @@ textarea {
     cursor: pointer;
 }
 
+#info-box-outer {
+    width: 100%;
+
+}
+
+#info-box {
+    height: 50px;
+    position: absolute;
+    top: -100px;
+    z-index: 99999999999;
+    display: inline-block
+}
+
 
 /*
  * Activity styles
