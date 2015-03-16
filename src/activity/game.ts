@@ -176,8 +176,8 @@ module Activity {
                     var tooltip = $("#canvas-tooltip-left");
                     var process = this.graph.processById(parseInt(processId));
                     var position = this.leftGraph.getPosition(processId);
-                    tooltip.css("top", position.y - 45);
-                    tooltip.css("left", position.x - 10);
+                    tooltip.css("top", position.y - 45 - this.$leftContainer.scrollTop());
+                    tooltip.css("left", position.x - 10 - this.$leftContainer.scrollLeft());
                     tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
                     tooltip.show();
                 }, 1000);
@@ -193,8 +193,8 @@ module Activity {
                     var tooltip = $("#canvas-tooltip-right");
                     var process = this.graph.processById(parseInt(processId));
                     var position = this.rightGraph.getPosition(processId);
-                    tooltip.css("top", position.y - 45);
-                    tooltip.css("left", position.x - 10);
+                    tooltip.css("top", position.y - 45 - this.$rightContainer.scrollTop());
+                    tooltip.css("left", position.x - 10 - this.$rightContainer.scrollLeft());
                     tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
                     tooltip.show();
                 }, 1000);
