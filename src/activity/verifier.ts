@@ -497,9 +497,8 @@ module Activity {
         }
 
         private verifactionEnded(result? : PropertyStatus) {
-            this.verifyAllButton.prop("disabled", false);
-            this.verifyStopButton.prop("disabled", true);
             this.currentVerifyingProperty = null;
+            this.enableVerificationGUI()
             this.displayProperties();
             this.doNextVerification();
         }
@@ -511,12 +510,34 @@ module Activity {
             }
         }
 
+        private disabledVerificationGUI() {
+            /*Hide the displayed propertyforms*/
+            this.hidePropertyForm();
+            
+            /* enable the stop btn and disable the verify all btn. */
+            this.verifyAllButton.prop("disabled", true);
+            this.verifyStopButton.prop("disabled", false);
+
+            /* Disable all verify(play-btn)*/
+            $("tr #property-verify").prop("disabled", true);
+        }
+
+        private enableVerificationGUI() {
+            /* Disable the stop btn, and enable the verify all btn. */
+            this.verifyAllButton.prop("disabled", false);
+            this.verifyStopButton.prop("disabled", true);
+
+            /* Enable all verify(play-btns) */
+            $("tr #property-verify").prop("disabled", false);
+
+        }
+
         public verify(e): void {
             var property = (e.data.property instanceof Property.Property) ? e.data.property : null;
 
             /* Start to verify a property row*/
-            this.verifyAllButton.prop("disabled", true);
-            this.verifyStopButton.prop("disabled", false); // enable the stop button
+            
+            this.disabledVerificationGUI();
             this.currentVerifyingProperty = property; // the current verifying property
             
             property.verify(this.verifactionEnded.bind(this));
