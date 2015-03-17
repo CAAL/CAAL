@@ -23,7 +23,7 @@ module Activity {
         private $statusContainer : JQuery;
         private $statusTable : JQuery;
         private tooltip : Tooltip;
-        private timeout : any;
+        private timeout : number;
         private $zoom : JQuery;
         private $depth : JQuery;
         private $freeze : JQuery;
@@ -113,19 +113,20 @@ module Activity {
 
             this.uiGraph.setHoverOnListener((processId) => {
                 this.timeout = setTimeout(() => {
-                    var tooltip = $(".canvas-tooltip");
-                    var process = this.graph.processById(parseInt(processId));
+                    var tooltipAnchor = $("#explorer-canvas-tooltip");
                     var position = this.uiGraph.getPosition(processId);
-                    tooltip.css("top", position.y - 45 - this.$canvasContainer.scrollTop());
-                    tooltip.css("left", position.x - 10 - this.$canvasContainer.scrollLeft());
-                    tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
-                    tooltip.show();
-                }, 1000);
+
+                    tooltipAnchor.css("left", position.x - this.$canvasContainer.scrollLeft());
+                    tooltipAnchor.css("top", position.y - this.$canvasContainer.scrollTop() - 10);
+
+                    tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId)});
+                    tooltipAnchor.tooltip("show");
+                }, 1000)
             });
 
             this.uiGraph.setHoverOutListener(() => {
                 clearTimeout(this.timeout);
-                $(".canvas-tooltip").hide();
+                $("#explorer-canvas-tooltip").tooltip("destroy");
             });
         }
 

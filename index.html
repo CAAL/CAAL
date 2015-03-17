@@ -172,7 +172,7 @@
                 </div>
                 <div id="explorer-main" class="row">
                     <div class="col-md-12">
-                        <div style="position: relative">
+                        <div class="relative">
                             <input id="explorer-zoom" min="1" max="3" step="0.2" value="1" type="range" />
                             <div class="input-group">
                                 <input id="explorer-depth" class="form-control" value="10" type="text" data-previous-depth="10" data-tooltip="depth" />
@@ -181,10 +181,10 @@
                                     <a id="explorer-save" type="button" class="btn btn-default" data-tooltip="save-image"><i class="fa fa-download"></i></a>
                                 </span>
                             </div>
-                        </div>
-                        <div id="explorer-canvas">
-                            <canvas></canvas>
-                            <div class="canvas-tooltip"></div>
+                            <div id="explorer-canvas">
+                                <canvas></canvas>
+                                <div id="explorer-canvas-tooltip"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -323,7 +323,7 @@
             </div>
             <div id="game-main" class="row">
                 <div id="game-left" class="col-md-6">
-                    <div style="position: relative">
+                    <div class="relative">
                         <input id="zoom-left" data-side="left" min="1" max="3" step="0.2" value="1" type="range" />
                         <div class="input-group">
                             <input id="depth-left" class="form-control" value="5" type="text" data-tooltip="depth" />
@@ -338,7 +338,7 @@
                     </div>
                 </div>
                 <div id="game-right" class="col-md-6">
-                    <div style="position: relative">
+                    <div class="relative">
                         <input id="zoom-right" data-side="right" min="1" max="3" step="0.2" value="1" type="range" />
                         <div class="input-group">
                             <input id="depth-right" class="form-control" value="5" type="text" data-tooltip="depth" />

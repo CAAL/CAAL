@@ -36,6 +36,10 @@ textarea {
     font-variant: small-caps;
 }
 
+.relative {
+    position: relative;
+}
+
 .no-highlight {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -207,17 +211,20 @@ textarea {
     overflow: auto;
 }
 
+#explorer-canvas-tooltip {
+    position: absolute;
+}
+
+#explorer-canvas .tooltip, #explorer-transitions .tooltip, #explorer-transitions table tbody {
+    font: normal 14px "Inconsolata";
+}
+
 #explorer-transitions {
     height: 176px; /* Fits four transitions */
     padding: 10px;
     border: 1px solid #e7e7e7;
     border-top: none;
     overflow: auto;
-}
-
-#explorer-transitions .tooltip, #explorer-transitions table tbody {
-    font: normal 14px "Inconsolata";
-    color: #333;
 }
 
 #explorer-transitions table {
@@ -480,22 +487,10 @@ p.small {
 .tooltip-inner {
     background-color: #eee;
     border: 1px solid #bbb;
-    color: black;
+    color: #333;
     max-width: 300px;
 }
 
 .tooltip-arrow {
     border-top-color: #bbb !important;
-}
-
-.canvas-tooltip {
-    max-width: 300px;
-    position: absolute;
-    display: none;
-    border: 1px solid #bbb;
-    overflow: visible;
-    background-color: #eee;
-    z-index: 1000;
-    font: normal 14px "Inconsolata";
-    padding: 5px;
 }
