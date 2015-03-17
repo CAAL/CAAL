@@ -248,7 +248,7 @@ textarea {
     vertical-align: middle;
 }
 
-#equivalence, #model-checking, #distinguishing-formula {
+#hml-form, #two-processlist-form {
     display: none;
 }
 
