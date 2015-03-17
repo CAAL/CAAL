@@ -276,7 +276,7 @@ module Activity {
                 options = this.getOptions();
             }
 
-            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
+            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
 
             if (drawLeft || !this.leftGraph.getNode(this.succGen.getProcessByName(options.leftProcess).id.toString())) {
                 this.clear(this.leftGraph);
@@ -335,6 +335,51 @@ module Activity {
             this.highlightNodes();
         }
 
+        private expandBFS(process : CCS.Process, maxDepth : number) : any {
+            var result = {},
+                queue = [[1, process]],
+                processed = [],
+                currentDepth, sourceProcess, transitions;
+
+            for (var i = 0; i < queue.length; i++) {
+                currentDepth = queue[i][0];
+                sourceProcess = queue[i][1];
+                processed.push(sourceProcess.id);
+                transitions = this.succGen.getSuccessors(sourceProcess.id);
+                console.log(transitions);
+
+                transitions.forEach(t => {
+                    if (this.succGen instanceof Traverse.WeakSuccessorGenerator) {
+                        var path = (<Traverse.WeakSuccessorGenerator> this.succGen).getStrictPath(sourceProcess.id, t.action, t.targetProcess.id);
+                        var current = sourceProcess;
+
+                        for(var j = 0; j < path.length; j++) {
+                            if (result[current.id]) {
+                                result[current.id].add(path[j]);
+                            } else {
+                                result[current.id] = new CCS.TransitionSet([path[j]]);
+                            }
+
+                            current = path[j].targetProcess;
+                        }
+                    } else {
+                        if (result[sourceProcess.id]) {
+                            result[sourceProcess.id].add(t);
+                        } else {
+                            result[sourceProcess.id] = new CCS.TransitionSet([t]);
+                        }
+                    }
+
+                    if (processed.indexOf(t.targetProcess.id) === -1 && currentDepth < maxDepth) {
+                        queue.push([currentDepth + 1, t.targetProcess]);
+                    }
+                });
+            }
+
+            console.log(result);
+            return result;
+        }
+
         private showProcess(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
             if (graph.getProcessDataObject(process.id)) return;
             graph.showProcess(process.id, {label: this.labelFor(process), status: "unexpanded"});
@@ -380,23 +425,6 @@ module Activity {
 
         private clear(graph : GUI.ProcessGraphUI) : void {
             graph.clearAll();
-        }
-
-        private expandBFS(process : CCS.Process, maxDepth : number) : any {
-            var result = {},
-                queue = [[1, process]], //non-emptying array as queue.
-                depth, qIdx, fromProcess, transitions;
-            for (qIdx = 0; qIdx < queue.length; qIdx++) {
-                depth = queue[qIdx][0];
-                fromProcess = queue[qIdx][1];
-                result[fromProcess.id] = transitions = this.succGen.getSuccessors(fromProcess.id);
-                transitions.forEach(t => {
-                    if (!result[t.targetProcess.id] && depth < maxDepth) {
-                        queue.push([depth + 1, t.targetProcess]);
-                    }
-                });
-            }
-            return result;
         }
 
         private labelFor(process : CCS.Process) : string {
