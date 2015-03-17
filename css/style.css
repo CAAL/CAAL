@@ -252,10 +252,6 @@ textarea {
     display: none;
 }
 
-#model-checking .editor-border {
-    margin-top: 20px;
-}
-
 #hml-editor {
     min-height: 75px;
 }
@@ -462,6 +458,7 @@ p.small {
     border-radius: 5px;
     padding: 0px 2px 0px 2px;
     cursor: pointer;
+    font: normal 14px "Inconsolata";
 }
 
 .tooltip {

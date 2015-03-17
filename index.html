@@ -171,10 +171,10 @@
                         <div class="relative">
                             <input id="explorer-zoom" min="1" max="3" step="0.2" value="1" type="range" />
                             <div class="input-group">
-                                <input id="explorer-depth" class="form-control" value="10" type="text" data-previous-depth="10" />
+                                <input id="explorer-depth" class="form-control" value="10" type="text" data-previous-depth="10" data-tooltip="depth" />
                                 <span class="input-group-btn">
-                                    <button id="explorer-freeze" type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
-                                    <a id="explorer-save" type="button" class="btn btn-default"><i class="fa fa-download"></i></a>
+                                    <button id="explorer-freeze" type="button" class="btn btn-default" data-frozen="false" data-tooltip="freeze"><i class="fa fa-lock fa-lg"></i></button>
+                                    <a id="explorer-save" type="button" class="btn btn-default" data-tooltip="save-image"><i class="fa fa-download"></i></a>
                                 </span>
                             </div>
                             <div id="explorer-canvas">
@@ -264,7 +264,12 @@
                             <div id="model-checking">
                                 <div class="form-group">
                                     <label for="hml-process" class="control-label">Process</label>
-                                    <select id="hml-process" class="form-control"></select>
+                                    <select id="hml-process" class="form-control"></select><br>
+                                    <label for="hml-formula" class="control-label">Formula</label>
+                                    <div class="editor-border">
+                                        <div id="hml-formula"></div>
+                                    </div>
+                                    <label for="hml-editor" class="control-label">Recursive HML Definitions</label> 
                                     <div class="editor-border">
                                         <div id="hml-editor"></div>
                                     </div>
@@ -317,9 +322,9 @@
                     <div class="relative">
                         <input id="zoom-left" data-side="left" min="1" max="3" step="0.2" value="1" type="range" />
                         <div class="input-group">
-                            <input id="depth-left" class="form-control" value="5" type="text" />
+                            <input id="depth-left" class="form-control" value="5" type="text" data-tooltip="depth" />
                             <span class="input-group-btn">
-                                <button id="freeze-left" type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                                <button id="freeze-left" type="button" class="btn btn-default" data-frozen="false" data-tooltip="freeze"><i class="fa fa-lock fa-lg"></i></button>
                             </span>
                         </div>
                     </div>
@@ -332,9 +337,9 @@
                     <div class="relative">
                         <input id="zoom-right" data-side="right" min="1" max="3" step="0.2" value="1" type="range" />
                         <div class="input-group">
-                            <input id="depth-right" class="form-control" value="5" type="text" />
+                            <input id="depth-right" class="form-control" value="5" type="text" data-tooltip="depth" />
                             <span class="input-group-btn">
-                                <button id="freeze-right" type="button" class="btn btn-default" data-frozen="false"><i class="fa fa-lock fa-lg"></i></button>
+                                <button id="freeze-right" type="button" class="btn btn-default" data-frozen="false" data-tooltip="freeze"><i class="fa fa-lock fa-lg"></i></button>
                             </span>
                         </div>
                     </div>

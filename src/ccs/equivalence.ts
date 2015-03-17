@@ -513,7 +513,7 @@ module Equivalence {
                 }
             }
             
-            formulaStr += "T";
+            formulaStr += "T;";
             return formulaStr;
         }
     }

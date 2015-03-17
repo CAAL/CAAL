@@ -126,6 +126,8 @@ module Traverse {
         return compareAction(left.action, right.action);
     }
 
+    var tauAction = new ccs.Action("tau", false);
+
     export class WeakSuccessorGenerator implements ccs.SuccessorGenerator {
 
         private fromTable : MapUtil.Map<FullTransition, FromData> =
@@ -146,7 +148,7 @@ module Traverse {
         getSuccessors(processId : ccs.ProcessId) : ccs.TransitionSet {
             if (this.cache[processId]) return this.cache[processId];
 
-            var tauAction = new ccs.Action("tau", false);
+            
             //Manuall add tau loop to from set:  P ==tau=> P, by P -- tau -> P
             var sourceFullTransition = new FullTransition(processId, tauAction, processId);
             if (!this.fromTable.has(sourceFullTransition)) {
@@ -233,17 +235,29 @@ module Traverse {
 
         //Only call with arguments, for which getSuccessors(fromId) has yielded Transition(action, proces.toId)
         getStrictPath(fromId : ccs.ProcessId, action : ccs.Action, toId : ccs.ProcessId) : ccs.Transition[] {
-            var result = [],
+            var path = [],
                 succGen = this.strictSuccGenerator;
 
             var fromData = this.fromTable.get(new FullTransition(fromId, action, toId));
-            if (!fromData) throw "This should probably not happen!";
+            if (!fromData) throw "Do not call getStrictPath with unknown data.";
             do {
-                result.push(new ccs.Transition(fromData.action, succGen.getProcessById(fromData.toId)));
+                path.push(new ccs.Transition(fromData.action, succGen.getProcessById(fromData.toId)));
                 fromData = fromData.prev;
             } while (fromData && fromData.toId !== fromId);
 
-            result.reverse();
+            path.reverse();
+            //Fix so only one non-tau
+            var hasNonTau = false;
+            var result = path.map(transition => {
+                var resultTransition = transition;
+                if (hasNonTau) {
+                    resultTransition = new ccs.Transition(tauAction, transition.targetProcess);
+                } else if (!tauAction.equals(transition.action)) {
+                    hasNonTau = true;
+                }
+                return resultTransition;
+            });
+
             return result;
         }
     }

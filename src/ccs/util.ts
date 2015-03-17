@@ -351,7 +351,7 @@ module Traverse {
         }
 
         visit(formula : hml.Formula) {
-            return formula.dispatchOn(this);
+            return formula.dispatchOn(this) + ";";
         }
 
         dispatchDisjFormula(formula : hml.DisjFormula) {
