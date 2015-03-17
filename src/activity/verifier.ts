@@ -382,20 +382,40 @@ module Activity {
             }
         }
 
-        private showPropertyForm(processFormName : string) {
+        private showPropertyForm(propertyFormName : string) {
             if(this.currentShownPropertyForm){
                 // hide previous form
                 this.currentShownPropertyForm.container.hide()
             }
             
             for (var key in this.propertyForms){
-                if (key === processFormName){
+                if (key === propertyFormName){
                     this.currentShownPropertyForm = this.propertyForms[key];
                 }
             }
 
             this.currentShownPropertyForm.container.show();
             return this.currentShownPropertyForm;
+        }
+        private hidePropertyForm(propertyFormName : string = "") {
+            var hiddenForm;
+            if(propertyFormName === "") {
+                /*Hide all forms*/
+                for (var key in this.propertyForms){
+                    hiddenForm = this.propertyForms[key]
+                    hiddenForm.container.hide()
+                }
+            } else {
+                for (var key in this.propertyForms) {
+                    if (key === propertyFormName) {
+                        hiddenForm = this.propertyForms[key].container.hide();
+                        hiddenForm.container.hide()
+                    }
+                }
+            }
+
+            this.currentShownPropertyForm = null;
+            return hiddenForm
         }
 
         public editProperty(e): void {
@@ -471,6 +491,7 @@ module Activity {
 
         public deleteProperty(e): void {
             e.stopPropagation();
+            this.hidePropertyForm(); // hides all the propertyforms.
             this.project.deleteProperty(e.data.property);
             this.displayProperties();
         }
