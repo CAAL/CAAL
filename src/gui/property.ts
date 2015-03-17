@@ -11,48 +11,12 @@ module Property {
         protected status : PropertyStatus;
         protected worker;
         private statistics = {elapsedTime: null};
-        //public onStatusHover : Function = () => {return""}; /*it is not allowed to be null?*/
         protected tdStatus;
         private clockInterval;
         private startTime;
         private error : string = "";
-
-        public toolMenuOptions = {
-            "edit":{
-                id:"property-edit",
-                label: "Edit",
-                click: null
-            }, 
-            "delete":{
-                id: "property-delete",
-                label: "Delete",
-                click: null
-            },
-            "play":{
-                id: "property-playgame",
-                label: "Play",
-                click: null
-            }
-        };
-
-        public rowClickHandlers = {
-            "collapse" : {
-                id:"property-collapse",
-                click : null,
-            },
-            "description" : {
-                id : "property-description",
-                click : null
-            },
-            "status" : {
-                id : "property-status",
-                click : null
-            },
-            "verify" : {
-                id : "property-verify",
-                click : null
-            }
-        }
+        protected toolMenuOptions = {};
+        protected rowClickHandlers = {};
 
         public icons = {
             "play" : $("<i class=\"fa fa-play\"></i>"),
@@ -89,9 +53,7 @@ module Property {
             for (var key in this.toolMenuOptions) {
                 if(this.toolMenuOptions[key].click != null){
                     list.append("<li><a id=\""+this.toolMenuOptions[key].id+"\">"+this.toolMenuOptions[key].label+"</a></li>")
-                } /* else {
-                    list.append("<li class=\"disabled\"><a id=\""+this.toolMenuOptions[key].id+"\">"+this.toolMenuOptions[key].label+"</a></li>")
-                }*/
+                }
             }
 
             // if no element in the lists, just disable it.
@@ -192,7 +154,7 @@ module Property {
             /*Row click handlers*/
             for (var rowHandler in this.rowClickHandlers){
                 var rowElement = row.find("#"+this.rowClickHandlers[rowHandler].id);
-                if(this.rowClickHandlers[rowHandler].click) {
+                if(this.rowClickHandlers[rowHandler]) {
                     rowElement.on("click", {property:this}, this.rowClickHandlers[rowHandler].click);
                 }
             }
@@ -200,7 +162,7 @@ module Property {
             /*Tool menu options*/
             for (var tooloption in this.toolMenuOptions){
                 var toolMenuOption = toolmenu.find("#" + this.toolMenuOptions[tooloption].id);
-                if(this.toolMenuOptions[tooloption].click !== null) {
+                if(this.toolMenuOptions[tooloption]) {
                     toolMenuOption.on("click", {property:this}, this.toolMenuOptions[tooloption].click);
                 }
             }
@@ -597,8 +559,8 @@ module Property {
             result[0].find("#property-collapse").append(this.getCollapseState());
             
             if(this.isExpanded() /*&& this.firstHMLProperty.getFormula() !== "" && this.secondHMLProperty.getFormula() !== ""*/) {
-                var rowHandlers = {verify: null};
-                rowHandlers.verify = this.rowClickHandlers.verify;
+                var rowHandlers = {} 
+                rowHandlers["verify"] = this.rowClickHandlers["verify"];
 
                 this.firstHMLProperty.setRowClickHandlers(rowHandlers);
                 //this.firstHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
@@ -630,7 +592,7 @@ module Property {
                 this.currentVerifyingProperty = property;
                 
                 // verify the property, and have the callback start the next.
-                property.verify( () => {
+                property.verify(() => {
                     this.currentVerifyingProperty = null;
                     this.doNextVerification();
                 });
@@ -714,8 +676,7 @@ module Property {
             this.worker.terminate();
             this.worker = null; 
             
-            var goodResult = !event.data.result.isBisimilar; //this should be false, for there to be distinguishing formula
-            if (goodResult) {
+            if (!event.data.result.isBisimilar) { //this should be false, for there to be distinguishing formula
                 this.status = PropertyStatus.satisfied;
                 this.verificationEndedCallback = callback;
                 this.verifyHml(event.data.result.formula);

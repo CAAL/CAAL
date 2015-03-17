@@ -18,8 +18,11 @@ module Activity {
         private clockInterval;
         private propsToVerify = [];
         private startTime;
+        private currentShownPropertyForm = null;
         private propertyForms = {};
         private formulaEditor : any;
+        private toolMenuOptions = {};
+        private rowClickHandlers = {};
 
         constructor(container: string, button: string) {
             super(container, button);
@@ -76,24 +79,55 @@ module Activity {
 
             this.propertyForms = 
             {
-                hml :
+                hmlform :
                     {
-                        container : $("#model-checking"),
+                        container : $("#hml-form"),
                         processList : $("#hml-process"),
                     }, 
-                distinguishing :
+                twoprocesslistform :
                     {
-                        container : $("#distinguishing-formula"),
-                        firstProcessList : $('#distinguishing-first-process'),
-                        secondProcessList : $('#distinguishing-second-process'),
-                    }, 
-                equivalence : 
-                    {
-                        container : $("#equivalence"),
-                        firstProcessList : $("#equivalence-first-process"),
-                        secondProcessList : $("#equivalence-second-process"),
-                    }
+                        container : $("#two-processlist-form"),
+                        firstProcessList : $('#first-processlist'),
+                        secondProcessList : $('#second-processlist'),
+                    }            
             };
+
+            this.toolMenuOptions = {
+                "edit": {
+                    id:"property-edit",
+                    label: "Edit",
+                    click: (e) => this.editProperty(e)
+                }, 
+                "delete": {
+                    id: "property-delete",
+                    label: "Delete",
+                    click: (e) => this.deleteProperty(e)
+                },
+                "play": {
+                    id: "property-playgame",
+                    label: "Play",
+                    click: (e) => this.playGame(e)
+                }
+            };
+
+            this.rowClickHandlers = {
+                "collapse" : {
+                    id:"property-collapse",
+                    click : (e) => this.onCollapseClick(e),
+                },
+                "status" : {
+                    id : "property-status",
+                    click : (e) => this.playGame(e)
+                },
+                "description": {
+                    id : "property-description",
+                    click : (e) => this.editProperty(e)
+                },
+                "verify": {
+                    id : "property-verify",
+                    click : (e) => this.verify(e)
+                }
+            }
         }
 
         protected checkPreconditions(): boolean {
@@ -177,79 +211,51 @@ module Activity {
             }
         }
 
+        private generateToolMenuOptions(options : string[]) {
+            var result = {};
+            for (var key in this.toolMenuOptions){
+                var index = options.indexOf(key);
+                if(index !== -1){
+                    result[key] = this.toolMenuOptions[key];
+                }
+            }
+
+            return result
+        }
+
+        private generateRowClickHandlers(options : string[]) {
+            var result = {};
+            for (var key in this.rowClickHandlers){
+                var index = options.indexOf(key);
+                if(index !== -1){
+                    result[key] = this.rowClickHandlers[key];
+                }
+            }
+
+            return result
+        }
+
         public displayProperties(): void {
             var properties = this.project.getProperties();
             this.propertyTableBody.empty();
-            
 
             for (var i = 0; i < properties.length; i++) {
-                var toolMenuOptions = {
-                    "edit": {
-                        id:"property-edit",
-                        label: "Edit",
-                        click: (e) => this.editProperty(e)
-                    }, 
-                    "delete": {
-                        id: "property-delete",
-                        label: "Delete",
-                        click: (e) => this.deleteProperty(e)
-                    },
-                    "play": {
-                        id: "property-playgame",
-                        label: "Play",
-                        click: (e) => this.playGame(e)
-                    }
-                };
-
-                var rowClickHandlers = {
-                    "collapse" : {
-                        id:"property-collapse",
-                        click : null,
-                    },
-                    "status" : {
-                        id : "property-status",
-                        click : (e) => this.playGame(e)
-                    },
-                    "description": {
-                        id : "property-description",
-                        click : (e) => this.editProperty(e)
-                    },
-                    "verify": {
-                        id : "property-verify",
-                        click : (e) => this.verify(e)
-                    }
-                }
-
                 var propertyRows = null;
                 if (properties[i] instanceof Property.DistinguishingFormulaSuper) {
-                    /* distinguishing formula */
-                    var onCollapseClick = (e) => {
-                        if(e.data.property.isExpanded()){
-                            this.onCollapse(e);
-                            e.data.property.setExpanded(false);
-                        } else {
-                            this.onExpand(e);
-                            e.data.property.setExpanded(true);
-                        }
-                        this.displayProperties()
-                    };  
-                    toolMenuOptions.play.click = null; // you can't play on a distinguishing formula.
-                    rowClickHandlers.collapse.click = onCollapseClick;
-                    properties[i].setRowClickHandlers(rowClickHandlers)
-                    properties[i].setToolMenuOptions(toolMenuOptions);
+                    /* distinguishing formula */                        
+                    properties[i].setRowClickHandlers(this.generateRowClickHandlers(["collapse", "description", "verify"]));
+                    properties[i].setToolMenuOptions(this.generateToolMenuOptions(["edit", "delete"]));
                     propertyRows = properties[i].toTableRow();
                 }
                 else if (properties[i] instanceof Property.StrongTraceInclusion || properties[i] instanceof Property.WeakTraceInclusion || properties[i] instanceof Property.WeakTraceEq || properties[i] instanceof Property.StrongTraceEq) {
-                    toolMenuOptions.play.click = null;
-                    rowClickHandlers.status.click = null;
-                    properties[i].setRowClickHandlers(rowClickHandlers)
-                    properties[i].setToolMenuOptions(toolMenuOptions)
+                    properties[i].setRowClickHandlers(this.generateRowClickHandlers(["description", "verify"]));
+                    properties[i].setToolMenuOptions(this.generateToolMenuOptions(["edit", "delete"]));
                     propertyRows = properties[i].toTableRow();
                 }
                 else {
-                    /* Strong/Weak bisim and HML*/
-                    properties[i].setRowClickHandlers(rowClickHandlers)
-                    properties[i].setToolMenuOptions(toolMenuOptions)
+                    /* Strong/Weak bisim and HML */
+                    properties[i].setRowClickHandlers(this.generateRowClickHandlers(["status", "description", "verify", "delete"]));
+                    properties[i].setToolMenuOptions(this.generateToolMenuOptions(["play", "edit", "delete"]));
                     propertyRows = properties[i].toTableRow();
                 }
 
@@ -257,6 +263,17 @@ module Activity {
                     this.propertyTableBody.append(row);
                 });                
             }
+        }
+
+        private onCollapseClick(e) {
+            if(e.data.property.isExpanded()){
+                this.onCollapse(e);
+                e.data.property.setExpanded(false);
+            } else {
+                this.onExpand(e);
+                e.data.property.setExpanded(true);
+            }
+            this.displayProperties()
         }
 
         public onCollapse(e) {
@@ -289,7 +306,6 @@ module Activity {
                 throw "Cannot expand this property"
             }
         }
-
 
         public addProperty(e): void {
             var type = e.currentTarget.id;
@@ -367,17 +383,19 @@ module Activity {
         }
 
         private showPropertyForm(processFormName : string) {
-            var result = null;
+            if(this.currentShownPropertyForm){
+                // hide previous form
+                this.currentShownPropertyForm.container.hide()
+            }
+            
             for (var key in this.propertyForms){
                 if (key === processFormName){
-                    result = this.propertyForms[key];
-                    result.container.show();
-                } else {
-                    this.propertyForms[key].container.hide();
+                    this.currentShownPropertyForm = this.propertyForms[key];
                 }
             }
 
-            return result;
+            this.currentShownPropertyForm.container.show();
+            return this.currentShownPropertyForm;
         }
 
         public editProperty(e): void {
@@ -386,8 +404,8 @@ module Activity {
             var CCSProcessList = Main.getGraph().getNamedProcesses();
             CCSProcessList.reverse();
 
-            if (property instanceof Property.Equivalence) {
-                var equivalenceForm = this.showPropertyForm("equivalence");
+            if (property instanceof Property.Equivalence || property instanceof Property.DistinguishingFormulaSuper) {
+                var equivalenceForm = this.showPropertyForm("twoprocesslistform");
 
                 this.displayProcessList(CCSProcessList, equivalenceForm.firstProcessList, property.getFirstProcess());
                 this.displayProcessList(CCSProcessList, equivalenceForm.secondProcessList, property.getSecondProcess());
@@ -414,7 +432,7 @@ module Activity {
                     this.displayProperties();
                 });
             } else if (property instanceof Property.HML) {
-                var hmlForm = this.showPropertyForm("hml");
+                var hmlForm = this.showPropertyForm("hmlform");
 
                 this.displayProcessList(CCSProcessList, hmlForm.processList, property.getProcess());
 
@@ -448,34 +466,6 @@ module Activity {
                     this.displayProperties();
                     this.updateHeight();
                 });
-            } else if (property instanceof Property.DistinguishingFormulaSuper){
-                var distinguishingForm = this.showPropertyForm("distinguishing");
-
-                this.displayProcessList(CCSProcessList, distinguishingForm.firstProcessList, property.getFirstProcess());
-                this.displayProcessList(CCSProcessList, distinguishingForm.secondProcessList, property.getSecondProcess());
-
-                if (property.getFirstProcess() !== distinguishingForm.firstProcessList.val()){
-                    property.setFirstProcess(distinguishingForm.firstProcessList.val()); // Re-set the chosen process, since the process might have been deleted
-                }
-                if (property.getSecondProcess() !== distinguishingForm.secondProcessList.val()){
-                    property.setSecondProcess(distinguishingForm.secondProcessList.val()); // Re-set the chosen process, since the process might have been deleted
-                }
-
-                this.displayProperties(); // update the process table
-
-                distinguishingForm.firstProcessList.off("change");
-                distinguishingForm.firstProcessList.on("change", () => {
-                    // On change, set the process.
-                    property.setFirstProcess(distinguishingForm.firstProcessList.val());
-                    this.displayProperties();
-                });
-
-                distinguishingForm.secondProcessList.off("change");
-                distinguishingForm.secondProcessList.on("change", () => {
-                    // On change, set the process.
-                    property.setSecondProcess(distinguishingForm.secondProcessList.val());
-                    this.displayProperties();
-                });
             }
         }
 
@@ -507,6 +497,7 @@ module Activity {
             this.verifyAllButton.prop("disabled", true);
             this.verifyStopButton.prop("disabled", false); // enable the stop button
             this.currentVerifyingProperty = property; // the current verifying property
+            
             property.verify(this.verifactionEnded.bind(this));
         }
 
