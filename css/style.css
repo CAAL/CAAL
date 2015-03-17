@@ -94,13 +94,13 @@ textarea {
     left: inherit;
 }
 
-#toolmenu-btn {
+.property-btn {
     border: none;
+    width: 100%;
+    height: 100%;
 }
 
-.dropdown-menu #toolmenu.dropdown-menu > li {
-    z-index: 10001;
-}
+
 
 .table-hover > tbody {
     cursor: pointer;
