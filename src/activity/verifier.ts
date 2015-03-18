@@ -94,17 +94,17 @@ module Activity {
 
             this.toolMenuOptions = {
                 "edit": {
-                    id:"property-edit",
+                    id:"#property-edit",
                     label: "Edit",
                     click: (e) => this.editProperty(e)
                 }, 
                 "delete": {
-                    id: "property-delete",
+                    id: "#property-delete",
                     label: "Delete",
                     click: (e) => this.deleteProperty(e)
                 },
                 "play": {
-                    id: "property-playgame",
+                    id: "#property-playgame",
                     label: "Play",
                     click: (e) => this.playGame(e)
                 }
@@ -112,19 +112,19 @@ module Activity {
 
             this.rowClickHandlers = {
                 "collapse" : {
-                    id:"property-collapse",
+                    id:"#property-collapse-btn",
                     click : (e) => this.onCollapseClick(e),
                 },
                 "status" : {
-                    id : "property-status",
+                    id : "#property-status-btn",
                     click : (e) => this.playGame(e)
                 },
                 "description": {
-                    id : "property-description",
+                    id : "#property-description-btn",
                     click : (e) => this.editProperty(e)
                 },
                 "verify": {
-                    id : "property-verify",
+                    id : "#property-verify-btn",
                     click : (e) => this.verify(e)
                 }
             }
@@ -517,7 +517,7 @@ module Activity {
             this.verifyStopButton.prop("disabled", false);
 
             /* Disable all verify(play-btn)*/
-            $("tr #property-verify").prop("disabled", true);
+            $("tr #property-verify-btn").prop("disabled", true);
         }
 
         private enableVerificationGUI() {
@@ -526,7 +526,7 @@ module Activity {
             this.verifyStopButton.prop("disabled", true);
 
             /* Enable all verify(play-btns) */
-            $("tr #property-verify").prop("disabled", false);
+            $("tr #property-verify-btn").prop("disabled", false);
 
         }
 

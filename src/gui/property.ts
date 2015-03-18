@@ -137,13 +137,14 @@ module Property {
         public toTableRow() : any[] {
             var row = $("<tr id='"+this.getId()+"'></tr>");
             var toolmenu = this.getToolMenu()
-            var collapseBtn = $("<button id=\"property-collapse\" type=\"button\" class=\"property-btn btn btn-default btn-xs\"></button>")
+            var collapseBtn = $("<button id=\"property-collapse-btn\" type=\"button\" class=\"property-btn btn btn-default btn-xs\"></button>")
             var collapse = $("<td id=\"tdCollapse\" class=\"text-center\"></td>").append(collapseBtn.hide());
-            this.tdStatus = $("<td id=\"property-status\" class=\"text-center\"></td>").append(this.getStatusIcon());
-            var tdDescription = $("<td id=\"property-description\"></td>").append(this.getDescription());
-            var btnVerify = $("<button id=\"property-verify\" type=\"button\" class=\"property-btn btn btn-default btn-xs\"></button>").append(this.icons.play);
+            //var statusBtn = $("<button id=\"property-status-btn\" type=\"button\" class=\"property-btn btn btn-default btn-xs\"></button>").append(this.getStatusIcon());
+            this.tdStatus = $("<td id=\"property-status-btn\" class=\"text-center\"></td>").append(this.getStatusIcon());
+            var tdDescription = $("<td id=\"property-description-btn\"></td>").append(this.getDescription());
+            var btnVerify = $("<button id=\"property-verify-btn\" type=\"button\" class=\"property-btn btn btn-default btn-xs\"></button>").append(this.icons.play);
             var tdVerify = $("<td id=\"tdVerify\" class=\"text-center\"></td>").append(btnVerify);
-            var tdToolMenu = $("<td id=\"property-toolmenu\" class=\"text-center\"></td>").append(toolmenu);
+            var tdToolMenu = $("<td id=\"tdToolmenu\" class=\"text-center\"></td>").append(toolmenu);
             row.append(collapse, this.tdStatus, tdDescription, tdVerify, tdToolMenu);
 
             this.tdStatus.tooltip({
@@ -154,7 +155,7 @@ module Property {
             
             /*Row click handlers*/
             for (var rowHandler in this.rowClickHandlers){
-                var rowElement = row.find("#"+this.rowClickHandlers[rowHandler].id);
+                var rowElement = row.find(this.rowClickHandlers[rowHandler].id);
                 if(this.rowClickHandlers[rowHandler]) {
                     rowElement.on("click", {property:this}, this.rowClickHandlers[rowHandler].click);
                 }
@@ -162,7 +163,7 @@ module Property {
 
             /*Tool menu options*/
             for (var tooloption in this.toolMenuOptions){
-                var toolMenuOption = toolmenu.find("#" + this.toolMenuOptions[tooloption].id);
+                var toolMenuOption = toolmenu.find(this.toolMenuOptions[tooloption].id);
                 if(this.toolMenuOptions[tooloption]) {
                     toolMenuOption.on("click", {property:this}, this.toolMenuOptions[tooloption].click);
                 }
@@ -558,7 +559,7 @@ module Property {
 
             /* Add the collapse button */
 
-            var collapseBtn = result[0].find("#property-collapse");
+            var collapseBtn = result[0].find(this.rowClickHandlers["collapse"].id);
             collapseBtn.show();
             collapseBtn.append(this.getCollapseState())
             
