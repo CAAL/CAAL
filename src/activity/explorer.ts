@@ -266,9 +266,9 @@ module Activity {
             transitions.forEach(t => {
                 var row = $("<tr>");
 
-                row.append($("<td>").append(Tooltip.wrap(this.labelFor(this.selectedProcess))));
+                row.append($("<td>").append(Tooltip.wrapProcess(this.labelFor(this.selectedProcess))));
                 row.append($("<td>").append(t.action.toString()));
-                row.append($("<td>").append(Tooltip.wrap(this.labelFor(t.targetProcess))));
+                row.append($("<td>").append(Tooltip.wrapProcess(this.labelFor(t.targetProcess))));
 
                 row.attr("data-target-id", t.targetProcess.id);
 

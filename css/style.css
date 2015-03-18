@@ -470,8 +470,16 @@ p.small {
 /*
  *  Tooltip styles
  */
-
 .ccs-tooltip-constant {
+    background-color: #eee;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    padding: 0px 2px 0px 2px;
+    cursor: pointer;
+    font: normal 14px "Inconsolata";
+}
+
+.ccs-tooltip {
     background-color: #eee;
     border: 1px solid #bbb;
     border-radius: 5px;
