@@ -113,7 +113,7 @@ module CCS {
 
         constructor(label : string, isComplement : boolean) {
             if (label === "tau" && isComplement) {
-                throw new Error("tau has no complement");
+                throw newError("Tau no complement", "tau has no complement");
             }
             this.label = label;
             this.complement = isComplement;
@@ -144,6 +144,12 @@ module CCS {
         message : string;
     }
 
+    function newError(type, message) : Error {
+        var error = new Error(message);
+        error.name = type;
+        return error;
+    }
+
     export class Graph {
         nextId : number = 1;
         private nullProcess = new NullProcess(0);
@@ -167,8 +173,7 @@ module CCS {
             } else if (!namedProcess.subProcess) {
                 namedProcess.subProcess = process;
             } else {
-                this.constructErrors.push({name: "DuplicateProcessDefinition",
-                    message: "Duplicate definition of process '" + processName + "'"});
+                this.constructErrors.push(newError("Duplicate Process Definition", "Duplicate definition of process '" + processName + "'"));
             }
             return namedProcess;
         }
@@ -241,7 +246,7 @@ module CCS {
         newRestrictedProcessOnSetName(process, setName) {
             var labelSet = this.definedSets[setName];
             if (!labelSet) {
-                this.constructErrors.push({name: "UndefinedSet", message: "Set '" + setName + "' has not been defined"});
+                this.constructErrors.push(newError("Undefined Set", "Set '" + setName + "' has not been defined"));
                 //Fallback for empty set
                 labelSet = this.allRestrictedSets.getOrAdd(new LabelSet([]));
             }
@@ -262,7 +267,7 @@ module CCS {
 
         defineNamedSet(name, labelSet : LabelSet) {
             if (this.definedSets[name]) {
-                this.constructErrors.push({name: "DuplicateSetDefinition", message: "Set '" + name + "' has already been defined"});
+                this.constructErrors.push(newError("Duplicate Set Definition", "Set '" + name + "' has already been defined"));
             }
             this.definedSets[name] = this.allRestrictedSets.getOrAdd(labelSet);
         }
@@ -287,8 +292,7 @@ module CCS {
                 for (processName in this.namedProcesses) {
                     process = this.namedProcesses[processName];
                     if (!process.subProcess) {
-                        errors.push({name: "UndefinedProcess",
-                            message: "Process '" + processName + "' has no definition"});
+                        errors.push(newError("UndefinedProcess", "Process '" + processName + "' has no definition"));
                     }
                 }
             }
@@ -298,7 +302,7 @@ module CCS {
                     processes = processNames.map(name => this.namedProcesses[name]),
                     unguardedProcesses = checker.findUnguardedProcesses(processes);
                 unguardedProcesses.forEach(process => {
-                    errors.push({name: "UnguardedProcess", message: "Process '" + process.name + "' has unguarded recursion"});
+                    errors.push(newError("UnguardedProcess", "Process '" + process.name + "' has unguarded recursion"));
                 });
             }
             addUndefinedProcesses();
@@ -315,7 +319,7 @@ module CCS {
         constructor(relabellings : {from: string; to: string}[]) {
             relabellings.forEach( (relabel) => {
                 if (relabel.from === "tau") {
-                    throw new Error("Cannot relabel tau to something else");
+                    throw newError("Tau Relabel", "Cannot relabel tau to something else");
                 }
                 this.froms.push(relabel.from);
                 this.tos.push(relabel.to);
@@ -370,7 +374,7 @@ module CCS {
         constructor(labels : string[]) {
             this.labels = ArrayUtil.sortAndRemoveDuplicates(labels);
             if (this.contains("tau")) {
-                throw new Error("tau not allowed in label set");
+                throw newError("Tau in LabelSet", "tau not allowed in label set");
             }
         }
 

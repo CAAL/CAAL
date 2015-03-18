@@ -132,15 +132,13 @@ module Activity {
 
         protected checkPreconditions(): boolean {
             var graph = Main.getGraph();
-
-            if (!graph) {
-                this.showExplainDialog("Syntax Error", "Your program contains one or more syntax errors.");
+            if (graph.error) {
+                this.showExplainDialog("Error", graph.error);
                 return false;
-            } else if (graph.getNamedProcesses().length === 0) {
+            } else if (graph.graph.getNamedProcesses().length === 0) {
                 this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
                 return false;
             }
-
             return true;
         }
 
@@ -150,7 +148,7 @@ module Activity {
                 // If project has changed check whether the properties are still valid? Meaning that their processes are still defined,
                 // Also check wether the actions exists in used in the ccs program. (low prio)
                 var properties = this.project.getProperties();
-                var processList = Main.getGraph().getNamedProcesses()
+                var processList = Main.getGraph().graph.getNamedProcesses()
                 //$("#equivalence").hide(); // hide the equivalence box(process selector), since it might have the wrong data 
                 //$("#model-checking").hide(); // hide the model-checking(HMl process selector) box, since it might have the wrong data
                 properties.forEach((property : Property.Property) => {
@@ -421,7 +419,7 @@ module Activity {
         public editProperty(e): void {
             var property = e.data.property;
 
-            var CCSProcessList = Main.getGraph().getNamedProcesses();
+            var CCSProcessList = Main.getGraph().graph.getNamedProcesses();
             CCSProcessList.reverse();
 
             if (property instanceof Property.Equivalence || property instanceof Property.DistinguishingFormulaSuper) {

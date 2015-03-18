@@ -54,6 +54,11 @@ textarea {
  * Custom Bootstrap styles
  */
 
+/* Preserve newlines used for explain dialog. Like multiple errors on separate lines. */
+#explain-dialog-body-par {
+    white-space: pre-wrap;
+}
+
 /* Remove focus from buttons */
 .btn:focus {
     background-color: #fff;

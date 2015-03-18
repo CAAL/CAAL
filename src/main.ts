@@ -66,19 +66,23 @@ module Main {
         return Project.getInstance().getCCS();
     }
 
-    export function getGraph() {
+    export function getGraph() : {graph: ccs.Graph; error: string; } {
         var graph : ccs.Graph = new CCS.Graph(),
-            bad = false;
+            errors = [],
+            error = null;
         try {
             CCSParser.parse(Project.getInstance().getCCS(), {ccs: CCS, graph: graph});
-            bad = graph.getErrors().length > 0;
+            if (graph.getErrors().length > 0) {
+                errors = graph.getErrors();
+            }
         } catch (error) {
-            bad = true;
+            errors = [error];
         }
-        if (bad) {
+        if (errors.length > 0) {
             graph = null;
+            error = errors.map(error => error.toString()).join("\n");
         }
-        return graph;
+        return {graph: graph, error: error};
     }
 
     export function getStrictSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {
