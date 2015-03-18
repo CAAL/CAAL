@@ -9,7 +9,6 @@
 /// <reference path="gui/menu/load.ts" />
 /// <reference path="gui/menu/delete.ts" />
 /// <reference path="gui/menu/export.ts" />
-/// <reference path="gui/tooltips.ts" />
 /// <reference path="activity/activityhandler.ts" />
 /// <reference path="activity/activity.ts" />
 /// <reference path="activity/editor.ts" />
