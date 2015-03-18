@@ -536,6 +536,7 @@ module Traverse {
                     formula.actionMatcher.matches(new CCS.Action("tau", false))) {
                     return subFormula;
                 }
+                //TODO: Add on the right
             }
             return this.prevSet.newWeakForAll(formula.actionMatcher, subFormula);
         }

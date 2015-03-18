@@ -299,7 +299,7 @@ module Property {
                 error = "There is no process selected.";
             } else {
                 // if they are defined check whether they are defined in the CCS-program
-                var processList = Main.getGraph().getNamedProcesses()
+                var processList = Main.getGraph().graph.getNamedProcesses()
                 if (processList.indexOf(this.getProcess()) === -1 ) {
                     error = "The processes selected is not defined in the CCS program.";
                     isReady = false;
@@ -395,7 +395,7 @@ module Property {
                 error = "Two processes must be selected"
             } else {
                 // if they are defined check whether they are defined in the CCS-program
-                var processList = Main.getGraph().getNamedProcesses()
+                var processList = Main.getGraph().graph.getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
                     isReady = false;
                     error = "One of the processes is not defined in the CCS program."
@@ -647,7 +647,7 @@ module Property {
                 error = "Two processes must be selected"
             } else {
                 // if they are defined check whether they are defined in the CCS-program
-                var processList = Main.getGraph().getNamedProcesses()
+                var processList = Main.getGraph().graph.getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
                     error = "One of the processes selected is not defined in the CCS program."
                     isReady = false;
@@ -716,7 +716,7 @@ module Property {
                 error = "Two processes must be selected"
             } else {
                 // if they are defined check whether they are defined in the CCS-program
-                var processList = Main.getGraph().getNamedProcesses()
+                var processList = Main.getGraph().graph.getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
                     error = "One of the processes selected is not defined in the CCS program."
                     isReady = false;
