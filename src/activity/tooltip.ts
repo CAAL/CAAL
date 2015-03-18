@@ -1,3 +1,28 @@
+module Tooltip {
+    export var Tooltips = {
+        "collapse-none": "Do not collapse the labelled transition system.",
+        "collapse-strong": "Collapse all processes that are strongly bisimilar (∼) into a single process.",
+        "collapse-weak": "Collapse all processes that are weakly bisimilar (≈) into a single process.",
+        "simplify": "Simplify processes by applying structural congruence.",
+        "depth": "Set the unfolding depth of the labelled transition system.",
+        "freeze": "Lock/unlock the current location of states.",
+        "save-image": "Export the labelled transition system."
+    }
+
+    export function addTooltips() {
+        //Non delegating since these tooltips only cover static elements.
+        $("[data-tooltip]").tooltip({
+            title: function() {
+                return Tooltips[this.dataset.tooltip];
+            },
+            delay: {
+                "show": 500,
+                "hide": 100
+            }
+        });
+    }
+}
+
 module Activity {
 
     export class Tooltip {
@@ -39,10 +64,19 @@ module Activity {
             this.graph = graph;
             this.visitor.clearCache();
         }
-
-        static wrap(text : string) : JQuery {
+        
+        // used for matching process names/ids globally
+        static wrapProcess(text : string) : JQuery {
             return $("<span>").attr("class", "ccs-tooltip-constant").append(text);
         }
+        
+        static wrap(text : string) : JQuery {
+            return $("<span>").attr("class", "ccs-tooltip").append(text);
+        }
+        
+        static setTooltip($element : JQuery, text : string) : JQuery {
+            $element.tooltip({title: text});
+            return $element;
+        }
     }
-
 }

@@ -43,7 +43,7 @@ module Main {
         new Delete(null, activityHandler);
         new Export("#export-pdf-btn", activityHandler);
 
-        GUI.addTooltips();
+        Tooltip.addTooltips();
     });
 
     export function getProgram() : string {

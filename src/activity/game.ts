@@ -103,6 +103,10 @@ module Activity {
             $(document).on("ccs-changed", () => this.changed = true);
         }
 
+        public getSuccessorGenerator() : CCS.SuccessorGenerator {
+            return this.succGen;
+        }
+        
         private setDepth(process : CCS.Process, graph : GUI.ProcessGraphUI, depth : number, move : Move) : void {
             this.clear(graph);
             this.draw(process, graph, depth);
@@ -291,7 +295,7 @@ module Activity {
             }
             
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
-            var defenderSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
+            var defenderSuccessorGenerator : CCS.SuccessorGenerator = this.succGen; //CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
 
             if (this.dgGame !== undefined) {this.dgGame.stopGame()};
             
@@ -344,7 +348,6 @@ module Activity {
                 sourceProcess = queue[i][1];
                 processed.push(sourceProcess.id);
                 transitions = this.succGen.getSuccessors(sourceProcess.id);
-                console.log(transitions);
 
                 transitions.forEach(t => {
                     if (this.succGen instanceof Traverse.WeakSuccessorGenerator) {
@@ -374,7 +377,6 @@ module Activity {
                 });
             }
 
-            console.log(result);
             return result;
         }
 
@@ -504,7 +506,7 @@ module Activity {
         protected dependencyGraph : dg.PlayableDependencyGraph;
         protected marking : dg.LevelMarking;
         
-        protected gameLog : GameLog = new GameLog();
+        protected gameLog : GameLog = new GameLog(this.gameActivity);
         
         protected attacker : Player;
         protected defender : Player;
@@ -512,7 +514,7 @@ module Activity {
         
         protected round : number = 1;
         protected lastMove : Move;
-        protected lastAction : string;
+        protected lastAction : CCS.Action;
         protected currentNodeId : dg.DgNodeId = 0; // the DG node id
         
         private cycleCache : any;
@@ -549,7 +551,7 @@ module Activity {
             return this.lastMove;
         }
         
-        public getLastAction() : string {
+        public getLastAction() : CCS.Action {
             return this.lastAction;
         }
         
@@ -602,7 +604,7 @@ module Activity {
             }
         }
         
-        public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : string = this.lastAction, move? : Move) : void {
+        public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : CCS.Action = this.lastAction, move? : Move) : void {
             this.abstract();
         }
         
@@ -711,7 +713,7 @@ module Activity {
             super.startGame();
         }
         
-        public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : string = this.lastAction, move? : Move) : void {
+        public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : CCS.Action = this.lastAction, move? : Move) : void {
             var previousConfig = this.getCurrentConfiguration();
             
             // change the current node id to the next
@@ -751,7 +753,6 @@ module Activity {
         }
         
         protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
-            
             return this.bisimulationDG = new Equivalence.BisimulationDG(this.attackerSuccessorGen, this.defenderSuccessorGen, this.currentLeft.id, this.currentRight.id);
         }
         
@@ -991,12 +992,11 @@ module Activity {
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
             var currentConfiguration = game.getCurrentConfiguration();
+            var actionTransition : string;
             
             if (!isAttack) {
                 if (game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak") {
-                    var action = "=" + game.getLastAction() + "=>";
-                } else {
-                    var action = "-" + game.getLastAction() + "->";
+                    actionTransition = "=" + game.getLastAction().toString() + "=>";
                 }
             }
             
@@ -1007,16 +1007,18 @@ module Activity {
 
                 if (isAttack) {
                     var sourceProcess = choice.move == 1 ? currentConfiguration.left : currentConfiguration.right;
-                    var source = this.labelFor(sourceProcess);
-                    action = "-" + choice.action + "->";
+                    var $source = this.labelWithTooltip(sourceProcess);
+                    actionTransition = "-" + choice.action.toString() + "->";
+                    var $actionTd = $("<td id='action'></td>").append(actionTransition);
                 } else {
                     var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
-                    var source = this.labelFor(sourceProcess);
+                    var $source = this.labelWithTooltip(sourceProcess);
+                    var $action = Tooltip.setTooltip(Tooltip.wrap(actionTransition), this.strongSequence(sourceProcess, game.getLastAction(), choice.targetProcess));
+                    var $actionTd = $("<td id='action'></td>").append($action);
                 }
                 
-                var sourceTd = $("<td id='source'></td>").append(source);
-                var actionTd = $("<td id='action'></td>").append(action);
-                var targetTd = $("<td id='target'></td>").append(this.labelFor(choice.targetProcess));
+                var $sourceTd = $("<td id='source'></td>").append($source);
+                var $targetTd = $("<td id='target'></td>").append(this.labelWithTooltip(choice.targetProcess));
                 
                 // onClick
                 $(row).on("click", (event) => {
@@ -1033,22 +1035,38 @@ module Activity {
                     this.highlightChoices(choice, game, isAttack, false, event);
                 });
                 
-                row.append(sourceTd, actionTd, targetTd);
+                row.append($sourceTd, $actionTd, $targetTd);
                 this.$table.append(row);
             });
         }
         
-        private labelFor(process : CCS.Process) : JQuery {
-            return Tooltip.wrap(process instanceof CCS.NamedProcess ? process.name : process.id.toString());
+        private strongSequence(source : CCS.Process, action : CCS.Action, target : CCS.Process) : string {
+            var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.gameActivity.getSuccessorGenerator();
+            var strictPath = weakSuccGen.getStrictPath(source.id, action, target.id);
+            var strongActions = this.labelFor(source);
+            
+            for (var i = 0; i < strictPath.length; i++) {
+                strongActions += " -" + strictPath[i].action.toString() + "-> " + this.labelFor(strictPath[i].targetProcess);
+            }
+            
+            return strongActions;
+        }
+        
+        private labelWithTooltip(process : CCS.Process) : JQuery {
+            return Tooltip.wrapProcess(this.labelFor(process));
+        }
+        
+        private labelFor(process : CCS.Process) : string {
+            return process instanceof CCS.NamedProcess ? process.name : process.id.toString();
         }
 
         private highlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
             var move : Move;
             
             if (isAttack) {
-                move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+                move = choice.move === 1 ? Move.Left : Move.Right; // 1: left, 2: right
             } else {
-                move = game.getLastMove() == 1 ? Move.Right : Move.Left // this is flipped because of defender role 
+                move = game.getLastMove() === Move.Left ? Move.Right : Move.Left // this is flipped because of defender role 
             }
 
             if (entering) {
@@ -1072,7 +1090,7 @@ module Activity {
         private clickChoice(choice : any, game: DgGame, isAttack : boolean) : void {
             this.$table.empty();
             if (isAttack) {
-                var move : Move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+                var move : Move = choice.move === 1 ? Move.Left : Move.Right; // 1: left, 2: right
                 game.play(this, choice.targetProcess, choice.nextNode, choice.action, move);
             }
             else {
@@ -1145,7 +1163,7 @@ module Activity {
     class GameLog {
         private $log : JQuery;
 
-        constructor() {
+        constructor(private gameActivity? : Game) {
             this.$log = $("#game-log");
             this.$log.empty();
         }
@@ -1200,17 +1218,28 @@ module Activity {
             this.println(this.render(template, context), "<p>");
         }
 
-        public printPlay(player : Player, action : string, source : CCS.Process, destination : CCS.Process, move : Move, isStrongMove : boolean) : void {
-            var template = "{1} played {2} {3}{4}{5} {6} on the {7}.";
-
+        public printPlay(player : Player, action : CCS.Action, source : CCS.Process, destination : CCS.Process, move : Move, isStrongMove : boolean) : void {
+            var template = "{1} played {2} {3} {4} on the {5}.";
+            
+            var actionTransition : string;
+            var $action : JQuery;
+            
+            if (isStrongMove) {
+                actionTransition = "-" + action.toString() + "->";
+            } else {
+                actionTransition = "=" + action.toString() + "=>";
+                
+                //TODO add tooltip to weak transition
+                $action = Tooltip.wrap(actionTransition);
+                Tooltip.setTooltip($action, this.strongSequence(source, action, destination));
+            }
+            
             var context = {
                 1: {text: (player instanceof Computer) ? player.playTypeStr() : "You"},
                 2: {text: this.labelFor(source), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
-                3: {text: isStrongMove ? "-" : "=", tag: "<span>", attr: [{name: "class", value: "monospace"}]},
-                4: {text: action, tag: "<span>", attr: [{name: "class", value: "monospace"}]},
-                5: {text: isStrongMove ? "->" : "=>", tag: "<span>", attr: [{name: "class", value: "monospace"}]},
-                6: {text: this.labelFor(destination), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
-                7: {text: (move === Move.Left) ? "left" : "right"}
+                3: {text: actionTransition, tag: "<span>", attr: [{name: "class", value: "monospace"}]},
+                4: {text: this.labelFor(destination), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
+                5: {text: (move === Move.Left) ? "left" : "right"}
             };
 
             if (player instanceof Human) {
@@ -1218,6 +1247,18 @@ module Activity {
             }
 
             this.println(this.render(template, context), "<p>");
+        }
+
+        private strongSequence(source : CCS.Process, action : CCS.Action, target : CCS.Process) : string {
+            var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.gameActivity.getSuccessorGenerator();
+            var strictPath = weakSuccGen.getStrictPath(source.id, action, target.id);
+            var strongActions = this.labelFor(source);
+            
+            for (var i = 0; i < strictPath.length; i++) {
+                strongActions += " -" + strictPath[i].action.toString() + "-> " + this.labelFor(strictPath[i].targetProcess);
+            }
+            
+            return strongActions;
         }
 
         public printWinner(winner : Player) : void {
