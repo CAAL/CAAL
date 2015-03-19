@@ -18,7 +18,7 @@ module Activity {
         private succGen : CCS.SuccessorGenerator;
         private dgGame : DgGame;
         private fullscreen : Fullscreen;
-        private tooltip : Tooltip;
+        private tooltip : ProcessTooltip;
         private timeout : any;
         private $gameType : JQuery;
         private $leftProcessList : JQuery;
@@ -45,8 +45,9 @@ module Activity {
 
             this.project = Project.getInstance();
             this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(null, null));
-            this.tooltip = new Tooltip($("#game-status"));
-
+            this.tooltip = new ProcessTooltip($("#game-status"));
+            new DataTooltip($("#game-log")); // no need to save instance
+            
             this.$gameType = $("#game-type");
             this.$leftProcessList = $("#game-left-process");
             this.$rightProcessList = $("#game-right-process");
@@ -1217,8 +1218,8 @@ module Activity {
             var template = "Current configuration: ({1}, {2}).";
 
             var context = {
-                1: {text: this.labelFor(configuration.left), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
-                2: {text: this.labelFor(configuration.right), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]}
+                1: {text: this.labelFor(configuration.left), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]},
+                2: {text: this.labelFor(configuration.right), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]}
             }
 
             this.println(this.render(template, context), "<p>");
@@ -1228,23 +1229,21 @@ module Activity {
             var template = "{1} played {2} {3} {4} on the {5}.";
             
             var actionTransition : string;
-            var $action : JQuery;
+            var actionContext : any;
             
             if (isStrongMove) {
                 actionTransition = "-" + action.toString() + "->";
+                actionContext = {text: actionTransition, tag: "<span>", attr: [{name: "class", value: "monospace"}]};
             } else {
                 actionTransition = "=" + action.toString() + "=>";
-                
-                //TODO add tooltip to weak transition
-                $action = Tooltip.wrap(actionTransition);
-                Tooltip.setTooltip($action, this.strongSequence(source, action, destination));
+                actionContext = {text: actionTransition, tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-data"}, {name: "data-tooltip", value: this.strongSequence(source, action, destination)}]};
             }
             
             var context = {
                 1: {text: (player instanceof Computer) ? player.playTypeStr() : "You"},
-                2: {text: this.labelFor(source), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
-                3: {text: actionTransition, tag: "<span>", attr: [{name: "class", value: "monospace"}]},
-                4: {text: this.labelFor(destination), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-constant"}]},
+                2: {text: this.labelFor(source), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]},
+                3: actionContext,
+                4: {text: this.labelFor(destination), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]},
                 5: {text: (move === Move.Left) ? "left" : "right"}
             };
 

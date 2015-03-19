@@ -45,7 +45,7 @@ module Main {
 
         new HotkeyHandler().setGlobalHotkeys(activityHandler, save);
 
-        Tooltip.addTooltips();
+        Activity.addTooltips();
     });
 
     export function showInfoBox(text : string, time : number) : void {
