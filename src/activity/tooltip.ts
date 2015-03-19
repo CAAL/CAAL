@@ -48,6 +48,21 @@ module Activity {
             $element.tooltip({title: text});
             return $element;
         }
+        
+        static strongSequence(weakSuccGen : Traverse.WeakSuccessorGenerator, source : CCS.Process, action : CCS.Action, target : CCS.Process) : string {
+            var labelFor = function(process : CCS.Process) {
+                return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString()
+            }
+            
+            var strictPath = weakSuccGen.getStrictPath(source.id, action, target.id);
+            var strongActions = labelFor(source);
+            
+            for (var i = 0; i < strictPath.length; i++) {
+                strongActions += " -" + strictPath[i].action.toString() + "-> " + labelFor(strictPath[i].targetProcess);
+            }
+            
+            return strongActions;
+        }
     }
     
     export class ProcessTooltip extends Tooltip {
