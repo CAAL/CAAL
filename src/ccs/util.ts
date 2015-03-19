@@ -247,7 +247,7 @@ module Traverse {
 
         private insideNamedProcess = undefined;
         private cache;
-        private ttConstant = "ccs-tooltip-constant";
+        private ttConstant = "ccs-tooltip-process";
 
         constructor() {
             this.clearCache();

@@ -22,7 +22,7 @@ module Activity {
         private $canvasContainer : JQuery;
         private $statusContainer : JQuery;
         private $statusTable : JQuery;
-        private tooltip : Tooltip;
+        private tooltip : ProcessTooltip;
         private timeout : number;
         private $zoom : JQuery;
         private $depth : JQuery;
@@ -40,7 +40,7 @@ module Activity {
             this.$canvasContainer = $("#explorer-canvas");
             this.$statusContainer = $("#explorer-transitions");
             this.$statusTable = this.$statusContainer.find("tbody");
-            this.tooltip = new Tooltip(this.$statusTable);
+            this.tooltip = new ProcessTooltip(this.$statusTable);
             this.$zoom = $("#explorer-zoom");
             this.$depth = $("#explorer-depth");
             this.$freeze = $("#explorer-freeze");
