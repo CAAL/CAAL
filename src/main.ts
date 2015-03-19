@@ -9,6 +9,7 @@
 /// <reference path="gui/menu/load.ts" />
 /// <reference path="gui/menu/delete.ts" />
 /// <reference path="gui/menu/export.ts" />
+/// <reference path="gui/hotkey.ts" />
 /// <reference path="activity/activityhandler.ts" />
 /// <reference path="activity/activity.ts" />
 /// <reference path="activity/editor.ts" />
@@ -37,13 +38,25 @@ module Main {
         $("#bug-report").attr("href", "mailto:caal@cs.aau.dk?Subject=CAAL%20Bug%20(" + Version + ")");
 
         new New("#new-btn", activityHandler);
-        new Save(null, activityHandler);
+        var save = new Save(null, activityHandler);
         new Load(null, activityHandler);
         new Delete(null, activityHandler);
         new Export("#export-pdf-btn", activityHandler);
 
+        new HotkeyHandler().setGlobalHotkeys(activityHandler, save);
+
         Tooltip.addTooltips();
     });
+
+    export function showInfoBox(text : string, time : number) : void {
+        $('#info-box').html(text);
+        $('#info-box').stop().animate({ top: '10%' }, 400);
+        
+        var timer = setTimeout(() => {
+            $('#info-box').stop().animate({ top: -100 }, 400);
+            window.clearTimeout(timer);
+        }, time);
+    }
 
     export function getProgram() : string {
         return Project.getInstance().getCCS();

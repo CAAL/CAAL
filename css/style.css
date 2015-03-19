@@ -111,6 +111,17 @@ textarea {
     cursor: pointer;
 }
 
+#info-box {
+    max-width: 300px;
+    position: absolute;
+    top: -100px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    z-index: 99999999999;
+    text-align: center;
+}
+
 
 /*
  * Activity styles
