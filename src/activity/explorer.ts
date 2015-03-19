@@ -265,9 +265,19 @@ module Activity {
 
             transitions.forEach(t => {
                 var row = $("<tr>");
-
+                var $actionTd = $("<td>");
+                
+                if (this.succGenerator instanceof Traverse.WeakSuccessorGenerator) {
+                    var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.succGenerator;
+                    var $action = Tooltip.wrap(t.action.toString());
+                    Tooltip.setTooltip($action, Tooltip.strongSequence(weakSuccGen, this.selectedProcess, t.action, t.targetProcess));
+                    $actionTd.append($action);
+                } else {
+                    $actionTd.append(t.action.toString());
+                }
+                
                 row.append($("<td>").append(Tooltip.wrapProcess(this.labelFor(this.selectedProcess))));
-                row.append($("<td>").append(t.action.toString()));
+                row.append($actionTd);
                 row.append($("<td>").append(Tooltip.wrapProcess(this.labelFor(t.targetProcess))));
 
                 row.attr("data-target-id", t.targetProcess.id);

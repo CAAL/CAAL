@@ -1017,7 +1017,8 @@ module Activity {
                     var $source = this.labelWithTooltip(sourceProcess);
                     
                     if (isWeakGame) {
-                        var $action = Tooltip.setTooltip(Tooltip.wrap(actionTransition), this.strongSequence(sourceProcess, game.getLastAction(), choice.targetProcess));
+                        var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.gameActivity.getSuccessorGenerator();
+                        var $action = Tooltip.setTooltip(Tooltip.wrap(actionTransition), Tooltip.strongSequence(weakSuccGen, sourceProcess, game.getLastAction(), choice.targetProcess));
                         var $actionTd = $("<td id='action'></td>").append($action);
                     } else {
                         var $actionTd = $("<td id='action'></td>").append(actionTransition);
@@ -1045,18 +1046,6 @@ module Activity {
                 row.append($sourceTd, $actionTd, $targetTd);
                 this.$table.append(row);
             });
-        }
-        
-        private strongSequence(source : CCS.Process, action : CCS.Action, target : CCS.Process) : string {
-            var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.gameActivity.getSuccessorGenerator();
-            var strictPath = weakSuccGen.getStrictPath(source.id, action, target.id);
-            var strongActions = this.labelFor(source);
-            
-            for (var i = 0; i < strictPath.length; i++) {
-                strongActions += " -" + strictPath[i].action.toString() + "-> " + this.labelFor(strictPath[i].targetProcess);
-            }
-            
-            return strongActions;
         }
         
         private labelWithTooltip(process : CCS.Process) : JQuery {
@@ -1236,7 +1225,8 @@ module Activity {
                 actionContext = {text: actionTransition, tag: "<span>", attr: [{name: "class", value: "monospace"}]};
             } else {
                 actionTransition = "=" + action.toString() + "=>";
-                actionContext = {text: actionTransition, tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-data"}, {name: "data-tooltip", value: this.strongSequence(source, action, destination)}]};
+                actionContext = {text: actionTransition, tag: "<span>",attr: [{name: "class", value: "ccs-tooltip-data"},
+                    {name: "data-tooltip", value: Tooltip.strongSequence(<Traverse.WeakSuccessorGenerator>this.gameActivity.getSuccessorGenerator(), source, action, destination)}]};
             }
             
             var context = {
@@ -1252,18 +1242,6 @@ module Activity {
             }
 
             this.println(this.render(template, context), "<p>");
-        }
-
-        private strongSequence(source : CCS.Process, action : CCS.Action, target : CCS.Process) : string {
-            var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.gameActivity.getSuccessorGenerator();
-            var strictPath = weakSuccGen.getStrictPath(source.id, action, target.id);
-            var strongActions = this.labelFor(source);
-            
-            for (var i = 0; i < strictPath.length; i++) {
-                strongActions += " -" + strictPath[i].action.toString() + "-> " + this.labelFor(strictPath[i].targetProcess);
-            }
-            
-            return strongActions;
         }
 
         public printWinner(winner : Player) : void {
