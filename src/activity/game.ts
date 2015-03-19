@@ -993,11 +993,12 @@ module Activity {
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
             var currentConfiguration = game.getCurrentConfiguration();
             var actionTransition : string;
+            var isWeakGame = game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak";
             
-            if (!isAttack) {
-                if (game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak") {
-                    actionTransition = "=" + game.getLastAction().toString() + "=>";
-                }
+            if (!isAttack && isWeakGame) {
+                actionTransition = "=" + game.getLastAction().toString() + "=>";
+            } else if(!isAttack) {
+                actionTransition = "-" + game.getLastAction().toString() + "->";
             }
             
             this.$table.empty();
@@ -1013,8 +1014,13 @@ module Activity {
                 } else {
                     var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
                     var $source = this.labelWithTooltip(sourceProcess);
-                    var $action = Tooltip.setTooltip(Tooltip.wrap(actionTransition), this.strongSequence(sourceProcess, game.getLastAction(), choice.targetProcess));
-                    var $actionTd = $("<td id='action'></td>").append($action);
+                    
+                    if (isWeakGame) {
+                        var $action = Tooltip.setTooltip(Tooltip.wrap(actionTransition), this.strongSequence(sourceProcess, game.getLastAction(), choice.targetProcess));
+                        var $actionTd = $("<td id='action'></td>").append($action);
+                    } else {
+                        var $actionTd = $("<td id='action'></td>").append(actionTransition);
+                    }
                 }
                 
                 var $sourceTd = $("<td id='source'></td>").append($source);
