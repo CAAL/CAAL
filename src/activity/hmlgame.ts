@@ -236,13 +236,13 @@ module Activity {
         }
 
         private resize() : void {
-            //var $processExplorerElem = $(this.processExplorer.getRootElement()),
-                //explorerOffsetTop = $("hml-canvas").offset().top,
-                //explorerOffsetBottom = $("#hml-game-status").height();
+            var $processExplorerCanvasContainer = $(this.processExplorer.getCanvasContainer()),
+                explorerOffsetTop = $processExplorerCanvasContainer.offset().top,
+                explorerOffsetBottom = $("#hml-game-status").height();
             
-           // var explorerHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 22;
+           var explorerHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 22;
                         
-            this.processExplorer.resize(0/*this.$container.width()*/, /*explorerHeight*/0);
+            this.processExplorer.resize(this.$container.width(), explorerHeight);
         }
 
         toString() {

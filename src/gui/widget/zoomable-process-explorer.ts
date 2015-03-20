@@ -33,7 +33,7 @@ module GUI.Widget {
 
         constructor() {
             $(this.root).addClass("widget-zoom-process-explorer");
-            $(this.canvasContainer).addClass("hml-canvas-container");
+            $(this.canvasContainer).addClass("canvas-container").attr("id", "hml-canvas-container");
             this.setupRange();
             this.setupFreezeBtn();
 
@@ -47,6 +47,10 @@ module GUI.Widget {
 
         getRootElement() : HTMLElement {
             return this.root;
+        }
+
+        getCanvasContainer() : HTMLElement {
+            return this.canvasContainer;
         }
 
         setExpandDepth(depth) {
@@ -101,10 +105,15 @@ module GUI.Widget {
         }
 
         resize(width, height) : void {
-            /*var $root = $(this.root);
+            var $root = $(this.root);
+            var $canvasContainer = $(this.canvasContainer);
             height = Math.max(265, height);
+            
             $root.width(width);
-            $root.height(height);*/
+            $root.height(height);
+            $canvasContainer.width(width);
+            $canvasContainer.height(height);
+            
             //Fix zoom
             this.setZoom(this.currentZoom);
         }
