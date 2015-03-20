@@ -46,18 +46,18 @@ module Activity {
 
         }
 
-        private setOptionsDom(activity : SubActivity) {
+        private setOptionsDom(subActivity : SubActivity) {
             var injecter = $("#hml-game-inject-options")[0];
             while (injecter.firstChild) {
                 injecter.removeChild(injecter.firstChild);
             }
-            injecter.appendChild(activity.getUIDom());
+            injecter.appendChild(subActivity.getUIDom());
         }
 
         onHide() {
-            var activity = this.currentSubActivity;
-            if (activity) {
-                activity.onHide();
+            var subActivity = this.currentSubActivity;
+            if (subActivity) {
+                subActivity.onHide();
             }
         }
 
@@ -114,7 +114,7 @@ module Activity {
 
             this.$processList.on("change", () => {
                 this.loadGuiIntoConfig(this.configuration);
-                this.setCurrentProcToSelected();
+                this.setCurrentProcFromProcesslist();
                 this.configure(this.configuration);
             });
             this.$formulaList.on("change", () => {
@@ -166,10 +166,12 @@ module Activity {
         }
 
         getUIDom() {
+            /*Return the HTML for a HML-Game options*/
             return this.optionsDom;
         }
 
         getDefaultConfiguration() : any {
+            /*Return a default configurations*/
             var configuration = Object.create(null),
                 graph = Main.getGraph();
             configuration.succGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
@@ -178,21 +180,25 @@ module Activity {
             return configuration;
         }
 
-        private getCurrentProcess() : string {
+        private getProcessListValue() : string {
+            /*Returns the value from the processlist*/
             return this.$processList.val();
         }
 
-        private getCurrentFormula() : string {
+        private getFormulaListValue() : string {
+            /*Returns the value from the formulalist*/
             return this.$formulaList.val();
         }
 
         private getNamedProcessList() : string[] {
+            /*Returns the named processes defined in the CCS-program*/
             var namedProcesses = Main.getGraph().getNamedProcesses().slice(0);
             namedProcesses.reverse();
             return namedProcesses;
         }
 
         private setProcesses(processNames : string[], selectedProcessName? : string) : void {
+            /*Updates the processes in processlist*/
             this.$processList.empty();
             processNames.forEach(pName => {
                 var optionsNode = $("<option></option>").append(pName);
@@ -204,12 +210,14 @@ module Activity {
         }
 
         private loadGuiIntoConfig(configuration) {
-            configuration.processName = this.getCurrentProcess();
-            configuration.formulaId = this.getCurrentFormula();
+            /*Updates the configuration object with new data from processlist and formulalist*/
+            configuration.processName = this.getProcessListValue();
+            configuration.formulaId = this.getFormulaListValue();
         }
 
-        private setCurrentProcToSelected() : void {
-            this.currentProcess = this.configuration.succGen.getProcessByName(this.getCurrentProcess());
+        private setCurrentProcFromProcesslist() : void {
+            /*Updates the this.currentProcess with the newly selected process in processlist */
+            this.currentProcess = this.configuration.succGen.getProcessByName(this.getProcessListValue());
         }
 
         private configure(configuration) {
@@ -222,17 +230,19 @@ module Activity {
         }
 
         private refresh(configuration) {
+            /* Explores the currentProcess and updates the transitiontable with its successors transitions*/
             this.processExplorer.exploreProcess(this.currentProcess);
             this.transitionTable.setTransitions(this.configuration.succGen.getSuccessors(this.currentProcess.id).toArray());
         }
 
         private resize() : void {
-            var $processExplorerElem = $(this.processExplorer.getRootElement()),
-                explorerOffsetTop = $processExplorerElem.offset().top,
-                explorerOffsetBottom = $("#hml-game-status").height();
-            var explorerHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 22;
-            explorerHeight = Math.max(explorerHeight, 265);
-            this.processExplorer.resize(this.$container.width(), explorerHeight);
+            //var $processExplorerElem = $(this.processExplorer.getRootElement()),
+                //explorerOffsetTop = $("hml-canvas").offset().top,
+                //explorerOffsetBottom = $("#hml-game-status").height();
+            
+           // var explorerHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 22;
+                        
+            this.processExplorer.resize(0/*this.$container.width()*/, /*explorerHeight*/0);
         }
 
         toString() {
@@ -267,30 +277,35 @@ module Activity {
         }
 
         selectedFormula(formula : HML.Formula) {
+            /* con/dis-junction this is only viable */
             //The player selected a formula.
             //Same as selectedTransition
+            throw "not implemented"
         }
 
         selectedTransition(transition : CCS.Transition) {
             //The player selected a transition
             //Push current to previous
             //Check for gameover including min/max cycle.
+            throw "not implemented"
         }
 
         isGameOver() : Pair<Player, WinReason> {
             //returns undefined/null if no winner.
             //otherwise return who won, and why.
+            throw "not implemented"
         }
 
         getNextActionType() : ActionType {
             //Returns whether the next player is to select an action or formula or
             //maybe the judge has to unfold variable.
+            throw "not implemented"
         }
 
         getCurrentPlayer() : Player {
             var attackerMoves = [HML.ConjFormula, HML.StrongExistsFormula, HML.WeakExistsFormula, HML.FalseFormula];
-            var defenderMoves = [HML.DisjFormula, HLM.StrongForAllFormula, HML.WeakForAllFormula, HML.TrueFormula];
-            var judgeMoves = [HML.MinFixedPointFormula, HLM.MaxFixedPointFormula, HML.VariableFormula];
+            var defenderMoves = [HML.DisjFormula, HML.StrongForAllFormula, HML.WeakForAllFormula, HML.TrueFormula];
+            var judgeMoves = [HML.MinFixedPointFormula, HML.MaxFixedPointFormula, HML.VariableFormula];
             var isPrototypeOfCurrentFormula = obj => this.state.formula instanceof obj;
 
             if (attackerMoves.some(isPrototypeOfCurrentFormula)) return Player.attacker;
@@ -302,10 +317,12 @@ module Activity {
         getAvailableTransitions() : Pair<CCS.Transition, HML.Formula> {
             //Not sure about interface. they all lead to the same subformula,
             //but the transition may differ.
+            throw "not implemented"
         }
 
         getAvailableFormulas() : HML.Formula[] {
-            //Get the possible formulas you can select amon
+            //Get the possible formulas you can select among
+            throw "not implemented"
         }
     }
 }

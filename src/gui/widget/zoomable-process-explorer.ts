@@ -21,6 +21,7 @@ module GUI.Widget {
         private $freezeBtn : JQuery;
         private isFrozen = false;
         private root = document.createElement("div");
+        private canvasContainer = document.createElement("div");
         private canvas : HTMLCanvasElement = document.createElement("canvas");
 
         private renderer : Renderer = new Renderer(this.canvas);
@@ -32,12 +33,14 @@ module GUI.Widget {
 
         constructor() {
             $(this.root).addClass("widget-zoom-process-explorer");
+            $(this.canvasContainer).addClass("hml-canvas-container");
             this.setupRange();
             this.setupFreezeBtn();
 
             var $pullRight = $('<div class="btn-group pull-right button-row"></div>').append(this.$freezeBtn);
             var $buttonDiv = $('<div class="widget-zoom-proces-explorer-toolbar"></div>').append(this.$zoomRange, $pullRight)
-            $(this.root).append($buttonDiv, this.canvas);
+            $(this.canvasContainer).append(this.canvas);
+            $(this.root).append($buttonDiv, this.canvasContainer);
 
             this.graphUI.bindCanvasEvents();
         }
@@ -51,25 +54,37 @@ module GUI.Widget {
         }
 
         setZoom(zoomFactor : number) : void {
-            var $root = $(this.root),
+            var $canvas = $(this.canvas),
+                $root = $(this.root),
+                $canvasContainer = $(this.canvasContainer),
                 canvasWidth, canvasHeight;
             zoomFactor = clamp(zoomFactor, this.zoomMin, this.zoomMax);
             //TODO
             //By enlarging the canvas but not its containing element we zoom in.
-            canvasWidth = $root.width() * zoomFactor;
-            canvasHeight = $root.height() * zoomFactor;
+
+            var offsetTop = $canvasContainer.offset().top;
+            var offsetBottom = $("#hml-game-status").height();
+            var availableHeight = window.innerHeight - offsetTop - offsetBottom;
+
+            var width = $canvasContainer.width();
+            var height = Math.max(265, availableHeight); // Minimum height 265px.
+            
+            $canvasContainer.height(height);
+
+            canvasWidth = $canvasContainer.width() * zoomFactor;
+            canvasHeight = $canvasContainer.height() * zoomFactor;
             this.canvas.width = canvasWidth;
             this.canvas.height = canvasHeight;
             this.renderer.resize(canvasWidth, canvasHeight);
 
             //Not sure why this
             if (zoomFactor > 1) {
-                this.$freezeBtn.css("right", 30);
-                $root.css("overflow", "auto");
+                this.$freezeBtn.parent().css("right", 30);
+                $canvasContainer.css("overflow", "auto");
                 //Focus on node
             } else {
-                this.$freezeBtn.css("right", 10);
-                $root.css("overflow", "hidden");
+                this.$freezeBtn.parent().css("right", 10);
+                $canvasContainer.css("overflow", "hidden");
             }
         }
 
@@ -86,10 +101,10 @@ module GUI.Widget {
         }
 
         resize(width, height) : void {
-            var $root = $(this.root);
+            /*var $root = $(this.root);
             height = Math.max(265, height);
             $root.width(width);
-            $root.height(height);
+            $root.height(height);*/
             //Fix zoom
             this.setZoom(this.currentZoom);
         }
