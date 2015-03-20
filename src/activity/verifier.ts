@@ -161,8 +161,8 @@ module Activity {
                             property.setUnknownStatus(); // Otherwise set the unknown status
                         }
                     }
-                    else if (property instanceof Property.DistinguishingFormulaSuper) {
-                        var temp : Property.DistinguishingFormulaSuper = <Property.DistinguishingFormulaSuper> property;
+                    else if (property instanceof Property.DistinguishingFormula) {
+                        var temp : Property.DistinguishingFormula = <Property.DistinguishingFormula> property;
                         if (processList.indexOf(temp.getFirstProcess()) === -1 || processList.indexOf(temp.getSecondProcess()) === -1 ) {
                             // If process is not in list of named processes, show the red triangle
                             temp.setInvalidateStatus("One of the processes selected is not defined in the CCS program.")
@@ -239,7 +239,7 @@ module Activity {
 
             for (var i = 0; i < properties.length; i++) {
                 var propertyRows = null;
-                if (properties[i] instanceof Property.DistinguishingFormulaSuper) {
+                if (properties[i] instanceof Property.DistinguishingFormula) {
                     /* distinguishing formula */                        
                     properties[i].setRowClickHandlers(this.generateRowClickHandlers(["collapse", "description", "verify"]));
                     properties[i].setToolMenuOptions(this.generateToolMenuOptions(["edit", "delete"]));
@@ -275,7 +275,7 @@ module Activity {
         }
 
         public onCollapse(e) {
-            if (e.data.property instanceof Property.DistinguishingFormulaSuper) {
+            if (e.data.property instanceof Property.DistinguishingFormula) {
                 var firstProperty = e.data.property.getFirstHML();
                 var firstHMLid = firstProperty.getId();
                 var firstHMLRow = this.propertyTableBody.find("#" + firstHMLid);
@@ -291,7 +291,7 @@ module Activity {
         }
 
         public onExpand(e) {
-            if (e.data.property instanceof Property.DistinguishingFormulaSuper) {
+            if (e.data.property instanceof Property.DistinguishingFormula) {
                 var firstHMLid = e.data.property.getFirstHML().getId();
                 var firstHMLRow = this.propertyTableBody.find("#" + firstHMLid);
                 firstHMLRow.show();
@@ -340,7 +340,7 @@ module Activity {
                     property = new Property.HML({process: "", topFormula: "", definitions: ""});
                     break;
                 case "distinguishing-strong":
-                    property = new Property.DistinguishingFormula(
+                    property = new Property.DistinguishingBisimulationFormula(
                         {
                             firstHMLProperty: {process: "", topFormula: "", definitions: ""}, 
                             secondHMLProperty: {process: "", topFormula: "", definitions: ""},
@@ -348,7 +348,7 @@ module Activity {
                         });
                     break;
                 case "distinguishing-weak":
-                    property = new Property.DistinguishingFormula(
+                    property = new Property.DistinguishingBisimulationFormula(
                         {
                             firstHMLProperty: {process: "", topFormula: "", definitions: ""}, 
                             secondHMLProperty: {process: "", topFormula: "", definitions: ""},
@@ -422,7 +422,7 @@ module Activity {
             var CCSProcessList = Main.getGraph().graph.getNamedProcesses();
             CCSProcessList.reverse();
 
-            if (property instanceof Property.Equivalence || property instanceof Property.DistinguishingFormulaSuper) {
+            if (property instanceof Property.Equivalence || property instanceof Property.DistinguishingFormula) {
                 var equivalenceForm = this.showPropertyForm("twoprocesslistform");
 
                 this.displayProcessList(CCSProcessList, equivalenceForm.firstProcessList, property.getFirstProcess());
