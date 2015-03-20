@@ -66,15 +66,6 @@ module GUI.Widget {
             //TODO
             //By enlarging the canvas but not its containing element we zoom in.
 
-            var offsetTop = $canvasContainer.offset().top;
-            var offsetBottom = $("#hml-game-status").height();
-            var availableHeight = window.innerHeight - offsetTop - offsetBottom;
-
-            var width = $canvasContainer.width();
-            var height = Math.max(265, availableHeight); // Minimum height 265px.
-            
-            $canvasContainer.height(height);
-
             canvasWidth = $canvasContainer.width() * zoomFactor;
             canvasHeight = $canvasContainer.height() * zoomFactor;
             this.canvas.width = canvasWidth;
@@ -109,9 +100,9 @@ module GUI.Widget {
             var $canvasContainer = $(this.canvasContainer);
             height = Math.max(265, height);
             
-            $root.width(width);
+            $root.width(width); // they must be the same size?
             $root.height(height);
-            $canvasContainer.width(width);
+            $canvasContainer.width(width); // they must be the same size?
             $canvasContainer.height(height);
             
             //Fix zoom
@@ -183,7 +174,10 @@ module GUI.Widget {
             var changeEvent = (navigator.userAgent.indexOf("MSIE ") > 0 ||
                                !!navigator.userAgent.match(/Trident.*rv\:11\./))
                                ? "change" : "input";
-            this.$zoomRange.on(changeEvent, () => this.setZoom(this.$zoomRange.val()));
+            this.$zoomRange.on(changeEvent, () => {
+                this.currentZoom = this.$zoomRange.val();
+                this.setZoom(this.currentZoom);
+                });
         }
 
         private setupFreezeBtn() {
