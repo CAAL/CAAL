@@ -76,7 +76,7 @@ module GUI.Widget {
             if (zoomFactor > 1) {
                 this.$freezeBtn.parent().css("right", 30);
                 $canvasContainer.css("overflow", "auto");
-                //Focus on node
+                this.focusOnProcess(this.succGen.getProcessById(parseInt(this.graphUI.getSelected())));
             } else {
                 this.$freezeBtn.parent().css("right", 10);
                 $canvasContainer.css("overflow", "hidden");
@@ -116,9 +116,9 @@ module GUI.Widget {
 
         focusOnProcess(process : CCS.Process) : void {
             var position = this.graphUI.getPosition(process.id.toString()),
-                $root = $(this.root);
-            $root.scrollLeft(position.x - ($root.width() / 2));
-            $root.scrollTop(position.y - ($root.height() / 2));
+                $canvasContainer = $(this.canvasContainer);
+            $canvasContainer.scrollLeft(position.x - ($canvasContainer.width() / 2));
+            $canvasContainer.scrollTop(position.y - ($canvasContainer.height() / 2));
         }
 
         setSuccGenerator(succGen : CCS.SuccessorGenerator) {

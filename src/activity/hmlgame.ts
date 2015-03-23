@@ -125,9 +125,10 @@ module Activity {
             $("#hml-game-main").append(this.processExplorer.getRootElement());
             $("#hml-game-status-right").append(this.transitionTable.getRootElement());
 
-            this.transitionTable.onSelectListener = (transition => {
+            this.transitionTable.onSelectListener = ((transition) => {
                 this.currentProcess = transition.targetProcess;
                 this.refresh(this.configuration);
+                this.processExplorer.exploreProcess(transition.targetProcess);
                 this.processExplorer.focusOnProcess(transition.targetProcess);
             });
         }

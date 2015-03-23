@@ -23,6 +23,7 @@ module GUI {
         clearHoverOutListener() : void;
 
         setSelected(name : string) : void;
+        getSelected() : string;
         setHover(name: string) : void;
         clearHover() : void;
 

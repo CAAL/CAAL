@@ -73,6 +73,10 @@ module GUI {
             this.renderer.redraw(); // redraw the image to change the color of the selected node.
         }
 
+        public getSelected() : string {
+            return this.renderer.selectedNode.name;
+        }
+
         public setHover(name : string) : void {
             this.renderer.hoverNode = this.sys.getNode(name);
             this.highlightEdges();
