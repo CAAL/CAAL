@@ -517,10 +517,14 @@ module Traverse {
             //Todo: this should probably be more robust
             //Check if  <<X>> <<Y>> ...
             if (subFormula instanceof hml.WeakExistsFormula) {
-                //  <<tau>> <<X>> ...
                 if (formula.actionMatcher instanceof hml.SingleActionMatcher &&
                     formula.actionMatcher.matches(new CCS.Action("tau", false))) {
+                    //  <<tau>> <<X>> ...
                     return subFormula;
+                } else if (subFormula.actionMatcher instanceof hml.SingleActionMatcher &&
+                    subFormula.actionMatcher.matches(new CCS.Action("tau", false))) {
+                    // <<X><<tau>> ...
+                    return this.prevSet.newWeakExists(formula.actionMatcher, subFormula.subFormula);
                 }
             }
             return this.prevSet.newWeakExists(formula.actionMatcher, subFormula);
@@ -531,10 +535,14 @@ module Traverse {
             //Todo: this should probably be more robust
             //Check if  [[X]] [[Y]] ...
             if (subFormula instanceof hml.WeakForAllFormula) {
-                //  [[tau]] [[X]] ...
                 if (formula.actionMatcher instanceof hml.SingleActionMatcher &&
                     formula.actionMatcher.matches(new CCS.Action("tau", false))) {
+                    //  [[tau]] [[X]] ...
                     return subFormula;
+                } else if (subFormula.actionMatcher instanceof hml.SingleActionMatcher &&
+                    subFormula.actionMatcher.matches(new CCS.Action("tau", false))) {
+                    // [[X]] [[tau]]
+                    return this.prevSet.newWeakForAll(formula.actionMatcher, subFormula.subFormula);
                 }
                 //TODO: Add on the right
             }
