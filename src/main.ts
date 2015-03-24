@@ -83,6 +83,11 @@ module Main {
         return {graph: graph, error: error};
     }
 
+    export function getFormulas() {
+        var properties = Project.getProperties();
+        // TODO return topformulars
+    }
+
     export function getStrictSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {
         return CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true});
     }

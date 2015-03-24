@@ -3,7 +3,7 @@
 
 module GUI.Widget {
 
-    export type SelectListener = (transition : CCS.Transition) => void;;
+    export type SelectListener = (transition : CCS.Transition) => void;
     export type HoverEnterListener = SelectListener;
     export type HoverLeaveListener = SelectListener;
 
@@ -33,7 +33,6 @@ module GUI.Widget {
         }
 
         setTransitions(transitions : CCS.Transition[] ) {
-            // TODO remember to refactor this for HMl-game, we want to display a HML-formula in the table also.
             var $body = $(this.body);
             $body.empty();
             this.transitions = transitions.slice(0);

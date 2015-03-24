@@ -126,7 +126,7 @@ module Traverse {
         }
     }
 
-    function wrapIfInstanceOf(stringRepr : string, object : any, classes) {
+    export function wrapIfInstanceOf(stringRepr : string, object : any, classes) {
         for (var i = 0; i < classes.length; i++) {
             if (object instanceof classes[i]) {
                 return "(" + stringRepr + ")";
@@ -229,7 +229,7 @@ module Traverse {
         }
     }
 
-    function safeHtml(str : string) : string {
+    export function safeHtml(str : string) : string {
         var entities = {
             "&": "&amp;",
             "<": "&lt;",

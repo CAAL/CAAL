@@ -2,6 +2,7 @@
 /// <reference path="../gui/gui.ts" />
 /// <reference path="../gui/widget/zoomable-process-explorer.ts" />
 /// <reference path="../gui/widget/transition-table.ts" />
+/// <reference path="../gui/widget/hmlformula-selector.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="activity.ts" />
@@ -81,28 +82,26 @@ module Activity {
         private $container : JQuery;
         private processExplorer = new GUI.Widget.ZoomableProcessExplorer();
         private transitionTable = new GUI.Widget.TransitionTable();
+        private hmlselector = new GUI.Widget.FormulaSelector();
         private currentProcess = null;
-
+        // HMlgamelogic instance is missing.
         private project : Project;
-        
         private configuration = {
             processName: undefined,
             formulaId: undefined,
             succGen: null
         };
-
         private $processList : JQuery;
         private $formulaList : JQuery;
         private optionsDom;
 
         /* Todo
-    
             How to ensure leftProcess and right formula valid. Or just not draw until selected?
             How to ensure valid configuration
             Detect ccs changes
             Create options
             Add event handling options
-            Formula subgui.
+            Create a new selector for hml selections(dis/con-junction)
             Only allow valid transitions.
         */
 
@@ -198,6 +197,14 @@ module Activity {
             return namedProcesses;
         }
 
+        private getPropertyFormulaList() {
+
+        }
+
+        private setFormulas() {
+
+        }
+
         private setProcesses(processNames : string[], selectedProcessName? : string) : void {
             /*Updates the processes in processlist*/
             this.$processList.empty();
@@ -278,22 +285,22 @@ module Activity {
         }
 
         selectedFormula(formula : HML.Formula) {
-            /* con/dis-junction this is only viable */
-            //The player selected a formula.
-            //Same as selectedTransition
+            // con/dis-junction this is only viable
+            // The player selected a formula.
+            // Same as selectedTransition
             throw "not implemented"
         }
 
         selectedTransition(transition : CCS.Transition) {
-            //The player selected a transition
-            //Push current to previous
-            //Check for gameover including min/max cycle.
+            // The player selected a transition
+            // Push current to previous
+            // Check for gameover including min/max cycle.
             throw "not implemented"
         }
 
         isGameOver() : Pair<Player, WinReason> {
-            //returns undefined/null if no winner.
-            //otherwise return who won, and why.
+            // returns undefined/null if no winner.
+            // otherwise return who won, and why.
             throw "not implemented"
         }
 
@@ -307,7 +314,7 @@ module Activity {
             var attackerMoves = [HML.ConjFormula, HML.StrongExistsFormula, HML.WeakExistsFormula, HML.FalseFormula];
             var defenderMoves = [HML.DisjFormula, HML.StrongForAllFormula, HML.WeakForAllFormula, HML.TrueFormula];
             var judgeMoves = [HML.MinFixedPointFormula, HML.MaxFixedPointFormula, HML.VariableFormula];
-            var isPrototypeOfCurrentFormula = obj => this.state.formula instanceof obj;
+            var isPrototypeOfCurrentFormula = (obj) => this.state.formula instanceof obj;
 
             if (attackerMoves.some(isPrototypeOfCurrentFormula)) return Player.attacker;
             if (defenderMoves.some(isPrototypeOfCurrentFormula)) return Player.defender;
