@@ -68,7 +68,7 @@ module Activity {
             if (!graph) {
                 this.showExplainDialog("Syntax Error", "Your program contains one or more syntax errors.");
                 return false;
-            } else if (graph.getNamedProcesses().length === 0) {
+            } else if (graph.graph.getNamedProcesses().length === 0) {
                 this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
                 return false;
             }
@@ -102,6 +102,7 @@ module Activity {
             Create options
             Add event handling options
             Create a new selector for hml selections(dis/con-junction)
+            be able to switch between the transition table and hml-selector
             Only allow valid transitions.
         */
 
@@ -122,7 +123,8 @@ module Activity {
             });
 
             $("#hml-game-main").append(this.processExplorer.getRootElement());
-            $("#hml-game-status-right").append(this.transitionTable.getRootElement());
+            //$("#hml-game-status-right").append(this.transitionTable.getRootElement());
+            $("#hml-game-status-right").append(this.hmlselector.getRootElement());
 
             this.transitionTable.onSelectListener = ((transition) => {
                 this.currentProcess = transition.targetProcess;
@@ -136,6 +138,7 @@ module Activity {
             $(window).on("resize", () => this.resize());
             this.resize();
             this.configure(configuration);
+            console.log(Main.getFormulas());
         }
 
         onHide() {
@@ -173,10 +176,10 @@ module Activity {
         getDefaultConfiguration() : any {
             /*Return a default configurations*/
             var configuration = Object.create(null),
-                graph = Main.getGraph();
+                graph : ccs.Graph = Main.getGraph().graph;
             configuration.succGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
             configuration.processName = this.getNamedProcessList()[0];
-            configuration.formulaId = "Howdy";
+            configuration.formulaId = this.getFormulaList()[0].getTopFormula().id;
             return configuration;
         }
 
@@ -192,17 +195,28 @@ module Activity {
 
         private getNamedProcessList() : string[] {
             /*Returns the named processes defined in the CCS-program*/
-            var namedProcesses = Main.getGraph().getNamedProcesses().slice(0);
+            var namedProcesses = Main.getGraph().graph.getNamedProcesses().slice(0);
             namedProcesses.reverse();
             return namedProcesses;
         }
 
-        private getPropertyFormulaList() {
-
+        private getFormulaList() : HML.FormulaSet[] {
+            return Main.getFormulas();
         }
 
-        private setFormulas() {
-
+        private setFormulas(hmlFormulas : HML.FormulaSet[], selectedHMLId : number) : void {
+            this.$formulaList.empty();
+            var hmlvisitor = new Traverse.HMLNotationVisitor();
+            
+            hmlFormulas.forEach((hmlF) => {
+                var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlF.getTopFormula()))
+                var optionsNode = $("<option></option>").append(formulaStr);
+                
+                if(hmlF.getTopFormula().id === selectedHMLId){
+                    optionsNode.prop("selected", true);
+                }
+                this.$formulaList.append(optionsNode);
+            });
         }
 
         private setProcesses(processNames : string[], selectedProcessName? : string) : void {
@@ -233,6 +247,7 @@ module Activity {
             this.configuration = configuration;
             this.currentProcess = configuration.succGen.getProcessByName(configuration.processName);
             this.setProcesses(this.getNamedProcessList(), configuration.processName);
+            this.setFormulas(this.getFormulaList(), configuration.formulaId);
             this.processExplorer.setSuccGenerator(this.configuration.succGen);
             this.refresh(configuration);
         }

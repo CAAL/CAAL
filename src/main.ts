@@ -83,9 +83,22 @@ module Main {
         return {graph: graph, error: error};
     }
 
-    export function getFormulas() {
-        var properties = Project.getProperties();
-        // TODO return topformulars
+    export function getFormulas() : HML.FormulaSet[] {
+        var properties = Project.getInstance().getProperties();
+        var hmlPropertyFormulas : HML.FormulaSet[] = [];
+
+        properties.forEach((property) => {
+            if (property instanceof Property.HML) {
+                var formulaSet = new HML.FormulaSet;
+                HMLParser.parse(property.getDefinitions(), {ccs: CCS, hml: HML, formulaSet: formulaSet});
+                HMLParser.parse(property.getTopFormula(), {startRule: "TopFormula", ccs: CCS, hml: HML, formulaSet: formulaSet});
+                hmlPropertyFormulas.push(formulaSet)
+            }
+        });
+
+        // TODO handle errors
+
+        return hmlPropertyFormulas;
     }
 
     export function getStrictSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {

@@ -266,7 +266,7 @@ module HML {
             this.allFormulas.push(formula);
         }
 
-        getErrors() {
+        getErrors() : string[] {
             var errors = this.errors.slice(0);
             this.undefinedVariables.forEach(variable => {
                 errors.push({name: "UndefinedVariable", message: "The variable '" + variable + "' has not been defined."});
@@ -285,6 +285,15 @@ module HML {
                     return this.allFormulas[i];
                 }
             }
+            return null;
+        }
+
+        getFormulaById(id : number) : Formula {
+            this.allFormulas.forEach((formula)=>{
+                if(id === formula.id){
+                    return formula;
+                }
+            });
             return null;
         }
 
