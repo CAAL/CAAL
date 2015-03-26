@@ -24,17 +24,17 @@ module GUI.Widget {
             $root.append(this.paragraph);
 
             /*Click listeners on each subformula*/
-            $root.on("click", "span .hml-subformula", this.onSubformulaClick.bind(this));
+            $root.on("click", "span.hml-subformula", this.onSubformulaClick.bind(this));
         }
 
         setFormula(hmlFormula : HML.Formula, hmlFormulaSet : HML.FormulaSet){
             this.hmlFormulaSet = hmlFormulaSet;
-            var $paragraph = $(this.paragraph);
 
-            var hmlFormulaStr = this.HMLSubFormulaVisitor.visit(hmlFormula);
+            var $paragraph = $(this.paragraph);
+            $paragraph.empty(); // clear the previous HML formula
+
+            var hmlFormulaStr = this.HMLSubFormulaVisitor.visit(hmlFormula); // convert the formula to a string
             $paragraph.append(hmlFormulaStr);
-            // get the subformula from the visitor
-            // and add each of them to the paragraph
         }
 
         public getRootElement() : HTMLElement {
@@ -73,11 +73,11 @@ module GUI.Widget {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStrs = formula.subFormulas.map((subF) => {
-                    var preHtml = '<span id="'+ subF.id +'" class="hml-subformula">';
-                    var endHtml = '</span>'; 
-                    
-                    return preHtml + Traverse.safeHtml(subF.dispatchOn(this)) + endHtml;
-                    });
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-idx', subF.id);
+                    $span.append(subF.dispatchOn(this));
+                    console.log($span[0].outerHTML);                    
+                    return $span[0].outerHTML;
+                });
                 
                 result = this.cache[formula.id] = subStrs.join(" or ");
             }
@@ -88,13 +88,13 @@ module GUI.Widget {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStrs = formula.subFormulas.map(subF => {
-                    var unwrapped = subF.dispatchOn(this)
+                    var unwrapped = subF.dispatchOn(this);
                     var wrapped = Traverse.wrapIfInstanceOf(unwrapped, subF, [HML.DisjFormula]);
 
-                    var preHtml = '<span id="'+ subF.id +'" class="hml-subformula">';
-                    var endHtml = '</span>';
-
-                    return preHtml + wrapped + endHtml;
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-idx', subF.id);
+                    $span.append(wrapped);     
+                    console.log($span[0].outerHTML);
+                    return $span[0].outerHTML;
                 });
 
                 result = this.cache[formula.id] = subStrs.join(" and ");
@@ -122,9 +122,11 @@ module GUI.Widget {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "<" + 
-                    formula.actionMatcher.actionMatchingString() + ">" +
+                var formulaAction = "<" + formula.actionMatcher.actionMatchingString() + ">";
+                var formulaStr = Traverse.safeHtml(formulaAction) +
                     Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
+                result = this.cache[formula.id] = formulaStr;
+
             }
             return result;
         }
@@ -133,9 +135,10 @@ module GUI.Widget {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "[" + 
-                    formula.actionMatcher.actionMatchingString() + "]" +
+                var formulaAction = "[" + formula.actionMatcher.actionMatchingString() + "]";
+                var formulaStr = Traverse.safeHtml(formulaAction) +
                     Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
+                result = this.cache[formula.id] = formulaStr;
             }
             return result;
         }
@@ -144,9 +147,10 @@ module GUI.Widget {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "<<" + 
-                    formula.actionMatcher.actionMatchingString() + ">>" +
+                var formulaAction = "<<" + formula.actionMatcher.actionMatchingString() + ">>";
+                var formulaStr = Traverse.safeHtml(formulaAction) +
                     Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
+                result = this.cache[formula.id] = formulaStr;
             }
             return result;
         }
@@ -155,9 +159,10 @@ module GUI.Widget {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "[[" + 
-                    formula.actionMatcher.actionMatchingString() + "]]" +
+                var formulaAction = "[[" + formula.actionMatcher.actionMatchingString() + "]]"
+                var formulaStr = Traverse.safeHtml(formulaAction) +
                     Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
+                result = this.cache[formula.id] = formulaStr;
             }
             return result;
         }
@@ -183,7 +188,7 @@ module GUI.Widget {
         dispatchVariableFormula(formula : HML.VariableFormula) {
             var result = this.cache[formula.id];
             if (!result) {
-                result = this.cache[formula.id] = formula.variable;
+                result = this.cache[formula.id] = Traverse.safeHtml(formula.variable);
             }
             return result;
         }
