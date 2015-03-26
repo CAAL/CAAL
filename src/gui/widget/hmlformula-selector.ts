@@ -54,7 +54,7 @@ module GUI.Widget {
     }
 
     class HMLSubFormulaVisitor implements HML.FormulaVisitor<string>, HML.FormulaDispatchHandler<string> { 
-
+        private isFirst = true;
         private cache;
 
         constructor() {
@@ -72,11 +72,18 @@ module GUI.Widget {
         dispatchDisjFormula(formula : HML.DisjFormula) {
             var result = this.cache[formula.id];
             if (!result) {
+                if(this.isFirst) {
+                    var firstDis = this.isFirst;
+                    this.isFirst = false;
+                }
                 var subStrs = formula.subFormulas.map((subF) => {
-                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-idx', subF.id);
-                    $span.append(subF.dispatchOn(this));
-                    console.log($span[0].outerHTML);                    
-                    return $span[0].outerHTML;
+                    if(firstDis) {
+                        var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-idx', subF.id);
+                        $span.append(subF.dispatchOn(this));
+                        return $span[0].outerHTML;                    
+                    } else {
+                        return subF.dispatchOn(this);
+                    }
                 });
                 
                 result = this.cache[formula.id] = subStrs.join(" or ");
@@ -87,14 +94,22 @@ module GUI.Widget {
         dispatchConjFormula(formula : HML.ConjFormula) {
             var result = this.cache[formula.id];
             if (!result) {
+                if(this.isFirst) {
+                    var firstCon = this.isFirst;
+                    this.isFirst = false;
+                }
+
                 var subStrs = formula.subFormulas.map(subF => {
                     var unwrapped = subF.dispatchOn(this);
                     var wrapped = Traverse.wrapIfInstanceOf(unwrapped, subF, [HML.DisjFormula]);
 
-                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-idx', subF.id);
-                    $span.append(wrapped);     
-                    console.log($span[0].outerHTML);
-                    return $span[0].outerHTML;
+                    if(firstCon) {
+                        var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-idx', subF.id);
+                        $span.append(wrapped);     
+                        return $span[0].outerHTML;
+                    } else {
+                        return wrapped;
+                    }
                 });
 
                 result = this.cache[formula.id] = subStrs.join(" and ");
