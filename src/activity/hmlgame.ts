@@ -215,9 +215,10 @@ module Activity {
         }
 
         private setFormulas(hmlFormulaSets : HML.FormulaSet[], selectedHMLId : number) : void {
+            console.log(hmlFormulaSets);
             this.$formulaList.empty();
-            var hmlvisitor = new Traverse.HMLNotationVisitor();
             hmlFormulaSets.forEach((hmlFSet, index) => {
+                var hmlvisitor = new Traverse.HMLNotationVisitor();
                 var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlFSet.getTopFormula()))
                 var optionsNode = $("<option></option>").attr("value", index).append(formulaStr);
                 if(hmlFSet.getTopFormula().id === selectedHMLId){

@@ -8,7 +8,7 @@ module GUI.Widget {
         private root = document.createElement("div");
         private paragraph = document.createElement("p");
         private hmlFormulaSet : HML.FormulaSet;
-        private HMLSubFormulaVisitor = new HMLSubFormulaVisitor();
+        //private HMLSubFormulaVisitor = new HMLSubFormulaVisitor();
 
         public onSelectListener : HMLSelectListener = null;
 
@@ -33,7 +33,8 @@ module GUI.Widget {
             var $paragraph = $(this.paragraph);
             $paragraph.empty(); // clear the previous HML formula
 
-            var hmlFormulaStr = this.HMLSubFormulaVisitor.visit(hmlFormula); // convert the formula to a string
+            var HMLVisitor = new HMLSubFormulaVisitor();
+            var hmlFormulaStr = HMLVisitor.visit(hmlFormula); // convert the formula to a string
             $paragraph.append(hmlFormulaStr);
         }
 
