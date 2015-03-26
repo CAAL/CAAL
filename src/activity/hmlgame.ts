@@ -83,7 +83,9 @@ module Activity {
         private processExplorer = new GUI.Widget.ZoomableProcessExplorer();
         private transitionTable = new GUI.Widget.TransitionTable();
         private hmlselector = new GUI.Widget.FormulaSelector();
-        private currentProcess = null;
+        private currentProcess : CCS.Process = null;
+        private currentFormula : HML.Formula = null
+        private currentFormulaSet : HML.FormulaSet = null
         // HMlgamelogic instance is missing.
         private project : Project;
         private configuration = {
@@ -119,7 +121,8 @@ module Activity {
             });
             this.$formulaList.on("change", () => {
                 this.loadGuiIntoConfig(this.configuration);
-                this.refresh(this.configuration);
+                this.setCurrentFormulaFromFormulalist();
+                this.configure(this.configuration);
             });
 
             $("#hml-game-main").append(this.processExplorer.getRootElement());
@@ -132,13 +135,16 @@ module Activity {
                 this.processExplorer.exploreProcess(transition.targetProcess);
                 this.processExplorer.focusOnProcess(transition.targetProcess);
             });
+
+            this.hmlselector.onSelectListener = ((hmlformula) => {
+                this.currentFormula = hmlformula;
+            });
         }
 
         onShow(configuration) {
             $(window).on("resize", () => this.resize());
             this.resize();
             this.configure(configuration);
-            console.log(Main.getFormulas());
         }
 
         onHide() {
@@ -179,7 +185,7 @@ module Activity {
                 graph : ccs.Graph = Main.getGraph().graph;
             configuration.succGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
             configuration.processName = this.getNamedProcessList()[0];
-            configuration.formulaId = this.getFormulaList()[0].getTopFormula().id;
+            configuration.formulaId = this.getFormulaSetList()[0].getTopFormula().id;
             return configuration;
         }
 
@@ -188,9 +194,13 @@ module Activity {
             return this.$processList.val();
         }
 
-        private getFormulaListValue() : string {
-            /*Returns the value from the formulalist*/
+        private getFormulaListValue() : number {
+            /*Returns the value(the index of the formulaSet in this.getFormulaSetList()) from the formulalist*/
             return this.$formulaList.val();
+        }
+
+        private getSelectedFormulaSet() : HML.FormulaSet {
+            return this.getFormulaSetList()[this.getFormulaListValue()];
         }
 
         private getNamedProcessList() : string[] {
@@ -200,19 +210,17 @@ module Activity {
             return namedProcesses;
         }
 
-        private getFormulaList() : HML.FormulaSet[] {
-            return Main.getFormulas();
+        private getFormulaSetList() : HML.FormulaSet[] {
+            return Main.getFormulaSets();
         }
 
-        private setFormulas(hmlFormulas : HML.FormulaSet[], selectedHMLId : number) : void {
+        private setFormulas(hmlFormulaSets : HML.FormulaSet[], selectedHMLId : number) : void {
             this.$formulaList.empty();
             var hmlvisitor = new Traverse.HMLNotationVisitor();
-            
-            hmlFormulas.forEach((hmlF) => {
-                var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlF.getTopFormula()))
-                var optionsNode = $("<option></option>").append(formulaStr);
-                
-                if(hmlF.getTopFormula().id === selectedHMLId){
+            hmlFormulaSets.forEach((hmlFSet, index) => {
+                var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlFSet.getTopFormula()))
+                var optionsNode = $("<option></option>").attr("value", index).append(formulaStr);
+                if(hmlFSet.getTopFormula().id === selectedHMLId){
                     optionsNode.prop("selected", true);
                 }
                 this.$formulaList.append(optionsNode);
@@ -234,7 +242,7 @@ module Activity {
         private loadGuiIntoConfig(configuration) {
             /*Updates the configuration object with new data from processlist and formulalist*/
             configuration.processName = this.getProcessListValue();
-            configuration.formulaId = this.getFormulaListValue();
+            configuration.formulaId = this.getSelectedFormulaSet().getTopFormula().id;
         }
 
         private setCurrentProcFromProcesslist() : void {
@@ -242,20 +250,38 @@ module Activity {
             this.currentProcess = this.configuration.succGen.getProcessByName(this.getProcessListValue());
         }
 
+        private setCurrentFormulaFromFormulalist() : void {
+            this.currentFormulaSet = this.getSelectedFormulaSet()
+            this.currentFormula = this.currentFormulaSet.getTopFormula();
+        }
+
         private configure(configuration) {
             //This is/should-only-be called for change in either process, formula or succ generator.
             this.configuration = configuration;
-            this.currentProcess = configuration.succGen.getProcessByName(configuration.processName);
+            
+            /*Fill the dropdown list with infomation*/            
             this.setProcesses(this.getNamedProcessList(), configuration.processName);
-            this.setFormulas(this.getFormulaList(), configuration.formulaId);
+            this.setFormulas(this.getFormulaSetList(), configuration.formulaId);
+            
+            /*Set the currentFormula/Process */
+            this.currentProcess = configuration.succGen.getProcessByName(configuration.processName);
+            this.currentFormulaSet = this.getSelectedFormulaSet() // Currently selected FormulaSet
+            this.currentFormula = this.currentFormulaSet.getTopFormula();
+
             this.processExplorer.setSuccGenerator(this.configuration.succGen);
             this.refresh(configuration);
         }
 
         private refresh(configuration) {
-            /* Explores the currentProcess and updates the transitiontable with its successors transitions*/
+
+            /* E-xplores the currentProcess and updates the transitiontable with its successors transitions*/
             this.processExplorer.exploreProcess(this.currentProcess);
-            this.transitionTable.setTransitions(this.configuration.succGen.getSuccessors(this.currentProcess.id).toArray());
+            
+
+            // todo insert if about actionType
+            //this.transitionTable.setTransitions(this.configuration.succGen.getSuccessors(this.currentProcess.id).toArray());
+            this.hmlselector.setFormula(this.currentFormula, this.currentFormulaSet);
+
         }
 
         private resize() : void {

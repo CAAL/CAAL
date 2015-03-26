@@ -7,7 +7,7 @@ module GUI.Widget {
     export class FormulaSelector {
         private root = document.createElement("div");
         private paragraph = document.createElement("p");
-        private hmlSubFormulas : HML.Formula[] = [];
+        private hmlFormulaSet : HML.FormulaSet;
         private HMLSubFormulaVisitor = new HMLSubFormulaVisitor();
 
         public onSelectListener : HMLSelectListener = null;
@@ -27,10 +27,12 @@ module GUI.Widget {
             $root.on("click", "span .hml-subformula", this.onSubformulaClick.bind(this));
         }
 
-        setFormula(hmlFormula : HML.Formula){
-            var paragraph = $(this.paragraph);
+        setFormula(hmlFormula : HML.Formula, hmlFormulaSet : HML.FormulaSet){
+            this.hmlFormulaSet = hmlFormulaSet;
+            var $paragraph = $(this.paragraph);
+
             var hmlFormulaStr = this.HMLSubFormulaVisitor.visit(hmlFormula);
-            console.log(hmlFormulaStr);
+            $paragraph.append(hmlFormulaStr);
             // get the subformula from the visitor
             // and add each of them to the paragraph
         }
@@ -41,7 +43,7 @@ module GUI.Widget {
 
         private subformulaFromDelegateEvent(event) : HML.Formula {
             var idx = $(event.currentTarget).data("data-subformula-idx");
-            return this.hmlSubFormulas[idx];
+            return this.hmlFormulaSet.formulaById(idx);
         }
 
         private onSubformulaClick(event) {

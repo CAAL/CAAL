@@ -288,7 +288,7 @@ module HML {
             return null;
         }
 
-        getFormulaById(id : number) : Formula {
+        formulaById(id : number) : Formula {
             this.allFormulas.forEach((formula)=>{
                 if(id === formula.id){
                     return formula;

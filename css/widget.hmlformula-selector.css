@@ -1,0 +1,7 @@
+div#hml-selector-body {
+    height: 225px;
+    padding: 10px;
+    overflow: auto;
+    border: 1px solid #e7e7e7;
+    border-top: none;
+} 

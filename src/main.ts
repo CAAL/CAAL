@@ -9,6 +9,7 @@
 /// <reference path="gui/menu/load.ts" />
 /// <reference path="gui/menu/delete.ts" />
 /// <reference path="gui/menu/export.ts" />
+/// <reference path="gui/hotkey.ts" />
 /// <reference path="activity/activityhandler.ts" />
 /// <reference path="activity/activity.ts" />
 /// <reference path="activity/editor.ts" />
@@ -46,7 +47,6 @@ module Main {
 
         new HotkeyHandler().setGlobalHotkeys(activityHandler, save);
         
-
         Activity.addTooltips();
     });
 
@@ -83,7 +83,7 @@ module Main {
         return {graph: graph, error: error};
     }
 
-    export function getFormulas() : HML.FormulaSet[] {
+    export function getFormulaSets() : HML.FormulaSet[] {
         var properties = Project.getInstance().getProperties();
         var hmlPropertyFormulas : HML.FormulaSet[] = [];
 

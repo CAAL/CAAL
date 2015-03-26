@@ -1,6 +1,7 @@
 @import url("hml-game.css");
 @import url("widget.transition-table.css");
 @import url("widget.zoom-process-explorer.css");
+@import url("widget.hmlformula-selector.css");
 
 html, body {
     margin: 0;
