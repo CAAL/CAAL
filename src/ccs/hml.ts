@@ -17,17 +17,17 @@ module HML {
     }
 
     export interface FormulaDispatchHandler<T> {
-        dispatchDisjFormula(formula : DisjFormula, ... args) : T
-        dispatchConjFormula(formula : ConjFormula, ... args) : T
-        dispatchTrueFormula(formula : TrueFormula, ... args) : T
-        dispatchFalseFormula(formula : FalseFormula, ... args) : T
-        dispatchStrongExistsFormula(formula : StrongExistsFormula, ... args) : T
-        dispatchStrongForAllFormula(formula : StrongForAllFormula, ... args) : T
-        dispatchWeakExistsFormula(formula : WeakExistsFormula, ... args) : T
-        dispatchWeakForAllFormula(formula : WeakForAllFormula, ... args) : T
-        dispatchMinFixedPointFormula(formula : MinFixedPointFormula, ... args) : T
-        dispatchMaxFixedPointFormula(formula : MaxFixedPointFormula, ... args) : T
-        dispatchVariableFormula(formula : VariableFormula, ... args) : T
+        dispatchDisjFormula(formula : DisjFormula) : T
+        dispatchConjFormula(formula : ConjFormula) : T
+        dispatchTrueFormula(formula : TrueFormula) : T
+        dispatchFalseFormula(formula : FalseFormula) : T
+        dispatchStrongExistsFormula(formula : StrongExistsFormula) : T
+        dispatchStrongForAllFormula(formula : StrongForAllFormula) : T
+        dispatchWeakExistsFormula(formula : WeakExistsFormula) : T
+        dispatchWeakForAllFormula(formula : WeakForAllFormula) : T
+        dispatchMinFixedPointFormula(formula : MinFixedPointFormula) : T
+        dispatchMaxFixedPointFormula(formula : MaxFixedPointFormula) : T
+        dispatchVariableFormula(formula : VariableFormula) : T
     }
 
     export class DisjFormula implements Formula {

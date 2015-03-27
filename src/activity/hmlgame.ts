@@ -254,7 +254,8 @@ module Activity {
         }
 
         private setCurrentFormulaFromFormulalist() : void {
-            this.currentFormulaSet = this.getSelectedFormulaSet()
+            this.currentFormulaSet = this.getSelectedFormulaSet();
+            //this.hmlselector.setFormulaSet(this.currentFormulaSet);
             this.currentFormula = this.currentFormulaSet.getTopFormula();
         }
 
@@ -269,6 +270,7 @@ module Activity {
             /*Set the currentFormula/Process */
             this.currentProcess = configuration.succGen.getProcessByName(configuration.processName);
             this.currentFormulaSet = this.getFormulaSetList()[configuration.formulaSetIndex];
+            this.hmlselector.setFormulaSet(this.currentFormulaSet);
             this.currentFormula = this.currentFormulaSet.getTopFormula();
 
             this.processExplorer.setSuccGenerator(this.configuration.succGen);
@@ -283,7 +285,7 @@ module Activity {
 
             // todo insert if about actionType
             //this.transitionTable.setTransitions(this.configuration.succGen.getSuccessors(this.currentProcess.id).toArray());
-            this.hmlselector.setFormula(this.currentFormula, this.currentFormulaSet);
+            this.hmlselector.setFormula(this.currentFormula);
 
         }
 

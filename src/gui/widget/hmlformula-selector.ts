@@ -7,7 +7,8 @@ module GUI.Widget {
     export class FormulaSelector {
         private root = document.createElement("div");
         private paragraph = document.createElement("p");
-        private hmlFormulaSet : HML.FormulaSet;
+        private currentHml : HML.Formula;
+        private currentHmlSet : HML.FormulaSet;
         //private HMLSubFormulaVisitor = new HMLSubFormulaVisitor();
 
         public onSelectListener : HMLSelectListener = null;
@@ -27,9 +28,12 @@ module GUI.Widget {
             $root.on("click", "span.hml-subformula", this.onSubformulaClick.bind(this));
         }
 
-        setFormula(hmlFormula : HML.Formula, hmlFormulaSet : HML.FormulaSet){
-            this.hmlFormulaSet = hmlFormulaSet;
+        setFormulaSet(hmlFormulaSet : HML.FormulaSet) {
+            this.currentHmlSet = hmlFormulaSet;
+        }
 
+        setFormula(hmlFormula : HML.Formula){
+            this.currentHml = hmlFormula
             var $paragraph = $(this.paragraph);
             $paragraph.empty(); // clear the previous HML formula
 
@@ -43,11 +47,14 @@ module GUI.Widget {
         }
 
         private subformulaFromDelegateEvent(event) : HML.Formula {
-            var idx = $(event.currentTarget).data("data-subformula-idx");
-            return this.hmlFormulaSet.formulaById(idx);
+            var id = parseInt($(event.currentTarget).attr("data-subformula-id"));
+            var hmlExtractor = new HMLSubFormulaExtractor(this.currentHmlSet);
+            var subFormula : HML.Formula = hmlExtractor.getSubFormulaWithId(this.currentHml, id);
+            return subFormula;
         }
 
         private onSubformulaClick(event) {
+            console.log("you clicked on subFormula : ", this.subformulaFromDelegateEvent(event));
             if(this.onSelectListener) {
                 this.onSelectListener(this.subformulaFromDelegateEvent(event));
             }
@@ -79,7 +86,7 @@ module GUI.Widget {
                 }
                 var subStrs = formula.subFormulas.map((subF) => {
                     if(firstDis) {
-                        var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-idx', subF.id);
+                        var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', subF.id);
                         $span.append(subF.dispatchOn(this));
                         return $span[0].outerHTML;                    
                     } else {
@@ -207,6 +214,67 @@ module GUI.Widget {
                 result = this.cache[formula.id] = Traverse.safeHtml(formula.variable);
             }
             return result;
+        }
+    }
+
+    class HMLSubFormulaExtractor implements HML.FormulaDispatchHandler<HML.Formula> { 
+        private getForId : number;
+
+        constructor(private hmlFormulaSet : HML.FormulaSet) {
+        }
+
+        getSubFormulaWithId(parentFormula : HML.Formula, id : number) : HML.Formula {
+            this.getForId = id;
+            return parentFormula.dispatchOn(this);
+        }
+
+        dispatchDisjFormula(formula : HML.DisjFormula) {
+            return ArrayUtil.first(formula.subFormulas, f => f.id === this.getForId);
+        }
+
+        dispatchConjFormula(formula : HML.ConjFormula) {
+            return ArrayUtil.first(formula.subFormulas, f => f.id === this.getForId);
+        }
+
+        dispatchTrueFormula(formula : HML.TrueFormula) {
+            return null;
+        }
+
+        dispatchFalseFormula(formula : HML.FalseFormula) {
+            return null;
+        }
+
+        dispatchStrongExistsFormula(formula : HML.StrongExistsFormula) {
+            return (formula.subFormula.id === this.getForId) ? formula.subFormula : null;
+        }
+
+        dispatchStrongForAllFormula(formula : HML.StrongForAllFormula) {
+            return (formula.subFormula.id === this.getForId) ? formula.subFormula : null;
+        }
+
+        dispatchWeakExistsFormula(formula : HML.WeakExistsFormula) {
+            return (formula.subFormula.id === this.getForId) ? formula.subFormula : null;
+        }
+
+        dispatchWeakForAllFormula(formula : HML.WeakForAllFormula) {
+            return (formula.subFormula.id === this.getForId) ? formula.subFormula : null;
+        }
+
+        dispatchMinFixedPointFormula(formula : HML.MinFixedPointFormula) {
+            return (formula.subFormula.id === this.getForId) ? formula.subFormula : null;
+        }
+
+        dispatchMaxFixedPointFormula(formula : HML.MaxFixedPointFormula) {
+            return (formula.subFormula.id === this.getForId) ? formula.subFormula : null;
+        }
+
+        dispatchVariableFormula(formula : HML.VariableFormula) {
+            var namedFormula = this.hmlFormulaSet.formulaByName(formula.variable);
+            if (namedFormula && namedFormula.id === this.getForId) {
+                return namedFormula;
+            }
+
+            return null; 
         }
 
     }
