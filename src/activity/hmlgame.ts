@@ -21,7 +21,6 @@ module Activity {
     }
 
     export class HmlGame extends Activity {
-        
         private currentSubActivity : SubActivity = null;
         private hmlGameActivity : SubActivity = new HmlGameActivity("#hml-game-main");
 
@@ -91,6 +90,7 @@ module Activity {
         private configuration = {
             processName: undefined,
             formulaId: undefined,
+            formulaSetIndex: undefined,
             succGen: null
         };
         private $processList : JQuery;
@@ -141,7 +141,7 @@ module Activity {
             });
         }
 
-        onShow(configuration) {
+        onShow(configuration) { 
             $(window).on("resize", () => this.resize());
             this.resize();
             this.configure(configuration);
@@ -185,7 +185,8 @@ module Activity {
                 graph : ccs.Graph = Main.getGraph().graph;
             configuration.succGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
             configuration.processName = this.getNamedProcessList()[0];
-            configuration.formulaId = this.getFormulaSetList()[0].getTopFormula().id;
+            configuration.formulaSetIndex = this.getSelectedFormulaSetIndex() >= 0 ? this.getSelectedFormulaSetIndex() : 0;
+            configuration.formulaId = this.getFormulaSetList()[configuration.formulaSetIndex].getTopFormula().id;
             return configuration;
         }
 
@@ -194,13 +195,13 @@ module Activity {
             return this.$processList.val();
         }
 
-        private getFormulaListValue() : number {
+        private getSelectedFormulaSetIndex() : number {
             /*Returns the value(the index of the formulaSet in this.getFormulaSetList()) from the formulalist*/
-            return this.$formulaList.val();
+            return parseInt(this.$formulaList.val());
         }
 
         private getSelectedFormulaSet() : HML.FormulaSet {
-            return this.getFormulaSetList()[this.getFormulaListValue()];
+            return this.getFormulaSetList()[this.getSelectedFormulaSetIndex()];
         }
 
         private getNamedProcessList() : string[] {
@@ -214,14 +215,13 @@ module Activity {
             return Main.getFormulaSets();
         }
 
-        private setFormulas(hmlFormulaSets : HML.FormulaSet[], selectedHMLId : number) : void {
-            console.log(hmlFormulaSets);
+        private setFormulas(hmlFormulaSets : HML.FormulaSet[], selectecHMLIndex : number) : void {
             this.$formulaList.empty();
             hmlFormulaSets.forEach((hmlFSet, index) => {
                 var hmlvisitor = new Traverse.HMLNotationVisitor();
                 var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlFSet.getTopFormula()))
                 var optionsNode = $("<option></option>").attr("value", index).append(formulaStr);
-                if(hmlFSet.getTopFormula().id === selectedHMLId){
+                if(index === selectecHMLIndex) {
                     optionsNode.prop("selected", true);
                 }
                 this.$formulaList.append(optionsNode);
@@ -243,7 +243,9 @@ module Activity {
         private loadGuiIntoConfig(configuration) {
             /*Updates the configuration object with new data from processlist and formulalist*/
             configuration.processName = this.getProcessListValue();
+            configuration.formulaSetIndex = this.getSelectedFormulaSetIndex();
             configuration.formulaId = this.getSelectedFormulaSet().getTopFormula().id;
+
         }
 
         private setCurrentProcFromProcesslist() : void {
@@ -262,11 +264,11 @@ module Activity {
             
             /*Fill the dropdown list with infomation*/            
             this.setProcesses(this.getNamedProcessList(), configuration.processName);
-            this.setFormulas(this.getFormulaSetList(), configuration.formulaId);
+            this.setFormulas(this.getFormulaSetList(), configuration.formulaSetIndex);
             
             /*Set the currentFormula/Process */
             this.currentProcess = configuration.succGen.getProcessByName(configuration.processName);
-            this.currentFormulaSet = this.getSelectedFormulaSet() // Currently selected FormulaSet
+            this.currentFormulaSet = this.getFormulaSetList()[configuration.formulaSetIndex];
             this.currentFormula = this.currentFormulaSet.getTopFormula();
 
             this.processExplorer.setSuccGenerator(this.configuration.succGen);
