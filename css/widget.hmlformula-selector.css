@@ -5,3 +5,22 @@ div#hml-selector-body {
     border: 1px solid #e7e7e7;
     border-top: none;
 } 
+
+div#hml-selector-body p{
+	font-size: 20px;
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%)
+}
+
+div#hml-selector-body .hml-subformula{
+  background-color: #eee;
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  padding: 0px 2px 0px 2px;
+  cursor: pointer;
+  font: normal 20px "Inconsolata";
+}
