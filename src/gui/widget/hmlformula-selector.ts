@@ -262,8 +262,6 @@ module GUI.Widget {
             var isfirst = this.isFirstFormula();
             var formulaStr = Traverse.safeHtml(formula.variable);
             var namedFormulaDef = this.hmlFormulaSet.formulaByName(formula.variable);
-            console.log("namedformula", namedFormulaDef);
-            console.log("formulaStr", formulaStr);
             if (namedFormulaDef) {
                 if (isfirst) {
                     if(namedFormulaDef instanceof HML.MinFixedPointFormula || namedFormulaDef instanceof HML.MaxFixedPointFormula) {
@@ -294,12 +292,10 @@ module GUI.Widget {
         }
 
         dispatchDisjFormula(formula : HML.DisjFormula) {
-            console.log(ArrayUtil.first(formula.subFormulas, f => f.id === this.getForId));
             return ArrayUtil.first(formula.subFormulas, f => f.id === this.getForId);
         }
 
         dispatchConjFormula(formula : HML.ConjFormula) {
-            console.log(ArrayUtil.first(formula.subFormulas, f => f.id === this.getForId));
             return ArrayUtil.first(formula.subFormulas, f => f.id === this.getForId);
         }
 
@@ -339,7 +335,6 @@ module GUI.Widget {
 
         dispatchVariableFormula(formula : HML.VariableFormula) {
             var namedFormula = this.hmlFormulaSet.formulaByName(formula.variable);
-            console.log("namedFormula click: ", namedFormula);
             if(namedFormula instanceof HML.MinFixedPointFormula || namedFormula instanceof HML.MaxFixedPointFormula) {
                 if (namedFormula && namedFormula.subFormula.id === this.getForId) {
                     return namedFormula.subFormula;
