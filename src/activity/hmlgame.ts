@@ -138,6 +138,7 @@ module Activity {
 
             this.hmlselector.onSelectListener = ((hmlformula) => {
                 this.currentFormula = hmlformula;
+                this.refresh(this.configuration);
             });
         }
 

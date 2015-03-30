@@ -37,7 +37,7 @@ module GUI.Widget {
             var $paragraph = $(this.paragraph);
             $paragraph.empty(); // clear the previous HML formula
 
-            var HMLVisitor = new HMLSubFormulaVisitor();
+            var HMLVisitor = new HMLSubFormulaHTMLVisitor(this.currentHmlSet);
             var hmlFormulaStr = HMLVisitor.visit(hmlFormula); // convert the formula to a string
             $paragraph.append(hmlFormulaStr);
         }
@@ -54,23 +54,16 @@ module GUI.Widget {
         }
 
         private onSubformulaClick(event) {
-            console.log("you clicked on subFormula : ", this.subformulaFromDelegateEvent(event));
             if(this.onSelectListener) {
                 this.onSelectListener(this.subformulaFromDelegateEvent(event));
             }
         }
     }
 
-    class HMLSubFormulaVisitor implements HML.FormulaVisitor<string>, HML.FormulaDispatchHandler<string> { 
+    class HMLSubFormulaHTMLVisitor implements HML.FormulaVisitor<string>, HML.FormulaDispatchHandler<string> { 
         private isFirst = true;
-        private cache;
 
-        constructor() {
-            this.clearCache();        
-        }
-
-        clearCache(){
-            this.cache = {};
+        constructor(private hmlFormulaSet : HML.FormulaSet) {
         }
 
         visit(formula : HML.Formula) {
@@ -78,7 +71,7 @@ module GUI.Widget {
         }
 
         dispatchDisjFormula(formula : HML.DisjFormula) {
-            var result = this.cache[formula.id];
+            var result;
             if (!result) {
                 if(this.isFirst) {
                     var firstDis = this.isFirst;
@@ -94,13 +87,13 @@ module GUI.Widget {
                     }
                 });
                 
-                result = this.cache[formula.id] = subStrs.join(" or ");
+                result = subStrs.join(" or ");
             }
             return result;
         }
 
         dispatchConjFormula(formula : HML.ConjFormula) {
-            var result = this.cache[formula.id];
+            var result;
             if (!result) {
                 if(this.isFirst) {
                     var firstCon = this.isFirst;
@@ -112,7 +105,7 @@ module GUI.Widget {
                     var wrapped = Traverse.wrapIfInstanceOf(unwrapped, subF, [HML.DisjFormula]);
 
                     if(firstCon) {
-                        var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-idx', subF.id);
+                        var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', subF.id);
                         $span.append(wrapped);     
                         return $span[0].outerHTML;
                     } else {
@@ -120,98 +113,185 @@ module GUI.Widget {
                     }
                 });
 
-                result = this.cache[formula.id] = subStrs.join(" and ");
+                result = subStrs.join(" and ");
             }
             return result;
         }
 
         dispatchTrueFormula(formula : HML.TrueFormula) {
-            var result = this.cache[formula.id];
+            var result;
+
             if (!result) {
-                result = this.cache[formula.id] = "T";
+                if(this.isFirst) {
+                    this.isFirst = false;
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', '-1');
+                    $span.append('T');
+                    result = $span[0].outerHTML;
+                } else {
+                    result = "T";
+                }
             }
             return result;
         }
 
         dispatchFalseFormula(formula : HML.FalseFormula) {
-            var result = this.cache[formula.id];
+            var result;
             if (!result) {
-                result = this.cache[formula.id] = "F";
+                if(this.isFirst) {
+                    this.isFirst = false;
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', '-1');
+                    $span.append('F');
+                    result = $span[0].outerHTML;
+                } else {
+                    result = "F";
+                }
             }
             return result;
         }
 
         dispatchStrongExistsFormula(formula : HML.StrongExistsFormula) {
-            var result = this.cache[formula.id];
+            var result
             if (!result) {
-                var subStr = formula.subFormula.dispatchOn(this);
-                var formulaAction = "<" + formula.actionMatcher.actionMatchingString() + ">";
-                var formulaStr = Traverse.safeHtml(formulaAction) +
-                    Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
-                result = this.cache[formula.id] = formulaStr;
-
+                
+                if (this.isFirst) {
+                    this.isFirst = false;
+                    
+                    var subStr = formula.subFormula.dispatchOn(this);
+                    var formulaAction = "<" + formula.actionMatcher.actionMatchingString() + ">";
+                    var formulaStr = Traverse.safeHtml(formulaAction) +
+                        Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
+                    
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                    $span.append(formulaStr)
+                    result = $span[0].outerHTML;
+                } else {
+                    result = formulaStr;
+                }
             }
             return result;
         }
 
         dispatchStrongForAllFormula(formula : HML.StrongForAllFormula) {
-            var result = this.cache[formula.id];
+            var result;
             if (!result) {
-                var subStr = formula.subFormula.dispatchOn(this);
-                var formulaAction = "[" + formula.actionMatcher.actionMatchingString() + "]";
-                var formulaStr = Traverse.safeHtml(formulaAction) +
-                    Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
-                result = this.cache[formula.id] = formulaStr;
+                
+                if (this.isFirst) {
+                    this.isFirst = false;
+                    
+                    var subStr = formula.subFormula.dispatchOn(this);
+                    var formulaAction = "[" + formula.actionMatcher.actionMatchingString() + "]";
+                    var formulaStr = Traverse.safeHtml(formulaAction) +
+                        Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
+                    
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                    $span.append(formulaStr)
+                    result = $span[0].outerHTML;
+                } else {
+                    result = formulaStr;
+                }
             }
             return result;
         }
 
         dispatchWeakExistsFormula(formula : HML.WeakExistsFormula) {
-            var result = this.cache[formula.id];
+            var result
             if (!result) {
-                var subStr = formula.subFormula.dispatchOn(this);
-                var formulaAction = "<<" + formula.actionMatcher.actionMatchingString() + ">>";
-                var formulaStr = Traverse.safeHtml(formulaAction) +
-                    Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
-                result = this.cache[formula.id] = formulaStr;
+                if (this.isFirst) {
+                    this.isFirst = false;
+                    
+                    var subStr = formula.subFormula.dispatchOn(this);
+                    var formulaAction = "<<" + formula.actionMatcher.actionMatchingString() + ">>";
+                    var formulaStr = Traverse.safeHtml(formulaAction) +
+                        Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
+                    
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                    $span.append(formulaStr)
+                    result = $span[0].outerHTML;
+                } else {
+                    result = formulaStr;
+                }
             }
             return result;
         }
 
         dispatchWeakForAllFormula(formula : HML.WeakForAllFormula) {
-            var result = this.cache[formula.id];
+            var result;
             if (!result) {
-                var subStr = formula.subFormula.dispatchOn(this);
-                var formulaAction = "[[" + formula.actionMatcher.actionMatchingString() + "]]"
-                var formulaStr = Traverse.safeHtml(formulaAction) +
-                    Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
-                result = this.cache[formula.id] = formulaStr;
+                if (this.isFirst) {
+                    this.isFirst = false;
+
+                    var subStr = formula.subFormula.dispatchOn(this);
+                    var formulaAction = "[[" + formula.actionMatcher.actionMatchingString() + "]]"
+                    var formulaStr = Traverse.safeHtml(formulaAction) +
+                        Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
+                    
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                    $span.append(formulaStr)
+                    result = $span[0].outerHTML;
+                } else {
+                    result = formulaStr;
+                }
             }
             return result;
         }
 
         dispatchMinFixedPointFormula(formula : HML.MinFixedPointFormula) {
-            var result = this.cache[formula.id];
+            var result;
             if (!result) {
-                var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = formula.variable + " min= " + subStr;
+                if (this.isFirst) {
+                    this.isFirst = false;
+                    
+                    var subStr = formula.subFormula.dispatchOn(this);
+                    var formulaStr = formula.variable + " min= " + subStr;
+                    
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                    $span.append(formulaStr)
+                    result = $span[0].outerHTML;
+                } else {
+                    result = formulaStr;
+                }
+
             }
             return result;
         }
 
         dispatchMaxFixedPointFormula(formula : HML.MaxFixedPointFormula) {
-            var result = this.cache[formula.id];
+            var result;
             if (!result) {
-                var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = formula.variable + " max= " + subStr;
+
+                if (this.isFirst) {
+                    this.isFirst = false;
+                    
+                    var subStr = formula.subFormula.dispatchOn(this);
+                    var formulaStr = formula.variable + " max= " + subStr;
+                    
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                    $span.append(formulaStr)
+                    result = $span[0].outerHTML;
+                } else {
+                    result = formulaStr;
+                }
             }
             return result;
         }
 
         dispatchVariableFormula(formula : HML.VariableFormula) {
-            var result = this.cache[formula.id];
+            var result;
             if (!result) {
-                result = this.cache[formula.id] = Traverse.safeHtml(formula.variable);
+                var formulaStr = Traverse.safeHtml(formula.variable);
+                var namedFormulaDef = this.hmlFormulaSet.formulaByName(formula.variable);
+                if (namedFormulaDef) {
+                    if (this.isFirst) {
+                        this.isFirst = false;
+                        var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', namedFormulaDef.id);
+                        $span.append(formulaStr)
+                        result = $span[0].outerHTML;
+                    } else {
+                        result = formulaStr;
+                    }
+                } else {
+                    result = null;
+                }
             }
             return result;
         }
@@ -271,6 +351,7 @@ module GUI.Widget {
         dispatchVariableFormula(formula : HML.VariableFormula) {
             var namedFormula = this.hmlFormulaSet.formulaByName(formula.variable);
             if (namedFormula && namedFormula.id === this.getForId) {
+                console.log(namedFormula);
                 return namedFormula;
             }
 
