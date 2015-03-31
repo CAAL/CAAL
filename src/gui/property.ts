@@ -450,6 +450,42 @@ module Property {
         }
     }
     
+    export class StrongSimulation extends Equivalence {
+        public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+
+        public getDescription() : string {
+            return this.firstProcess + " strongly simulates " + this.secondProcess;
+        }
+        
+        public getType() : string {
+            return "StrongSimulation";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isStronglySimilar";
+        }
+    }
+    
+    export class WeakSimulation extends Equivalence {
+        public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+
+        public getDescription() : string {
+            return this.firstProcess + " weakly simulates " + this.secondProcess;
+        }
+        
+        public getType() : string {
+            return "WeakSimulation";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isWeaklySimilar";
+        }
+    }
+    
     export class StrongTraceEq extends Equivalence {
         constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);

@@ -316,6 +316,12 @@ module Activity {
                 case "weak":
                     property = new Property.WeakBisimulation({firstProcess: "", secondProcess: ""});
                     break;
+                case "strongsim":
+                    property = new Property.StrongSimulation({firstProcess: "", secondProcess: ""});
+                    break;
+                case "weaksim":
+                    property = new Property.WeakSimulation({firstProcess: "", secondProcess: ""});
+                    break;
                 case "strongtraceinclusion":
                     property = new Property.StrongTraceInclusion(
                         {

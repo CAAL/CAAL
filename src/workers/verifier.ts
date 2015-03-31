@@ -41,6 +41,26 @@ messageHandlers.isWeaklyBisimilar = data => {
     self.postMessage(data);
 };
 
+messageHandlers.isStronglySimilar = data => {
+    var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        defendSuccGen = attackSuccGen,
+        leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
+        rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
+        isSimilar = Equivalence.isSimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id);
+    data.result = isSimilar;
+    self.postMessage(data);
+};
+
+messageHandlers.isWeaklySimilar = data => {
+    var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        defendSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}),
+        leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
+        rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
+        isSimilar = Equivalence.isSimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id);
+    data.result = isSimilar;
+    self.postMessage(data);
+};
+
 messageHandlers.isStronglyTraceIncluded = data => {
     var attackSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true});
     var defendSuccGen = attackSuccGen;
