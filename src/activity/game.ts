@@ -278,8 +278,15 @@ module Activity {
             } else {
                 options = this.getOptions();
             }
-
-            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
+            
+            if (options.gameType === "strong" || options.gameType === "weak")
+                var gameType : string = options.gameType;
+            else if (options.gameType === "strongsim")
+                var gameType = "strong";
+            else if (options.gameType === "weaksim")
+                var gameType = "weak";
+                
+            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: gameType, reduce: false});
 
             if (drawLeft || !this.leftGraph.getNode(this.succGen.getProcessByName(options.leftProcess).id.toString())) {
                 this.clear(this.leftGraph);
@@ -300,7 +307,11 @@ module Activity {
 
             if (this.dgGame !== undefined) {this.dgGame.stopGame()};
             
-            this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, options.gameType);
+            if (options.gameType === "strong" || options.gameType === "weak")
+                this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, gameType);
+            else if (options.gameType === "strongsim" || options.gameType === "weaksim") {
+                this.dgGame = new SimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, gameType);
+            }
             
             var attacker : Player;
             var defender : Player;
@@ -506,8 +517,13 @@ module Activity {
         
         protected dependencyGraph : dg.PlayableDependencyGraph;
         protected marking : dg.LevelMarking;
+        protected graph : CCS.Graph;
         
-        protected gameLog : GameLog = new GameLog(this.gameActivity);
+        protected gameActivity : Game;
+        protected gameLog : GameLog;
+        
+        protected currentLeft : any;
+        protected currentRight : any;
         
         protected attacker : Player;
         protected defender : Player;
@@ -520,9 +536,15 @@ module Activity {
         
         private cycleCache : any;
         
-        constructor(protected gameActivity : Game, protected graph : CCS.Graph,
-            protected currentLeft : any, protected currentRight : any) {
+        constructor(gameActivity : Game, gameLog : GameLog, graph : CCS.Graph,
+            currentLeft : any, currentRight : any) {
             super();
+            
+            this.gameActivity = gameActivity;
+            this.gameLog = gameLog;
+            this.graph = graph;
+            this.currentLeft = currentLeft;
+            this.currentRight = currentRight;
             
             // create the dependency graph
             this.dependencyGraph = this.createDependencyGraph(this.graph, currentLeft, currentRight);
@@ -680,95 +702,12 @@ module Activity {
         public getTryHardDefend(choices : any) : any { this.abstract(); }
         protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph { return this.abstract(); }
     }
-
-    class BisimulationGame extends DgGame {
+    
+    class DgComputerStrategy extends DgGame {
         
-        private leftProcessName : string;
-        private rightProcessName : string;
-        private bisimulationDG : Equivalence.BisimulationDG;
-        private bisimilar : boolean;
-        private gameType : string;
-        private attackerSuccessorGen : CCS.SuccessorGenerator;
-        private defenderSuccessorGen : CCS.SuccessorGenerator;
-        
-        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
-            
-            this.leftProcessName = leftProcessName;
-            this.rightProcessName = rightProcessName;
-            this.gameType = gameType;
-            this.attackerSuccessorGen = attackerSuccessorGen;
-            this.defenderSuccessorGen = defenderSuccessorGen;
-            
-            var currentLeft  = graph.processByName(this.leftProcessName);
-            var currentRight = graph.processByName(this.rightProcessName);
-            
-            super(gameActivity, graph, currentLeft, currentRight); // creates dependency graph and marking
-        }
-        
-        public getGameType() : string {
-            return this.gameType;
-        }
-        
-        public startGame() : void {
-            this.gameLog.printIntro(this.gameType, this.getCurrentConfiguration(), this.getUniversalWinner(), this.attacker);
-            super.startGame();
-        }
-        
-        public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : CCS.Action = this.lastAction, move? : Move) : void {
-            var previousConfig = this.getCurrentConfiguration();
-            
-            // change the current node id to the next
-            this.currentNodeId = nextNode;
-            
-            if (player.getPlayType() == PlayType.Attacker) {
-                var sourceProcess = move === Move.Left ? previousConfig.left : previousConfig.right;
-                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, move, true);
-
-                this.lastAction = action;
-                this.lastMove = move;
-                
-                this.saveCurrentProcess(destinationProcess, this.lastMove);
-                this.preparePlayer(this.defender);
-            } else {
-                // the play is a defense, flip the saved last move
-                this.lastMove = this.lastMove === Move.Right ? Move.Left : Move.Right;
-                
-                var sourceProcess = this.lastMove === Move.Left ? previousConfig.left : previousConfig.right;
-                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove, this.gameType === "strong");
-                
-                this.saveCurrentProcess(destinationProcess, this.lastMove);
-
-                this.round++;
-                this.gameLog.printRound(this.round, this.getCurrentConfiguration());
-                
-                if (!this.cycleExists())
-                    this.preparePlayer(this.attacker);
-            }
-
-            this.gameActivity.highlightNodes();
-            this.gameActivity.centerNode(destinationProcess, this.lastMove);
-        }
-        
-        public isBisimilar() : boolean {
-            return this.bisimilar;
-        }
-        
-        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
-            return this.bisimulationDG = new Equivalence.BisimulationDG(this.attackerSuccessorGen, this.defenderSuccessorGen, this.currentLeft.id, this.currentRight.id);
-        }
-        
-        public getUniversalWinner() : Player {
-            return this.bisimilar ? this.defender : this.attacker;
-        }
-        
-        public getCurrentWinner() : Player {
-            return this.marking.getMarking(this.currentNodeId) === this.marking.ONE ? this.attacker : this.defender;
-        }
-        
-        protected createMarking() : dg.LevelMarking {
-            var marking = dg.solveDgGlobalLevel(this.bisimulationDG);
-            this.bisimilar = marking.getMarking(0) === marking.ZERO;
-            return marking;
+        constructor(gameActivity : Game, gameLog : GameLog, graph : CCS.Graph,
+            currentLeft : any, currentRight : any) {
+            super(gameActivity, gameLog, graph, currentLeft, currentRight);
         }
         
         public getBestWinningAttack(choices : any) : any {
@@ -798,7 +737,7 @@ module Activity {
             
             choices.forEach((choice, i) => {
                 var oneMarkings = 0;
-                var defenderChoices = this.bisimulationDG.getDefenderOptions(choice.nextNode);
+                var defenderChoices : any = this.dependencyGraph.getDefenderOptions(choice.nextNode);
                 
                 if (defenderChoices.length > 0) {
                     defenderChoices.forEach( (defendChoice) => {
@@ -870,6 +809,178 @@ module Activity {
         }
     }
     
+    class BisimulationGame extends DgComputerStrategy {
+        
+        private leftProcessName : string;
+        private rightProcessName : string;
+        private bisimulationDg : Equivalence.BisimulationDG;
+        private bisimilar : boolean;
+        private gameType : string;
+        private attackerSuccessorGen : CCS.SuccessorGenerator;
+        private defenderSuccessorGen : CCS.SuccessorGenerator;
+        
+        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
+            
+            this.leftProcessName = leftProcessName;
+            this.rightProcessName = rightProcessName;
+            this.gameType = gameType;
+            this.attackerSuccessorGen = attackerSuccessorGen;
+            this.defenderSuccessorGen = defenderSuccessorGen;
+            
+            var currentLeft  = graph.processByName(this.leftProcessName);
+            var currentRight = graph.processByName(this.rightProcessName);
+            
+            super(gameActivity, new BisimulationGameLog(gameActivity), graph, currentLeft, currentRight); // creates dependency graph and marking
+        }
+        
+        public getGameType() : string {
+            return this.gameType;
+        }
+        
+        public startGame() : void {
+            this.gameLog.printIntro(this.gameType, this.getCurrentConfiguration(), this.getUniversalWinner(), this.attacker);
+            super.startGame();
+        }
+        
+        public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : CCS.Action = this.lastAction, move? : Move) : void {
+            var previousConfig = this.getCurrentConfiguration();
+            
+            // change the current node id to the next
+            this.currentNodeId = nextNode;
+            
+            if (player.getPlayType() == PlayType.Attacker) {
+                var sourceProcess = move === Move.Left ? previousConfig.left : previousConfig.right;
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, move, true);
+
+                this.lastAction = action;
+                this.lastMove = move;
+                
+                this.saveCurrentProcess(destinationProcess, this.lastMove);
+                this.preparePlayer(this.defender);
+            } else {
+                // the play is a defense, flip the saved last move
+                this.lastMove = this.lastMove === Move.Right ? Move.Left : Move.Right;
+                
+                var sourceProcess = this.lastMove === Move.Left ? previousConfig.left : previousConfig.right;
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove, this.gameType === "strong");
+                
+                this.saveCurrentProcess(destinationProcess, this.lastMove);
+
+                this.round++;
+                this.gameLog.printRound(this.round, this.getCurrentConfiguration());
+                
+                if (!this.cycleExists())
+                    this.preparePlayer(this.attacker);
+            }
+
+            this.gameActivity.highlightNodes();
+            this.gameActivity.centerNode(destinationProcess, this.lastMove);
+        }
+        
+        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
+            return this.bisimulationDg = new Equivalence.BisimulationDG(this.attackerSuccessorGen, this.defenderSuccessorGen, this.currentLeft.id, this.currentRight.id);
+        }
+        
+        public getUniversalWinner() : Player {
+            return this.bisimilar ? this.defender : this.attacker;
+        }
+        
+        public getCurrentWinner() : Player {
+            return this.marking.getMarking(this.currentNodeId) === this.marking.ONE ? this.attacker : this.defender;
+        }
+        
+        protected createMarking() : dg.LevelMarking {
+            var marking = dg.solveDgGlobalLevel(this.bisimulationDg);
+            this.bisimilar = marking.getMarking(0) === marking.ZERO;
+            return marking;
+        }
+    }
+    
+    class SimulationGame extends DgComputerStrategy {
+        
+        private leftProcessName : string;
+        private rightProcessName : string;
+        private simulationDG : Equivalence.SimulationDG;
+        private isSimilar : boolean;
+        private gameType : string;
+        private attackerSuccessorGen : CCS.SuccessorGenerator;
+        private defenderSuccessorGen : CCS.SuccessorGenerator;
+        
+        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
+            this.leftProcessName = leftProcessName;
+            this.rightProcessName = rightProcessName;
+            this.gameType = gameType;
+            this.attackerSuccessorGen = attackerSuccessorGen;
+            this.defenderSuccessorGen = defenderSuccessorGen;
+            
+            var currentLeft  = graph.processByName(this.leftProcessName);
+            var currentRight = graph.processByName(this.rightProcessName);
+            
+            super(gameActivity, new SimulationGameLog(gameActivity), graph, currentLeft, currentRight); // creates dependency graph and marking
+        }
+        
+        public getGameType() : string {
+            return this.gameType;
+        }
+        
+        public startGame() : void {
+            this.gameLog.printIntro(this.gameType, this.getCurrentConfiguration(), this.getUniversalWinner(), this.attacker);
+            super.startGame();
+        }
+        
+        public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : CCS.Action = this.lastAction, move? : Move) : void {
+            var previousConfig = this.getCurrentConfiguration();
+            
+            // change the current node id to the next
+            this.currentNodeId = nextNode;
+            
+            if (player.getPlayType() == PlayType.Attacker) {
+                var sourceProcess = previousConfig.left;
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, move, true);
+
+                this.lastAction = action;
+                this.lastMove = move;
+                
+                this.saveCurrentProcess(destinationProcess, this.lastMove);
+                this.preparePlayer(this.defender);
+            } else {
+                this.lastMove = Move.Right;
+                var sourceProcess = previousConfig.right;
+                
+                this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove, this.gameType === "strong");
+                
+                this.saveCurrentProcess(destinationProcess, this.lastMove);
+
+                this.round++;
+                this.gameLog.printRound(this.round, this.getCurrentConfiguration());
+                
+                if (!this.cycleExists())
+                    this.preparePlayer(this.attacker);
+            }
+
+            this.gameActivity.highlightNodes();
+            this.gameActivity.centerNode(destinationProcess, this.lastMove);
+        }
+        
+        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
+            return this.simulationDG = new Equivalence.SimulationDG(this.attackerSuccessorGen, this.defenderSuccessorGen, this.currentLeft.id, this.currentRight.id);
+        }
+        
+        public getUniversalWinner() : Player {
+            return this.isSimilar ? this.defender : this.attacker;
+        }
+        
+        public getCurrentWinner() : Player {
+            return this.marking.getMarking(this.currentNodeId) === this.marking.ONE ? this.attacker : this.defender;
+        }
+        
+        protected createMarking() : dg.LevelMarking {
+            var marking = dg.solveDgGlobalLevel(this.simulationDG);
+            this.isSimilar = marking.getMarking(0) === marking.ZERO;
+            return marking;
+        }
+    }
+    
     class HmlGame extends DgGame {
         
         private processName : string;
@@ -888,7 +999,7 @@ module Activity {
             
             var currentProcess = graph.processByName(this.processName);
             
-            super(gameActivity, graph, currentProcess, this.formula);
+            super(gameActivity, new GameLog(gameActivity), graph, currentProcess, this.formula);
         }
         
         public isSatisfied() : boolean {
@@ -994,7 +1105,7 @@ module Activity {
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
             var currentConfiguration = game.getCurrentConfiguration();
             var actionTransition : string;
-            var isWeakGame = game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak";
+            var isWeakGame = (game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak") || (game instanceof SimulationGame && (<SimulationGame>game).getGameType() === "weak");
             
             if (!isAttack && isWeakGame) {
                 actionTransition = "=" + game.getLastAction().toString() + "=>";
@@ -1155,11 +1266,12 @@ module Activity {
             game.play(this, choice.targetProcess, choice.nextNode);
         }
     }
-
-    class GameLog {
+    
+    class GameLog extends Abstract {
         private $log : JQuery;
 
         constructor(private gameActivity? : Game) {
+            super();
             this.$log = $("#game-log");
             this.$log.empty();
         }
@@ -1197,7 +1309,7 @@ module Activity {
         public removeLastPrompt() : void {
             this.$log.find(".game-prompt").last().remove();
         }
-
+        
         public printRound(round : number, configuration : any) : void {
             this.println("Round " + round, "<h4>");
             this.printConfiguration(configuration);
@@ -1269,6 +1381,22 @@ module Activity {
             this.println("You made a bad move. " + winner.playTypeStr() + " now has a winning strategy.", "<p>");
         }
 
+        private capitalize(str : string) : string {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        protected labelFor(process : CCS.Process) : string {
+            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
+        }
+        
+        public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void { this.abstract(); }
+    }
+    
+    class BisimulationGameLog extends GameLog {
+        constructor(gameActivity? : Game) {
+            super(gameActivity);
+        }
+        
         public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
             var template = "You are playing {1} in {2} bisimulation game.";
 
@@ -1285,13 +1413,28 @@ module Activity {
                 this.println(winner.playTypeStr() + " has a winning strategy. You are going to lose.", "<p class='intro'>");
             }
         }
-
-        private capitalize(str : string) : string {
-            return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+    
+    class SimulationGameLog extends GameLog {
+        constructor(gameActivity? : Game) {
+            super(gameActivity);
         }
+        
+        public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
+            var template = "You are playing {1} in {2} simulation game.";
 
-        private labelFor(process : CCS.Process) : string {
-            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
+            var context = {
+                1: {text: (attacker instanceof Computer ? "defender" : "attacker")},
+                2: {text: gameType},
+            }
+
+            this.println(this.render(template, context), "<p class='intro'>");
+
+            if (winner instanceof Human){
+                this.println("You have a winning strategy.", "<p class='intro'>");
+            } else {
+                this.println(winner.playTypeStr() + " has a winning strategy. You are going to lose.", "<p class='intro'>");
+            }
         }
     }
 }

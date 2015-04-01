@@ -373,9 +373,19 @@ module Activity {
             if (property instanceof Property.Equivalence) {
                 if(property.status === PropertyStatus.satisfied || property.status === PropertyStatus.unsatisfied) {       
                     var equivalence = <Property.Equivalence> property,
-                        gameType = (equivalence instanceof Property.StrongBisimulation) ? "strong" : "weak",
-                        playerType = (equivalence.getStatus() === PropertyStatus.satisfied) ? "attacker" : "defender",
-                        configuration = {
+                        gameType,
+                        playerType = (equivalence.getStatus() === PropertyStatus.satisfied) ? "attacker" : "defender";
+                    
+                    if (equivalence instanceof Property.StrongBisimulation)
+                        gameType = "strong";
+                    else if (equivalence instanceof Property.WeakBisimulation)
+                        gameType = "weak";
+                    else if (equivalence instanceof Property.StrongSimulation)
+                        gameType = "strongsim";
+                    else
+                        gameType = "weaksim";
+                    
+                    var configuration = {
                             gameType: gameType,
                             playerType: playerType,
                             leftProcess: equivalence.firstProcess,
@@ -401,6 +411,7 @@ module Activity {
             this.currentShownPropertyForm.container.show();
             return this.currentShownPropertyForm;
         }
+        
         private hidePropertyForm(propertyFormName : string = "") {
             var hiddenForm;
             if(propertyFormName === "") {

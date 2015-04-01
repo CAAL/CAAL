@@ -334,7 +334,7 @@ module Property {
         }
     }
     
-    export class Equivalence extends Property {
+    export class Equivalence extends Property { // equivalence is a bad name, it also covers preorders
         public firstProcess : string;
         public secondProcess : string;
 
@@ -456,7 +456,7 @@ module Property {
         }
 
         public getDescription() : string {
-            return this.firstProcess + " strongly simulates " + this.secondProcess;
+            return this.firstProcess + " sim<sub>&#8594;</sub> " + this.secondProcess;
         }
         
         public getType() : string {
@@ -474,7 +474,7 @@ module Property {
         }
 
         public getDescription() : string {
-            return this.firstProcess + " weakly simulates " + this.secondProcess;
+            return this.firstProcess + " sim<sub>&#8658;</sub> " + this.secondProcess;
         }
         
         public getType() : string {
@@ -492,7 +492,7 @@ module Property {
         }
         
         public getDescription() : string {
-            return "Traces<sub>S</sub>(" + this.firstProcess + ") = Traces<sub>S</sub>(" + this.secondProcess + ")";
+            return "Traces<sub>&#8594;</sub>(" + this.firstProcess + ") = Traces<sub>&#8594;</sub>(" + this.secondProcess + ")";
         }
         
         public getType() : string {
@@ -510,7 +510,7 @@ module Property {
         }
         
         public getDescription() : string {
-            return "Traces<sub>W</sub>(" + this.firstProcess + ") = Traces<sub>W</sub>(" + this.secondProcess + ")";
+            return "Traces<sub>&#8658;</sub>(" + this.firstProcess + ") = Traces<sub>&#8658;</sub>(" + this.secondProcess + ")";
         }
         
         public getType() : string {
@@ -802,7 +802,7 @@ module Property {
         }
         
         public getDescription() : string {
-            return "Traces<sub>S</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>S</sub>(" + this.getSecondProcess() + ")";
+            return "Traces<sub>&#8594;</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8594;</sub>(" + this.getSecondProcess() + ")";
         }
         
         public getType() : string {
@@ -820,7 +820,7 @@ module Property {
         }
         
         public getDescription() : string {
-            return "Traces<sub>W</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>W</sub>(" + this.getSecondProcess() + ")";
+            return "Traces<sub>&#8658;</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8658;</sub>(" + this.getSecondProcess() + ")";
         }
         
         public getType() : string {

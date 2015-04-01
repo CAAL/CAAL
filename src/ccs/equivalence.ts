@@ -149,7 +149,7 @@ module Equivalence {
             return hyperedges;
         }
 
-        public getAttackerOptions(dgNodeId : dg.DgNodeId) : dg.Hyperedge[] {
+        public getAttackerOptions(dgNodeId : dg.DgNodeId) : [CCS.Action, CCS.Process, dg.DgNodeId, number][] {
             if (this.constructData[dgNodeId][0] !== 0)
                 throw "Bad node for attacker options";
             
@@ -174,7 +174,7 @@ module Equivalence {
             return result;
         }
         
-        public getDefenderOptions(dgNodeId : dg.DgNodeId) {
+        public getDefenderOptions(dgNodeId : dg.DgNodeId) : [CCS.Process, dg.DgNodeId][] {
             if (this.constructData[dgNodeId][0] === 0)
                 throw "Bad node for defender options";
             
@@ -435,7 +435,7 @@ module Equivalence {
             return hyperedges;
         }
         
-        public getAttackerOptions(dgNodeId : dg.DgNodeId) : dg.Hyperedge[] {
+        public getAttackerOptions(dgNodeId : dg.DgNodeId) : [CCS.Action, CCS.Process, dg.DgNodeId, number][] {
             if (this.constructData[dgNodeId][0] !== 0)
                 throw "Bad node for attacker options";
             
@@ -460,7 +460,7 @@ module Equivalence {
             return result;
         }
         
-        public getDefenderOptions(dgNodeId : dg.DgNodeId) {
+        public getDefenderOptions(dgNodeId : dg.DgNodeId) : [CCS.Process, dg.DgNodeId][] {
             if (this.constructData[dgNodeId][0] === 0)
                 throw "Bad node for defender options";
             
