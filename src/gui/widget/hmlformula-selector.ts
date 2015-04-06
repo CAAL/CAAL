@@ -32,13 +32,18 @@ module GUI.Widget {
         }
 
         setFormula(hmlFormula : HML.Formula){
-            this.currentHml = hmlFormula
             var $paragraph = $(this.paragraph);
             $paragraph.empty(); // clear the previous HML formula
+            
+            if(hmlFormula){
+                this.currentHml = hmlFormula
 
-            var HMLVisitor = new HMLSubFormulaHTMLVisitor(this.currentHmlSet);
-            var hmlFormulaStr = HMLVisitor.visit(hmlFormula); // convert the formula to a string
-            $paragraph.append(hmlFormulaStr);
+                var HMLVisitor = new HMLSubFormulaHTMLVisitor(this.currentHmlSet);
+                var hmlFormulaStr = HMLVisitor.visit(hmlFormula); // convert the formula to a string
+                $paragraph.append(hmlFormulaStr);
+            } else {
+                $paragraph.append("No more moves");
+            }
         }
 
         public getRootElement() : HTMLElement {
@@ -91,7 +96,6 @@ module GUI.Widget {
                     return subF.dispatchOn(this);
                 }
             });
-            console.log(subStrs);
             result = subStrs.join(" or ");
 
             return result;
@@ -104,7 +108,6 @@ module GUI.Widget {
             var subStrs = formula.subFormulas.map(subF => {
                 var unwrapped = subF.dispatchOn(this);
                 var wrapped = Traverse.wrapIfInstanceOf(unwrapped, subF, [HML.DisjFormula]);
-                console.log(wrapped);
                 if(isfirst) {
                     var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', subF.id);
                     $span.append(wrapped);     
@@ -264,16 +267,18 @@ module GUI.Widget {
             var namedFormulaDef = this.hmlFormulaSet.formulaByName(formula.variable);
             if (namedFormulaDef) {
                 if (isfirst) {
+                    // this is the first formula
                     if(namedFormulaDef instanceof HML.MinFixedPointFormula || namedFormulaDef instanceof HML.MaxFixedPointFormula) {
                         var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', namedFormulaDef.subFormula.id);
                         $span.append(formulaStr)
                         result = $span[0].outerHTML;
                     }
                 } else {
+                    // this is not the first formula therefore just return the formula definition.
                     result = formulaStr;
                 }
             } else {
-                result = null;
+                throw "HML variable " + formula.variable + " has no definition";
             }
         
             return result;
@@ -324,12 +329,10 @@ module GUI.Widget {
         }
 
         dispatchMinFixedPointFormula(formula : HML.MinFixedPointFormula) {
-            console.log(formula);
             return (formula.subFormula.id === this.getForId) ? formula.subFormula : null;
         }
 
         dispatchMaxFixedPointFormula(formula : HML.MaxFixedPointFormula) {
-            console.log(formula);
             return (formula.subFormula.id === this.getForId) ? formula.subFormula : null;
         }
 

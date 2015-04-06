@@ -72,6 +72,8 @@ module Activity {
                 return false;
             }
 
+
+
             return true;
         }
     }
@@ -82,11 +84,13 @@ module Activity {
         private processExplorer = new GUI.Widget.ZoomableProcessExplorer();
         private transitionTable = new GUI.Widget.TransitionTable();
         private hmlselector = new GUI.Widget.FormulaSelector();
+
+        private project : Project;
         private currentProcess : CCS.Process = null;
         private currentFormula : HML.Formula = null
-        private currentFormulaSet : HML.FormulaSet = null
-        // HMlgamelogic instance is missing.
-        private project : Project;
+        private currentFormulaSet : HML.FormulaSet = null;
+        private hmlGameLogic : HmlGameLogic = null;
+
         private configuration = {
             processName: undefined,
             formulaId: undefined,
@@ -126,18 +130,20 @@ module Activity {
             });
 
             $("#hml-game-main").append(this.processExplorer.getRootElement());
+            
             //$("#hml-game-status-right").append(this.transitionTable.getRootElement());
-            $("#hml-game-status-right").append(this.hmlselector.getRootElement());
+            //$("#hml-game-status-right").append(this.hmlselector.getRootElement());
 
             this.transitionTable.onSelectListener = ((transition) => {
+                this.currentFormula = this.nextFormula(this.currentFormula); // pop the <> or [] 
                 this.currentProcess = transition.targetProcess;
+                this.hmlGameLogic.selectedTransition(transition, this.currentFormula);
                 this.refresh(this.configuration);
-                this.processExplorer.exploreProcess(transition.targetProcess);
-                this.processExplorer.focusOnProcess(transition.targetProcess);
             });
 
-            this.hmlselector.onSelectListener = ((hmlformula) => {
-                this.currentFormula = hmlformula;
+            this.hmlselector.onSelectListener = ((hmlSubFormula) => {
+                this.currentFormula = hmlSubFormula;
+                this.hmlGameLogic.selectedFormula(this.currentFormula);
                 this.refresh(this.configuration);
             });
         }
@@ -216,17 +222,27 @@ module Activity {
             return Main.getFormulaSets();
         }
 
-        private setFormulas(hmlFormulaSets : HML.FormulaSet[], selectecHMLIndex : number) : void {
+        private setFormulas(hmlFormulaSets : HML.FormulaSet[], selectecHMLSetIndex : number) : void {
             this.$formulaList.empty();
             hmlFormulaSets.forEach((hmlFSet, index) => {
                 var hmlvisitor = new Traverse.HMLNotationVisitor();
                 var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlFSet.getTopFormula()))
                 var optionsNode = $("<option></option>").attr("value", index).append(formulaStr);
-                if(index === selectecHMLIndex) {
+                if(index === selectecHMLSetIndex) {
                     optionsNode.prop("selected", true);
                 }
                 this.$formulaList.append(optionsNode);
             });
+        }
+
+        private nextFormula(hml : HML.Formula) : HML.Formula {
+            // this method can only be used on simple HML.formulas (such as <a> and [a])
+            if(hml instanceof HML.StrongExistsFormula || hml instanceof HML.WeakExistsFormula 
+                || hml instanceof HML.StrongForAllFormula || hml instanceof HML.WeakForAllFormula) {
+                console.log('subFormula exist', hml);
+                return hml.subFormula;
+            } 
+            throw "Unhandled formula type in nextFormula";
         }
 
         private setProcesses(processNames : string[], selectedProcessName? : string) : void {
@@ -275,27 +291,40 @@ module Activity {
             this.currentFormula = this.currentFormulaSet.getTopFormula();
 
             this.processExplorer.setSuccGenerator(this.configuration.succGen);
+
+            this.hmlGameLogic = new HmlGameLogic(this.currentProcess, this.currentFormula);
             this.refresh(configuration);
         }
 
         private refresh(configuration) {
-
             /* E-xplores the currentProcess and updates the transitiontable with its successors transitions*/
             this.processExplorer.exploreProcess(this.currentProcess);
-            
-
-            // todo insert if about actionType
-            //this.transitionTable.setTransitions(this.configuration.succGen.getSuccessors(this.currentProcess.id).toArray());
-            this.hmlselector.setFormula(this.currentFormula);
-
+            //this.processExplorer.focusOnProcess(this.currentProcess);
+            console.log(this.hmlGameLogic.getNextActionType() === ActionType.transition, ActionType.transition);
+            if(this.hmlGameLogic.getNextActionType() === ActionType.transition) {
+                this.setActionWidget(this.transitionTable)
+                this.transitionTable.setTransitions(this.configuration.succGen.getSuccessors(this.currentProcess.id).toArray());
+            } else {
+                this.setActionWidget(this.hmlselector)
+                this.hmlselector.setFormula(this.currentFormula);
+            }
         }
+
+        private setActionWidget(widget) {
+            var injecter = $("#hml-game-status-right")[0];
+            while (injecter.firstChild) {
+                injecter.removeChild(injecter.firstChild);
+            }
+            injecter.appendChild(widget.getRootElement());
+        }
+
 
         private resize() : void {
             var $processExplorerCanvasContainer = $(this.processExplorer.getCanvasContainer()),
                 explorerOffsetTop = $processExplorerCanvasContainer.offset().top,
                 explorerOffsetBottom = $("#hml-game-status").height();
             
-           var explorerHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 22;
+            var explorerHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 22;
                         
             this.processExplorer.resize(this.$container.width(), explorerHeight);
         }
@@ -335,26 +364,42 @@ module Activity {
             // con/dis-junction this is only viable
             // The player selected a formula.
             // Same as selectedTransition
-            throw "not implemented"
+            if (this.getNextActionType() === ActionType.formula) {
+
+            }
+            throw "Unhandled formula type in selectedFormula";
         }
 
-        selectedTransition(transition : CCS.Transition) {
+        selectedTransition(transition : CCS.Transition, formula : HML.Formula) {
             // The player selected a transition
             // Push current to previous
             // Check for gameover including min/max cycle.
-            throw "not implemented"
+            if (this.getNextActionType() === ActionType.transition) {
+
+            }
+            throw "Unhandled formula type in selectedFormula"
         }
 
         isGameOver() : Pair<Player, WinReason> {
             // returns undefined/null if no winner.
             // otherwise return who won, and why.
+            return null; // no winner
             throw "not implemented"
         }
 
         getNextActionType() : ActionType {
+            // what about true and false?
+            var transitionMoves = [HML.StrongForAllFormula, HML.WeakForAllFormula, HML.StrongExistsFormula, HML.WeakExistsFormula];
+            var formulaMoves = [HML.DisjFormula, HML.ConjFormula];
+            var variableMoves = [HML.MinFixedPointFormula, HML.MaxFixedPointFormula, HML.VariableFormula];
+            var isPrototypeOfCurrentFormula = (obj) => this.state.formula instanceof obj;
+
+            if(transitionMoves.some(isPrototypeOfCurrentFormula)) return ActionType.transition;
+            if(formulaMoves.some(isPrototypeOfCurrentFormula)) return ActionType.formula;
+            if(variableMoves.some(isPrototypeOfCurrentFormula)) return ActionType.variable;
+            throw "Unhandled formula type in getNextActionType";
             //Returns whether the next player is to select an action or formula or
             //maybe the judge has to unfold variable.
-            throw "not implemented"
         }
 
         getCurrentPlayer() : Player {
