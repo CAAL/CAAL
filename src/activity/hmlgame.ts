@@ -300,22 +300,33 @@ module Activity {
             /* E-xplores the currentProcess and updates the transitiontable with its successors transitions*/
             this.processExplorer.exploreProcess(this.currentProcess);
             //this.processExplorer.focusOnProcess(this.currentProcess);
-            console.log(this.hmlGameLogic.getNextActionType() === ActionType.transition, ActionType.transition);
-            if(this.hmlGameLogic.getNextActionType() === ActionType.transition) {
+            if(this.hmlGameLogic.isGameOver()) {
+                this.setActionWidget()
+                console.log("Game has ended");
+            }
+            else if(this.hmlGameLogic.getNextActionType() === ActionType.transition) {
                 this.setActionWidget(this.transitionTable)
                 this.transitionTable.setTransitions(this.configuration.succGen.getSuccessors(this.currentProcess.id).toArray());
-            } else {
+            } 
+            else if (this.hmlGameLogic.getNextActionType() === ActionType.formula) {
                 this.setActionWidget(this.hmlselector)
                 this.hmlselector.setFormula(this.currentFormula);
+            } 
+            else if (this.hmlGameLogic.getNextActionType() === ActionType.variable) {
+                // Judge plays
+                this.currentFormula =  this.hmlGameLogic.JudgeUnfold(this.currentFormula, this.currentFormulaSet);
+                this.refresh(this.configuration);
             }
         }
 
-        private setActionWidget(widget) {
+        private setActionWidget(widget = null) {
             var injecter = $("#hml-game-status-right")[0];
             while (injecter.firstChild) {
                 injecter.removeChild(injecter.firstChild);
             }
-            injecter.appendChild(widget.getRootElement());
+            if (widget) {
+                injecter.appendChild(widget.getRootElement());
+          }
         }
 
 
@@ -364,27 +375,44 @@ module Activity {
             // con/dis-junction this is only viable
             // The player selected a formula.
             // Same as selectedTransition
-            if (this.getNextActionType() === ActionType.formula) {
-
-            }
-            throw "Unhandled formula type in selectedFormula";
+            this.previousStates.push(this.state);
+            this.state = new HmlGameState(this.state.process, formula, this.state.isMinGame);
+            
+            // throw "Unhandled formula type in selectedFormula";
         }
 
         selectedTransition(transition : CCS.Transition, formula : HML.Formula) {
             // The player selected a transition
             // Push current to previous
             // Check for gameover including min/max cycle.
-            if (this.getNextActionType() === ActionType.transition) {
+            this.previousStates.push(this.state);
+            this.state = new HmlGameState(transition.targetProcess, formula, this.state.isMinGame);
 
-            }
-            throw "Unhandled formula type in selectedFormula"
+            // throw "Unhandled formula type in selectedFormula"
         }
 
         isGameOver() : Pair<Player, WinReason> {
             // returns undefined/null if no winner.
             // otherwise return who won, and why.
+            if (this.state.isMinGame) {
+                if(this.state.formula instanceof HML.FalseFormula) {
+                    return new Pair(Player.attacker, WinReason.falseFormula); // attacker win
+                } 
+                else if (this.state.formula instanceof HML.TrueFormula) {
+                    return new Pair(Player.defender, WinReason.trueFormula); // defender win
+                }
+                //TODO infinite play
+            } else {
+                if(this.state.formula instanceof HML.FalseFormula) {
+                    return new Pair(Player.defender, WinReason.falseFormula); // attacker win
+                } 
+                else if (this.state.formula instanceof HML.TrueFormula) {
+                    return new Pair(Player.attacker, WinReason.trueFormula); // defender win
+                }
+                //TODO infinite play
+            }
+            // TODO isStuck
             return null; // no winner
-            throw "not implemented"
         }
 
         getNextActionType() : ActionType {
@@ -400,6 +428,30 @@ module Activity {
             throw "Unhandled formula type in getNextActionType";
             //Returns whether the next player is to select an action or formula or
             //maybe the judge has to unfold variable.
+        }
+
+        JudgeUnfold(hml : HML.Formula, hmlFSet : HML.FormulaSet) : HML.Formula {
+            if (hml instanceof HML.MinFixedPointFormula) {
+                this.previousStates.push(this.state);
+                this.state = new HmlGameState(this.state.process, hml.subFormula, true);
+                return hml.subFormula;
+            }
+            else if (hml instanceof HML.MaxFixedPointFormula) {
+                this.previousStates.push(this.state);
+                this.state = new HmlGameState(this.state.process, hml.subFormula, false);
+                return hml.subFormula;
+            } 
+            else if (hml instanceof HML.VariableFormula) {
+                var namedFormula = hmlFSet.formulaByName(hml.variable);
+                if (namedFormula) {
+                    if (namedFormula instanceof HML.MinFixedPointFormula || namedFormula instanceof HML.MaxFixedPointFormula) {
+                        var unfolded = this.JudgeUnfold(namedFormula, hmlFSet);
+                        return unfolded;
+                    }
+                }
+            }
+
+            throw "Unhandled formula type in JudgeUnfold";
         }
 
         getCurrentPlayer() : Player {
