@@ -345,19 +345,19 @@ module Activity {
         }
     }
 
-    class HmlGameState {
-        constructor(public process : CCS.Process, 
-                public formula : HML.Formula, 
-                public isMinGame : boolean) {
-        }
-    }
-
     enum Player {attacker, defender, judge};
     enum ActionType {transition, formula, variable};
     enum WinReason {minGameCycle, maxGameCycle, falseFormula, trueFormula};
 
     class Pair<P,Q> {
         constructor(public left : P, public right : Q) {
+        }
+    }
+
+    class HmlGameState {
+        constructor(public process : CCS.Process, 
+                public formula : HML.Formula, 
+                public isMinGame : boolean) {
         }
     }
 
