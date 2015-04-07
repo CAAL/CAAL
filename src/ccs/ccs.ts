@@ -726,7 +726,7 @@ module CCS {
         }
     }
 
-    export function getSuccGenerator(graph, options) {
+    export function getSuccGenerator(graph, options) : SuccessorGenerator {
         var settings = {succGen: "strong", reduce: true},
             resultGenerator : SuccessorGenerator = new StrictSuccessorGenerator(graph);
         for (var optionName in options) {

@@ -134,16 +134,17 @@ module Activity {
             //$("#hml-game-status-right").append(this.transitionTable.getRootElement());
             //$("#hml-game-status-right").append(this.hmlselector.getRootElement());
 
-            this.transitionTable.onSelectListener = ((transition) => {
-                this.currentFormula = this.nextFormula(this.currentFormula); // pop the <> or [] 
-                this.currentProcess = transition.targetProcess;
-                this.hmlGameLogic.selectedTransition(transition, this.currentFormula);
+            this.transitionTable.onSelectListener = ((transition) => { 
+                var state = this.hmlGameLogic.selectedTransition(transition); // return the new state
+                this.currentFormula = state.formula; // has the modality <> [] popped 
+                this.currentProcess = state.process;
                 this.refresh(this.configuration);
             });
 
             this.hmlselector.onSelectListener = ((hmlSubFormula) => {
-                this.currentFormula = hmlSubFormula;
-                this.hmlGameLogic.selectedFormula(this.currentFormula);
+                var state = this.hmlGameLogic.selectedFormula(hmlSubFormula);
+                this.currentFormula = state.formula;
+                this.currentProcess = state.process; // should remain the same 
                 this.refresh(this.configuration);
             });
         }
@@ -235,16 +236,6 @@ module Activity {
             });
         }
 
-        private nextFormula(hml : HML.Formula) : HML.Formula {
-            // this method can only be used on simple HML.formulas (such as <a> and [a])
-            if(hml instanceof HML.StrongExistsFormula || hml instanceof HML.WeakExistsFormula 
-                || hml instanceof HML.StrongForAllFormula || hml instanceof HML.WeakForAllFormula) {
-                console.log('subFormula exist', hml);
-                return hml.subFormula;
-            } 
-            throw "Unhandled formula type in nextFormula";
-        }
-
         private setProcesses(processNames : string[], selectedProcessName? : string) : void {
             /*Updates the processes in processlist*/
             this.$processList.empty();
@@ -276,7 +267,7 @@ module Activity {
             this.currentFormula = this.currentFormulaSet.getTopFormula();
         }
 
-        private configure(configuration) {
+        private configure(configuration) : void {
             //This is/should-only-be called for change in either process, formula or succ generator.
             this.configuration = configuration;
             
@@ -293,33 +284,43 @@ module Activity {
             this.processExplorer.setSuccGenerator(this.configuration.succGen);
 
             this.hmlGameLogic = new HmlGameLogic(this.currentProcess, this.currentFormula);
+            this.hmlGameLogic.setSuccGenerator(this.configuration.succGen);
+            this.hmlGameLogic.setGamelogWriter(this.WriteToGamelog);
+
             this.refresh(configuration);
         }
 
-        private refresh(configuration) {
+
+        private refresh(configuration) : void {
             /* E-xplores the currentProcess and updates the transitiontable with its successors transitions*/
             this.processExplorer.exploreProcess(this.currentProcess);
-            //this.processExplorer.focusOnProcess(this.currentProcess);
+            
             if(this.hmlGameLogic.isGameOver()) {
-                this.setActionWidget()
+                this.setActionWidget() // clear the widget div
                 console.log("Game has ended");
             }
             else if(this.hmlGameLogic.getNextActionType() === ActionType.transition) {
-                this.setActionWidget(this.transitionTable)
-                this.transitionTable.setTransitions(this.configuration.succGen.getSuccessors(this.currentProcess.id).toArray());
+                this.setActionWidget(this.transitionTable) // set widget to be transition table
+                this.transitionTable.setTransitions(this.hmlGameLogic.getAvailableTransitions());
+                this.processExplorer.focusOnProcess(this.currentProcess);
             } 
             else if (this.hmlGameLogic.getNextActionType() === ActionType.formula) {
-                this.setActionWidget(this.hmlselector)
+                this.setActionWidget(this.hmlselector) // set widget to be hml selector
                 this.hmlselector.setFormula(this.currentFormula);
             } 
             else if (this.hmlGameLogic.getNextActionType() === ActionType.variable) {
                 // Judge plays
-                this.currentFormula =  this.hmlGameLogic.JudgeUnfold(this.currentFormula, this.currentFormulaSet);
+                this.currentFormula = this.hmlGameLogic.JudgeUnfold(this.currentFormula, this.currentFormulaSet);
                 this.refresh(this.configuration);
             }
         }
 
-        private setActionWidget(widget = null) {
+        private WriteToGamelog(Gamelogobject) : void {
+            console.log("Gamelog: ");
+            console.log(Gamelogobject);
+        }
+
+        private setActionWidget(widget = null) : void {
             var injecter = $("#hml-game-status-right")[0];
             while (injecter.firstChild) {
                 injecter.removeChild(injecter.firstChild);
@@ -328,7 +329,6 @@ module Activity {
                 injecter.appendChild(widget.getRootElement());
           }
         }
-
 
         private resize() : void {
             var $processExplorerCanvasContainer = $(this.processExplorer.getCanvasContainer()),
@@ -345,9 +345,16 @@ module Activity {
         }
     }
 
-    enum Player {attacker, defender, judge};
-    enum ActionType {transition, formula, variable};
-    enum WinReason {minGameCycle, maxGameCycle, falseFormula, trueFormula};
+    class GameLogObject {
+        constructor(public content : string) {
+        }
+    }
+
+    const enum Player {attacker, defender, judge};
+    const enum ActionType {transition, formula, variable};
+    const enum WinReason {minGameCycle, maxGameCycle, falseFormula, trueFormula, stuck};
+    type Modality = HML.WeakExistsFormula | HML.WeakForAllFormula | HML.StrongExistsFormula | HML.StrongForAllFormula;
+    type AndOrFormula = HML.DisjFormula | HML.ConjFormula;
 
     class Pair<P,Q> {
         constructor(public left : P, public right : Q) {
@@ -362,56 +369,81 @@ module Activity {
     }
 
     class HmlGameLogic {
-        
         private state : HmlGameState;
         private previousStates : HmlGameState[] = [];
         private gameIsOver : boolean = false;
+        private writeToGamelog : Function;
+        private succGen : CCS.SuccessorGenerator;
 
         constructor(process, formula) {
             this.state = new HmlGameState(process, formula, true);
         }
 
-        selectedFormula(formula : HML.Formula) {
-            // con/dis-junction this is only viable
+        private popModalityFormula(hmlF : Modality) : HML.Formula {
+            // this method can only be used on Modality formulas (such as <a>, [a], <<a>>, and [[a]])
+            if (hmlF) {
+                return hmlF.subFormula;
+            }
+
+            throw "Unhandled formula type in popModalityFormula";
+        }
+
+        public setGamelogWriter(gamelogger : Function) : void {
+            this.writeToGamelog = gamelogger;
+        }
+
+        public setSuccGenerator(succGen : CCS.SuccessorGenerator) {
+            this.succGen = succGen;
+        }
+
+        selectedFormula(formula : HML.Formula) : HmlGameState {
             // The player selected a formula.
             // Same as selectedTransition
             this.previousStates.push(this.state);
             this.state = new HmlGameState(this.state.process, formula, this.state.isMinGame);
-            
-            // throw "Unhandled formula type in selectedFormula";
+            // TODO Write to gamelog
+            return this.state;
         }
 
-        selectedTransition(transition : CCS.Transition, formula : HML.Formula) {
+        selectedTransition(transition : CCS.Transition) : HmlGameState {
             // The player selected a transition
             // Push current to previous
             // Check for gameover including min/max cycle.
+            var hmlSubF = this.popModalityFormula(<Modality> this.state.formula);
             this.previousStates.push(this.state);
-            this.state = new HmlGameState(transition.targetProcess, formula, this.state.isMinGame);
-
-            // throw "Unhandled formula type in selectedFormula"
+            this.state = new HmlGameState(transition.targetProcess, hmlSubF, this.state.isMinGame);
+            // TODO Write to gamelog
+            return this.state;
         }
 
         isGameOver() : Pair<Player, WinReason> {
             // returns undefined/null if no winner.
             // otherwise return who won, and why.
+            
+            // infinite run
             if (this.state.isMinGame) {
-                if(this.state.formula instanceof HML.FalseFormula) {
-                    return new Pair(Player.attacker, WinReason.falseFormula); // attacker win
-                } 
-                else if (this.state.formula instanceof HML.TrueFormula) {
-                    return new Pair(Player.defender, WinReason.trueFormula); // defender win
-                }
+                
                 //TODO infinite play
             } else {
-                if(this.state.formula instanceof HML.FalseFormula) {
-                    return new Pair(Player.defender, WinReason.falseFormula); // attacker win
-                } 
-                else if (this.state.formula instanceof HML.TrueFormula) {
-                    return new Pair(Player.attacker, WinReason.trueFormula); // defender win
-                }
+                
                 //TODO infinite play
             }
-            // TODO isStuck
+            
+
+            // true/false formula
+            if(this.state.formula instanceof HML.FalseFormula) {
+                return new Pair(Player.attacker, WinReason.falseFormula); // attacker win
+            } 
+            else if (this.state.formula instanceof HML.TrueFormula) {
+                return new Pair(Player.defender, WinReason.trueFormula); // defender win
+            }
+
+            //stuck
+            var currentPlayer = this.getCurrentPlayer();
+            if(!this.getAvailableTransitions()) {
+                var winner = (currentPlayer === Player.attacker) ? Player.defender : Player.attacker;
+                return new Pair(winner, WinReason.stuck);
+            }
             return null; // no winner
         }
 
@@ -466,10 +498,19 @@ module Activity {
             throw "Unhandled formula type in getCurrentPlayer";
         }
 
-        getAvailableTransitions() : Pair<CCS.Transition, HML.Formula> {
+        getAvailableTransitions() : CCS.Transition[] {
             //Not sure about interface. they all lead to the same subformula,
             //but the transition may differ.
-            throw "not implemented"
+            var hml = this.state.formula;
+            if(hml instanceof HML.StrongExistsFormula || hml instanceof HML.WeakExistsFormula 
+                || hml instanceof HML.StrongForAllFormula || hml instanceof HML.WeakForAllFormula) {
+                
+                var allTransitions = this.succGen.getSuccessors(this.state.process.id).toArray();
+                var availableTransitions = allTransitions.filter((transition) => hml.actionMatcher.matches(transition.action));
+                return availableTransitions;
+            }
+            return null;
+            throw "Unhandled formula type in getAvailableTransitions";
         }
 
         getAvailableFormulas() : HML.Formula[] {
