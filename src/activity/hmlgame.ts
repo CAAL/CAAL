@@ -440,10 +440,11 @@ module Activity {
 
             //stuck
             var currentPlayer = this.getCurrentPlayer();
-            if(!this.getAvailableTransitions()) {
+            if(!this.getAvailableTransitions() && this.getNextActionType() === ActionType.transition) {
                 var winner = (currentPlayer === Player.attacker) ? Player.defender : Player.attacker;
                 return new Pair(winner, WinReason.stuck);
             }
+
             return null; // no winner
         }
 

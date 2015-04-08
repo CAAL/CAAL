@@ -6,6 +6,8 @@ module GUI.Widget {
 
     export class FormulaSelector {
         private root = document.createElement("div");
+        private table = document.createElement("table");
+        private body = document.createElement("tbody");
         private paragraph = document.createElement("p");
         private currentHml : HML.Formula;
         private currentHmlSet : HML.FormulaSet;
@@ -13,18 +15,24 @@ module GUI.Widget {
         public onSelectListener : HMLSelectListener = null;
 
         constructor() {        
-            var $root = $(this.root);
-            var $paragraph = $(this.paragraph);
+            var $table = $(this.table);
+            var $body = $(this.body);
             
-            $paragraph.attr("id", "hml-selector-paragraph");
 
-            $root.attr("id", "hml-selector-body");
-            $root.addClass("no-highlight");
 
-            $root.append(this.paragraph);
+            $table.attr("id", "hml-selector-body");
+            $table.addClass("widget-transition-table table table-responsive table-striped table-condensed table-hover no-highlight");
+            $table.append('<thead><tr><th class="narrow">Subformula</th></tr></thead>');
+            $table.append(this.body);
 
+            $body.attr("id", "hml-selector-body");
             /*Click listeners on each subformula*/
-            $root.on("click", "span.hml-subformula", this.onSubformulaClick.bind(this));
+            // $body.on("click", "span.hml-subformula", this.onSubformulaClick.bind(this));
+            $body.on("click", "tr", this.onSubformulaClick.bind(this));
+        }
+
+        public getRootElement() : HTMLElement {
+            return this.table;
         }
 
         setFormulaSet(hmlFormulaSet : HML.FormulaSet) {
@@ -32,26 +40,39 @@ module GUI.Widget {
         }
 
         setFormula(hmlFormula : HML.Formula){
-            var $paragraph = $(this.paragraph);
-            $paragraph.empty(); // clear the previous HML formula
-            
+            var $body = $(this.body);
+            $body.empty();
+
+            /*this.transitions.forEach((transition, index) => {
+                var $row = $("<tr></tr>"),
+                    $action = $("<td></td>").append(transition.action.toString()),
+                    $name = $("<td></td>").append(this.labelFor(transition.targetProcess)),
+                    $target = $("<td></td>").append(this.getDefinitionForProcess(transition.targetProcess));
+                $row.append($action, $name, $target);
+                $row.data("data-transition-idx", index);
+                $body.append($row);
+            });*/
+
             if(hmlFormula){
                 this.currentHml = hmlFormula
 
                 var HMLVisitor = new HMLSubFormulaHTMLVisitor(this.currentHmlSet);
-                var hmlFormulaStr = HMLVisitor.visit(hmlFormula); // convert the formula to a string
-                $paragraph.append(hmlFormulaStr);
-            } else {
-                $paragraph.append("No more moves");
+                var hmlSubformulas : Array<string> = HMLVisitor.visit(hmlFormula); // convert the formula to an array of strings
+                
+                hmlSubformulas.forEach((subFormula) => {
+                    var $row = $("<tr></tr>"),
+                        $subFormula = $(subFormula),
+                        $subFormulaTd = $("<td></td>").append($subFormula);
+
+                    $row.append($subFormulaTd);
+                    $row.data("data-subformula-id", $subFormula.attr("data-id"));
+                    $body.append($row);
+                });                
             }
         }
 
-        public getRootElement() : HTMLElement {
-            return this.root;
-        }
-
         private subformulaFromDelegateEvent(event) : HML.Formula {
-            var id = parseInt($(event.currentTarget).attr("data-subformula-id"));
+            var id = parseInt($(event.currentTarget).data("data-subformula-id"));
             var hmlExtractor = new HMLSubFormulaExtractor(this.currentHmlSet);
             var subFormula : HML.Formula = hmlExtractor.getSubFormulaWithId(this.currentHml, id);
             return subFormula;
@@ -64,7 +85,7 @@ module GUI.Widget {
         }
     }
 
-    class HMLSubFormulaHTMLVisitor implements HML.FormulaVisitor<string>, HML.FormulaDispatchHandler<string> { 
+    class HMLSubFormulaHTMLVisitor implements HML.FormulaVisitor<Array<string>>, HML.FormulaDispatchHandler<Array<string>> { 
         private isFirst = true;
 
         constructor(private hmlFormulaSet : HML.FormulaSet) {
@@ -84,184 +105,186 @@ module GUI.Widget {
         }
 
         dispatchDisjFormula(formula : HML.DisjFormula) {
-            var result;
+            var result = [];
             var isfirst = this.isFirstFormula();
 
             var subStrs = formula.subFormulas.map((subF) => {
                 if(isfirst) {
-                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', subF.id);
-                    $span.append(subF.dispatchOn(this));
-                    return $span[0].outerHTML;                    
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', subF.id);
+                    $span.append(subF.dispatchOn(this)[0]);
+                    result.push($span[0].outerHTML);                    
                 } else {
-                    return subF.dispatchOn(this);
+                    
+                    result.push(subF.dispatchOn(this)[0]);
+                    result = [result.join(" or ")];
                 }
             });
-            result = subStrs.join(" or ");
 
             return result;
         }
 
         dispatchConjFormula(formula : HML.ConjFormula) {
-            var result;
+            var result = [];
             var isfirst = this.isFirstFormula();
 
             var subStrs = formula.subFormulas.map(subF => {
-                var unwrapped = subF.dispatchOn(this);
+                var unwrapped = subF.dispatchOn(this)[0];
                 var wrapped = Traverse.wrapIfInstanceOf(unwrapped, subF, [HML.DisjFormula]);
                 if(isfirst) {
-                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', subF.id);
+                    var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', subF.id);
                     $span.append(wrapped);     
-                    return $span[0].outerHTML;
+                    result.push($span[0].outerHTML);
                 } else {
-                    return wrapped;
+                    result.push(wrapped);
+                    result = [result.join(" and ")];
                 }
             });
 
-            return result = subStrs.join(" and ");;
+            return result;
         }
 
         dispatchTrueFormula(formula : HML.TrueFormula) {
-            var result;
+            var result = [];
             var isfirst = this.isFirstFormula();
 
             if(isfirst) {
-                var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', '-1');
+                var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', '-1');
                 $span.append('T');
-                result = $span[0].outerHTML;
+                result.push($span[0].outerHTML);
             } else {
-                result = "T";
+                result.push("T");
             }
 
             return result;
         }
 
         dispatchFalseFormula(formula : HML.FalseFormula) {
-            var result;
+            var result = [];
             var isfirst = this.isFirstFormula();
 
             if(isfirst) {
-                var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', '-1');
+                var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', '-1');
                 $span.append('F');
-                result = $span[0].outerHTML;
+                result.push($span[0].outerHTML);
             } else {
-                result = "F";
+                result.push("F");
             }
 
             return result;
         }
 
         dispatchStrongExistsFormula(formula : HML.StrongExistsFormula) {
-            var result
+            var result = [];
             var isfirst = this.isFirstFormula();
-            var subStr = formula.subFormula.dispatchOn(this);
+            var subStr = formula.subFormula.dispatchOn(this)[0];
             var formulaAction = "<" + formula.actionMatcher.actionMatchingString() + ">";
             var formulaStr = Traverse.safeHtml(formulaAction) +
                 Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
             
             if (isfirst) {
-                var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
-                result = $span[0].outerHTML;
+                result.push($span[0].outerHTML);
             } else {
-                result = formulaStr;
+                result.push(formulaStr);
             }
 
             return result;
         }
 
         dispatchStrongForAllFormula(formula : HML.StrongForAllFormula) {
-            var result;
+            var result = [];
             var isfirst = this.isFirstFormula();
-            var subStr = formula.subFormula.dispatchOn(this);
+            var subStr = formula.subFormula.dispatchOn(this)[0];
             var formulaAction = "[" + formula.actionMatcher.actionMatchingString() + "]";
             var formulaStr = Traverse.safeHtml(formulaAction) +
                 Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
 
             if (isfirst) {
-                var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
-                result = $span[0].outerHTML;
+                result.push($span[0].outerHTML);
             } else {
-                result = formulaStr;
+                result.push(formulaStr);
             }
 
             return result;
         }
 
         dispatchWeakExistsFormula(formula : HML.WeakExistsFormula) {
-            var result
+            var result = []
             var isfirst = this.isFirstFormula();
-            var subStr = formula.subFormula.dispatchOn(this);
+            var subStr = formula.subFormula.dispatchOn(this)[0];
             var formulaAction = "<<" + formula.actionMatcher.actionMatchingString() + ">>";
             var formulaStr = Traverse.safeHtml(formulaAction) +
                 Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
             
             if (isfirst) {
-                var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
-                result = $span[0].outerHTML;
+                result.push($span[0].outerHTML);
             } else {
-                result = formulaStr;
+                result.push(formulaStr);
             }
 
             return result;
         }
 
         dispatchWeakForAllFormula(formula : HML.WeakForAllFormula) {
-            var result;
+            var result = [];
             var isfirst = this.isFirstFormula();
-            var subStr = formula.subFormula.dispatchOn(this);
+            var subStr = formula.subFormula.dispatchOn(this)[0];
             var formulaAction = "[[" + formula.actionMatcher.actionMatchingString() + "]]"
             var formulaStr = Traverse.safeHtml(formulaAction) +
                 Traverse.wrapIfInstanceOf(subStr, formula.subFormula, [HML.DisjFormula, HML.ConjFormula]);
 
             if (isfirst) {                
-                var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
-                result = $span[0].outerHTML;
+                result.push($span[0].outerHTML);
             } else {
-                result = formulaStr;
+                result.push(formulaStr);
             }
 
             return result;
         }
 
         dispatchMinFixedPointFormula(formula : HML.MinFixedPointFormula) {
-            var result;
+            var result = [];
             var isfirst = this.isFirstFormula();
-            var subStr = formula.subFormula.dispatchOn(this);
+            var subStr = formula.subFormula.dispatchOn(this)[0];
             var formulaStr = formula.variable + " min= " + subStr;
             
             if (isfirst) {    
-                var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
-                result = $span[0].outerHTML;
+                result.push($span[0].outerHTML);
             } else {
-                result = formulaStr;
+                result.push(formulaStr);
             }
 
             return result;
         }
 
         dispatchMaxFixedPointFormula(formula : HML.MaxFixedPointFormula) {
-            var result;
+            var result = [];
             var isfirst = this.isFirstFormula();
-            var subStr = formula.subFormula.dispatchOn(this);
+            var subStr = formula.subFormula.dispatchOn(this)[0];
             var formulaStr = formula.variable + " max= " + subStr;
         
             if (isfirst) {        
-                var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', formula.subFormula.id);
+                var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
-                result = $span[0].outerHTML;
+                result.push($span[0].outerHTML);
             } else {
-                result = formulaStr;
+                result.push(formulaStr);
             }
         
             return result;
         }
 
         dispatchVariableFormula(formula : HML.VariableFormula) {
-            var result;
+            var result = [];
             var isfirst = this.isFirstFormula();
             var formulaStr = Traverse.safeHtml(formula.variable);
             var namedFormulaDef = this.hmlFormulaSet.formulaByName(formula.variable);
@@ -269,13 +292,13 @@ module GUI.Widget {
                 if (isfirst) {
                     // this is the first formula
                     if(namedFormulaDef instanceof HML.MinFixedPointFormula || namedFormulaDef instanceof HML.MaxFixedPointFormula) {
-                        var $span = $('<span></span>').addClass('hml-subformula').attr('data-subformula-id', namedFormulaDef.subFormula.id);
+                        var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', namedFormulaDef.subFormula.id);
                         $span.append(formulaStr)
-                        result = $span[0].outerHTML;
+                        result.push($span[0].outerHTML);
                     }
                 } else {
                     // this is not the first formula therefore just return the formula definition.
-                    result = formulaStr;
+                    result.push(formulaStr);
                 }
             } else {
                 throw "HML variable " + formula.variable + " has no definition";
