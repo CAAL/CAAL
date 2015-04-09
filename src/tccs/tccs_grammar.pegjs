@@ -13,8 +13,9 @@
 		return first + rest.join('');
 	}
 
-	var ccs = options.ccs;
-	var g = options.graph || new ccs.Graph();
+	// options is an arbitrary javascript object specified in the .parse(...) method
+	var tccs = options.tccs;
+	var g = options.graph || new tccs.TccsGraph();
 }
 
 start
@@ -31,7 +32,7 @@ Statements = Statement Statements
 Statement = Assignment
 		  / SetDeclaration
 
-SetDeclaration = _ "set" _ name:Identifier _ "=" _ "{" _ labels:LabelList _ "}" _ ";" { return g.defineNamedSet(name, new ccs.LabelSet(labels || [])); }
+SetDeclaration = _ "set" _ name:Identifier _ "=" _ "{" _ labels:LabelList _ "}" _ ";" { return g.defineNamedSet(name, new tccs.LabelSet(labels || [])); }
 
 Assignment
 	= (_ "agent" Whitespace)? _ name:Identifier _ "=" _ P:Process _ ";" { return g.newNamedProcess(name, P); }
@@ -42,11 +43,11 @@ Assignment
 Process = Summation
 
 Summation
-	= P:Composition _ "+" _ Q:Summation { return Q instanceof ccs.SummationProcess ? g.newSummationProcess([P].concat(Q.subProcesses)) : g.newSummationProcess([P, Q]); }
+	= P:Composition _ "+" _ Q:Summation { return Q instanceof tccs.SummationProcess ? g.newSummationProcess([P].concat(Q.subProcesses)) : g.newSummationProcess([P, Q]); }
 	/ P:Composition { return P; }
 
 Composition
-	= P:Prefix _ "|" _ Q:Composition { return Q instanceof ccs.CompositionProcess ? g.newCompositionProcess([P].concat(Q.subProcesses)) : g.newCompositionProcess([P, Q]); }
+	= P:Prefix _ "|" _ Q:Composition { return Q instanceof tccs.CompositionProcess ? g.newCompositionProcess([P].concat(Q.subProcesses)) : g.newCompositionProcess([P, Q]); }
 	/ P:Prefix { return P; }
 
 Prefix
@@ -55,9 +56,9 @@ Prefix
 	/ P:ReProcess { return P; }
 
 ReProcess
-	= P:ParenProcess _ "\\" _ "{" _ labels:LabelList? _ "}" { return g.newRestrictedProcess(P, new ccs.LabelSet(labels || [])); }
+	= P:ParenProcess _ "\\" _ "{" _ labels:LabelList? _ "}" { return g.newRestrictedProcess(P, new tccs.LabelSet(labels || [])); }
 	/ P:ParenProcess _ "\\" _ setName:Identifier { return g.newRestrictedProcessOnSetName(P, setName); }
-	/ P:ParenProcess _ "[" _ relabels:RelabellingList _ "]" { return g.newRelabelingProcess(P, new ccs.RelabellingSet(relabels || [])); }
+	/ P:ParenProcess _ "[" _ relabels:RelabellingList _ "]" { return g.newRelabelingProcess(P, new tccs.RelabellingSet(relabels || [])); }
 	/ P:ParenProcess { return P; }
 
 // Relabellings  [a/b, c/d]
@@ -83,11 +84,11 @@ IdentifierRest
 	= rest:[A-Za-z0-9?!_'\-#^]*  { return rest; }
 
 Action "action"
-	= ['] label:Label { return new ccs.Action(label, true); }
-	/ label:Label { return new ccs.Action(label, false); }
+	= ['] label:Label { return new tccs.Action(label, true); }
+	/ label:Label { return new tccs.Action(label, false); }
 
 Delay "delay"
-	= delay:Number { return new ccs.Delay(delay); }
+	= delay:Number { return new tccs.Delay(delay); }
 
 Label "label"
 	= first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }

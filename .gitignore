@@ -8,12 +8,15 @@ test/*.js
 npm-debug.log
 lib/ccs.js
 lib/ccs_grammar.js
+lib/tccs_grammar.js
 lib/hml_grammar.js
 lib/ace
 lib/main.js
 lib/main.d.ts
 lib/ccs.js
 lib/ccs.d.ts
+lib/tccs.js
+lib/tccs.d.ts
 lib/util.js
 lib/util.d.ts
 lib/workers
