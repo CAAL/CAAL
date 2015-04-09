@@ -462,6 +462,112 @@ module Traverse {
         }
     }
 
+    export class HMLSuccGenVisitor implements HML.FormulaVisitor<Array<HML.Formula>>, HML.FormulaDispatchHandler<Array<HML.Formula>> { 
+        private isFirst = true;
+
+        constructor(private hmlFormulaSet : HML.FormulaSet) {
+        }
+
+        visit(formula : HML.Formula) {
+            return formula.dispatchOn(this);
+        }
+
+        private isFirstFormula() : boolean {
+            if(this.isFirst){
+                this.isFirst = !this.isFirst;
+                return true;
+            }
+
+            return false;
+        }
+
+        dispatchDisjFormula(formula : HML.DisjFormula) {
+            return formula.subFormulas;
+        }
+
+        dispatchConjFormula(formula : HML.ConjFormula) {
+            return formula.subFormulas;
+        }
+
+        dispatchTrueFormula(formula : HML.TrueFormula) {
+            var result = [];
+
+            result.push(null);
+
+            return result;
+        }
+
+        dispatchFalseFormula(formula : HML.FalseFormula) {
+            var result = [];
+
+            result.push(null);
+
+            return result;
+        }
+
+        dispatchStrongExistsFormula(formula : HML.StrongExistsFormula) {
+            var result = [];
+            
+            result.push(formula.subFormula);
+
+            return result;
+        }
+
+        dispatchStrongForAllFormula(formula : HML.StrongForAllFormula) {
+            var result = [];
+                
+            result.push(formula.subFormula);
+
+            return result;
+        }
+
+        dispatchWeakExistsFormula(formula : HML.WeakExistsFormula) {
+            var result = []
+            
+            result.push(formula.subFormula);
+
+            return result;
+        }
+
+        dispatchWeakForAllFormula(formula : HML.WeakForAllFormula) {
+            var result = [];
+
+            result.push(formula.subFormula);
+
+            return result;
+        }
+
+        dispatchMinFixedPointFormula(formula : HML.MinFixedPointFormula) {
+            var result = [];
+           
+            result.push(formula.subFormula);
+
+            return result;
+        }
+
+        dispatchMaxFixedPointFormula(formula : HML.MaxFixedPointFormula) {
+            var result = [];
+            
+            result.push(formula.subFormula);
+        
+            return result;
+        }
+
+        dispatchVariableFormula(formula : HML.VariableFormula) {
+            var result = [];
+            var namedFormulaDef = <HML.MinFixedPointFormula | HML.MaxFixedPointFormula>this.hmlFormulaSet.formulaByName(formula.variable);
+
+            if (namedFormulaDef) {
+                result.push(namedFormulaDef.subFormula);
+            } 
+            else {
+                throw "HML variable " + formula.variable + " has no definition";
+            }
+        
+            return result;
+        }
+    }
+
     /*
         This class should hold any simplications that can be done to the HML formulas.
 

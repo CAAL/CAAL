@@ -306,7 +306,8 @@ module Activity {
             } 
             else if (this.hmlGameLogic.getNextActionType() === ActionType.formula) {
                 this.setActionWidget(this.hmlselector) // set widget to be hml selector
-                this.hmlselector.setFormula(this.currentFormula);
+                var successorFormulas = this.hmlGameLogic.getAvailableFormulas(this.currentFormulaSet);
+                this.hmlselector.setFormula(successorFormulas);
             } 
             else if (this.hmlGameLogic.getNextActionType() === ActionType.variable) {
                 // Judge plays
@@ -540,9 +541,12 @@ module Activity {
             throw "Unhandled formula type in getAvailableTransitions";
         }
 
-        getAvailableFormulas() : HML.Formula[] {
-            //Get the possible formulas you can select among
-            throw "not implemented"
+        getAvailableFormulas(hmlFSet : HML.FormulaSet) : HML.Formula[] {
+            var hmlSuccGen = new Traverse.HMLSuccGenVisitor(hmlFSet);
+            var formulaSuccessors = hmlSuccGen.visit(this.state.formula);
+
+            console.log(formulaSuccessors);
+            return formulaSuccessors;
         }
     }
 }
