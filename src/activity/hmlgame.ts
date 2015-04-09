@@ -45,6 +45,7 @@ module Activity {
             this.currentSubActivity.onShow(configuration);
 
         }
+        
 
         private setOptionsDom(subActivity : SubActivity) {
             var injecter = $("#hml-game-inject-options")[0];
@@ -71,8 +72,6 @@ module Activity {
                 this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
                 return false;
             }
-
-
 
             return true;
         }
@@ -282,6 +281,7 @@ module Activity {
             this.currentFormula = this.currentFormulaSet.getTopFormula();
 
             this.processExplorer.setSuccGenerator(this.configuration.succGen);
+            this.processExplorer.exploreProcess(this.currentProcess);
 
             this.hmlGameLogic = new HmlGameLogic(this.currentProcess, this.currentFormula);
             this.hmlGameLogic.setSuccGenerator(this.configuration.succGen);
@@ -293,11 +293,11 @@ module Activity {
 
         private refresh(configuration) : void {
             /* E-xplores the currentProcess and updates the transitiontable with its successors transitions*/
-            this.processExplorer.exploreProcess(this.currentProcess);
+            var isGameOver = this.hmlGameLogic.isGameOver();
             
-            if(this.hmlGameLogic.isGameOver()) {
+            if(isGameOver) {
                 this.setActionWidget() // clear the widget div
-                console.log("Game has ended");
+                console.log(isGameOver);
             }
             else if(this.hmlGameLogic.getNextActionType() === ActionType.transition) {
                 this.setActionWidget(this.transitionTable) // set widget to be transition table
@@ -313,6 +313,8 @@ module Activity {
                 this.currentFormula = this.hmlGameLogic.JudgeUnfold(this.currentFormula, this.currentFormulaSet);
                 this.refresh(this.configuration);
             }
+            
+            this.processExplorer.exploreProcess(this.currentProcess);
         }
 
         private WriteToGamelog(Gamelogobject) : void {
@@ -366,6 +368,16 @@ module Activity {
                 public formula : HML.Formula, 
                 public isMinGame : boolean) {
         }
+
+        toString() {
+            var hmlNotationVisitor = new Traverse.HMLNotationVisitor();
+            var processStr = (this.process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess>this.process).name : this.process.id.toString();
+            var formulaStr = hmlNotationVisitor.visit(this.formula);
+            var isMinGameStr = this.isMinGame.toString();
+
+            var result = "(" + processStr + "," + formulaStr + "," + isMinGameStr + ")";
+            return result;
+        }
     }
 
     class HmlGameLogic {
@@ -373,10 +385,13 @@ module Activity {
         private previousStates : HmlGameState[] = [];
         private gameIsOver : boolean = false;
         private writeToGamelog : Function;
+        private stopGame : Function;
         private succGen : CCS.SuccessorGenerator;
+        private cycleCache;
 
         constructor(process, formula) {
             this.state = new HmlGameState(process, formula, true);
+            this.cycleCache = {};
         }
 
         private popModalityFormula(hmlF : Modality) : HML.Formula {
@@ -416,19 +431,30 @@ module Activity {
             return this.state;
         }
 
+        private cycleExists() : boolean {
+            var stateStr = this.state.toString()
+            console.log(stateStr);
+            if (this.cycleCache[stateStr] != undefined) {
+                // cycle detected
+                return true;
+            } else {
+                this.cycleCache[stateStr] = this.state;
+                return false;
+            }
+        }
+
         isGameOver() : Pair<Player, WinReason> {
             // returns undefined/null if no winner.
             // otherwise return who won, and why.
             
             // infinite run
-            if (this.state.isMinGame) {
-                
-                //TODO infinite play
-            } else {
-                
-                //TODO infinite play
+            if(this.cycleExists()){
+                if (this.state.isMinGame) {
+                    return new Pair(Player.defender, WinReason.minGameCycle);
+                } else {
+                    return new Pair(Player.attacker, WinReason.maxGameCycle);
+                }
             }
-            
 
             // true/false formula
             if(this.state.formula instanceof HML.FalseFormula) {

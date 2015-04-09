@@ -11,13 +11,13 @@ module CCS {
     }
 
     export interface ProcessDispatchHandler<T> {
-        dispatchNullProcess(process : NullProcess, ... args) : T
-        dispatchNamedProcess(process : NamedProcess, ... args) : T
-        dispatchSummationProcess(process : SummationProcess, ... args) : T
-        dispatchCompositionProcess(process : CompositionProcess, ... args) : T
-        dispatchActionPrefixProcess(process : ActionPrefixProcess, ... args) : T
-        dispatchRestrictionProcess(process : RestrictionProcess, ... args) : T
-        dispatchRelabellingProcess(process : RelabellingProcess, ... args) : T
+        dispatchNullProcess(process : NullProcess, ... args) : T;
+        dispatchNamedProcess(process : NamedProcess, ... args) : T;
+        dispatchSummationProcess(process : SummationProcess, ... args) : T;
+        dispatchCompositionProcess(process : CompositionProcess, ... args) : T;
+        dispatchActionPrefixProcess(process : ActionPrefixProcess, ... args) : T;
+        dispatchRestrictionProcess(process : RestrictionProcess, ... args) : T;
+        dispatchRelabellingProcess(process : RelabellingProcess, ... args) : T;
     }
 
     export interface ProcessVisitor<T> {
@@ -160,7 +160,7 @@ module CCS {
         private definedSets = Object.create(null);
         //Uses index as uid.
         private allRestrictedSets = new GrowingIndexedArraySet<LabelSet>();
-        private allRelabellings = new GrowingIndexedArraySet<RelabellingSet>()
+        private allRelabellings = new GrowingIndexedArraySet<RelabellingSet>();
 
         constructor() {
         }

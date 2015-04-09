@@ -29,7 +29,6 @@ module GUI.Widget {
                 .on("click", "tr", this.onRowClicked.bind(this))
                 .on("mouseenter", "tr", this.onRowHoverEnter.bind(this))
                 .on("mouseleave", "tr", this.onRowHoverLeave.bind(this));
-
         }
 
         setTransitions(transitions : CCS.Transition[] ) {

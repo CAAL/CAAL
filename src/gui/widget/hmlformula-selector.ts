@@ -43,16 +43,6 @@ module GUI.Widget {
             var $body = $(this.body);
             $body.empty();
 
-            /*this.transitions.forEach((transition, index) => {
-                var $row = $("<tr></tr>"),
-                    $action = $("<td></td>").append(transition.action.toString()),
-                    $name = $("<td></td>").append(this.labelFor(transition.targetProcess)),
-                    $target = $("<td></td>").append(this.getDefinitionForProcess(transition.targetProcess));
-                $row.append($action, $name, $target);
-                $row.data("data-transition-idx", index);
-                $body.append($row);
-            });*/
-
             if(hmlFormula){
                 this.currentHml = hmlFormula
 
@@ -113,8 +103,8 @@ module GUI.Widget {
                     var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', subF.id);
                     $span.append(subF.dispatchOn(this)[0]);
                     result.push($span[0].outerHTML);                    
-                } else {
-                    
+                } 
+                else {
                     result.push(subF.dispatchOn(this)[0]);
                     result = [result.join(" or ")];
                 }
@@ -134,7 +124,8 @@ module GUI.Widget {
                     var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', subF.id);
                     $span.append(wrapped);     
                     result.push($span[0].outerHTML);
-                } else {
+                } 
+                else {
                     result.push(wrapped);
                     result = [result.join(" and ")];
                 }
@@ -151,7 +142,8 @@ module GUI.Widget {
                 var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', '-1');
                 $span.append('T');
                 result.push($span[0].outerHTML);
-            } else {
+            } 
+            else {
                 result.push("T");
             }
 
@@ -166,7 +158,8 @@ module GUI.Widget {
                 var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', '-1');
                 $span.append('F');
                 result.push($span[0].outerHTML);
-            } else {
+            } 
+            else {
                 result.push("F");
             }
 
@@ -185,7 +178,8 @@ module GUI.Widget {
                 var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
                 result.push($span[0].outerHTML);
-            } else {
+            } 
+            else {
                 result.push(formulaStr);
             }
 
@@ -204,7 +198,8 @@ module GUI.Widget {
                 var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
                 result.push($span[0].outerHTML);
-            } else {
+            } 
+            else {
                 result.push(formulaStr);
             }
 
@@ -223,7 +218,8 @@ module GUI.Widget {
                 var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
                 result.push($span[0].outerHTML);
-            } else {
+            } 
+            else {
                 result.push(formulaStr);
             }
 
@@ -242,7 +238,8 @@ module GUI.Widget {
                 var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
                 result.push($span[0].outerHTML);
-            } else {
+            } 
+            else {
                 result.push(formulaStr);
             }
 
@@ -259,7 +256,8 @@ module GUI.Widget {
                 var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
                 result.push($span[0].outerHTML);
-            } else {
+            } 
+            else {
                 result.push(formulaStr);
             }
 
@@ -276,7 +274,8 @@ module GUI.Widget {
                 var $span = $('<span></span>').addClass('hml-subformula').attr('data-id', formula.subFormula.id);
                 $span.append(formulaStr)
                 result.push($span[0].outerHTML);
-            } else {
+            } 
+            else {
                 result.push(formulaStr);
             }
         
@@ -296,11 +295,13 @@ module GUI.Widget {
                         $span.append(formulaStr)
                         result.push($span[0].outerHTML);
                     }
-                } else {
+                } 
+                else {
                     // this is not the first formula therefore just return the formula definition.
                     result.push(formulaStr);
                 }
-            } else {
+            } 
+            else {
                 throw "HML variable " + formula.variable + " has no definition";
             }
         
