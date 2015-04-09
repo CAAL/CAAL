@@ -16,6 +16,7 @@ module CCS {
         dispatchSummationProcess(process : SummationProcess, ... args) : T;
         dispatchCompositionProcess(process : CompositionProcess, ... args) : T;
         dispatchActionPrefixProcess(process : ActionPrefixProcess, ... args) : T;
+        // dispatchDelayPrefixProcess(process : DelayPrefixProcess, ... args) : T;
         dispatchRestrictionProcess(process : RestrictionProcess, ... args) : T;
         dispatchRelabellingProcess(process : RelabellingProcess, ... args) : T;
     }
@@ -84,6 +85,17 @@ module CCS {
             return "Action(" + this.action.toString() + ")";
         }
     }
+    
+    // export class DelayPrefixProcess implements Process {
+    //     constructor(public id : ProcessId, public delay : Delay, public nextProcess : Process) {
+    //     }
+    //     dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
+    //         return dispatcher.dispatchDelayPrefixProcess(this);
+    //     }
+    //     toString() {
+    //         return "Delay(" + this.delay.toString() + ")";
+    //     }
+    // }
 
     export class RestrictionProcess implements Process {
         constructor(public id : ProcessId, public subProcess : Process, public restrictedLabels : LabelSet) {
@@ -138,6 +150,18 @@ module CCS {
             return new Action(this.label, this.complement);
         }
     }
+    
+    // export class Delay {
+    //     private delay : number;
+        
+    //     constructor(delay : number) {
+    //         this.delay = delay;
+    //     }
+        
+    //     getDelay() : number {
+    //         return this.delay;
+    //     }
+    // }
 
     interface Error {
         name : string;
@@ -201,6 +225,11 @@ module CCS {
             this.processes[existing.id] = existing;
             return existing;
         }
+        
+        // newDelayPrefixProcess(delay : Delay, nextProcess : Process) {
+        //     // var key = "." + delay.getDelay() + "." + nextProcess.id;
+        //     return this.processes[this.nextId] = new DelayPrefixProcess(this.nextId++, delay, nextProcess);
+        // }
 
         newSummationProcess(subProcesses : Process[]) {
             var temp, key, existing;
