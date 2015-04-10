@@ -46,7 +46,7 @@ module Main {
         new Export("#export-pdf-btn", activityHandler);
 
         new HotkeyHandler().setGlobalHotkeys(activityHandler, save);
-        
+
         Activity.addTooltips();
     });
 

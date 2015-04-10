@@ -43,7 +43,7 @@ module Equivalence {
             var result,
             data = this.constructData[identifier],
             type = data[0];
-            if (type === 0) { //It it a pair?
+            if (type === 0) { //Is it a pair?
                 result = this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
             } else if (type === 1) { // The left action and destination is fixed?
                 result = this.nodes[identifier] = this.getNodeForLeftTransition(data);
@@ -149,12 +149,11 @@ module Equivalence {
             return hyperedges;
         }
 
-        public getAttackerOptions(dgNodeId : dg.DgNodeId) : dg.Hyperedge[] {
+        public getAttackerOptions(dgNodeId : dg.DgNodeId) : [CCS.Action, CCS.Process, dg.DgNodeId, number][] {
             if (this.constructData[dgNodeId][0] !== 0)
                 throw "Bad node for attacker options";
             
             var hyperedges = this.getHyperEdges(dgNodeId);
-            
             var result = [];
             
             hyperedges.forEach(hyperedge => {
@@ -175,14 +174,12 @@ module Equivalence {
             return result;
         }
         
-        public getDefenderOptions(dgNodeId : dg.DgNodeId) {
+        public getDefenderOptions(dgNodeId : dg.DgNodeId) : [CCS.Process, dg.DgNodeId][] {
             if (this.constructData[dgNodeId][0] === 0)
                 throw "Bad node for defender options";
             
             var hyperedge = this.getHyperEdges(dgNodeId)[0];
-            
             var result = [];
-            
             var tcpi = this.constructData[dgNodeId][0] === 1 ? 2 : 1;
             
             hyperedge.forEach(targetNode => {
@@ -341,6 +338,150 @@ module Equivalence {
         }
     }
 
+    export class SimulationDG implements dg.DependencyGraph, dg.PlayableDependencyGraph {
+        private nextIdx;
+        private nodes = [];
+        private constructData = [];
+        private leftPairs = {};
+        private isFullyConstructed = false;
+
+        constructor(private attackSuccGen : ccs.SuccessorGenerator,
+                    private defendSuccGen : ccs.SuccessorGenerator,
+                    leftNode, rightNode) {
+            this.constructData[0] = [0, leftNode, rightNode];
+            this.nextIdx = 1;
+        }
+
+        getHyperEdges(identifier : dg.DgNodeId) : dg.Hyperedge[] {
+            var type, result;
+            //Have we already built this? Then return copy of the edges.
+            if (this.nodes[identifier]) {
+                result = this.nodes[identifier];
+            } else {
+                result = this.constructNode(identifier);
+            }
+            return dg.copyHyperEdges(result);
+        }
+
+        private constructNode(identifier : dg.DgNodeId) {
+            var result,
+            data = this.constructData[identifier],
+            type = data[0];
+            if (type === 0) { //It it a pair?
+                result = this.nodes[identifier] = this.getProcessPairStates(data[1], data[2]);
+            } else if (type === 1) { // The left action and destination is fixed?
+                result = this.nodes[identifier] = this.getNodeForLeftTransition(data);
+            }
+            return result;
+        }
+
+        getAllHyperEdges() : [dg.DgNodeId, dg.Hyperedge][] {
+            if (!this.isFullyConstructed) {
+                this.isFullyConstructed = true;
+                //All nodes have ids in order of creation, thus there are no gaps.
+                for (var i=0; i < this.nextIdx; i++) {
+                    this.constructNode(i);
+                }
+            }
+            var result = [];
+            result.length = this.nextIdx;
+            for (var i=0; i < this.nextIdx; i++) {
+                result[i] = [i, dg.copyHyperEdges(this.nodes[i])];
+            }
+            return result;
+        }
+
+        private getNodeForLeftTransition(data) {
+            var action = data[1],
+            toLeftId = data[2],
+            fromRightId = data[3],
+            result = [];
+            // for (s, fromRightId), s ----action---> toLeftId.
+            // fromRightId must be able to match.
+            var rightTransitions = this.defendSuccGen.getSuccessors(fromRightId);
+            rightTransitions.forEach(rightTransition => {
+                var existing, toRightId;
+                //Same action - possible candidate.
+                if (rightTransition.action.equals(action)) {
+                    toRightId = rightTransition.targetProcess.id;
+                    var rightIds = this.leftPairs[toLeftId];
+                    if (rightIds) {
+                        existing = rightIds[toRightId];
+                    }
+                    //Have we already solved the resulting (s1, t1) pair?
+                    if (existing) {
+                        result.push(existing);
+                    } else {
+                        //Build the node.
+                        var newIndex = this.nextIdx++;
+                        if (!rightIds) this.leftPairs[toLeftId] = rightIds = {};
+                        rightIds[toRightId] = newIndex
+                        this.constructData[newIndex] = [0, toLeftId, toRightId];
+                        result.push(newIndex);
+                    }
+                }
+            });
+            return [result];
+        }
+
+        private getProcessPairStates(leftProcessId : ccs.ProcessId, rightProcessId : ccs.ProcessId) : dg.Hyperedge[] {
+            var hyperedges : dg.Hyperedge[] = [];
+            var leftTransitions = this.attackSuccGen.getSuccessors(leftProcessId);
+            leftTransitions.forEach(leftTransition => {
+                var newNodeIdx = this.nextIdx++;
+                this.constructData[newNodeIdx] = [1, leftTransition.action, leftTransition.targetProcess.id, rightProcessId];
+                hyperedges.push([newNodeIdx]);
+            });
+            return hyperedges;
+        }
+        
+        public getAttackerOptions(dgNodeId : dg.DgNodeId) : [CCS.Action, CCS.Process, dg.DgNodeId, number][] {
+            if (this.constructData[dgNodeId][0] !== 0)
+                throw "Bad node for attacker options";
+            
+            var hyperedges = this.getHyperEdges(dgNodeId);
+            var result = [];
+            
+            hyperedges.forEach(hyperedge => {
+                var targetNode = hyperedge[0];
+                var data = this.constructData[targetNode];
+                var action = data[1];
+                var targetProcess = this.attackSuccGen.getProcessById(data[2]);
+                var move = data[0];
+                
+                result.push({
+                    action: action,
+                    targetProcess: targetProcess,
+                    nextNode: targetNode,
+                    move: move
+                });
+            });
+            
+            return result;
+        }
+        
+        public getDefenderOptions(dgNodeId : dg.DgNodeId) : [CCS.Process, dg.DgNodeId][] {
+            if (this.constructData[dgNodeId][0] === 0)
+                throw "Bad node for defender options";
+            
+            var hyperedge = this.getHyperEdges(dgNodeId)[0];
+            var result = [];
+            var tcpi = this.constructData[dgNodeId][0] === 1 ? 2 : 1;
+            
+            hyperedge.forEach(targetNode => {
+                var data = this.constructData[targetNode];
+                var targetProcess = this.defendSuccGen.getProcessById(data[tcpi]);
+                
+                result.push({
+                    targetProcess: targetProcess,
+                    nextNode: targetNode
+                });
+            });
+            
+            return result;
+        }
+    }
+    
     export function isBisimilar(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
         var bisimDG = new Equivalence.BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
         marking = dg.liuSmolkaLocal2(0, bisimDG);
@@ -356,6 +497,12 @@ module Equivalence {
         //         console.log(prettyPrintTrace(graph, traces.right));
         //     }
         // }
+        return marking.getMarking(0) === marking.ZERO;
+    }
+    
+    export function isSimilar(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId) {
+        var simDG = new Equivalence.SimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId);
+        var marking = dg.liuSmolkaLocal2(0, simDG);
         return marking.getMarking(0) === marking.ZERO;
     }
 
