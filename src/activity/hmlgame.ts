@@ -99,6 +99,8 @@ module Activity {
         private $processList : JQuery;
         private $formulaList : JQuery;
         private optionsDom;
+        private $restartBtn;
+        private fullscreen;
 
         /* Todo
             How to ensure leftProcess and right formula valid. Or just not draw until selected?
@@ -129,6 +131,12 @@ module Activity {
             });
 
             $("#hml-game-main").append(this.processExplorer.getRootElement());
+            
+            /* Assign the restart button */
+            this.$restartBtn = $("#hml-game-restart");
+            this.$restartBtn.on("click", () => this.configure(this.configuration));
+
+            this.fullscreen = new Fullscreen($("#hml-game-container")[0], $("#hml-game-fullscreen"), () => this.resize());
             
             //$("#hml-game-status-right").append(this.transitionTable.getRootElement());
             //$("#hml-game-status-right").append(this.hmlselector.getRootElement());
@@ -165,15 +173,15 @@ module Activity {
                     '<option value="weak">Weak Logic</option>' +
                 '</select>' +
                 '<select id="hml-game-process" class="form-control"></select>' +
-                '<select id="hml-game-formula" class="form-control"></select>' +
-                '<div class="btn-group" data-toggle="buttons">' +
-                    '<label class="btn btn-default">' +
-                        '<input name="player-type" value="attacker" type="radio"> Attacker' +
-                    '</label>' +
-                    '<label class="btn btn-default active">' +
-                        '<input name="player-type" value="defender" type="radio" checked> Defender' +
-                    '</label>' +
-                '</div>';
+                '<select id="hml-game-formula" class="form-control"></select>';
+                // '<div class="btn-group" data-toggle="buttons">' +
+                //     '<label class="btn btn-default">' +
+                //         '<input name="player-type" value="attacker" type="radio"> Attacker' +
+                //     '</label>' +
+                //     '<label class="btn btn-default active">' +
+                //         '<input name="player-type" value="defender" type="radio" checked> Defender' +
+                //     '</label>' +
+                // '</div>';
             var optionsContainer = document.createElement("div");
             optionsContainer.innerHTML = domString;
             this.optionsDom = optionsContainer;
@@ -283,8 +291,8 @@ module Activity {
             this.processExplorer.setSuccGenerator(this.configuration.succGen);
             this.processExplorer.exploreProcess(this.currentProcess);
 
-            this.hmlGameLogic = new HmlGameLogic(this.currentProcess, this.currentFormula);
-            this.hmlGameLogic.setSuccGenerator(this.configuration.succGen);
+            this.hmlGameLogic = new HmlGameLogic(this.currentProcess, this.currentFormula, 
+                                                 this.currentFormulaSet, configuration.succGen, configuration.graph);
             this.hmlGameLogic.setGamelogWriter(this.WriteToGamelog);
 
             this.refresh(configuration);
@@ -338,9 +346,13 @@ module Activity {
                 explorerOffsetTop = $processExplorerCanvasContainer.offset().top,
                 explorerOffsetBottom = $("#hml-game-status").height();
             
-            var explorerHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 22;
+            var availableHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 22;
+
+            // Only 10px margin bot in fullscreen.
+            if (this.fullscreen.isFullscreen())
+                availableHeight += 10;
                         
-            this.processExplorer.resize(this.$container.width(), explorerHeight);
+            this.processExplorer.resize(this.$container.width(), availableHeight);
         }
 
         toString() {
@@ -366,9 +378,9 @@ module Activity {
 
     class HmlGameState {
         constructor(public process : CCS.Process, 
-                public formula : HML.Formula, 
-                public isMinGame : boolean) {
-        }
+                public formula : HML.Formula,
+                public formulaSet : HML.FormulaSet, 
+                public isMinGame : boolean){}
 
         toString() {
             var hmlNotationVisitor = new Traverse.HMLNotationVisitor();
@@ -388,11 +400,20 @@ module Activity {
         private writeToGamelog : Function;
         private stopGame : Function;
         private succGen : CCS.SuccessorGenerator;
+        private dGraph : dg.PlayableDependencyGraph;
         private cycleCache;
 
-        constructor(process, formula) {
-            this.state = new HmlGameState(process, formula, true);
+        constructor(process : CCS.Process, formula : HML.Formula, formulaSet : HML.FormulaSet, succGen : CCS.SuccessorGenerator, graph : CCS.Graph) {
             this.cycleCache = {};
+            this.state = new HmlGameState(process, formula, formulaSet, true);
+            this.succGen = succGen;
+            this.dGraph = this.createDependencyGraph(graph, this.state.process, this.state.formula); 
+        }
+
+        private createDependencyGraph(graph : CCS.Graph, process : CCS.Process, formula : HML.Formula) : dg.PlayableDependencyGraph {
+            var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
+            var weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: false});
+            return new dg.MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, process.id, this.state.formulaSet, formula);
         }
 
         private popModalityFormula(hmlF : Modality) : HML.Formula {
@@ -408,28 +429,29 @@ module Activity {
             this.writeToGamelog = gamelogger;
         }
 
-        public setSuccGenerator(succGen : CCS.SuccessorGenerator) {
-            this.succGen = succGen;
-        }
-
         selectedFormula(formula : HML.Formula) : HmlGameState {
-            // The player selected a formula.
-            // Same as selectedTransition
-            this.previousStates.push(this.state);
-            this.state = new HmlGameState(this.state.process, formula, this.state.isMinGame);
-            // TODO Write to gamelog
-            return this.state;
+            if(!this.gameIsOver){
+                // The player selected a formula.
+                this.previousStates.push(this.state);
+                this.state = new HmlGameState(this.state.process, formula, this.state.formulaSet, this.state.isMinGame);
+                // TODO Write to gamelog
+                return this.state;
+            }
+
+            throw "Game has ended";
         }
 
         selectedTransition(transition : CCS.Transition) : HmlGameState {
             // The player selected a transition
-            // Push current to previous
-            // Check for gameover including min/max cycle.
-            var hmlSubF = this.popModalityFormula(<Modality> this.state.formula);
-            this.previousStates.push(this.state);
-            this.state = new HmlGameState(transition.targetProcess, hmlSubF, this.state.isMinGame);
-            // TODO Write to gamelog
-            return this.state;
+            if (!this.gameIsOver) {
+                var hmlSubF = this.popModalityFormula(<Modality> this.state.formula);
+                this.previousStates.push(this.state);
+                this.state = new HmlGameState(transition.targetProcess, hmlSubF, this.state.formulaSet, this.state.isMinGame);
+                // TODO Write to gamelog
+                return this.state;
+            }
+
+            throw "Game has ended";
         }
 
         private cycleExists() : boolean {
@@ -451,17 +473,21 @@ module Activity {
             // infinite run
             if(this.cycleExists()){
                 if (this.state.isMinGame) {
+                    this.gameIsOver = true;
                     return new Pair(Player.defender, WinReason.minGameCycle);
                 } else {
+                    this.gameIsOver = true;
                     return new Pair(Player.attacker, WinReason.maxGameCycle);
                 }
             }
 
             // true/false formula
             if(this.state.formula instanceof HML.FalseFormula) {
+                this.gameIsOver = true;
                 return new Pair(Player.attacker, WinReason.falseFormula); // attacker win
             } 
             else if (this.state.formula instanceof HML.TrueFormula) {
+                this.gameIsOver = true;
                 return new Pair(Player.defender, WinReason.trueFormula); // defender win
             }
 
@@ -469,6 +495,7 @@ module Activity {
             var currentPlayer = this.getCurrentPlayer();
             if(!this.getAvailableTransitions() && this.getNextActionType() === ActionType.transition) {
                 var winner = (currentPlayer === Player.attacker) ? Player.defender : Player.attacker;
+                this.gameIsOver = true;
                 return new Pair(winner, WinReason.stuck);
             }
 
@@ -493,12 +520,12 @@ module Activity {
         JudgeUnfold(hml : HML.Formula, hmlFSet : HML.FormulaSet) : HML.Formula {
             if (hml instanceof HML.MinFixedPointFormula) {
                 this.previousStates.push(this.state);
-                this.state = new HmlGameState(this.state.process, hml.subFormula, true);
+                this.state = new HmlGameState(this.state.process, hml.subFormula, this.state.formulaSet, true);
                 return hml.subFormula;
             }
             else if (hml instanceof HML.MaxFixedPointFormula) {
                 this.previousStates.push(this.state);
-                this.state = new HmlGameState(this.state.process, hml.subFormula, false);
+                this.state = new HmlGameState(this.state.process, hml.subFormula, this.state.formulaSet, false);
                 return hml.subFormula;
             } 
             else if (hml instanceof HML.VariableFormula) {
@@ -527,12 +554,8 @@ module Activity {
         }
 
         getAvailableTransitions() : CCS.Transition[] {
-            //Not sure about interface. they all lead to the same subformula,
-            //but the transition may differ.
-            var hml = this.state.formula;
-            if(hml instanceof HML.StrongExistsFormula || hml instanceof HML.WeakExistsFormula 
-                || hml instanceof HML.StrongForAllFormula || hml instanceof HML.WeakForAllFormula) {
-                
+            if(this.getNextActionType() === ActionType.transition) {
+                var hml = <Modality>this.state.formula;
                 var allTransitions = this.succGen.getSuccessors(this.state.process.id).toArray();
                 var availableTransitions = allTransitions.filter((transition) => hml.actionMatcher.matches(transition.action));
                 return availableTransitions;
@@ -545,7 +568,6 @@ module Activity {
             var hmlSuccGen = new Traverse.HMLSuccGenVisitor(hmlFSet);
             var formulaSuccessors = hmlSuccGen.visit(this.state.formula);
 
-            console.log(formulaSuccessors);
             return formulaSuccessors;
         }
     }

@@ -100,9 +100,9 @@ module GUI.Widget {
             var $canvasContainer = $(this.canvasContainer);
             height = Math.max(265, height);
             
-            $root.width(width); // they must be the same size?
+            //$root.width(width); // they must be the same size?
             $root.height(height);
-            $canvasContainer.width(width); // they must be the same size?
+            //$canvasContainer.width(width); // they must be the same size?
             $canvasContainer.height(height);
             
             //Fix zoom
