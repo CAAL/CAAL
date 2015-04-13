@@ -3,15 +3,18 @@
 /// <reference path="../../lib/ccs.d.ts" />
 /// <reference path="property.ts" />
 
+enum InputMode {CCS, TCCS}
+
 class Project {
-    private static instance: Project = null;
-    private defaultTitle: string = "Untitled Project";
-    private defaultCCS: string = "";
-    private id: number = null;
-    private $projectTitle: JQuery = $("#project-title");
-    private ccs: string;
-    private properties: Property.Property[];
-    private changed: boolean = false;
+    private static instance : Project = null;
+    private defaultTitle : string = "Untitled Project";
+    private defaultCCS : string = "";
+    private id : number = null;
+    private $projectTitle : JQuery = $("#project-title");
+    private ccs : string;
+    private properties : Property.Property[];
+    private changed : boolean = false;
+    private inputMode : InputMode = InputMode.CCS;
 
     public constructor() {
         if (Project.instance) {
@@ -25,7 +28,7 @@ class Project {
         this.$projectTitle.focusout(() => this.onTitleChanged());
     }
 
-    public static getInstance(): Project {
+    public static getInstance() : Project {
         if (Project.instance === null) {
             Project.instance = new Project();
         }
@@ -33,34 +36,34 @@ class Project {
         return Project.instance;
     }
 
-    public reset(): void {
+    public reset() : void {
         this.update(null, this.defaultTitle, this.defaultCCS, null);
     }
 
-    public update(id: number, title: string, ccs: string, properties: any[]): void {
+    public update(id : number, title : string, ccs : string, properties : any[]) : void {
         this.setId(id);
         this.setTitle(title);
         this.setCCS(ccs);
         this.setProperties(properties);
     }
 
-    public getId(): number {
+    public getId() : number {
         return this.id;
     }
 
-    public setId(id: number): void {
+    public setId(id : number) : void {
         this.id = id;
     }
 
-    public getTitle(): string {
+    public getTitle() : string {
         return this.$projectTitle.text();
     }
 
-    public setTitle(title: string): void {
+    public setTitle(title : string) : void {
         this.$projectTitle.text(title);
     }
 
-    private onTitleChanged(): void {
+    private onTitleChanged() : void {
         var title = this.$projectTitle.text();
 
         if (title === "") {
@@ -70,19 +73,19 @@ class Project {
         }
     }
 
-    public getCCS(): string {
+    public getCCS() : string {
         return this.ccs;
     }
 
-    public setCCS(ccs: string): void {
+    public setCCS(ccs : string) : void {
         this.ccs = ccs;
     }
 
-    public getProperties(): Property.Property[] {
+    public getProperties() : Property.Property[] {
         return this.properties;
     }
 
-    public setProperties(properties: any[]): void {
+    public setProperties(properties : any[]) : void {
         this.properties = Array();
 
         if (properties) {
@@ -98,11 +101,11 @@ class Project {
         }
     }
 
-    public addProperty(property: Property.Property): void {
+    public addProperty(property : Property.Property) : void {
         this.properties.push(property);
     }
 
-    public deleteProperty(property: Property.Property): void {
+    public deleteProperty(property : Property.Property) : void {
         var id = property.getId();
 
         for (var i = 0; i < this.properties.length; i++) {
@@ -113,11 +116,11 @@ class Project {
         }
     }
 
-    public isChanged(): boolean {
+    public isChanged() : boolean {
         return this.changed;
     }
 
-    public setChanged(changed: boolean): void {
+    public setChanged(changed : boolean) : void {
         // Changed from false to true.
         if (changed !== this.changed && changed === true) {
             $(document).trigger("ccs-changed");
@@ -126,13 +129,21 @@ class Project {
         this.changed = changed;
     }
 
-    public getGraph(): CCS.Graph {
+    public getInputMode() : InputMode {
+        return this.inputMode;
+    }
+
+    public setInputMode(inputMode : InputMode) : void {
+        this.inputMode = inputMode;
+    }
+
+    public getGraph() : CCS.Graph {
         var graph = new CCS.Graph();
             CCSParser.parse(this.ccs, {ccs: CCS, graph: graph});
         return graph;
     }
 
-    public toJSON(): any {
+    public toJSON() : any {
         var properties = Array();
         for (var i = 0; i < this.properties.length; i++) {
             properties.push(this.properties[i].toJSON());
