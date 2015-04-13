@@ -553,6 +553,10 @@ module Activity {
             this.marking = this.createMarking();
         }
         
+        public getGameLog() : GameLog {
+            return this.gameLog;
+        }
+        
         protected createMarking() : dg.LevelMarking {
             return dg.liuSmolkaLocal2(this.currentNodeId, this.dependencyGraph);
         }
@@ -819,7 +823,8 @@ module Activity {
         private attackerSuccessorGen : CCS.SuccessorGenerator;
         private defenderSuccessorGen : CCS.SuccessorGenerator;
         
-        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
+        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator,
+                leftProcessName : string, rightProcessName : string, gameType : string) {
             
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
@@ -906,7 +911,8 @@ module Activity {
         private attackerSuccessorGen : CCS.SuccessorGenerator;
         private defenderSuccessorGen : CCS.SuccessorGenerator;
         
-        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
+        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator,
+                leftProcessName : string, rightProcessName : string, gameType : string) {
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
             this.gameType = gameType;
@@ -1044,8 +1050,6 @@ module Activity {
     }
 
     class Player extends Abstract {
-
-        protected gameLog : GameLog = new GameLog();
         
         constructor(private playType : PlayType) {
             super();
@@ -1094,18 +1098,19 @@ module Activity {
         
         protected prepareAttack(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, true);
-            this.gameLog.println("Pick a transition on the left or the right.", "<p class='game-prompt'>");
+            game.getGameLog().printPrepareAttack();
         }
         
         protected prepareDefend(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, false);
-            this.gameLog.println("Pick a transition on the " + ((game.getLastMove() === Move.Left) ? "right." : "left."), "<p class='game-prompt'>");
+            game.getGameLog().printPrepareDefend(game.getLastMove());
         }
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
             var currentConfiguration = game.getCurrentConfiguration();
             var actionTransition : string;
-            var isWeakGame = (game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak") || (game instanceof SimulationGame && (<SimulationGame>game).getGameType() === "weak");
+            var isWeakGame = (game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak") ||
+                    (game instanceof SimulationGame && (<SimulationGame>game).getGameType() === "weak");
             
             if (!isAttack && isWeakGame) {
                 actionTransition = "=" + game.getLastAction().toString() + "=>";
@@ -1305,7 +1310,7 @@ module Activity {
 
             return template;
         }
-
+        
         public removeLastPrompt() : void {
             this.$log.find(".game-prompt").last().remove();
         }
@@ -1313,6 +1318,14 @@ module Activity {
         public printRound(round : number, configuration : any) : void {
             this.println("Round " + round, "<h4>");
             this.printConfiguration(configuration);
+        }
+
+        public printPrepareAttack() {
+            this.println("Pick a transition on the left or the right.", "<p class='game-prompt'>");
+        }
+        
+        public printPrepareDefend(lastMove : Move) {
+            this.println("Pick a transition on the " + ((lastMove === Move.Left) ? "right." : "left."), "<p class='game-prompt'>");
         }
 
         public printConfiguration(configuration : any) : void {
@@ -1435,6 +1448,14 @@ module Activity {
             } else {
                 this.println(winner.playTypeStr() + " has a winning strategy. You are going to lose.", "<p class='intro'>");
             }
+        }
+        
+        public printPrepareAttack() {
+            this.println("Pick a transition on the left.", "<p class='game-prompt'>");
+        }
+        
+        public printPrepareDefend(lastMove : Move) {
+            this.println("Pick a transition on the right.", "<p class='game-prompt'>");
         }
     }
 }
