@@ -78,34 +78,52 @@
         
         <!-- Editor -->
         <div id="editor-container" class="container">
-            <h4 id="project-title" class="pull-left" contenteditable="true"></h4>
-            <i id="title-edit-icon" class="fa fa-pencil-square-o"></i>
-            <div class="btn-group pull-right">
-                <button id="parse-btn" type="button" class="btn btn-default">Parse</button>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                        Font Size
-                        <span class="caret"></span>
-                    </button>
-                    <ul id="font-size-btn" class="dropdown-menu" role="menu">
-                        <li><a>10</a></li>
-                        <li><a>12</a></li>
-                        <li><a>14</a></li>
-                        <li><a>16 <i class="fa fa-check"></i></a></li>
-                        <li><a>18</a></li>
-                        <li><a>20</a></li>
-                        <li><a>22</a></li>
-                        <li><a>24</a></li>
-                    </ul>
+            <div class="row">
+                <div class="col-md-4">
+                    <h4 id="project-title" class="pull-left" contenteditable="true"></h4>
+                </div>
+                <div class="col-md-8 controls">
+                    <div class="control-group">
+                        <select id="font-size" class="form-control">
+                            <option>10</option>
+                            <option>12</option>
+                            <option>14</option>
+                            <option selected>16</option>
+                            <option>18</option>
+                            <option>20</option>
+                            <option>22</option>
+                            <option>24</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <div id="input-mode" class="btn-group" data-toggle="buttons">
+                            <label class="btn btn-default active">
+                                <input value="CCS" type="radio" checked>CCS</input>
+                            </label>
+                            <label class="btn btn-default">
+                                <input value="TCCS" type="radio">TCCS</input>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <button id="parse-btn" type="button" class="btn btn-default">Parse</button>
+                    </div>
                 </div>
             </div>
-            <div class="clearfix"></div>
-            <div class="editor-border">
-                <div id="editor"></div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="editor-border">
+                        <div id="editor"></div>
+                    </div>
+                </div>
             </div>
-            <div id="status-area" class="alert alert-dismissible" role="alert">
-                <button type="button" class="close" data-hide="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <p></p>
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="parse-result" class="alert alert-dismissible" role="alert">
+                        <button type="button" class="close" data-hide="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <p></p>
+                    </div>
+                </div>
             </div>
         </div>
 

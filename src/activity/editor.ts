@@ -1,29 +1,25 @@
 /// <reference path="../../lib/jquery.d.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
-/// <reference path="../gui/project.ts" />
 /// <reference path="../main.ts" />
-/// <reference path="activity.ts" />
+/// <reference path="../gui/project.ts" />
 /// <reference path="../gui/autosave.ts" />
+/// <reference path="activity.ts" />
 
 module Activity {
 
     export class Editor extends Activity {
-        private editor: any;
-        private project: Project;
-        private initialCCS: string;
-        private $statusArea: JQuery;
-        private $fontSizeButton: JQuery;
-        private autosave: AutoSave;
+        private project : Project;
+        private editor : any;
+        private autosave : AutoSave;
+        private initialCCS : string;
+        private $parseResult : JQuery;
 
-        constructor(container: string, button: string) {
+        constructor(container : string, button : string) {
             super(container, button);
 
             this.project = Project.getInstance();
-            this.editor = ace.edit("editor");
-            this.$statusArea = this.$container.find("#status-area");
-            this.$fontSizeButton = this.$container.find("#font-size-btn");
-            this.autosave = new AutoSave();
 
+            this.editor = ace.edit("editor");
             this.editor.setTheme("ace/theme/crisp");
             this.editor.getSession().setMode("ace/mode/ccs");
             this.editor.getSession().setUseWrapMode(true);
@@ -33,104 +29,94 @@ module Activity {
                 fontSize: 16,
                 fontFamily: "Inconsolata",
             });
-            
-            this.$container.find("#parse-btn").on("click", () => {this.parse()});
-            this.$statusArea.children("button").on("click", () => {this.$statusArea.hide()});
-            this.$fontSizeButton.children("li").on("click", (e) => {this.setFontSize(e)});
 
-            // Set initial size to match initial content
-            this.updateHeight();
-            
-            this.editor.on("change", (event) => {
-                // if userinput:
-                if (this.editor.curOp && this.editor.curOp.command.name)
+            this.editor.on("change", () => {
+                if (this.editor.curOp && this.editor.curOp.command.name) {
                     this.autosave.resetTimer();
-                
-                this.project.setCCS(this.editor.getValue())
+                }
+
+                this.project.setCCS(this.editor.getValue());
                 this.updateHeight();
-                
             });
 
-            if( this.autosave.checkAutosave() )
-                this.loadAutosave();
+            this.autosave = new AutoSave();
+
+            if (this.autosave.checkAutosave()) {
+                var autosaveProject = this.autosave.getAutosave();
+                this.project.update(0, autosaveProject.title, autosaveProject.ccs, autosaveProject.properties);
+            }
+
+            this.$parseResult = $("#parse-result");
+            this.$parseResult.find("button").on("click", () => this.$parseResult.hide());
+
+            $("#parse-btn").on("click", () => this.parse());
+            $("#input-mode").on("change", (e) => this.setInputMode(e));
+            $("#font-size").on("change", (e) => this.setFontSize(e));
         }
 
-        private loadAutosave() {
-            var autosaveProject = this.autosave.getAutosave();
-            this.project.update(0, autosaveProject.title, autosaveProject.ccs, autosaveProject.properties);
+        public setInputMode(e) {
+            this.project.setInputMode(InputMode[<string> $(e.target).val()]);
         }
 
-        public onShow(configuration?: any): void {
-            this.project.setChanged(false);
-            this.$statusArea.hide();
-            this.initialCCS = this.editor.getValue()
-            this.setText(this.project.getCCS());
+        public onShow(configuration? : any) : void {
+            this.initialCCS = this.editor.getValue();
+
+            if (this.initialCCS !== this.project.getCCS()) {
+                this.editor.setValue(this.project.getCCS());
+                this.editor.clearSelection();
+            }
+
             this.editor.focus();
         }
 
-        public onHide(): void {
+        public onHide() : void {
             this.project.setChanged(this.initialCCS !== this.project.getCCS());
+            this.$parseResult.hide();
         }
 
-        private setText(text: string): void {
-            this.editor.setValue(text);
-            this.editor.clearSelection();
-        }
-
-        private setFontSize(e): void {
-            var selected = " <i class=\"fa fa-check\"></i>";
-
-            this.$fontSizeButton.find("a").each(function() {
-                $(this).children("i").remove();
-                if ($(this).text() === e.target.text) {$(this).append(selected)}
-            });
-
-            this.editor.setFontSize(parseInt(e.target.text));
+        private setFontSize(e) : void {
+            var fontSize = $(e.target).val();
+            this.editor.setFontSize(parseInt(fontSize));
             this.updateHeight();
         }
 
-        private parse(): void {
+        private parse() : void {
             try {
                 var graph = this.project.getGraph(),
                     errors = graph.getErrors();
                 if (errors.length > 0) {
-                    this.updateStatusArea(errors.map(error => error.message).join("<br>"), "alert-danger");
+                    this.showParseResult(errors.map(error => error.message).join("<br>"), "alert-danger");
                 } else {
-                    this.updateStatusArea("Success! No errors.", "alert-success");
+                    this.showParseResult("Success! No errors.", "alert-success");
                 }
             } catch (error) {
                 if (error.message) {
                     var prefix = error.name ? error.name : "FatalError";
-                    this.updateStatusArea(prefix + ": " + error.message, "alert-danger");
+                    this.showParseResult(prefix + ": " + error.message, "alert-danger");
                 } else {
-                    this.updateStatusArea("Unknown Error: " + error.toString(), "alert-danger");
+                    this.showParseResult("Unknown Error: " + error.toString(), "alert-danger");
                 }
             }
         }
 
-        private updateStatusArea(errorString: string, errorClass: string): void {
-            this.$statusArea.removeClass("alert-success");
-            this.$statusArea.removeClass("alert-danger");
-            this.$statusArea.addClass(errorClass);
+        private showParseResult(errorString : string, errorClass : string) : void {
+            this.$parseResult.removeClass("alert-success");
+            this.$parseResult.removeClass("alert-danger");
+            this.$parseResult.addClass(errorClass);
 
-            var textArea = this.$statusArea.children("p");
+            var textArea = this.$parseResult.find("p");
             textArea.empty();
             textArea.append(errorString);
-            this.$statusArea.show();
+            this.$parseResult.show();
         }
 
         // http://stackoverflow.com/questions/11584061/
-        private updateHeight(): void {
-            var newHeight =
-                      this.editor.getSession().getScreenLength()
-                      * this.editor.renderer.lineHeight
-                      + this.editor.renderer.scrollBar.getWidth();
+        private updateHeight() : void {
+            var newHeight = this.editor.getSession().getScreenLength() * this.editor.renderer.lineHeight + this.editor.renderer.scrollBar.getWidth();
 
-            $('#editor').height(newHeight.toString() + "px");
-            $('#editor-section').height(newHeight.toString() + "px");
+            $('#editor').height(newHeight);
+            $('#editor-section').height(newHeight);
 
-            // This call is required for the editor to fix all of
-            // its inner structure for adapting to a change in size
             this.editor.resize();
         }
     }
