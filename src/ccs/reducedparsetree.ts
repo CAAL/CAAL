@@ -137,6 +137,10 @@ module Traverse {
             this.cache = cache || {};
         }
 
+        getGraph() {
+            return this.strictSuccGenerator.getGraph();
+        }
+
         getProcessByName(processName : string) : ccs.Process {
             return this.strictSuccGenerator.getProcessByName(processName);
         }
@@ -265,6 +269,10 @@ module Traverse {
     export class ReducingSuccessorGenerator implements ccs.SuccessorGenerator {
 
         constructor(public succGenerator : ccs.SuccessorGenerator, public reducer : ProcessTreeReducer) { }
+
+        getGraph() {
+            return this.succGenerator.getGraph();
+        }
 
         getProcessByName(processName : string) : ccs.Process {
             var namedProcess = this.succGenerator.getProcessByName(processName);
