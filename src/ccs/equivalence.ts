@@ -196,11 +196,12 @@ module Equivalence {
         */
         addReachablePairs(fromProcess : ccs.ProcessId) : void {
             var reachableProcessIds = [];
-            var count = 0;
+            var count = 0,
+                maxCount = 666;
 
             var iterator = ccs.reachableProcessIterator(fromProcess, this.attackSuccGen);
             while (iterator.hasNext()) {
-                if (count++ > 1000) throw "Too many process pairs";
+                if (count++ > maxCount) throw "Too many process pairs";
                 reachableProcessIds.push(iterator.next());
             }
 
