@@ -173,41 +173,42 @@ module Activity {
                     this.draw(this.graph.processById(processId), this.rightGraph, this.$rightDepth.val());
             });
 
-            // Ugly copy/paste. Fix later.
             this.leftGraph.setHoverOnListener((processId) => {
                 this.timeout = setTimeout(() => {
-                    var tooltip = $("#canvas-tooltip-left");
-                    var process = this.graph.processById(parseInt(processId));
+                    var tooltipAnchor = $("#game-canvas-tooltip-left");
                     var position = this.leftGraph.getPosition(processId);
-                    tooltip.css("top", position.y - 45 - this.$leftContainer.scrollTop());
-                    tooltip.css("left", position.x - 10 - this.$leftContainer.scrollLeft());
-                    tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
-                    tooltip.show();
-                }, 1000);
+
+                    tooltipAnchor.css("left", position.x - this.$leftContainer.scrollLeft());
+                    tooltipAnchor.css("top", position.y - this.$leftContainer.scrollTop() - 10);
+
+                    tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId)});
+                    tooltipAnchor.tooltip("show");
+                }, 1000)
             });
 
             this.leftGraph.setHoverOutListener(() => {
                 clearTimeout(this.timeout);
-                $("#canvas-tooltip-left").hide();
+                $("#game-canvas-tooltip-left").tooltip("destroy");
             });
 
             this.rightGraph.setHoverOnListener((processId) => {
                 this.timeout = setTimeout(() => {
-                    var tooltip = $("#canvas-tooltip-right");
-                    var process = this.graph.processById(parseInt(processId));
+                    var tooltipAnchor = $("#game-canvas-tooltip-right");
                     var position = this.rightGraph.getPosition(processId);
-                    tooltip.css("top", position.y - 45 - this.$rightContainer.scrollTop());
-                    tooltip.css("left", position.x - 10 - this.$rightContainer.scrollLeft());
-                    tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
-                    tooltip.show();
-                }, 1000);
+
+                    tooltipAnchor.css("left", position.x - this.$rightContainer.scrollLeft());
+                    tooltipAnchor.css("top", position.y - this.$rightContainer.scrollTop() - 10);
+
+                    tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId)});
+                    tooltipAnchor.tooltip("show");
+                }, 1000)
             });
 
             this.rightGraph.setHoverOutListener(() => {
                 clearTimeout(this.timeout);
-                $("#canvas-tooltip-right").hide();
+                $("#game-canvas-tooltip-right").tooltip("destroy");
             });
-            
+
             this.leftGraph.bindCanvasEvents();
             this.rightGraph.bindCanvasEvents();
         }

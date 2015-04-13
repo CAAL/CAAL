@@ -338,8 +338,16 @@ textarea {
     overflow: auto;
 }
 
+#game-left-canvas .tooltip, #game-right-canvas .tooltip {
+    font: normal 14px "Inconsolata";
+}
+
 #game-right-canvas {
     border-left: none;
+}
+
+#game-canvas-tooltip-left, #game-canvas-tooltip-right {
+    position: absolute;
 }
 
 #game-main input[type=range] {
