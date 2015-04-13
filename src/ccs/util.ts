@@ -227,6 +227,14 @@ module Traverse {
             }
             return result;
         }
+
+        dispatchCollapsedProcess(process : ccs.CollapsedProcess) {
+            var result = this.cache[process.id];
+            if (!result) {
+                result = "{" + process.subProcesses.map(subProc => subProc.id).join(", ") + "}";
+            }
+            return result;
+        }
     }
 
     export function safeHtml(str : string) : string {
@@ -239,104 +247,6 @@ module Traverse {
             "/": "&#x2F;"
         };
         return str.replace(/[&<>"'\/]/g, symbol => entities[symbol] || symbol);
-    }
-
-    export class TooltipHtmlCCSNotationVisitor implements ccs.ProcessVisitor<string>, ccs.ProcessDispatchHandler<string> {
-
-        //Be careful not to escape out any intentional html. Assume subStrings are escaped properly and only escape new parts.
-
-        private insideNamedProcess = undefined;
-        private cache;
-        private ttConstant = "ccs-tooltip-process";
-
-        constructor() {
-            this.clearCache();
-        }
-
-        clearCache() {
-            this.cache = {};
-        }
-
-        visit(process : ccs.Process) {
-            return process.dispatchOn(this);
-        }
-
-        dispatchNullProcess(process : ccs.NullProcess) {
-            return this.cache[process.id] = "0";
-        }
-
-        dispatchNamedProcess(process : ccs.NamedProcess) {
-            var result = this.cache[process.id];
-            //How to handle recursion???
-            if (!result) {
-                result = this.cache[process.id] =
-                    '<span class="' + this.ttConstant + '">' + safeHtml(process.name) + '</span>';
-            }
-            return result;
-        }
-
-        dispatchSummationProcess(process : ccs.SummationProcess) {
-            var result = this.cache[process.id],
-                subStr;
-            if (!result) {
-                subStr = process.subProcesses.map(subProc => subProc.dispatchOn(this));
-                result = this.cache[process.id] = subStr.join(" + ");
-            }
-            return result;
-        }
-
-        dispatchCompositionProcess(process : ccs.CompositionProcess) {
-            var result = this.cache[process.id],
-                subStr;
-            if (!result) {
-                subStr = process.subProcesses.map(subProc => {
-                    var unwrapped = subProc.dispatchOn(this);
-                    return wrapIfInstanceOf(unwrapped, subProc, [ccs.SummationProcess]);
-                });
-                result = this.cache[process.id] = subStr.join(" | ");
-            }
-            return result;
-        }
-
-        dispatchActionPrefixProcess(process : ccs.ActionPrefixProcess) {
-            var result = this.cache[process.id],
-                subStr;
-            if (!result) {
-                subStr = process.nextProcess.dispatchOn(this);
-                subStr = wrapIfInstanceOf(subStr, process.nextProcess, [ccs.SummationProcess, ccs.CompositionProcess]);
-                result = this.cache[process.id] = safeHtml(process.action.toString()) + "." + subStr;
-            }
-            return result;
-        }
-
-        dispatchRestrictionProcess(process : ccs.RestrictionProcess) {
-            var result = this.cache[process.id],
-                subStr, labels;
-            if (!result) {
-                subStr = process.subProcess.dispatchOn(this);
-                subStr = wrapIfInstanceOf(subStr, process.subProcess,
-                    [ccs.SummationProcess, ccs.CompositionProcess, ccs.ActionPrefixProcess]);
-                labels = process.restrictedLabels.toArray();
-                result = this.cache[process.id] = subStr + " \\ {" + safeHtml(labels.join(", ")) + "}";
-            }
-            return result;
-        }
-
-        dispatchRelabellingProcess(process : ccs.RelabellingProcess) {
-            var result = this.cache[process.id],
-                subStr, relabels;
-            if (!result) {
-                subStr = process.subProcess.dispatchOn(this);
-                subStr = wrapIfInstanceOf(subStr, process.subProcess,
-                    [ccs.SummationProcess, ccs.CompositionProcess, ccs.ActionPrefixProcess]);
-                relabels = [];
-                process.relabellings.forEach((from, to) => {
-                    relabels.push(to + "/" + from);
-                });
-                result = this.cache[process.id] = subStr + " [" + safeHtml(relabels.join(",")) + "]";
-            }
-            return result;
-        }
     }
 
     export class HMLNotationVisitor implements hml.FormulaVisitor<string>, hml.FormulaDispatchHandler<string> {

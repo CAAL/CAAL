@@ -19,12 +19,17 @@ module CCS {
         dispatchRestrictionProcess(process : RestrictionProcess, ... args) : T;
         dispatchRelabellingProcess(process : RelabellingProcess, ... args) : T;
     }
-    
+
+    export interface CollapsedDispatchHandler<T> extends ProcessDispatchHandler<T> {
+        dispatchCollapsedProcess(process : CollapsedProcess, ... args) : T
+    }
+
     export interface ProcessVisitor<T> {
         visit(process : Process) : T;
     }
 
     export interface SuccessorGenerator {
+        getGraph() : Graph;
         getProcessByName(processName : string) : Process;
         getProcessById(processId : ProcessId) : Process;
         getSuccessors(processId : ProcessId) : TransitionSet;
@@ -104,6 +109,17 @@ module CCS {
         }
         toString() {
             return "Relabelling";
+        }
+    }
+
+    export class CollapsedProcess implements Process {
+        constructor(public id : ProcessId, public subProcesses : Process[]) {
+        }
+        dispatchOn<T>(dispatcher : CollapsedDispatchHandler<T>) : T {
+            return dispatcher.dispatchCollapsedProcess(this);
+        }
+        toString() {
+            return "CollapsedProcess";
         }
     }
 
@@ -197,8 +213,8 @@ module CCS {
             var existing = this.structural[key];
             if (!existing) {
                 existing = this.structural[key] = new ActionPrefixProcess(this.nextId++, action, nextProcess);
+                this.processes[existing.id] = existing;
             }
-            this.processes[existing.id] = existing;
             return existing;
         }
 
@@ -260,6 +276,19 @@ module CCS {
             existing = this.structural[key];
             if (!existing) {
                 existing = this.structural[key] = new RelabellingProcess(this.nextId++, process, relabellings);
+                this.processes[existing.id] = existing;
+            }
+            return existing;
+        }
+
+        newCollapsedProcess(subProcesses : Process[]) {
+            var key, existing;
+            var newProcesses = subProcesses.slice(0);
+            newProcesses.sort((procA, procB) => procA.id - procB.id);
+            key = "collapse," + newProcesses.map(proc => proc.id).join(",");
+            existing = this.structural[key];
+            if (!existing) {
+                existing = this.structural[key] = new CollapsedProcess(this.nextId++, newProcesses);
                 this.processes[existing.id] = existing;
             }
             return existing;
@@ -365,9 +394,6 @@ module CCS {
         }
     }
 
-    /*
-        Always modifies inplace. Clone gives shallow clone
-    */
     export class LabelSet {
         private labels : string[] = [];
 
@@ -418,16 +444,14 @@ module CCS {
         }
 
         static Union(... sets : LabelSet[]) {
-            var result = new LabelSet([]),
-                si, li, curSet;
-            for (si = 0; si < sets.length; si++) {
-                curSet = sets[si];
-                for (li = 0; li < curSet.labels.length; li++) {
-                    if (!result.contains(curSet.labels[li])) {
-                        result.labels.push(curSet.labels[li]);
+            var result = new LabelSet([]);
+            sets.forEach(set => {
+                set.labels.forEach(label => {
+                    if (!result.contains(label)) {
+                        result.labels.push(label);
                     }
-                }
-            }
+                });
+            });
             result.labels.sort();
             return result;
         }
@@ -463,7 +487,7 @@ module CCS {
 
         constructor(transitions? : Transition[]) {
             if (transitions) {
-                this.addAll(transitions);
+                this.addMany(transitions);
             }
         }
 
@@ -486,14 +510,14 @@ module CCS {
             return -1;
         }
 
-        addAll(transitions : Transition[]) : void {
+        addMany(transitions : Transition[]) : void {
             for (var i = 0, max = transitions.length; i < max; i++){
                 this.add(transitions[i]);
             }
         }
 
         unionWith(tSet : TransitionSet) : TransitionSet {
-            this.addAll(tSet.transitions);
+            this.addMany(tSet.transitions);
             return this;
         }
 
@@ -569,6 +593,10 @@ module CCS {
 
         constructor(public graph : Graph, public cache?) {
             this.cache = cache || {};
+        }
+
+        getGraph() {
+            return this.graph;
         }
 
         getSuccessors(processId : ProcessId) : TransitionSet {
@@ -742,6 +770,7 @@ module CCS {
         return resultGenerator;
     }
 
+<<<<<<< HEAD
     export function expandBFS(process : Process, succGen : SuccessorGenerator, maxDepth : number) : {[id : number] : CCS.TransitionSet} {
         var result : any = {},
             queue = [[1, process]], //non-emptying array as queue.
@@ -757,5 +786,27 @@ module CCS {
             });
         }
         return result;
+=======
+    export function reachableProcessIterator(initialProcess : ProcessId, succGen : SuccessorGenerator) {
+        var visitStack = [initialProcess],
+            addedProcs = Object.create(null),
+            iterator : any = {};
+        
+        addedProcs[initialProcess] = true;
+        iterator.hasNext = () => visitStack.length > 0;
+        iterator.next = () => {
+            var result = visitStack.pop();
+            var targetProcs = succGen.getSuccessors(result);
+            targetProcs.forEach(t => {
+                var procId = t.targetProcess.id;
+                if (!addedProcs[procId]) {
+                    addedProcs[procId] = true;
+                    visitStack.push(procId);
+                }
+            });
+            return result;
+        };
+        return iterator;
+>>>>>>> Proper collapsing
     }
 }
