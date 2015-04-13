@@ -6,15 +6,21 @@ module Traverse {
     import ccs = CCS;
 
     export interface Collapse {
-        getRepresentative(id) : any;
-        getEquivalenceSet(id) : any[];
+        getRepresentative(id) : ccs.CollapsedProcess;
     }
 
+    // A collapsed process is a process that has
+    // replaced many equivalent processes.
+    // is not a real process. Has no id.
     export class CollapsingSuccessorGenerator implements ccs.SuccessorGenerator {
 
         private cache = {};
 
         constructor(private succGenerator : ccs.SuccessorGenerator, private collapse : Collapse) {
+        }
+
+        getGraph() {
+            return this.succGenerator.getGraph();
         }
 
         getProcessByName(processName : string) : ccs.Process {
@@ -27,17 +33,17 @@ module Traverse {
 
         getSuccessors(processId : ccs.ProcessId) : ccs.TransitionSet {
             if (this.cache[processId]) return this.cache[processId];
-            var getRepresentative = this.collapse.getRepresentative,
-                sourceCollapseIds = this.collapse.getEquivalenceSet(processId),
-                result = new ccs.TransitionSet();
 
-            sourceCollapseIds
-                .map(procId => this.succGenerator.getSuccessors(procId))
+            var getRepresentative = this.collapse.getRepresentative;
+               var  collapseProcs = getRepresentative(processId).subProcesses;
+              var  result = new ccs.TransitionSet();
+
+            collapseProcs
+                .map(proc => this.succGenerator.getSuccessors(proc.id))
                 .forEach(tSet => {
                     tSet.forEach(transition => {
-                        var targetReprId = getRepresentative(transition.targetProcess.id),
-                            newProcess = this.succGenerator.getProcessById(targetReprId);
-                        result.add(new ccs.Transition(transition.action, newProcess));
+                        var targetRepr = getRepresentative(transition.targetProcess.id);
+                        result.add(new ccs.Transition(transition.action, targetRepr));
                     });
                 });
 
