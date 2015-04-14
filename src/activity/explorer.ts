@@ -170,6 +170,7 @@ module Activity {
                 var otherSuccGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
                 var collapse = Equivalence.getBisimulationCollapse(this.succGenerator, otherSuccGenerator, process.id, process.id);
                 this.succGenerator = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
+                process = (<Traverse.CollapsingSuccessorGenerator>this.succGenerator).getCollapseForProcess(process.id);
             }
 
             this.expand(process);
