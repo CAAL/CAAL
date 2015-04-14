@@ -59,6 +59,9 @@ module Activity {
         }
 
         public onShow(configuration? : any) : void {
+            $(window).on("resize", () => this.resize());
+            this.resize();
+
             this.initialCCS = this.editor.getValue();
 
             if (this.initialCCS !== this.project.getCCS()) {
@@ -70,6 +73,7 @@ module Activity {
         }
 
         public onHide() : void {
+            $(window).off("resize");
             this.project.setChanged(this.initialCCS !== this.project.getCCS());
             this.$parseResult.hide();
         }
@@ -118,6 +122,11 @@ module Activity {
             $('#editor-section').height(newHeight);
 
             this.editor.resize();
+        }
+
+        private resize() : void {
+            var height = window.innerHeight - $(".editor-border").offset().top - 32;
+            $("#editor").css("max-height", height);
         }
     }
 }
