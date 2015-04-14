@@ -34,6 +34,16 @@ module ArrayUtil {
     	}
     }
 
+    export function intersperse<T>(array : Array<T>, element : T) : Array<T> {
+        var result = [];
+        if (array.length > 0) result.push(array[0]);
+        for (var i=1; i < array.length; ++i) {
+            result.push(element);
+            result.push(array[i]);
+        }
+        return result;
+    }
+
     export function selectBest<T>(array : Array<T>, isBetter: (a : T, b :T) => boolean) {
         return array.reduce((cur, check) => {
             return isBetter(check, cur) ? check : cur;
