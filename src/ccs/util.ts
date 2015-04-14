@@ -231,7 +231,7 @@ module Traverse {
         dispatchCollapsedProcess(process : ccs.CollapsedProcess) {
             var result = this.cache[process.id];
             if (!result) {
-                result = "{" + process.subProcesses.map(subProc => subProc.id).join(", ") + "}";
+                result = "{" + process.subProcesses.map(subProc => subProc instanceof ccs.NamedProcess ? subProc.name : subProc.id).join(", ") + "}";
             }
             return result;
         }
