@@ -167,10 +167,15 @@ module Activity {
             var process = this.succGenerator.getProcessByName(options.process);
 
             if (options.collapse !== "none") {
-                var otherSuccGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
-                var collapse = Equivalence.getBisimulationCollapse(this.succGenerator, otherSuccGenerator, process.id, process.id);
-                this.succGenerator = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
-                process = (<Traverse.CollapsingSuccessorGenerator>this.succGenerator).getCollapseForProcess(process.id);
+                //Always attack with strong succ generator (improves performance)
+                var attackSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
+                var defendSuccGen = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
+                var collapse = Equivalence.getBisimulationCollapse(attackSuccGen, defendSuccGen, process.id, process.id);
+                var collapseSuccGen = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
+                //Wrap the transition relation used in the collapse.
+                this.succGenerator = collapseSuccGen;
+                //Process have been replaced by collapse.
+                process = collapseSuccGen.getCollapseForProcess(process.id);
             }
 
             this.expand(process);
