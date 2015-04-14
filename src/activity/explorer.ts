@@ -276,7 +276,7 @@ module Activity {
                     $actionTd.append(t.action.toString());
                 }
                 
-                row.append($("<td>").append(Tooltip.wrapProcess(this.labelFor(this.selectedProcess))));
+                row.append($("<td>").append(this.sourceText(this.selectedProcess)));
                 row.append($actionTd);
                 row.append($("<td>").append(Tooltip.wrapProcess(this.labelFor(t.targetProcess))));
 
@@ -284,6 +284,23 @@ module Activity {
 
                 this.$statusTable.append(row);
             });
+        }
+
+        private sourceText(process : ccs.Process) : any {
+            // Collapsed process presents us with another indirection meaning
+            // under normal cirsumstances it would not be possible to hover
+            // over the constituent processes and get their description.
+            if (process instanceof ccs.CollapsedProcess) {
+                var wrappedSubProcs = process.subProcesses.map(p => Tooltip.wrapProcess(this.labelFor(p)));
+                return [].concat(
+                    [Tooltip.wrapProcess(this.labelFor(process))],
+                    [" = {"],
+                    ArrayUtil.intersperse<any>(wrappedSubProcs, ", "), 
+                    ["}"]
+                );
+            } else {
+                return Tooltip.wrapProcess(this.labelFor(process));
+            }
         }
 
         private onTransitionTableRowHover(entering : boolean, event) : void {
