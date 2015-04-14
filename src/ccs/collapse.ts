@@ -50,5 +50,9 @@ module Traverse {
             this.cache[processId] = result;
             return result;
         }
+
+        getCollapseForProcess(processId : ccs.ProcessId) : ccs.Process {
+            return this.collapse.getRepresentative(processId);
+        }
     }
 }
