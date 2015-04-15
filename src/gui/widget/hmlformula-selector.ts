@@ -17,9 +17,7 @@ module GUI.Widget {
         constructor() {        
             var $table = $(this.table);
             var $body = $(this.body);
-            
-
-
+        
             $table.attr("id", "hml-selector-body");
             $table.addClass("widget-transition-table table table-responsive table-striped table-condensed table-hover no-highlight");
             $table.append('<thead><tr><th class="narrow">Subformula</th></tr></thead>');
@@ -27,7 +25,6 @@ module GUI.Widget {
 
             $body.attr("id", "hml-selector-body");
             /*Click listeners on each subformula*/
-            // $body.on("click", "span.hml-subformula", this.onSubformulaClick.bind(this));
             $body.on("click", "tr", this.onSubformulaClick.bind(this));
         }
 

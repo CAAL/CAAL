@@ -3,6 +3,7 @@
 /// <reference path="../gui/widget/zoomable-process-explorer.ts" />
 /// <reference path="../gui/widget/transition-table.ts" />
 /// <reference path="../gui/widget/hmlformula-selector.ts" />
+/// <reference path="../gui/widget/gamelog-widget.ts" />
 /// <reference path="../gui/arbor/arbor.ts" />
 /// <reference path="../gui/arbor/renderer.ts" />
 /// <reference path="activity.ts" />
@@ -43,10 +44,8 @@ module Activity {
             this.setOptionsDom(this.currentSubActivity);
             configuration = configuration || this.currentSubActivity.getDefaultConfiguration();
             this.currentSubActivity.onShow(configuration);
-
         }
         
-
         private setOptionsDom(subActivity : SubActivity) {
             var injecter = $("#hml-game-inject-options")[0];
             while (injecter.firstChild) {
@@ -83,12 +82,14 @@ module Activity {
         private processExplorer = new GUI.Widget.ZoomableProcessExplorer();
         private transitionTable = new GUI.Widget.TransitionTable();
         private hmlselector = new GUI.Widget.FormulaSelector();
+        private gamelog = new GUI.Widget.GameLog();
 
         private project : Project;
         private currentProcess : CCS.Process = null;
         private currentFormula : HML.Formula = null
         private currentFormulaSet : HML.FormulaSet = null;
         private hmlGameLogic : HmlGameLogic = null;
+        private isWeak : boolean;
 
         private configuration = {
             processName: undefined,
@@ -96,6 +97,7 @@ module Activity {
             formulaSetIndex: undefined,
             succGen: null
         };
+
         private $processList : JQuery;
         private $formulaList : JQuery;
         private optionsDom;
@@ -133,7 +135,10 @@ module Activity {
                 this.configure(this.configuration);
             });
 
+            /*Explorer*/
             $("#hml-game-main").append(this.processExplorer.getRootElement());
+            /*Gamelog*/
+            $("#hml-game-status-left").append(this.gamelog.getRootElement());
             
             /* Assign the restart button */
             this.$restartBtn = $("#hml-game-restart");
@@ -141,9 +146,6 @@ module Activity {
 
             this.fullscreen = new Fullscreen($("#hml-game-container")[0], $("#hml-game-fullscreen"), () => this.resize());
             
-            //$("#hml-game-status-right").append(this.transitionTable.getRootElement());
-            //$("#hml-game-status-right").append(this.hmlselector.getRootElement());
-
             this.transitionTable.onSelectListener = ((transition) => { 
                 var state = this.hmlGameLogic.selectedTransition(transition); // return the new state
                 this.currentFormula = state.formula; // has the modality <> [] popped 
@@ -154,7 +156,7 @@ module Activity {
             this.hmlselector.onSelectListener = ((hmlSubFormula) => {
                 var state = this.hmlGameLogic.selectedFormula(hmlSubFormula);
                 this.currentFormula = state.formula;
-                this.currentProcess = state.process; // should remain the same 
+                this.currentProcess = state.process; // should remain the same
                 this.refresh(this.configuration);
             });
         }
@@ -291,13 +293,24 @@ module Activity {
             this.currentFormula = this.currentFormulaSet.getTopFormula();
 
             this.processExplorer.setSuccGenerator(this.configuration.succGen);
-            this.processExplorer.exploreProcess(this.currentProcess);
+            this.isWeak = false;
+            this.processExplorer.exploreProcess(this.currentProcess); // explore the current selected process
 
             this.hmlGameLogic = new HmlGameLogic(this.currentProcess, this.currentFormula, 
                                                  this.currentFormulaSet, configuration.succGen, Main.getGraph().graph);
-            this.hmlGameLogic.setGamelogWriter(this.WriteToGamelog);
+            this.hmlGameLogic.setGamelogWriter(this.gamelog.printToGameLog);
+            
             this.computer = this.hmlGameLogic.getUniversalWinner();
             this.human = (this.computer === Player.attacker) ? Player.defender : Player.attacker;
+
+            /* Gamelog */
+            this.gamelog.clear();
+            // print the intro
+            var gameIntro = new GUI.Widget.GameLogObject()
+            gameIntro.setTemplate("You are playing {0} in {1} HML game.")
+            gameIntro.addLabel({text: (this.human === Player.defender ? "defender" : "attacker")});
+            gameIntro.addLabel({text: (this.isWeak ? "weak" : "strong")});
+            this.gamelog.printToGameLog(gameIntro);
 
             this.refresh(configuration);
         }
@@ -305,11 +318,31 @@ module Activity {
 
         private refresh(configuration) : void {
             /* E-xplores the currentProcess and updates the transitiontable with its successors transitions*/
-            var isGameOver = this.hmlGameLogic.isGameOver();
             
+            var isGameOver = this.hmlGameLogic.isGameOver();
             if(isGameOver) {
                 this.setActionWidget() // clear the widget div
-                console.log(isGameOver);
+                var winner : Player = isGameOver.left;
+                var winReason = isGameOver.right;
+                var gameOver = new GUI.Widget.GameLogObject();
+
+                /* Gamelog */
+                if (winReason === WinReason.minGameCycle || winReason === WinReason.maxGameCycle) {
+                    gameOver.setTemplate("A cycle has been detected. {0}!");
+                    if(winReason === WinReason.minGameCycle){
+                        gameOver.addLabel({text: (this.human === winner) ? "You win" : "You lose"})
+                    }
+                    else{
+                        gameOver.addLabel({text: (this.human === winner) ? "You win" : "You lose"})
+                    }                 
+                }
+                else {
+                    gameOver.setTemplate("{0} no available transitions. You {1}!");
+                    gameOver.addLabel({text: (this.human === winner) ? ((this.computer === Player.defender) ? "Defender has" : "Attacker has") : "You have"});
+                    gameOver.addLabel({text: (this.human === winner) ? "win" : "lose"});
+                }
+
+                this.gamelog.printToGameLog(gameOver);
             }
             else {
                 var currentPlayer = this.hmlGameLogic.getCurrentPlayer();
@@ -343,9 +376,10 @@ module Activity {
             }
         }
 
-        private WriteToGamelog(Gamelogobject) : void {
+        /*private WriteToGamelog(state : HmlGameState, currentPlayer? : Player) : void {
+            
             console.log("Gamelog: ", Gamelogobject);
-        }
+        }*/
 
         private setActionWidget(widget = null) : void {
             var injecter = $("#hml-game-status-right")[0];
@@ -422,17 +456,16 @@ module Activity {
         private currentDgNodeId : dg.DgNodeId
         private cycleCache;
 
+
         constructor(process : CCS.Process, formula : HML.Formula, formulaSet : HML.FormulaSet, succGen : CCS.SuccessorGenerator, graph : CCS.Graph) {
             this.cycleCache = {};
             this.state = new HmlGameState(process, formula, formulaSet, true);
             this.succGen = succGen;
             
+            // this.round = 0;
             this.currentDgNodeId = 0;
             this.dGraph = this.createDependencyGraph(graph, this.state.process, this.state.formula); 
             this.marking = this.createMarking();
-            console.log(this.dGraph);
-            console.log(this.marking);
-            console.log(this.satisfied);
         }
 
         private createDependencyGraph(graph : CCS.Graph, process : CCS.Process, formula : HML.Formula) : dg.PlayableDependencyGraph {
@@ -483,7 +516,7 @@ module Activity {
                 // The player selected a formula.
                 this.previousStates.push(this.state);
                 this.state = new HmlGameState(this.state.process, formula, this.state.formulaSet, this.state.isMinGame);
-                // TODO Write to gamelog
+
                 return this.state;
             }
 
