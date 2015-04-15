@@ -1,4 +1,4 @@
-/// <reference path="../../lib/ccs.d.ts" />
+/// <reference path="ccs.ts" />
 
 module TCCS {
     
@@ -30,10 +30,6 @@ module TCCS {
     }
     
     export class TccsGraph extends CCS.Graph {
-        
-        constructor() {
-            super();
-        }
         
         newDelayPrefixProcess(delay : Delay, nextProcess : CCS.Process) {
             // var key = "." + delay.getDelay() + "." + nextProcess.id;
