@@ -346,6 +346,21 @@ module Activity {
             }
             else {
                 var currentPlayer = this.hmlGameLogic.getCurrentPlayer();
+
+                /* Gamelog */
+                var gameConfig = new GUI.Widget.GameLogObject();
+                gameConfig.setTemplate("{0} Current configuration: ({1}, {2}).");
+                gameConfig.addHeader({text: "Round 0", tag: "<h4>"});
+                gameConfig.addLabel({text: gameConfig.labelForProcess(this.currentProcess)})
+                gameConfig.addLabel({text: gameConfig.labelForFormula(this.currentFormula)})
+
+                // var context = {
+                //     1: ,
+                //     2: {text: this.labelFor(configuration.right), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]}
+                // }
+
+
+
                 if(currentPlayer === this.computer) {
                     // this.hmlGameLogic.AutoPlay(this.computer);
                     this.prepareGuiForUserAction();

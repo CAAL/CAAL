@@ -66,6 +66,7 @@ module GUI.Widget {
     const enum GameLogType {intro, play};
     export class GameLogObject {
         private template : string;
+        private header : GameLogObjectRow;
         private context : GameLogObjectRow[];
         
         constructor() {
@@ -81,6 +82,10 @@ module GUI.Widget {
             }
         }
 
+        public addHeader (row : GameLogObjectRow) : void {
+            this.header = row;
+        }
+
         public setTemplate(template : string) {
             this.template = template;
         }
@@ -91,6 +96,15 @@ module GUI.Widget {
 
         public getContext() : GameLogObjectRow[] {
             return this.context;
+        }
+
+        public labelForProcess(process : CCS.Process) : string {
+            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
+        }
+
+        public labelForFormula(formula : HML.Formula) : string {
+            return ""
+            // return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
         }
     }
 
