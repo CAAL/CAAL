@@ -18,6 +18,7 @@
 /// <reference path="activity/game.ts" />
 
 declare var CCSParser;
+declare var TCCSParser;
 declare var HMLParser;
 import ccs = CCS;
 import hml = HML;

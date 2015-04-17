@@ -55,7 +55,14 @@ module Activity {
         }
 
         public setInputMode(e) {
-            this.project.setInputMode(InputMode[<string> $(e.target).val()]);
+            var inputMode = InputMode[<string> $(e.target).val()];
+            this.project.setInputMode(inputMode);
+
+            if (inputMode === InputMode.CCS) {
+                this.editor.getSession().setMode("ace/mode/ccs");
+            } else if (inputMode === InputMode.TCCS) {
+                this.editor.getSession().setMode("ace/mode/tccs");
+            }
         }
 
         public onShow(configuration? : any) : void {
@@ -104,14 +111,7 @@ module Activity {
         }
 
         private showParseResult(errorString : string, errorClass : string) : void {
-            this.$parseResult.removeClass("alert-success");
-            this.$parseResult.removeClass("alert-danger");
-            this.$parseResult.addClass(errorClass);
-
-            var textArea = this.$parseResult.find("p");
-            textArea.empty();
-            textArea.append(errorString);
-            this.$parseResult.show();
+            console.log(errorString);
         }
 
         // http://stackoverflow.com/questions/11584061/

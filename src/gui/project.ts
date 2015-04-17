@@ -138,9 +138,16 @@ class Project {
     }
 
     public getGraph() : CCS.Graph {
-        var graph = new CCS.Graph();
+        var graph;
+        if (this.inputMode === InputMode.CCS) {
+            graph = new CCS.Graph();
             CCSParser.parse(this.ccs, {ccs: CCS, graph: graph});
-        return graph;
+            return graph;
+        } else if (this.inputMode === InputMode.TCCS) {
+            graph = new TCCS.TccsGraph();
+            TCCSParser.parse(this.ccs, {tccs: TCCS, graph: graph});
+            return graph;
+        }
     }
 
     public toJSON() : any {
