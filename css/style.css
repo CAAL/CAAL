@@ -478,7 +478,7 @@ p.small {
 }
 
 /*
- *  Tooltip styles
+ *  Tooltip and popover styles
  */
  .ccs-tooltip, .ccs-tooltip-process, .ccs-tooltip-data {
     background-color: #eee;
@@ -508,3 +508,21 @@ p.small {
 .tooltip-arrow {
     border-top-color: #bbb !important;
 }
+
+.popover.bottom {
+    max-width: 450px;
+    background-color: #f7f7f7;
+}
+
+.popover.bottom > .arrow:after {
+    border-bottom-color: #f7f7f7;
+}
+
+.popover.bottom > .popover-content {
+    background-color: #fff;
+}
+
+.popover-content p:last-child {
+    margin-bottom: 0;
+}
+

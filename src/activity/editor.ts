@@ -1,14 +1,9 @@
-/// <reference path="../../lib/jquery.d.ts" />
-/// <reference path="../../lib/ccs.d.ts" />
-/// <reference path="../main.ts" />
-/// <reference path="../gui/project.ts" />
-/// <reference path="../gui/autosave.ts" />
-/// <reference path="activity.ts" />
-
 module Activity {
 
     export class Editor extends Activity {
         private project : Project;
+        private $editor : JQuery;
+        private $parse : JQuery;
         private editor : any;
         private autosave : AutoSave;
         private initialCCS : string;
@@ -18,7 +13,10 @@ module Activity {
 
             this.project = Project.getInstance();
 
-            this.editor = ace.edit("editor");
+            this.$editor = $("#editor");
+            this.$parse = $("#parse");
+
+            this.editor = ace.edit(this.$editor[0]);
             this.editor.setTheme("ace/theme/crisp");
             this.editor.getSession().setMode("ace/mode/ccs");
             this.editor.getSession().setUseWrapMode(true);
@@ -45,26 +43,18 @@ module Activity {
                 this.project.update(0, autosaveProject.title, autosaveProject.ccs, autosaveProject.properties);
             }
 
-            $("#parse-btn").on("click", () => this.parse());
+            this.$parse.on("click", () => this.parse());
+            this.$parse.popover({delay: {"show": 100, "hide": 100}, html: true, placement: "bottom", trigger: "focus"});
+
             $("#input-mode").on("change", (e) => this.setInputMode(e));
             $("#font-size").on("change", (e) => this.setFontSize(e));
-        }
-
-        public setInputMode(e) {
-            var inputMode = InputMode[<string> $(e.target).val()];
-            this.project.setInputMode(inputMode);
-
-            if (inputMode === InputMode.CCS) {
-                this.editor.getSession().setMode("ace/mode/ccs");
-            } else if (inputMode === InputMode.TCCS) {
-                this.editor.getSession().setMode("ace/mode/tccs");
-            }
         }
 
         public onShow(configuration? : any) : void {
             $(window).on("resize", () => this.resize());
             this.resize();
 
+            this.project.setChanged(false);
             this.initialCCS = this.editor.getValue();
 
             if (this.initialCCS !== this.project.getCCS()) {
@@ -80,48 +70,63 @@ module Activity {
             this.project.setChanged(this.initialCCS !== this.project.getCCS());
         }
 
+        private parse() : void {
+            var graph, errors, title, content;
+
+            title = "<span class=\"text-danger\"><i class=\"fa fa-exclamation-circle fa-lg\"></i> Error</span>";
+
+            try {
+                graph = this.project.getGraph();
+                errors = graph.getErrors();
+
+                if (errors.length > 0) {
+                    content = "";
+                    for (var i = 0; i < errors.length; i++) {
+                        content += "<p>" + errors[i].name + ": " + errors[i].message + "</p>";
+                    }
+                } else {
+                    title = "<span class=\"text-success\"><i class=\"fa fa-check fa-lg\"></i> Success</span>";
+                    content = "<p>The program is valid " + InputMode[this.project.getInputMode()] + ".</p>";
+                }
+            } catch (error) {
+                content = "<p>" + error.name + ": " + error.message + "</p>";
+            }
+
+            this.$parse.attr("data-original-title", title);
+            this.$parse.attr("data-content", content);
+        }
+
+        private setInputMode(e) : void {
+            var inputMode = InputMode[<string> $(e.target).val()];
+
+            if (inputMode === InputMode.CCS) {
+                this.editor.getSession().setMode("ace/mode/ccs");
+            } else if (inputMode === InputMode.TCCS) {
+                this.editor.getSession().setMode("ace/mode/tccs");
+            }
+
+            this.project.setInputMode(inputMode);
+        }
+
         private setFontSize(e) : void {
             var fontSize = $(e.target).val();
             this.editor.setFontSize(parseInt(fontSize));
             this.updateHeight();
         }
 
-        private parse() : void {
-            try {
-                var graph = this.project.getGraph();
-                var errors = graph.getErrors();
-                if (errors.length > 0) {
-                    this.showParseResult(errors.map(error => error.message).join("<br>"), "alert-danger");
-                } else {
-                    this.showParseResult("Success! No errors.", "alert-success");
-                }
-            } catch (error) {
-                if (error.message) {
-                    var prefix = error.name ? error.name : "FatalError";
-                    this.showParseResult(prefix + ": " + error.message, "alert-danger");
-                } else {
-                    this.showParseResult("Unknown Error: " + error.toString(), "alert-danger");
-                }
-            }
-        }
-
-        private showParseResult(errorString : string, errorClass : string) : void {
-            console.log(errorString);
-        }
-
         // http://stackoverflow.com/questions/11584061/
         private updateHeight() : void {
-            var newHeight = this.editor.getSession().getScreenLength() * this.editor.renderer.lineHeight + this.editor.renderer.scrollBar.getWidth();
+            var height = this.editor.getSession().getScreenLength() * this.editor.renderer.lineHeight + this.editor.renderer.scrollBar.getWidth();
 
-            $('#editor').height(newHeight);
-            $('#editor-section').height(newHeight);
+            this.$editor.height(height);
+            this.$editor.find("#editor-section").height(height);
 
             this.editor.resize();
         }
 
         private resize() : void {
-            var height = window.innerHeight - $(".editor-border").offset().top - 32;
-            $("#editor").css("max-height", height);
+            var height = window.innerHeight - this.$editor.parent().offset().top - 32;
+            this.$editor.css("max-height", height);
         }
     }
 }
