@@ -160,7 +160,8 @@ module CCS {
         private definedSets = Object.create(null);
         //Uses index as uid.
         private allRestrictedSets = new GrowingIndexedArraySet<LabelSet>();
-        private allRelabellings = new GrowingIndexedArraySet<RelabellingSet>()
+        private allRelabellings = new GrowingIndexedArraySet<RelabellingSet>();
+        protected unguardedRecursionChecker = new Traverse.UnguardedRecursionChecker();
 
         constructor() {
         }
@@ -297,10 +298,9 @@ module CCS {
                 }
             }
             var addUnguardedRecursionErrors = () => {
-                var checker = new Traverse.UnguardedRecursionChecker(),
-                    processNames = Object.keys(this.namedProcesses),
+                var processNames = Object.keys(this.namedProcesses),
                     processes = processNames.map(name => this.namedProcesses[name]),
-                    unguardedProcesses = checker.findUnguardedProcesses(processes);
+                    unguardedProcesses = this.unguardedRecursionChecker.findUnguardedProcesses(processes);
                 unguardedProcesses.forEach(process => {
                     errors.push(newError("UnguardedProcess", "Process '" + process.name + "' has unguarded recursion"));
                 });

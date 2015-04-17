@@ -12,7 +12,6 @@ module Activity {
         private editor : any;
         private autosave : AutoSave;
         private initialCCS : string;
-        private $parseResult : JQuery;
 
         constructor(container : string, button : string) {
             super(container, button);
@@ -45,9 +44,6 @@ module Activity {
                 var autosaveProject = this.autosave.getAutosave();
                 this.project.update(0, autosaveProject.title, autosaveProject.ccs, autosaveProject.properties);
             }
-
-            this.$parseResult = $("#parse-result");
-            this.$parseResult.find("button").on("click", () => this.$parseResult.hide());
 
             $("#parse-btn").on("click", () => this.parse());
             $("#input-mode").on("change", (e) => this.setInputMode(e));
@@ -82,7 +78,6 @@ module Activity {
         public onHide() : void {
             $(window).off("resize");
             this.project.setChanged(this.initialCCS !== this.project.getCCS());
-            this.$parseResult.hide();
         }
 
         private setFontSize(e) : void {
@@ -93,8 +88,8 @@ module Activity {
 
         private parse() : void {
             try {
-                var graph = this.project.getGraph(),
-                    errors = graph.getErrors();
+                var graph = this.project.getGraph();
+                var errors = graph.getErrors();
                 if (errors.length > 0) {
                     this.showParseResult(errors.map(error => error.message).join("<br>"), "alert-danger");
                 } else {

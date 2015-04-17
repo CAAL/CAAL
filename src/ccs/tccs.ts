@@ -2,14 +2,14 @@
 
 module TCCS {
     
-    export interface TccsProcessDispatchHandler<T> extends CCS.ProcessDispatchHandler<T> {
+    export interface TCCSProcessDispatchHandler<T> extends CCS.ProcessDispatchHandler<T> {
         dispatchDelayPrefixProcess(process : DelayPrefixProcess, ... args) : T
     }
 
     export class DelayPrefixProcess implements CCS.Process {
         constructor(public id : CCS.ProcessId, public delay : Delay, public nextProcess : CCS.Process) {
         }
-        dispatchOn<T>(dispatcher : TccsProcessDispatchHandler<T>) : T {
+        dispatchOn<T>(dispatcher : TCCSProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchDelayPrefixProcess(this);
         }
         toString() {
@@ -29,8 +29,12 @@ module TCCS {
         }
     }
     
-    export class TccsGraph extends CCS.Graph {
-        
+    export class TCCSGraph extends CCS.Graph {
+        constructor() {
+            super();
+            this.unguardedRecursionChecker = new Traverse.TCCSUnguardedRecursionChecker();
+        }
+
         newDelayPrefixProcess(delay : Delay, nextProcess : CCS.Process) {
             // var key = "." + delay.getDelay() + "." + nextProcess.id;
             return this.processes[this.nextId] = new DelayPrefixProcess(this.nextId++, delay, nextProcess);
