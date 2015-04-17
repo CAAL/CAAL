@@ -1,10 +1,12 @@
 /// <reference path="../../../lib/jquery.d.ts" />
 /// <reference path="../../../lib/ccs.d.ts" />
+/// <reference path="../../activity/tooltip.ts" />
 
 module GUI.Widget {
     export type GameLogObjectRow = {text : string; tag? : string; attr? : [{name: string; value: string}];};
     export class GameLog {
         private log = document.createElement("div");
+        
         /* 
             Things to consider
                 Print intro
@@ -20,6 +22,7 @@ module GUI.Widget {
         constructor() {
             var $log = $(this.log);
             $log.attr("id", "hml-game-log");
+            new Activity.DataTooltip($log); // no need to save instance
         }
 
         public getRootElement() : HTMLElement {
@@ -35,7 +38,18 @@ module GUI.Widget {
             var $log = $(this.log),
                 logStr = this.render(gameLogObject);
 
+            var header = gameLogObject.getHeader();
+            if (header) {
+                if (header.tag) {
+                    var $header = $(header.tag).append(header.text);
+                    $log.append($header[0].outerHTML);
+                }else {
+                    $log.append(header.text);
+                }
+            }
+
             $log.append(logStr);
+            $log.scrollTop($log[0].scrollHeight);
         }
 
         private render(gameLogObject : GameLogObject) : string {
@@ -58,6 +72,11 @@ module GUI.Widget {
                 }
             });
 
+            var wrapper = gameLogObject.getClass(); 
+            if (wrapper) {
+                result = $(wrapper).append(result)[0].outerHTML;
+            }
+
             return result;
         }
     }
@@ -68,9 +87,11 @@ module GUI.Widget {
         private template : string;
         private header : GameLogObjectRow;
         private context : GameLogObjectRow[];
+        private class : string;
         
         constructor() {
             this.template = "";
+            this.header = null;
             this.context = [];
         }
 
@@ -84,6 +105,18 @@ module GUI.Widget {
 
         public addHeader (row : GameLogObjectRow) : void {
             this.header = row;
+        }
+
+        public getHeader() : GameLogObjectRow {
+            return this.header;
+        }
+
+        public addClass (wrapper : string) : void {
+            this.class = wrapper;
+        }
+
+        public getClass() : string {
+            return this.class;
         }
 
         public setTemplate(template : string) {
@@ -103,8 +136,8 @@ module GUI.Widget {
         }
 
         public labelForFormula(formula : HML.Formula) : string {
-            return ""
-            // return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
+            var hmlNotationVisitor = new Traverse.HMLNotationVisitor();
+            return hmlNotationVisitor.visit(formula);
         }
     }
 
@@ -115,7 +148,7 @@ module GUI.Widget {
             this.$log.append(line);
         }
 
-        this.$log.scrollTop(this.$log[0].scrollHeight);;
+        this.$log.scrollTop(this.$log[0].scrollHeight);
     }
 
     public render(template : string, context : any) : string {

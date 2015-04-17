@@ -298,7 +298,7 @@ module Activity {
 
             this.hmlGameLogic = new HmlGameLogic(this.currentProcess, this.currentFormula, 
                                                  this.currentFormulaSet, configuration.succGen, Main.getGraph().graph);
-            this.hmlGameLogic.setGamelogWriter(this.gamelog.printToGameLog);
+            this.hmlGameLogic.setGamelogWriter((gameLogObject) => this.gamelog.printToGameLog(gameLogObject));
             
             this.computer = this.hmlGameLogic.getUniversalWinner();
             this.human = (this.computer === Player.attacker) ? Player.defender : Player.attacker;
@@ -349,17 +349,13 @@ module Activity {
 
                 /* Gamelog */
                 var gameConfig = new GUI.Widget.GameLogObject();
-                gameConfig.setTemplate("{0} Current configuration: ({1}, {2}).");
                 gameConfig.addHeader({text: "Round 0", tag: "<h4>"});
-                gameConfig.addLabel({text: gameConfig.labelForProcess(this.currentProcess)})
-                gameConfig.addLabel({text: gameConfig.labelForFormula(this.currentFormula)})
+                gameConfig.setTemplate("Current configuration: ({0}, {1}).");
+                gameConfig.addLabel({text: gameConfig.labelForProcess(this.currentProcess), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]})
+                gameConfig.addLabel({text: gameConfig.labelForFormula(this.currentFormula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
+                gameConfig.addClass("<p>");
 
-                // var context = {
-                //     1: ,
-                //     2: {text: this.labelFor(configuration.right), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]}
-                // }
-
-
+                this.gamelog.printToGameLog(gameConfig);
 
                 if(currentPlayer === this.computer) {
                     // this.hmlGameLogic.AutoPlay(this.computer);
@@ -528,10 +524,19 @@ module Activity {
 
         public selectedFormula(formula : HML.Formula) : HmlGameState {
             if(!this.gameIsOver){
+                
+                /* Gamelog */
+                var gameLogPlay = new GUI.Widget.GameLogObject();
+                gameLogPlay.setTemplate("{0} has chosen subformula {1}.")
+                gameLogPlay.addClass("<p>");
+                gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
+                gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
+                this.writeToGamelog(gameLogPlay);
+
                 // The player selected a formula.
                 this.previousStates.push(this.state);
                 this.state = new HmlGameState(this.state.process, formula, this.state.formulaSet, this.state.isMinGame);
-
+                
                 return this.state;
             }
 
@@ -541,10 +546,21 @@ module Activity {
         public selectedTransition(transition : CCS.Transition) : HmlGameState {
             // The player selected a transition
             if (!this.gameIsOver) {
+
+                /* Gamelog */
+                var gameLogPlay = new GUI.Widget.GameLogObject();
+                gameLogPlay.setTemplate("{0} played {1} {2} {3}.");
+                gameLogPlay.addClass("<p>");
+                gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
+                gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(this.state.process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
+                gameLogPlay.addLabel({text: "-" + transition.action + "->", tag: "<span>", attr: [{name: "class", value: "monospace"}]});
+                gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(transition.targetProcess), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
+                this.writeToGamelog(gameLogPlay);
+
                 var hmlSubF = this.popModalityFormula(<Modality> this.state.formula);
                 this.previousStates.push(this.state);
                 this.state = new HmlGameState(transition.targetProcess, hmlSubF, this.state.formulaSet, this.state.isMinGame);
-                // TODO Write to gamelog
+
                 return this.state;
             }
 
@@ -589,8 +605,9 @@ module Activity {
             }
 
             //stuck
-            var currentPlayer = this.getCurrentPlayer();
-            if(!this.getAvailableTransitions() && this.getNextActionType() === ActionType.transition) {
+            var availTranstition = this.getAvailableTransitions() 
+            if((!availTranstition || availTranstition.length <= 0) && this.getNextActionType() === ActionType.transition) {
+                var currentPlayer = this.getCurrentPlayer();
                 var winner = (currentPlayer === Player.attacker) ? Player.defender : Player.attacker;
                 this.gameIsOver = true;
                 return new Pair(winner, WinReason.stuck);
@@ -629,6 +646,15 @@ module Activity {
                 if (namedFormula) {
                     if (namedFormula instanceof HML.MinFixedPointFormula || namedFormula instanceof HML.MaxFixedPointFormula) {
                         var unfolded = this.JudgeUnfold(namedFormula, hmlFSet);
+                        /* Gamelog */
+                        var gameLogPlay = new GUI.Widget.GameLogObject();
+                        gameLogPlay.setTemplate("Judge unfolds {0} {1} {2}.")
+                        gameLogPlay.addClass("<p>");
+                        gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(hml), tag:"<span>", attr: [{name: "class", value: "monospace"}]});
+                        gameLogPlay.addLabel({text: " --> ", tag:"<span>", attr: [{name: "class", value: "monospace"}]});
+                        gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(unfolded), tag:"<span>", attr: [{name: "class", value: "monospace"}]});
+                        this.writeToGamelog(gameLogPlay);
+
                         return unfolded;
                     }
                 }
