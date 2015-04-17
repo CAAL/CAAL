@@ -240,14 +240,16 @@
                             <span class="caret"></span>
                         </button>
                         <ul id="add-property" class="dropdown-menu no-highlight" role="menu">
-                            <li class="dropdown-header" role="presentation">Equivalence</li>
+                            <li class="dropdown-header" role="presentation">Strong Equivalences and Preorders</li>
                             <li id="strong" class="property-item"><a>Strong Bisimulation</a></li>
-                            <li id="weak" class="property-item"><a>Weak Bisimulation</a></li>
                             <li id="strongsim" class="property-item"><a>Strong Simulation</a></li>
-                            <li id="weaksim" class="property-item"><a>Weak Simulation</a></li>
                             <li id="strongtraceinclusion" class="property-item"><a>Strong Trace Inclusion</a></li>
-                            <li id="weaktraceinclusion" class="property-item"><a>Weak Trace Inclusion</a></li>
                             <li id="strongtraceeq" class="property-item"><a>Strong Trace Equivalence</a></li>
+                            <li class="divider"></li>
+                            <li class="dropdown-header" role="presentation">Weak Equivalences and Preorders</li>
+                            <li id="weak" class="property-item"><a>Weak Bisimulation</a></li>
+                            <li id="weaksim" class="property-item"><a>Weak Simulation</a></li>
+                            <li id="weaktraceinclusion" class="property-item"><a>Weak Trace Inclusion</a></li>
                             <li id="weaktraceeq" class="property-item"><a>Weak Trace Equivalence</a></li>
                             <li class="divider"></li>
                             <li class="dropdown-header" role="presentation">Model Checking</li>
@@ -332,10 +334,10 @@
                                 <button id="freeze-left" type="button" class="btn btn-default" data-frozen="false" data-tooltip="freeze"><i class="fa fa-lock fa-lg"></i></button>
                             </span>
                         </div>
-                    </div>
-                    <div id="game-left-canvas">
-                        <canvas></canvas>
-                        <div id="canvas-tooltip-left" class="canvas-tooltip"></div>
+                        <div id="game-left-canvas">
+                            <canvas></canvas>
+                            <div id="game-canvas-tooltip-left"></div>
+                        </div>
                     </div>
                 </div>
                 <div id="game-right" class="col-md-6">
@@ -347,10 +349,10 @@
                                 <button id="freeze-right" type="button" class="btn btn-default" data-frozen="false" data-tooltip="freeze"><i class="fa fa-lock fa-lg"></i></button>
                             </span>
                         </div>
-                    </div>
-                    <div id="game-right-canvas">
-                        <canvas></canvas>
-                        <div id="canvas-tooltip-right" class="canvas-tooltip"></div>
+                        <div id="game-right-canvas">
+                            <canvas></canvas>
+                            <div id="game-canvas-tooltip-right"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -475,7 +477,7 @@
                                         a.tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>
                                         </td>
                                     </tr>
-									<tr>
+                                    <tr>
                                         <td>Action prefixing - output</td>
                                         <td class ="inconsolata">
                                         <span class="ace_variable ace_overline">'a</span>.tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>

@@ -21,15 +21,26 @@ var examples : any[] = [
              "P21 = b1rf.P22 + b1rt.(kr1.P21 + kr2.P22);\n" +
              "P22 = enter2.exit2.'b2wf.P2;\n" +
              "\n" +
-             "set L = {b1rf, b2rf, b1rt, b2rt, b1wf, b2wf, b1wt, b2wt, kr1, kr2, kw1, kw2, enter1, enter2, exit1, exit2};\n" +
-             "Peterson = (P1 | P2 | B1f | B2f | K1) \\ L;",
+             "set L = {b1rf, b2rf, b1rt, b2rt, b1wf, b2wf, b1wt, b2wt, kr1, kr2, kw1, kw2};\n" +
+             "Peterson = (P1 | P2 | B1f | B2f | K1) \\ L;\n" +
+             "\n" +
+             "Spec = enter1.exit1.Spec + enter2.exit2.Spec;",
+
         properties: [
             {
-                type: "HML",
+                type: "WeakTraceEq",
                 status: 3,
                 options: {
-                    process: "Peterson",
-                    formula: "X max= ([exit1]ff or [exit2]ff) and [-]X;"
+                    firstProcess: "Peterson",
+                    secondProcess: "Spec"
+                }
+            },
+            {
+                type: "WeakBisimulation",
+                status: 3,
+                options: {
+                    firstProcess: "Peterson",
+                    secondProcess:"Spec"
                 }
             }
         ]

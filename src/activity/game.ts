@@ -173,41 +173,42 @@ module Activity {
                     this.draw(this.graph.processById(processId), this.rightGraph, this.$rightDepth.val());
             });
 
-            // Ugly copy/paste. Fix later.
             this.leftGraph.setHoverOnListener((processId) => {
                 this.timeout = setTimeout(() => {
-                    var tooltip = $("#canvas-tooltip-left");
-                    var process = this.graph.processById(parseInt(processId));
+                    var tooltipAnchor = $("#game-canvas-tooltip-left");
                     var position = this.leftGraph.getPosition(processId);
-                    tooltip.css("top", position.y - 45 - this.$leftContainer.scrollTop());
-                    tooltip.css("left", position.x - 10 - this.$leftContainer.scrollLeft());
-                    tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
-                    tooltip.show();
-                }, 1000);
+
+                    tooltipAnchor.css("left", position.x - this.$leftContainer.scrollLeft());
+                    tooltipAnchor.css("top", position.y - this.$leftContainer.scrollTop() - 10);
+
+                    tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId)});
+                    tooltipAnchor.tooltip("show");
+                }, 1000)
             });
 
             this.leftGraph.setHoverOutListener(() => {
                 clearTimeout(this.timeout);
-                $("#canvas-tooltip-left").hide();
+                $("#game-canvas-tooltip-left").tooltip("destroy");
             });
 
             this.rightGraph.setHoverOnListener((processId) => {
                 this.timeout = setTimeout(() => {
-                    var tooltip = $("#canvas-tooltip-right");
-                    var process = this.graph.processById(parseInt(processId));
+                    var tooltipAnchor = $("#game-canvas-tooltip-right");
                     var position = this.rightGraph.getPosition(processId);
-                    tooltip.css("top", position.y - 45 - this.$rightContainer.scrollTop());
-                    tooltip.css("left", position.x - 10 - this.$rightContainer.scrollLeft());
-                    tooltip.html(this.tooltip.ccsNotationForProcessId(processId));
-                    tooltip.show();
-                }, 1000);
+
+                    tooltipAnchor.css("left", position.x - this.$rightContainer.scrollLeft());
+                    tooltipAnchor.css("top", position.y - this.$rightContainer.scrollTop() - 10);
+
+                    tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId)});
+                    tooltipAnchor.tooltip("show");
+                }, 1000)
             });
 
             this.rightGraph.setHoverOutListener(() => {
                 clearTimeout(this.timeout);
-                $("#canvas-tooltip-right").hide();
+                $("#game-canvas-tooltip-right").tooltip("destroy");
             });
-            
+
             this.leftGraph.bindCanvasEvents();
             this.rightGraph.bindCanvasEvents();
         }
@@ -553,6 +554,10 @@ module Activity {
             this.marking = this.createMarking();
         }
         
+        public getGameLog() : GameLog {
+            return this.gameLog;
+        }
+        
         protected createMarking() : dg.LevelMarking {
             return dg.liuSmolkaLocal2(this.currentNodeId, this.dependencyGraph);
         }
@@ -819,7 +824,8 @@ module Activity {
         private attackerSuccessorGen : CCS.SuccessorGenerator;
         private defenderSuccessorGen : CCS.SuccessorGenerator;
         
-        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
+        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator,
+                leftProcessName : string, rightProcessName : string, gameType : string) {
             
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
@@ -906,7 +912,8 @@ module Activity {
         private attackerSuccessorGen : CCS.SuccessorGenerator;
         private defenderSuccessorGen : CCS.SuccessorGenerator;
         
-        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator, leftProcessName : string, rightProcessName : string, gameType : string) {
+        constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator,
+                leftProcessName : string, rightProcessName : string, gameType : string) {
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
             this.gameType = gameType;
@@ -1044,8 +1051,6 @@ module Activity {
     }
 
     class Player extends Abstract {
-
-        protected gameLog : GameLog = new GameLog();
         
         constructor(private playType : PlayType) {
             super();
@@ -1094,18 +1099,19 @@ module Activity {
         
         protected prepareAttack(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, true);
-            this.gameLog.println("Pick a transition on the left or the right.", "<p class='game-prompt'>");
+            game.getGameLog().printPrepareAttack();
         }
         
         protected prepareDefend(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, false);
-            this.gameLog.println("Pick a transition on the " + ((game.getLastMove() === Move.Left) ? "right." : "left."), "<p class='game-prompt'>");
+            game.getGameLog().printPrepareDefend(game.getLastMove());
         }
         
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
             var currentConfiguration = game.getCurrentConfiguration();
             var actionTransition : string;
-            var isWeakGame = (game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak") || (game instanceof SimulationGame && (<SimulationGame>game).getGameType() === "weak");
+            var isWeakGame = (game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak") ||
+                    (game instanceof SimulationGame && (<SimulationGame>game).getGameType() === "weak");
             
             if (!isAttack && isWeakGame) {
                 actionTransition = "=" + game.getLastAction().toString() + "=>";
@@ -1305,7 +1311,7 @@ module Activity {
 
             return template;
         }
-
+        
         public removeLastPrompt() : void {
             this.$log.find(".game-prompt").last().remove();
         }
@@ -1313,6 +1319,14 @@ module Activity {
         public printRound(round : number, configuration : any) : void {
             this.println("Round " + round, "<h4>");
             this.printConfiguration(configuration);
+        }
+
+        public printPrepareAttack() {
+            this.println("Pick a transition on the left or the right.", "<p class='game-prompt'>");
+        }
+        
+        public printPrepareDefend(lastMove : Move) {
+            this.println("Pick a transition on the " + ((lastMove === Move.Left) ? "right." : "left."), "<p class='game-prompt'>");
         }
 
         public printConfiguration(configuration : any) : void {
@@ -1435,6 +1449,14 @@ module Activity {
             } else {
                 this.println(winner.playTypeStr() + " has a winning strategy. You are going to lose.", "<p class='intro'>");
             }
+        }
+        
+        public printPrepareAttack() {
+            this.println("Pick a transition on the left.", "<p class='game-prompt'>");
+        }
+        
+        public printPrepareDefend(lastMove : Move) {
+            this.println("Pick a transition on the right.", "<p class='game-prompt'>");
         }
     }
 }

@@ -8,22 +8,29 @@ module Equivalence {
     import hml = HML;
     import dg = DependencyGraph;
 
+    /**
+        This class construct a bisimulation dependency graph.
+
+        It is extended with method for selecting AI choice for the DG-Games, and
+        other utility methods like finding distinguishing formula or performing
+        bisimulation collapse
+    */
     export class BisimulationDG implements dg.DependencyGraph, dg.PlayableDependencyGraph {
 
-        /** The dependency graph is constructed with disjunction
-            as conjunction and vica versa, since bisimulation is
-            maximal fixed-point. The result marking should be
+        /** The dependency graph is constructed such a minimum fixed point
+            of 1 indicates the processes diverge. Since bisimulation is
+            maximal fixed-point, the result marking should be
             inverted **/
 
         private nextIdx;
-        private nodes = [];
-        private constructData = [];
-        private leftPairs = {};
+        private nodes = []; //Reference to node ids already constructed.
+        private constructData = []; //Data necessary to construct nodes.
+        private leftPairs = {}; // leftPairs[P.id][Q.id] is a cache for solved process pairs.
         private isFullyConstructed = false;
 
         constructor(private attackSuccGen : ccs.SuccessorGenerator,
                     private defendSuccGen : ccs.SuccessorGenerator,
-                    leftNode, rightNode) {
+                    leftNode : ccs.ProcessId, rightNode : ccs.ProcessId) {
             this.constructData[0] = [0, leftNode, rightNode];
             this.nextIdx = 1;
         }
@@ -82,21 +89,7 @@ module Equivalence {
                 //Same action - possible candidate.
                 if (rightTransition.action.equals(action)) {
                     toRightId = rightTransition.targetProcess.id;
-                    var rightIds = this.leftPairs[toLeftId];
-                    if (rightIds) {
-                        existing = rightIds[toRightId];
-                    }
-                    //Have we already solved the resulting (s1, t1) pair?
-                    if (existing) {
-                        result.push(existing);
-                    } else {
-                        //Build the node.
-                        var newIndex = this.nextIdx++;
-                        if (!rightIds) this.leftPairs[toLeftId] = rightIds = {};
-                        rightIds[toRightId] = newIndex
-                        this.constructData[newIndex] = [0, toLeftId, toRightId];
-                        result.push(newIndex);
-                    }
+                    result.push(this.getOrCreatePairNode(toLeftId, toRightId));
                 }
             });
             return [result];
@@ -112,24 +105,27 @@ module Equivalence {
                 var existing, toLeftId;
                 if (leftTransition.action.equals(action)) {
                     toLeftId = leftTransition.targetProcess.id;
-                    var rightIds = this.leftPairs[toLeftId];
-                    if (rightIds) {
-                        existing = rightIds[toRightId];
-                    }
-                    //Have we already solved the resulting (s1, t1) pair?
-                    if (existing) {
-                        result.push(existing);
-                    } else {
-                        //Build the node.
-                        var newIndex = this.nextIdx++;
-                        if (!rightIds) this.leftPairs[toLeftId] = rightIds = {};
-                        rightIds[toRightId] = newIndex
-                        this.constructData[newIndex] = [0, toLeftId, toRightId];
-                        result.push(newIndex);
-                    }
+                    result.push(this.getOrCreatePairNode(toLeftId, toRightId));
                 }
             });
             return [result];
+        }
+
+        private getOrCreatePairNode(leftId : ccs.ProcessId, rightId : ccs.ProcessId) : dg.DgNodeId {
+            var result : dg.DgNodeId;
+            var rightIds = this.leftPairs[leftId];
+            if (rightIds) {
+                result = rightIds[rightId];
+            }
+            if (result) {
+                return result;
+            }
+            //Build the node.
+            var result = this.nextIdx++;
+            if (!rightIds) this.leftPairs[leftId] = rightIds = {};
+            rightIds[rightId] = result
+            this.constructData[result] = [0, leftId, rightId];
+            return result;
         }
 
         private getProcessPairStates(leftProcessId : ccs.ProcessId, rightProcessId : ccs.ProcessId) : dg.Hyperedge[] {
@@ -194,12 +190,38 @@ module Equivalence {
             
             return result;
         }
-        
-        getBisimulationCollapse(marking : dg.LevelMarking) : Traverse.Collapse {
 
+        /*
+            Create a node for all pairs of reachable processes
+        */
+        addReachablePairs(fromProcess : ccs.ProcessId) : void {
+            var reachableProcessIds = [];
+            var count = 0,
+                maxCount = 666;
+
+            var iterator = ccs.reachableProcessIterator(fromProcess, this.attackSuccGen);
+            while (iterator.hasNext()) {
+                if (count++ > maxCount) throw "Too many process pairs";
+                reachableProcessIds.push(iterator.next());
+            }
+
+            for (var leftIndex = 0; leftIndex < reachableProcessIds.length; ++leftIndex) {
+                for (var rightIndex = 0; rightIndex < reachableProcessIds.length; ++rightIndex) {
+                    if (leftIndex != rightIndex) {
+                        var leftProcId = reachableProcessIds[leftIndex];
+                        var rightProcId = reachableProcessIds[rightIndex];
+                        this.getOrCreatePairNode(leftProcId, rightProcId);
+                    }
+                }
+            }
+        }
+        
+        getBisimulationCollapse(marking : dg.LevelMarking, graph : ccs.Graph) : Traverse.Collapse {
+            //Implementation of Union-Find algorithm.
+            //Since Bisimulation is an equivalence relation
+            //this datastructure/algorithm is a good match.
             var sets = Object.create(null);
 
-            //Union find / disjoint-set.
             function singleton(id) {
                 var o : any = {val: id, rank: 0};
                 o.parent = o;
@@ -243,21 +265,30 @@ module Equivalence {
                 }
             });
 
-            //Create equivalence sets
-            var eqSet = {};
+            //Map each represenative id to the array of equivalent processes
+            var collapses = {};
             Object.keys(sets).forEach(procId => {
-                var reprId = getRepresentative(procId);
-                (eqSet[reprId] = eqSet[reprId] || []).push(procId);
+                var reprId = findRoot(procId).val,
+                    process = graph.processById(Number(procId));
+                (collapses[reprId] = collapses[reprId] || []).push(process);
             });
 
-            function getRepresentative(id) {
-                return findRoot(id).val;
-            }
+            //For each array create a collapse and map each proc id to its
+            //corresponding collapse
+            var proc2collapse = {};
+            Object.keys(collapses).forEach(reprId => {
+                var collapsedProces = collapses[reprId];
+                var collapse = graph.newCollapsedProcess(collapses[reprId]);
+                collapsedProces.forEach(proc => {
+                    proc2collapse[proc.id] = collapse;
+                });
+                //Add self collapse
+                proc2collapse[collapse.id] = collapse;
+            });
 
             return {
-                getRepresentative: getRepresentative,
-                getEquivalenceSet: function(id) {
-                    return eqSet[getRepresentative(id)];
+                getRepresentative: function(id) : ccs.CollapsedProcess {
+                    return proc2collapse[id];
                 }
             }
         }
@@ -485,18 +516,6 @@ module Equivalence {
     export function isBisimilar(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) {
         var bisimDG = new Equivalence.BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
         marking = dg.liuSmolkaLocal2(0, bisimDG);
-
-        //Bisimulation is maximal fixed point, the marking is reversed.
-        // if (marking.getMarking(0) === marking.ONE && graph) {
-        //     var traceIterator = dg.getTraceIterator(marking)
-        //     while (traceIterator.hasNext()) {
-        //         var traces = traceIterator.next();            
-        //         console.log("Left does: ");
-        //         console.log(prettyPrintTrace(graph, traces.left));
-        //         console.log("Right does: ");
-        //         console.log(prettyPrintTrace(graph, traces.right));
-        //     }
-        // }
         return marking.getMarking(0) === marking.ZERO;
     }
     
@@ -511,9 +530,13 @@ module Equivalence {
         defendSuccGen : ccs.SuccessorGenerator,
         leftProcessId,
         rightProcessId) : Traverse.Collapse {
-            var bisimDG = new Equivalence.BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId),
-            marking = dg.liuSmolkaGlobal(bisimDG);
-            return bisimDG.getBisimulationCollapse(marking);
+            var bisimDG = new Equivalence.BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId);
+            bisimDG.addReachablePairs(leftProcessId);
+            if (leftProcessId != rightProcessId) {
+                bisimDG.addReachablePairs(rightProcessId);
+            }
+            var marking = dg.liuSmolkaGlobal(bisimDG);
+            return bisimDG.getBisimulationCollapse(marking, attackSuccGen.getGraph());
         }
 
     export class TraceDG implements dg.DependencyGraph {

@@ -167,9 +167,15 @@ module Activity {
             var process = this.succGenerator.getProcessByName(options.process);
 
             if (options.collapse !== "none") {
-                var otherSuccGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
-                var collapse = Equivalence.getBisimulationCollapse(this.succGenerator, otherSuccGenerator, process.id, process.id);
-                this.succGenerator = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
+                //Always attack with strong succ generator (improves performance)
+                var attackSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
+                var defendSuccGen = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
+                var collapse = Equivalence.getBisimulationCollapse(attackSuccGen, defendSuccGen, process.id, process.id);
+                var collapseSuccGen = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
+                //Wrap the transition relation used in the collapse.
+                this.succGenerator = collapseSuccGen;
+                //Process have been replaced by collapse.
+                process = collapseSuccGen.getCollapseForProcess(process.id);
             }
 
             this.expand(process);
@@ -276,7 +282,7 @@ module Activity {
                     $actionTd.append(t.action.toString());
                 }
                 
-                row.append($("<td>").append(Tooltip.wrapProcess(this.labelFor(this.selectedProcess))));
+                row.append($("<td>").append(this.sourceText(this.selectedProcess)));
                 row.append($actionTd);
                 row.append($("<td>").append(Tooltip.wrapProcess(this.labelFor(t.targetProcess))));
 
@@ -284,6 +290,23 @@ module Activity {
 
                 this.$statusTable.append(row);
             });
+        }
+
+        private sourceText(process : ccs.Process) : any {
+            // Collapsed process presents us with another indirection meaning
+            // under normal cirsumstances it would not be possible to hover
+            // over the constituent processes and get their description.
+            if (process instanceof ccs.CollapsedProcess) {
+                var wrappedSubProcs = process.subProcesses.map(p => Tooltip.wrapProcess(this.labelFor(p)));
+                return [].concat(
+                    [Tooltip.wrapProcess(this.labelFor(process))],
+                    [" = {"],
+                    ArrayUtil.intersperse<any>(wrappedSubProcs, ", "), 
+                    ["}"]
+                );
+            } else {
+                return Tooltip.wrapProcess(this.labelFor(process));
+            }
         }
 
         private onTransitionTableRowHover(entering : boolean, event) : void {
