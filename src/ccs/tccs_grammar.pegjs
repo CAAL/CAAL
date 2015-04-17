@@ -88,7 +88,7 @@ Action "action"
 	/ label:Label { return new tccs.Action(label, false); }
 
 Delay "delay"
-	= delay:Number { return new tccs.Delay(delay); }
+	= delay:Number { return new tccs.Delay(parseInt(delay)); }
 
 Label "label"
 	= first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
@@ -97,12 +97,13 @@ LabelList
 	= first:Label rest:(_ "," _ Label)* { return extractLabelList(first, rest); }
 
 Number "number"
-	= [0-9]+
+	= number:[0-9]+ { return number; }
 
 Whitespace "whitespace"
 	= [ \t]
 
-Comment "comment" = "*" [^\r\n]* "\r"? "\n"?
+Comment "comment"
+	= "*" [^\r\n]* "\r"? "\n"?
 
 //Useful utility
 _ = (Whitespace / Newline)* Comment _
