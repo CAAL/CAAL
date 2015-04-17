@@ -9,7 +9,7 @@ module Traverse {
     // http://ironcreek.net/phpsyntaxtree/?
     export class LabelledBracketNotation implements ccs.ProcessVisitor<string>, ccs.ProcessDispatchHandler<void> {
 
-        private stringPieces : string[];
+        protected stringPieces : string[];
         private recurseOnceForNamedProcess = undefined;
 
         constructor() {
@@ -77,6 +77,15 @@ module Traverse {
             var relabels = [];
             process.relabellings.forEach((f, t) => relabels.push(t + "/" + f));
             this.stringPieces.push(" (" + relabels.join(",") + ")]");
+        }
+    }
+
+    export class TCCSLabelledBracketNotation extends LabelledBracketNotation implements ccs.ProcessVisitor<string>, TCCS.TCCSProcessDispatchHandler<void> {
+        dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
+            this.stringPieces.push("[DelayPrefix");
+            this.stringPieces.push(process.delay + ".");
+            process.nextProcess.dispatchOn(this);
+            this.stringPieces.push("]");
         }
     }
 

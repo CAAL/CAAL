@@ -177,6 +177,7 @@ module CCS {
         //Uses index as uid.
         private allRestrictedSets = new GrowingIndexedArraySet<LabelSet>();
         private allRelabellings = new GrowingIndexedArraySet<RelabellingSet>();
+        protected unguardedRecursionChecker = new Traverse.UnguardedRecursionChecker();
 
         constructor() {
         }
@@ -326,10 +327,9 @@ module CCS {
                 }
             }
             var addUnguardedRecursionErrors = () => {
-                var checker = new Traverse.UnguardedRecursionChecker(),
-                    processNames = Object.keys(this.namedProcesses),
+                var processNames = Object.keys(this.namedProcesses),
                     processes = processNames.map(name => this.namedProcesses[name]),
-                    unguardedProcesses = checker.findUnguardedProcesses(processes);
+                    unguardedProcesses = this.unguardedRecursionChecker.findUnguardedProcesses(processes);
                 unguardedProcesses.forEach(process => {
                     errors.push(newError("UnguardedProcess", "Process '" + process.name + "' has unguarded recursion"));
                 });
@@ -770,7 +770,6 @@ module CCS {
         return resultGenerator;
     }
 
-<<<<<<< HEAD
     export function expandBFS(process : Process, succGen : SuccessorGenerator, maxDepth : number) : {[id : number] : CCS.TransitionSet} {
         var result : any = {},
             queue = [[1, process]], //non-emptying array as queue.
@@ -786,7 +785,7 @@ module CCS {
             });
         }
         return result;
-=======
+
     export function reachableProcessIterator(initialProcess : ProcessId, succGen : SuccessorGenerator) {
         var visitStack = [initialProcess],
             addedProcs = Object.create(null),
@@ -807,6 +806,5 @@ module CCS {
             return result;
         };
         return iterator;
->>>>>>> Proper collapsing
     }
 }
