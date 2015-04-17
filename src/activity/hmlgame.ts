@@ -317,51 +317,26 @@ module Activity {
 
 
         private refresh(configuration) : void {
-            /* E-xplores the currentProcess and updates the transitiontable with its successors transitions*/
+            /* Explores the currentProcess and updates the transitiontable with its successors transitions*/
             
             var isGameOver = this.hmlGameLogic.isGameOver();
             if(isGameOver) {
                 this.setActionWidget() // clear the widget div
                 var winner : Player = isGameOver.left;
                 var winReason = isGameOver.right;
-                var gameOver = new GUI.Widget.GameLogObject();
 
-                /* Gamelog */
-                if (winReason === WinReason.minGameCycle || winReason === WinReason.maxGameCycle) {
-                    gameOver.setTemplate("A cycle has been detected. {0}!");
-                    if(winReason === WinReason.minGameCycle){
-                        gameOver.addLabel({text: (this.human === winner) ? "You win" : "You lose"})
-                    }
-                    else{
-                        gameOver.addLabel({text: (this.human === winner) ? "You win" : "You lose"})
-                    }                 
-                }
-                else {
-                    gameOver.setTemplate("{0} no available transitions. You {1}!");
-                    gameOver.addLabel({text: (this.human === winner) ? ((this.computer === Player.defender) ? "Defender has" : "Attacker has") : "You have"});
-                    gameOver.addLabel({text: (this.human === winner) ? "win" : "lose"});
-                }
-
-                this.gamelog.printToGameLog(gameOver);
+                this.printGameOver(winner, winReason);
             }
             else {
                 var currentPlayer = this.hmlGameLogic.getCurrentPlayer();
 
-                /* Gamelog */
-                var gameConfig = new GUI.Widget.GameLogObject();
-                gameConfig.addHeader({text: "Round 0", tag: "<h4>"});
-                gameConfig.setTemplate("Current configuration: ({0}, {1}).");
-                gameConfig.addLabel({text: gameConfig.labelForProcess(this.currentProcess), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]})
-                gameConfig.addLabel({text: gameConfig.labelForFormula(this.currentFormula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
-                gameConfig.addClass("<p>");
-
-                this.gamelog.printToGameLog(gameConfig);
-
                 if(currentPlayer === this.computer) {
                     // this.hmlGameLogic.AutoPlay(this.computer);
+                    this.printCurrentConfig(this.currentProcess, this.currentFormula);
                     this.prepareGuiForUserAction();
                 } 
                 else if(currentPlayer === this.human) {
+                    this.printCurrentConfig(this.currentProcess, this.currentFormula);
                     this.prepareGuiForUserAction();
                 }
                 else if(currentPlayer === Player.judge) {
@@ -372,6 +347,38 @@ module Activity {
             } 
             
             this.processExplorer.exploreProcess(this.currentProcess);
+        }
+
+        private printGameOver(winner : Player, winReason : WinReason) : void {
+            /* Gamelog */
+            var gameLogObject = new GUI.Widget.GameLogObject();
+            if (winReason === WinReason.minGameCycle || winReason === WinReason.maxGameCycle) {
+                gameLogObject.setTemplate("A cycle has been detected. {0}!");
+                if(winReason === WinReason.minGameCycle){
+                    gameLogObject.addLabel({text: (this.human === winner) ? "You win" : "You lose"})
+                }
+                else{
+                    gameLogObject.addLabel({text: (this.human === winner) ? "You win" : "You lose"})
+                }                 
+            }
+            else {
+                gameLogObject.setTemplate("{0} no available transitions. You {1}!");
+                gameLogObject.addLabel({text: (this.human === winner) ? ((this.computer === Player.defender) ? "Defender has" : "Attacker has") : "You have"});
+                gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
+            }
+
+            this.gamelog.printToGameLog(gameLogObject);
+        }
+
+        private printCurrentConfig(process : CCS.Process, formula : HML.Formula) : void{
+            /* Gamelog */
+            var gameConfig = new GUI.Widget.GameLogObject();
+            gameConfig.addHeader({text: "Round 0", tag: "<h4>"});
+            gameConfig.setTemplate("Current configuration: ({0}, {1}).");
+            gameConfig.addLabel({text: gameConfig.labelForProcess(process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]})
+            gameConfig.addLabel({text: gameConfig.labelForFormula(formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
+            gameConfig.addClass("<p>");
+            this.gamelog.printToGameLog(gameConfig);
         }
 
         private prepareGuiForUserAction() {
