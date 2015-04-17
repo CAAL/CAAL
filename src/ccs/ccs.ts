@@ -113,7 +113,7 @@ module CCS {
 
         constructor(label : string, isComplement : boolean) {
             if (label === "tau" && isComplement) {
-                throw newError("Tau no complement", "tau has no complement");
+                throw newError("TauNoComplement", "Tau has no complement.");
             }
             this.label = label;
             this.complement = isComplement;
@@ -174,7 +174,7 @@ module CCS {
             } else if (!namedProcess.subProcess) {
                 namedProcess.subProcess = process;
             } else {
-                this.constructErrors.push(newError("Duplicate Process Definition", "Duplicate definition of process '" + processName + "'"));
+                this.constructErrors.push(newError("DuplicateProcessDefinition", "Duplicate definition of process '" + processName + "'."));
             }
             return namedProcess;
         }
@@ -247,7 +247,7 @@ module CCS {
         newRestrictedProcessOnSetName(process, setName) {
             var labelSet = this.definedSets[setName];
             if (!labelSet) {
-                this.constructErrors.push(newError("Undefined Set", "Set '" + setName + "' has not been defined"));
+                this.constructErrors.push(newError("UndefinedSet", "Set '" + setName + "' has not been defined."));
                 //Fallback for empty set
                 labelSet = this.allRestrictedSets.getOrAdd(new LabelSet([]));
             }
@@ -268,7 +268,7 @@ module CCS {
 
         defineNamedSet(name, labelSet : LabelSet) {
             if (this.definedSets[name]) {
-                this.constructErrors.push(newError("Duplicate Set Definition", "Set '" + name + "' has already been defined"));
+                this.constructErrors.push(newError("DuplicateSetDefinition", "Duplicate definition of set '" + name + "'."));
             }
             this.definedSets[name] = this.allRestrictedSets.getOrAdd(labelSet);
         }
@@ -293,7 +293,7 @@ module CCS {
                 for (processName in this.namedProcesses) {
                     process = this.namedProcesses[processName];
                     if (!process.subProcess) {
-                        errors.push(newError("UndefinedProcess", "Process '" + processName + "' has no definition"));
+                        errors.push(newError("UndefinedProcess", "Process '" + processName + "' has not been defined."));
                     }
                 }
             }
@@ -302,7 +302,7 @@ module CCS {
                     processes = processNames.map(name => this.namedProcesses[name]),
                     unguardedProcesses = this.unguardedRecursionChecker.findUnguardedProcesses(processes);
                 unguardedProcesses.forEach(process => {
-                    errors.push(newError("UnguardedProcess", "Process '" + process.name + "' has unguarded recursion"));
+                    errors.push(newError("UnguardedProcess", "Process '" + process.name + "' has unguarded recursion."));
                 });
             }
             addUndefinedProcesses();
@@ -319,7 +319,7 @@ module CCS {
         constructor(relabellings : {from: string; to: string}[]) {
             relabellings.forEach( (relabel) => {
                 if (relabel.from === "tau") {
-                    throw newError("Tau Relabel", "Cannot relabel tau to something else");
+                    throw newError("TauRelabel", "Cannot relabel tau.");
                 }
                 this.froms.push(relabel.from);
                 this.tos.push(relabel.to);
@@ -374,7 +374,7 @@ module CCS {
         constructor(labels : string[]) {
             this.labels = ArrayUtil.sortAndRemoveDuplicates(labels);
             if (this.contains("tau")) {
-                throw newError("Tau in LabelSet", "tau not allowed in label set");
+                throw newError("TauInLabelSet", "Tau is not allowed in label set.");
             }
         }
 

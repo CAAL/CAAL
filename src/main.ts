@@ -10,6 +10,7 @@
 /// <reference path="gui/menu/delete.ts" />
 /// <reference path="gui/menu/export.ts" />
 /// <reference path="gui/hotkey.ts" />
+/// <reference path="gui/autosave.ts" />
 /// <reference path="activity/activityhandler.ts" />
 /// <reference path="activity/activity.ts" />
 /// <reference path="activity/editor.ts" />
