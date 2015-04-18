@@ -354,27 +354,39 @@ module Activity {
             var result = {},
                 queue = [[1, process]],
                 processed = [],
-                currentDepth, sourceProcess, transitions;
+                strongSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false}),
+                currentDepth, sourceProcess, hasTau;
 
             for (var i = 0; i < queue.length; i++) {
                 currentDepth = queue[i][0];
                 sourceProcess = queue[i][1];
                 processed.push(sourceProcess.id);
-                transitions = this.succGen.getSuccessors(sourceProcess.id);
 
-                transitions.forEach(t => {
+                if (this.succGen instanceof Traverse.WeakSuccessorGenerator) {
+                    hasTau = false;
+
+                    strongSuccGen.getSuccessors(sourceProcess.id).forEach(t => {
+                        if (t.action.toString() === "tau" && sourceProcess === t.targetProcess) {
+                            hasTau = true; // Process has tau-loop.
+                        }
+                    });
+                }
+
+                this.succGen.getSuccessors(sourceProcess.id).forEach(t => {
                     if (this.succGen instanceof Traverse.WeakSuccessorGenerator) {
-                        var path = (<Traverse.WeakSuccessorGenerator> this.succGen).getStrictPath(sourceProcess.id, t.action, t.targetProcess.id);
-                        var current = sourceProcess;
+                        if (hasTau || (t.action.toString() !== "tau" || sourceProcess !== t.targetProcess)) {
+                            var path = (<Traverse.WeakSuccessorGenerator> this.succGen).getStrictPath(sourceProcess.id, t.action, t.targetProcess.id);
+                            var current = sourceProcess;
 
-                        for(var j = 0; j < path.length; j++) {
-                            if (result[current.id]) {
-                                result[current.id].add(path[j]);
-                            } else {
-                                result[current.id] = new CCS.TransitionSet([path[j]]);
+                            for(var j = 0; j < path.length; j++) {
+                                if (result[current.id]) {
+                                    result[current.id].add(path[j]);
+                                } else {
+                                    result[current.id] = new CCS.TransitionSet([path[j]]);
+                                }
+
+                                current = path[j].targetProcess;
                             }
-
-                            current = path[j].targetProcess;
                         }
                     } else {
                         if (result[sourceProcess.id]) {
