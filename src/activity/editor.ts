@@ -86,7 +86,7 @@ module Activity {
                     }
                 } else {
                     title = '<span class="text-success"><i class="fa fa-check fa-lg"></i> Success</span>';
-                    content = "<p>The program is valid " + InputMode[this.project.getInputMode()] + ".</p>";
+                    content = "<p>This is a valid " + InputMode[this.project.getInputMode()] + " program.</p>";
                     this.showPopover(title, content, false);
                     return;
                 }
