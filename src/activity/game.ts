@@ -362,6 +362,8 @@ module Activity {
                 sourceProcess = queue[i][1];
                 processed.push(sourceProcess.id);
 
+                result[sourceProcess.id] = new CCS.TransitionSet();
+
                 if (this.succGen instanceof Traverse.WeakSuccessorGenerator) {
                     hasTau = false;
 
