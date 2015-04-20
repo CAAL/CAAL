@@ -394,11 +394,6 @@ module Activity {
             }
         }
 
-        /*private WriteToGamelog(state : HmlGameState, currentPlayer? : Player) : void {
-            
-            console.log("Gamelog: ", Gamelogobject);
-        }*/
-
         private setActionWidget(widget = null) : void {
             var injecter = $("#hml-game-status-right")[0];
             while (injecter.firstChild) {
