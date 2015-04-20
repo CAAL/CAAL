@@ -320,7 +320,7 @@ module Activity {
             /* Explores the currentProcess and updates the transitiontable with its successors transitions*/
             
             var isGameOver = this.hmlGameLogic.isGameOver();
-            if(isGameOver) {
+            if (isGameOver) {
                 this.setActionWidget() // clear the widget div
                 var winner : Player = isGameOver.left;
                 var winReason = isGameOver.right;
@@ -367,17 +367,18 @@ module Activity {
                 gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
             }
 
+            gameLogObject.addWrapper({tag: "<p>", attr: [{name: "class", value: "outro"}]});
             this.gamelog.printToGameLog(gameLogObject);
         }
 
         private printCurrentConfig(process : CCS.Process, formula : HML.Formula) : void{
             /* Gamelog */
             var gameConfig = new GUI.Widget.GameLogObject();
-            gameConfig.addHeader({text: "Round 0", tag: "<h4>"});
+            gameConfig.setNewRound(true);
             gameConfig.setTemplate("Current configuration: ({0}, {1}).");
             gameConfig.addLabel({text: gameConfig.labelForProcess(process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]})
             gameConfig.addLabel({text: gameConfig.labelForFormula(formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
-            gameConfig.addClass("<p>");
+            gameConfig.addWrapper({tag: "<p>"});
             this.gamelog.printToGameLog(gameConfig);
         }
 
@@ -420,11 +421,6 @@ module Activity {
 
         toString() {
             return "HML Game Activity";
-        }
-    }
-
-    class GameLogObject {
-        constructor(public content : string) {
         }
     }
 
@@ -530,7 +526,7 @@ module Activity {
                 /* Gamelog */
                 var gameLogPlay = new GUI.Widget.GameLogObject();
                 gameLogPlay.setTemplate("{0} has chosen subformula {1}.")
-                gameLogPlay.addClass("<p>");
+                gameLogPlay.addWrapper({tag: "<p>"});
                 gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
                 gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
                 this.writeToGamelog(gameLogPlay);
@@ -552,7 +548,7 @@ module Activity {
                 /* Gamelog */
                 var gameLogPlay = new GUI.Widget.GameLogObject();
                 gameLogPlay.setTemplate("{0} played {1} {2} {3}.");
-                gameLogPlay.addClass("<p>");
+                gameLogPlay.addWrapper({tag: "<p>"});
                 gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
                 gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(this.state.process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
                 gameLogPlay.addLabel({text: "-" + transition.action + "->", tag: "<span>", attr: [{name: "class", value: "monospace"}]});
@@ -586,7 +582,7 @@ module Activity {
             // otherwise return who won, and why.
             
             // infinite run
-            if(this.cycleExists()){
+            if (this.cycleExists()) {
                 if (this.state.isMinGame) {
                     this.gameIsOver = true;
                     return new Pair(Player.defender, WinReason.minGameCycle);
@@ -597,7 +593,7 @@ module Activity {
             }
 
             // true/false formula
-            if(this.state.formula instanceof HML.FalseFormula) {
+            if (this.state.formula instanceof HML.FalseFormula) {
                 this.gameIsOver = true;
                 return new Pair(Player.attacker, WinReason.falseFormula); // attacker win
             } 
@@ -651,7 +647,7 @@ module Activity {
                         /* Gamelog */
                         var gameLogPlay = new GUI.Widget.GameLogObject();
                         gameLogPlay.setTemplate("Judge unfolds {0} {1} {2}.")
-                        gameLogPlay.addClass("<p>");
+                        gameLogPlay.addWrapper({tag: "<p>"});
                         gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(hml), tag:"<span>", attr: [{name: "class", value: "monospace"}]});
                         gameLogPlay.addLabel({text: " --> ", tag:"<span>", attr: [{name: "class", value: "monospace"}]});
                         gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(unfolded), tag:"<span>", attr: [{name: "class", value: "monospace"}]});

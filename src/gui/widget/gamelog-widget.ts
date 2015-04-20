@@ -3,9 +3,11 @@
 /// <reference path="../../activity/tooltip.ts" />
 
 module GUI.Widget {
-    export type GameLogObjectRow = {text : string; tag? : string; attr? : [{name: string; value: string}];};
+    export type htmlWrapper = {tag : string; attr? : [{name: string; value: string}];}
+    export type GameLogObjectRow = {text : string; htmlWrapper? : htmlWrapper;};
     export class GameLog {
         private log = document.createElement("div");
+        private round = 0;
         
         /* 
             Things to consider
@@ -34,18 +36,19 @@ module GUI.Widget {
             $log.empty();
         }
 
+        private newRound() {
+            var $log = $(this.log);
+            var $round = $("<h4></h4>").append("Round " + (++this.round).toString());
+
+            $log.append($round);
+        }
+
         public printToGameLog(gameLogObject : GameLogObject) : void {
             var $log = $(this.log),
                 logStr = this.render(gameLogObject);
 
-            var header = gameLogObject.getHeader();
-            if (header) {
-                if (header.tag) {
-                    var $header = $(header.tag).append(header.text);
-                    $log.append($header[0].outerHTML);
-                }else {
-                    $log.append(header.text);
-                }
+            if (gameLogObject.getNewRound()) {
+                this.newRound();
             }
 
             $log.append(logStr);
@@ -72,9 +75,17 @@ module GUI.Widget {
                 }
             });
 
-            var wrapper = gameLogObject.getClass(); 
+            var wrapper = gameLogObject.getWrapper(); 
             if (wrapper) {
-                result = $(wrapper).append(result)[0].outerHTML;
+                var $temp = $(wrapper.tag);
+
+                if (wrapper.attr){
+                    wrapper.attr.forEach(elem => {
+                        $temp.attr(elem.name, elem.value);
+                    });
+                }
+
+                result = $temp.append(result)[0].outerHTML;
             }
 
             return result;
@@ -85,14 +96,15 @@ module GUI.Widget {
     const enum GameLogType {intro, play};
     export class GameLogObject {
         private template : string;
-        private header : GameLogObjectRow;
         private context : GameLogObjectRow[];
-        private class : string;
+        private wrapper : htmlWrapper;
+        private isNewRound : boolean;
         
         constructor() {
             this.template = "";
-            this.header = null;
             this.context = [];
+            this.wrapper = null;
+            this.isNewRound = false;
         }
 
         public addLabel (row : GameLogObjectRow, index? : number) : void {
@@ -103,20 +115,20 @@ module GUI.Widget {
             }
         }
 
-        public addHeader (row : GameLogObjectRow) : void {
-            this.header = row;
+        public setNewRound(isNewRound : boolean) : void {
+            this.isNewRound = isNewRound;
         }
 
-        public getHeader() : GameLogObjectRow {
-            return this.header;
+        public getNewRound() : boolean {
+            return this.isNewRound;
         }
 
-        public addClass (wrapper : string) : void {
-            this.class = wrapper;
+        public addWrapper (wrapper : htmlWrapper) : void {
+            this.wrapper = wrapper;
         }
 
-        public getClass() : string {
-            return this.class;
+        public getWrapper() : htmlWrapper {
+            return this.wrapper;
         }
 
         public setTemplate(template : string) {
