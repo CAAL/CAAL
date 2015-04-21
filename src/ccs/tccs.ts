@@ -3,7 +3,7 @@
 module TCCS {
     
     export interface TCCSProcessDispatchHandler<T> extends CCS.ProcessDispatchHandler<T> {
-        dispatchDelayPrefixProcess(process : DelayPrefixProcess, ... args) : T
+        dispatchDelayPrefixProcess(process : DelayPrefixProcess, ... args) : T;
     }
 
     export class DelayPrefixProcess implements CCS.Process {
@@ -55,6 +55,30 @@ module TCCS {
                 next = this.newDelayPrefixProcess(delays[i], next);
             }
             return this.processes[this.nextId-1];
+        }
+    }
+}
+
+module Traverse {
+    export class TCCSLabelledBracketNotation extends Traverse.LabelledBracketNotation implements CCS.ProcessVisitor<string>, TCCS.TCCSProcessDispatchHandler<void> {
+        public dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
+            this.stringPieces.push("[DelayPrefix");
+            this.stringPieces.push(process.delay + ".");
+            process.nextProcess.dispatchOn(this);
+            this.stringPieces.push("]");
+        }
+    }
+    
+    export class TCCSNotationVisitor extends Traverse.CCSNotationVisitor implements CCS.ProcessVisitor<string>, TCCS.TCCSProcessDispatchHandler<string> {
+        public dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
+            var result = this.cache[process.id],
+                subStr;
+            if (!result) {
+                subStr = process.nextProcess.dispatchOn(this);
+                subStr = wrapIfInstanceOf(subStr, process.nextProcess, [CCS.SummationProcess, CCS.CompositionProcess]);
+                result = this.cache[process.id] = process.delay.toString() + "." + subStr;
+            }
+            return result;
         }
     }
 }
