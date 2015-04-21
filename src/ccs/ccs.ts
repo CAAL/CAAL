@@ -169,7 +169,7 @@ module CCS {
     export class Graph {
         protected nextId : number = 1;
         private nullProcess = new NullProcess(0);
-        private structural = Object.create(null);
+        protected structural = Object.create(null);
         protected processes = {0: this.nullProcess};
         private namedProcesses = Object.create(null);
         private constructErrors = [];

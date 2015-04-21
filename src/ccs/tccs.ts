@@ -24,8 +24,12 @@ module TCCS {
             this.delay = delay;
         }
         
-        getDelay() : number {
+        public getDelay() : number {
             return this.delay;
+        }
+        
+        public toString() {
+            return this.delay.toString();
         }
     }
     
@@ -34,10 +38,23 @@ module TCCS {
             super();
             this.unguardedRecursionChecker = new Traverse.TCCSUnguardedRecursionChecker();
         }
-
-        newDelayPrefixProcess(delay : Delay, nextProcess : CCS.Process) {
-            // var key = "." + delay.getDelay() + "." + nextProcess.id;
-            return this.processes[this.nextId] = new DelayPrefixProcess(this.nextId++, delay, nextProcess);
+        
+        private newDelayPrefixProcess(delay : Delay, nextProcess : CCS.Process) {
+            var key = "." + delay.getDelay() + "." + nextProcess.id;
+            var existing = this.structural[key];
+            if (!existing) {
+                existing = this.structural[key] = new DelayPrefixProcess(this.nextId++, delay, nextProcess);
+                this.processes[existing.id] = existing;
+            }
+            return existing;
+        }
+        
+        public newDelayPrefixProcesses(delays : Delay[], nextProcess : CCS.Process) {
+            var next = nextProcess;
+            for (var i = 0; i < delays.length; i++) {
+                next = this.newDelayPrefixProcess(delays[i], next);
+            }
+            return this.processes[this.nextId-1];
         }
     }
 }

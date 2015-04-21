@@ -88,6 +88,7 @@ module Activity {
                     title = '<span class="text-success"><i class="fa fa-check fa-lg"></i> Success</span>';
                     content = "<p>The program is valid " + InputMode[this.project.getInputMode()] + ".</p>";
                     this.showPopover(title, content, false);
+                    //if (graph instanceof TCCS.TCCSGraph) console.log(new Traverse.TCCSLabelledBracketNotation().visit(graph.processByName("P"))); // printing process P
                     return;
                 }
             } catch (error) {

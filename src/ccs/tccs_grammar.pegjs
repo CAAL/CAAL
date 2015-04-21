@@ -12,6 +12,17 @@
 	function strFirstAndRest(first, rest) {
 		return first + rest.join('');
 	}
+    
+    function splitDelay(delay) {
+        if (delay === 0)
+            return [new tccs.Delay(0)];
+        
+        var delays = [];
+        for (var i = 0; i < delay; i++) {
+            delays.push(new tccs.Delay(1));
+        }
+        return delays;
+    }
 
 	// options is an arbitrary javascript object specified in the .parse(...) method
 	var ccs = options.ccs;
@@ -53,7 +64,7 @@ Composition
 
 Prefix
 	= action:Action _ "." _ P:Prefix { return g.newActionPrefixProcess(action, P); }
-	/ delay:Delay _ "." _ P:Prefix { return g.newDelayPrefixProcess(delay, P); }
+	/ delay:Delay _ "." _ P:Prefix { return g.newDelayPrefixProcesses(delay, P); }
 	/ P:ReProcess { return P; }
 
 ReProcess
@@ -89,7 +100,7 @@ Action "action"
 	/ label:Label { return new ccs.Action(label, false); }
 
 Delay "delay"
-	= delay:Number { return new tccs.Delay(parseInt(delay)); }
+	= delay:Number { return splitDelay(parseInt(delay)); }
 
 Label "label"
 	= first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
