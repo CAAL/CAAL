@@ -474,7 +474,7 @@ module CCS {
     */
     export class ActionTransition implements Transition {
 
-        constructor(public action : Action, public targetProcess : Process) {
+        constructor(public action : Action = null, public targetProcess : Process = null, public delay = null) {
         }
 
         equals(other : ActionTransition) {

@@ -80,6 +80,39 @@ module TCCS {
             return this.processes[this.nextId-1];
         }
     }
+
+    export class StrictSuccessorGenerator extends CCS.StrictSuccessorGenerator implements TCCSProcessDispatchHandler<CCS.TransitionSet> {
+
+        dispatchSummationProcess(process : CCS.SummationProcess) {
+            var transitionSet = this.cache[process.id];
+            if (!transitionSet) {
+                transitionSet = this.cache[process.id] = new CCS.TransitionSet();
+                var hasTau = false;
+
+                process.subProcesses.forEach(subProcess => {
+                    if (subProcess instanceof CCS.ActionPrefixProcess && subProcess.action.toString() === "tau")
+                        hasTau = true;
+                });
+                
+                process.subProcesses.forEach(subProcess => {
+                    if (!hasTau || !(subProcess instanceof DelayPrefixProcess)) {
+                        transitionSet.unionWith(subProcess.dispatchOn(this));
+                    }
+                });
+
+                return transitionSet;
+            }
+        }
+
+        dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
+            var transitionSet = this.cache[process.id];
+            if (!transitionSet) {
+                transitionSet = this.cache[process.id] = new CCS.TransitionSet([new DelayTransition(process.delay, process.nextProcess)]);
+            }
+            return transitionSet;
+        }
+        
+    }
 }
 
 module Traverse {
@@ -95,7 +128,7 @@ module Traverse {
     export class TCCSNotationVisitor extends Traverse.CCSNotationVisitor implements CCS.ProcessVisitor<string>, TCCS.TCCSProcessDispatchHandler<string> {
         public dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
             var result = this.cache[process.id],
-                subStr;
+            subStr;
             if (!result) {
                 subStr = process.nextProcess.dispatchOn(this);
                 subStr = wrapIfInstanceOf(subStr, process.nextProcess, [CCS.SummationProcess, CCS.CompositionProcess]);
