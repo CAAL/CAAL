@@ -27,11 +27,34 @@ module TCCS {
         public getDelay() : number {
             return this.delay;
         }
+
+        public equals(other : Delay) {
+            return this.delay === other.getDelay();
+        }
         
         public toString() {
             return this.delay.toString();
         }
     }
+
+    export class DelayTransition implements CCS.Transition {
+
+        constructor(public delay : Delay, public targetProcess : CCS.Process) {
+        }
+
+        equals(other : DelayTransition) {
+            return (this.delay.equals(other.delay) &&
+                    this.targetProcess.id == other.targetProcess.id);
+        }
+
+        toString() {
+            if (this.targetProcess instanceof CCS.NamedProcess) {
+                return this.delay.toString() + "->" + (<CCS.NamedProcess>this.targetProcess).name;
+            }
+            return this.delay.toString() + "->" + this.targetProcess.id;
+        }
+    }
+
     
     export class TCCSGraph extends CCS.Graph {
         constructor() {

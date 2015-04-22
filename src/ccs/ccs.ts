@@ -35,6 +35,14 @@ module CCS {
         getSuccessors(processId : ProcessId) : TransitionSet;
     }
 
+    export interface Transition {
+        action?: Action;
+        delay?: TCCS.Delay;
+        targetProcess: Process;
+        equals(other : Transition): boolean;
+        toString(): string;
+    }
+
     export class NullProcess implements Process {
         constructor(public id : ProcessId) {
         }
@@ -464,12 +472,12 @@ module CCS {
     /*
         Always modifies inplace. Clone gives shallow clone
     */
-    export class Transition {
+    export class ActionTransition implements Transition {
 
         constructor(public action : Action, public targetProcess : Process) {
         }
 
-        equals(other : Transition) {
+        equals(other : ActionTransition) {
             return (this.action.equals(other.action) &&
                     this.targetProcess.id == other.targetProcess.id);
         }
@@ -552,7 +560,7 @@ module CCS {
                 oldAction = transition.action;
                 if (relabels.hasRelabelForLabel(transition.action.label)) {
                     newAction = relabels.relabeledActionFor(transition.action);
-                    allCurrent[i] = new Transition(newAction, transition.targetProcess);
+                    allCurrent[i] = new ActionTransition(newAction, transition.targetProcess);
                 }
             }
         }
@@ -663,7 +671,7 @@ module CCS {
                                     var targetSubprocesses = process.subProcesses.slice(0);
                                     targetSubprocesses[i] = leftTransition.targetProcess;
                                     targetSubprocesses[j] = rightTransition.targetProcess;
-                                    transitionSet.add(new Transition(new Action("tau", false),
+                                    transitionSet.add(new ActionTransition(new Action("tau", false),
                                         this.graph.newCompositionProcess(targetSubprocesses)));
                                 }
                             });
@@ -676,7 +684,7 @@ module CCS {
                         var targetSubprocesses = process.subProcesses.slice(0);
                         //Only the index of the subprocess will have changed.
                         targetSubprocesses[index] = subTransition.targetProcess;
-                        transitionSet.add(new Transition(subTransition.action.clone(),
+                        transitionSet.add(new ActionTransition(subTransition.action.clone(),
                             this.graph.newCompositionProcess(targetSubprocesses)));
                     });
                 });
@@ -688,7 +696,7 @@ module CCS {
             var transitionSet = this.cache[process.id];
             if (!transitionSet) {
                 //process.nextProcess.dispatchOn(this).clone();
-                transitionSet = this.cache[process.id] = new TransitionSet([new Transition(process.action, process.nextProcess)]);
+                transitionSet = this.cache[process.id] = new TransitionSet([new ActionTransition(process.action, process.nextProcess)]);
             }
             return transitionSet;
         }
@@ -702,7 +710,7 @@ module CCS {
                 subTransitionSet.applyRestrictionSet(process.restrictedLabels);
                 subTransitionSet.forEach(transition => {
                     var newRestriction = this.graph.newRestrictedProcess(transition.targetProcess, process.restrictedLabels);
-                    transitionSet.add(new Transition(transition.action.clone(), newRestriction));
+                    transitionSet.add(new ActionTransition(transition.action.clone(), newRestriction));
                 });
             }
             return transitionSet;
@@ -717,7 +725,7 @@ module CCS {
                 subTransitionSet.applyRelabelSet(process.relabellings);
                 subTransitionSet.forEach(transition => {
                     var newRelabelling = this.graph.newRelabelingProcess(transition.targetProcess, process.relabellings);
-                    transitionSet.add(new Transition(transition.action.clone(), newRelabelling));
+                    transitionSet.add(new ActionTransition(transition.action.clone(), newRelabelling));
                 });
             }
             return transitionSet;
