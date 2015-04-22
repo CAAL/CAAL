@@ -7,7 +7,7 @@ module Traverse {
     import ccs = CCS;
 
     export class ProcessTreeReducer implements ccs.ProcessVisitor<ccs.Process>, ccs.ProcessDispatchHandler<ccs.Process> {
-        private cache : {[id : number] : ccs.Process} = Object.create(null);
+        protected cache : {[id : number] : ccs.Process} = Object.create(null);
 
         constructor(public graph : ccs.Graph) {
         }
