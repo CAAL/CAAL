@@ -477,9 +477,12 @@ module CCS {
         constructor(public action : Action = null, public targetProcess : Process = null, public delay = null) {
         }
 
-        equals(other : ActionTransition) {
-            return (this.action.equals(other.action) &&
-                    this.targetProcess.id == other.targetProcess.id);
+        equals(other : Transition) {
+            if (!(other instanceof ActionTransition)) {
+                return false;
+            }
+            
+            return (this.action.equals(other.action) && this.targetProcess.id == other.targetProcess.id);
         }
 
         toString() {

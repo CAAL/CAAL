@@ -42,9 +42,12 @@ module TCCS {
         constructor(public delay : Delay, public targetProcess : CCS.Process) {
         }
 
-        equals(other : DelayTransition) {
-            return (this.delay.equals(other.delay) &&
-                    this.targetProcess.id == other.targetProcess.id);
+        equals(other : CCS.Transition) {
+            if (!(other instanceof DelayTransition)) {
+                return false;
+            }
+            
+            return (this.delay.equals(other.delay) && this.targetProcess.id == other.targetProcess.id);
         }
 
         toString() {
@@ -88,17 +91,38 @@ module TCCS {
             if (!transitionSet) {
                 transitionSet = this.cache[process.id] = new CCS.TransitionSet();
                 var hasTau = false;
+                var hasDelay = false;
 
                 process.subProcesses.forEach(subProcess => {
-                    if (subProcess instanceof CCS.ActionPrefixProcess && subProcess.action.toString() === "tau")
+                    if (subProcess instanceof CCS.ActionPrefixProcess && subProcess.action.toString() === "tau") {
                         hasTau = true;
+                    }
+
+                    if (subProcess instanceof DelayPrefixProcess) {
+                        hasDelay = true;
+                    }
                 });
-                
+
                 process.subProcesses.forEach(subProcess => {
                     if (!hasTau || !(subProcess instanceof DelayPrefixProcess)) {
                         transitionSet.unionWith(subProcess.dispatchOn(this));
                     }
                 });
+
+                if (!hasTau && hasDelay) {
+                    var processes = [];
+
+                    process.subProcesses.forEach(subProcess => {
+                        if (subProcess instanceof DelayPrefixProcess) {
+                            processes.push(subProcess.nextProcess);
+                        } else {
+                            processes.push(subProcess);
+                        }
+                    });
+
+                    var summation = this.graph.newSummationProcess(processes);
+                    transitionSet.add(new DelayTransition(new Delay(1), summation));
+                }
 
                 return transitionSet;
             }
