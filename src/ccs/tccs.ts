@@ -9,10 +9,10 @@ module TCCS {
     export class DelayPrefixProcess implements CCS.Process {
         constructor(public id : CCS.ProcessId, public delay : Delay, public nextProcess : CCS.Process) {
         }
-        dispatchOn<T>(dispatcher : TCCSProcessDispatchHandler<T>) : T {
+        public dispatchOn<T>(dispatcher : TCCSProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchDelayPrefixProcess(this);
         }
-        toString() {
+        public toString() {
             return "Delay(" + this.delay.toString() + ")";
         }
     }
@@ -159,6 +159,39 @@ module Traverse {
                 result = this.cache[process.id] = process.delay.toString() + "." + subStr;
             }
             return result;
+        }
+    }
+    
+    export class TCCSProcessTreeReducer extends Traverse.ProcessTreeReducer implements CCS.ProcessVisitor<CCS.Process>, TCCS.TCCSProcessDispatchHandler<CCS.Process> {
+        
+        constructor(private tccsgraph : TCCS.TCCSGraph) {
+            super(tccsgraph);
+        }
+        
+        public dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
+            var resultProcess = this.cache[process.id];
+            
+            if (!resultProcess) {
+                var nextProcess : CCS.Process = process.nextProcess;
+                var resultDelay : number = process.delay.getDelay();
+                
+                // ɛ(d).ɛ(d').P => ɛ(d+d').P
+                while (nextProcess instanceof TCCS.DelayPrefixProcess) {
+                    var nextDelayProcess : TCCS.DelayPrefixProcess = <TCCS.DelayPrefixProcess>nextProcess;
+                    resultDelay += nextDelayProcess.delay.getDelay();
+                    nextProcess = nextDelayProcess.nextProcess;
+                }
+                
+                if (resultDelay === 0) {
+                    // ɛ(0).P => P
+                    resultProcess = this.cache[process.id] = nextProcess.dispatchOn(this);
+                } else {
+                    nextProcess = nextProcess.dispatchOn(this);
+                    resultProcess = this.cache[process.id] = this.tccsgraph.newDelayPrefixProcesses([new TCCS.Delay(resultDelay)], nextProcess);
+                }
+            }
+            
+            return resultProcess;
         }
     }
 }
