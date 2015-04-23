@@ -52,7 +52,8 @@ module Property {
 
             for (var key in this.toolMenuOptions) {
                 if(this.toolMenuOptions[key].click != null){
-                    list.append("<li><a id=\""+this.toolMenuOptions[key].id+"\">"+this.toolMenuOptions[key].label+"</a></li>")
+                    var identifier = this.toolMenuOptions[key].id.replace("#", "") // replace the # with nothing, otherwise jquery will not find it later.
+                    list.append("<li><a id=\""+identifier+"\">"+this.toolMenuOptions[key].label+"</a></li>")
                 }
             }
 
