@@ -7,8 +7,7 @@ module GUI.Widget {
     export type GameLogObjectRow = {text : string; htmlWrapper? : htmlWrapper;};
     export class GameLog {
         private log = document.createElement("div");
-        private round = 0;
-        
+        private round = 0;        
         /* 
             Things to consider
                 Print intro
@@ -24,16 +23,16 @@ module GUI.Widget {
         constructor() {
             var $log = $(this.log);
             $log.attr("id", "hml-game-log");
-            new Activity.DataTooltip($log); // no need to save instance
         }
 
         public getRootElement() : HTMLElement {
             return this.log;
         }
 
-        public clear() {
+        public reset() {
             var $log = $(this.log);
             $log.empty();
+            this.round = 0;
         }
 
         private newRound() {

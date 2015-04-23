@@ -41,8 +41,8 @@ module Activity {
             }
             this.currentSubActivity = switchTo;
             //Now have the right activity
-            this.setOptionsDom(this.currentSubActivity);
             configuration = configuration || this.currentSubActivity.getDefaultConfiguration();
+            this.setOptionsDom(this.currentSubActivity);
             this.currentSubActivity.onShow(configuration);
         }
         
@@ -103,6 +103,8 @@ module Activity {
         private optionsDom;
         private $restartBtn;
         private fullscreen;
+        private tooltip;
+        private CCSChanged : boolean;
 
         private human : Player = null;
         private computer : Player = null;
@@ -159,12 +161,27 @@ module Activity {
                 this.currentProcess = state.process; // should remain the same
                 this.refresh(this.configuration);
             });
+
+            // when the ccs changes, set a flag, so when switching back to the activity we grab the new graph.
+            $(document).on("ccs-changed", () => this.CCSChanged = true);
+
+            this.tooltip = new ProcessTooltip($("#hml-game-status"));
+            new DataTooltip($("#hml-game-log")); // no need to save instance
         }
 
         onShow(configuration) { 
             $(window).on("resize", () => this.resize());
+            this.fullscreen.onShow();
+
+            if (this.CCSChanged || configuration.type != "default" || this.configuration === null) {
+                // if either the CCS has changed, the configuration given is not the default one, 
+                // or this.configuration has not yet been initialized, then re-configure everything.
+                this.CCSChanged = false;
+                this.tooltip.setGraph(Main.getGraph().graph);
+                this.configure(configuration);
+            }
+
             this.resize();
-            this.configure(configuration);
         }
 
         onHide() {
@@ -207,8 +224,10 @@ module Activity {
             configuration.processName = this.getNamedProcessList()[0];
             configuration.formulaSetIndex = this.getSelectedFormulaSetIndex() >= 0 ? this.getSelectedFormulaSetIndex() : 0;
             configuration.formulaId = this.getFormulaSetList()[configuration.formulaSetIndex].getTopFormula().id;
+            configuration.type = "default";
             return configuration;
         }
+
 
         private getProcessListValue() : string {
             /*Returns the value from the processlist*/
@@ -304,10 +323,10 @@ module Activity {
             this.human = (this.computer === Player.attacker) ? Player.defender : Player.attacker;
 
             /* Gamelog */
-            this.gamelog.clear();
+            this.gamelog.reset();
             // print the intro
             var gameIntro = new GUI.Widget.GameLogObject()
-            gameIntro.setTemplate("You are playing {0} in {1} HML game.")
+            gameIntro.setTemplate("You are playing {0} in {1} HML game, and you will lose.")
             gameIntro.addLabel({text: (this.human === Player.defender ? "defender" : "attacker")});
             gameIntro.addLabel({text: (this.isWeak ? "weak" : "strong")});
             this.gamelog.printToGameLog(gameIntro);
@@ -331,6 +350,7 @@ module Activity {
                 var currentPlayer = this.hmlGameLogic.getCurrentPlayer();
 
                 if(currentPlayer === this.computer) {
+                    // TODO: make this work (so the computer always will play the correct choice.)
                     // this.hmlGameLogic.AutoPlay(this.computer);
                     this.printCurrentConfig(this.currentProcess, this.currentFormula);
                     this.prepareGuiForUserAction();
@@ -461,7 +481,6 @@ module Activity {
         private succGen : CCS.SuccessorGenerator;
         private dGraph : dg.PlayableDependencyGraph;
         private marking : dg.LevelMarking;
-        private satisfied : boolean = false;
         private currentDgNodeId : dg.DgNodeId
         private cycleCache;
 
@@ -485,12 +504,11 @@ module Activity {
 
         private createMarking() : dg.LevelMarking {
             var marking = dg.liuSmolkaLocal2(this.currentDgNodeId, this.dGraph);
-            this.satisfied = marking.getMarking(0) === marking.ONE;
             return marking;
         }
 
         public getUniversalWinner() : Player {
-            return this.satisfied ? Player.defender : Player.attacker;
+            return (this.marking.getMarking(0) === this.marking.ONE) ? Player.defender : Player.attacker;
         }
 
         private popModalityFormula(hmlF : Modality) : HML.Formula {
@@ -603,7 +621,7 @@ module Activity {
             }
 
             //stuck
-            var availTranstition = this.getAvailableTransitions() 
+            var availTranstition = this.getAvailableTransitions();
             if((!availTranstition || availTranstition.length <= 0) && this.getNextActionType() === ActionType.transition) {
                 var currentPlayer = this.getCurrentPlayer();
                 var winner = (currentPlayer === Player.attacker) ? Player.defender : Player.attacker;
@@ -646,10 +664,10 @@ module Activity {
                         var unfolded = this.JudgeUnfold(namedFormula, hmlFSet);
                         /* Gamelog */
                         var gameLogPlay = new GUI.Widget.GameLogObject();
-                        gameLogPlay.setTemplate("Judge unfolds {0} {1} {2}.")
+                        gameLogPlay.setTemplate("We have unfolded {0} to {1}.")
                         gameLogPlay.addWrapper({tag: "<p>"});
                         gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(hml), tag:"<span>", attr: [{name: "class", value: "monospace"}]});
-                        gameLogPlay.addLabel({text: " --> ", tag:"<span>", attr: [{name: "class", value: "monospace"}]});
+                        // gameLogPlay.addLabel({text: " --> ", tag:"<span>", attr: [{name: "class", value: "monospace"}]});
                         gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(unfolded), tag:"<span>", attr: [{name: "class", value: "monospace"}]});
                         this.writeToGamelog(gameLogPlay);
 
@@ -674,7 +692,7 @@ module Activity {
         }
 
         public getAvailableTransitions() : CCS.Transition[] {
-            if(this.getNextActionType() === ActionType.transition) {
+            if (this.getNextActionType() === ActionType.transition) {
                 var hml = <Modality>this.state.formula;
                 var allTransitions = this.succGen.getSuccessors(this.state.process.id).toArray();
                 var availableTransitions = allTransitions.filter((transition) => hml.actionMatcher.matches(transition.action));
@@ -685,7 +703,7 @@ module Activity {
         }
 
         public getAvailableFormulas(hmlFSet : HML.FormulaSet) : HML.Formula[] {
-            if(this.getNextActionType() === ActionType.formula) {            
+            if (this.getNextActionType() === ActionType.formula) {            
                 var hmlSuccGen = new Traverse.HMLSuccGenVisitor(hmlFSet);
                 var formulaSuccessors = hmlSuccGen.visit(this.state.formula);
 
