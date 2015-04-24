@@ -405,7 +405,7 @@ module Activity {
         private prepareGuiForUserAction() {
             if(this.hmlGameLogic.getNextActionType() === ActionType.transition) {
                 this.setActionWidget(this.transitionTable) // set widget to be transition table
-                this.transitionTable.setTransitions(this.hmlGameLogic.getAvailableTransitions());
+                this.transitionTable.setTransitions(this.currentProcess, this.hmlGameLogic.getAvailableTransitions());
                 this.processExplorer.focusOnProcess(this.currentProcess);
             } 
             else if (this.hmlGameLogic.getNextActionType() === ActionType.formula) {

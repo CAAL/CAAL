@@ -392,7 +392,28 @@ module Activity {
                             rightProcess: equivalence.secondProcess
                         };
                     Main.activityHandler.selectActivity("game", configuration);
+                } else {
+                    throw "This property has not yet been evaluated"
                 }
+            } else if(property instanceof Property.HML) {
+                if (property.status === PropertyStatus.satisfied || property.status === PropertyStatus.unsatisfied) {
+
+                    if (equivalence instanceof Property.StrongBisimulation)
+                        gameType = "strong";
+                    else (equivalence instanceof Property.WeakBisimulation)
+                        gameType = "weak";
+                    
+                    var configuration = {
+                            gameType: gameType,
+                            playerType: playerType,
+                            leftProcess: equivalence.firstProcess,
+                            rightProcess: equivalence.secondProcess
+                        };
+
+                    Main.activityHandler.selectActivity("hmlgame", configuration);
+                }
+            } else {
+                throw "This play was unhandled";
             }
         }
 

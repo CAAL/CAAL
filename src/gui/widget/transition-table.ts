@@ -1,5 +1,6 @@
 /// <reference path="../../../lib/jquery.d.ts" />
 /// <reference path="../../../lib/ccs.d.ts" />
+/// <reference path="../../activity/tooltip.ts" />
 
 module GUI.Widget {
 
@@ -12,7 +13,7 @@ module GUI.Widget {
         private table = document.createElement("table");
         private body = document.createElement("tbody");
         private transitions : CCS.Transition[] = [];
-        private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
+        // private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
 
         public onSelectListener : SelectListener = null;
         public onHoverEnterListener : HoverEnterListener = null;
@@ -22,7 +23,7 @@ module GUI.Widget {
             var $table = $(this.table);
 
             $table.addClass("widget-transition-table table table-responsive table-striped table-condensed table-hover no-highlight");
-            $table.append('<thead><tr><th class="narrow">Action</th><th class="narrow">Target</th><th>Target Definition</th></tr></thead>');
+            $table.append('<thead><tr><th class="narrow">Source</th><th class="narrow">Action</th><th class="narrow">Target</th></tr></thead>');
             $table.append(this.body);
 
             $(this.body)
@@ -31,16 +32,16 @@ module GUI.Widget {
                 .on("mouseleave", "tr", this.onRowHoverLeave.bind(this));
         }
 
-        setTransitions(transitions : CCS.Transition[] ) {
+        setTransitions(source, transitions : CCS.Transition[] ) {
             var $body = $(this.body);
             $body.empty();
             this.transitions = transitions.slice(0);
             this.transitions.forEach((transition, index) => {
                 var $row = $("<tr></tr>"),
+                    $source = $("<td></td>").append(this.labelWithTooltip(source)),
                     $action = $("<td></td>").append(transition.action.toString()),
-                    $name = $("<td></td>").append(this.labelFor(transition.targetProcess)),
-                    $target = $("<td></td>").append(this.getDefinitionForProcess(transition.targetProcess));
-                $row.append($action, $name, $target);
+                    $target = $("<td></td>").append(this.labelWithTooltip(transition.targetProcess));
+                $row.append($source, $action, $target);
                 $row.data("data-transition-idx", index);
                 $body.append($row);
             });          
@@ -50,15 +51,12 @@ module GUI.Widget {
             return this.table;
         }
 
-        private labelFor(process : CCS.Process) {
-            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess>process).name : "" + process.id;
+        private labelWithTooltip(process : CCS.Process) : JQuery {
+            return Activity.Tooltip.wrapProcess(this.labelFor(process));
         }
 
-        private getDefinitionForProcess(process) : string {
-            if (process instanceof CCS.NamedProcess) {
-                return this.htmlNotationVisitor.visit((<CCS.NamedProcess>process).subProcess);
-            }
-            return this.htmlNotationVisitor.visit(process);
+        private labelFor(process : CCS.Process) {
+            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess>process).name : "" + process.id;
         }
 
         private transitionFromDelegateEvent(event) : CCS.Transition {
