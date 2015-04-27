@@ -86,21 +86,15 @@ module Main {
     }
 
     export function getFormulaSets() : HML.FormulaSet[] {
-        var properties = Project.getInstance().getProperties();
-        var hmlPropertyFormulas : HML.FormulaSet[] = [];
+        return Project.getInstance().getFormulaSets();
+    }
 
-        properties.forEach((property) => {
-            if (property instanceof Property.HML) {
-                var formulaSet = new HML.FormulaSet;
-                HMLParser.parse(property.getDefinitions(), {ccs: CCS, hml: HML, formulaSet: formulaSet});
-                HMLParser.parse(property.getTopFormula(), {startRule: "TopFormula", ccs: CCS, hml: HML, formulaSet: formulaSet});
-                hmlPropertyFormulas.push(formulaSet)
-            }
-        });
+    export function getFormulaForProperty(prop : Property.HML) : HML.FormulaSet {
+        return Project.getInstance().getFormulaSetForProperty(prop);
+    }
 
-        // TODO handle errors
-
-        return hmlPropertyFormulas;
+    export function getIdxForFormulaSet(formulaSet : HML.FormulaSet) : number {
+        return Project.getInstance().getIdxForFormulaSet(formulaSet);
     }
 
     export function getStrictSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {

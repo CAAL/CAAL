@@ -368,10 +368,14 @@ module Activity {
             this.editProperty({data: {property: property}});
         }
 
-        private playGame(e){
-            var property = e.data.property;
+        private playGame(e) : void {
+            var property =  <Property.Property>e.data.property;
+            
+            if(property.getStatus() != PropertyStatus.satisfied && property.getStatus() != PropertyStatus.unsatisfied) {
+                throw "Property has not yet been evaluated";
+            }
+
             if (property instanceof Property.Equivalence) {
-                if(property.status === PropertyStatus.satisfied || property.status === PropertyStatus.unsatisfied) {       
                     var equivalence = <Property.Equivalence> property,
                         gameType,
                         playerType = (equivalence.getStatus() === PropertyStatus.satisfied) ? "attacker" : "defender";
@@ -385,35 +389,30 @@ module Activity {
                     else
                         gameType = "weaksim";
                     
-                    var configuration = {
+                    var EquivConfiguration = {
                             gameType: gameType,
                             playerType: playerType,
                             leftProcess: equivalence.firstProcess,
                             rightProcess: equivalence.secondProcess
-                        };
-                    Main.activityHandler.selectActivity("game", configuration);
-                } else {
-                    throw "This property has not yet been evaluated"
-                }
-            } else if(property instanceof Property.HML) {
-                if (property.status === PropertyStatus.satisfied || property.status === PropertyStatus.unsatisfied) {
+                    };
+                    Main.activityHandler.selectActivity("game", EquivConfiguration);
+            } 
+            else if(property instanceof Property.HML) {
+                    var gameType : any = "strong";
+                    var formulaSetForProperty = Main.getFormulaForProperty(property);
+                    var HmlConfiguration = Object.create(null),
+                        graph : ccs.Graph = Main.getGraph().graph;
 
-                    if (equivalence instanceof Property.StrongBisimulation)
-                        gameType = "strong";
-                    else (equivalence instanceof Property.WeakBisimulation)
-                        gameType = "weak";
-                    
-                    var configuration = {
-                            gameType: gameType,
-                            playerType: playerType,
-                            leftProcess: equivalence.firstProcess,
-                            rightProcess: equivalence.secondProcess
-                        };
+                    HmlConfiguration.succGen = CCS.getSuccGenerator(graph, {succGen: gameType, reduce: false});
+                    HmlConfiguration.processName = property.getProcess();
+                    HmlConfiguration.formulaSetIndex = Main.getIdxForFormulaSet(formulaSetForProperty);
+                    HmlConfiguration.formulaId = formulaSetForProperty.getTopFormula().id;
+                    HmlConfiguration.type = "not default";
 
-                    Main.activityHandler.selectActivity("hmlgame", configuration);
-                }
-            } else {
-                throw "This play was unhandled";
+                    Main.activityHandler.selectActivity("hmlgame", HmlConfiguration);
+            } 
+            else {
+                throw "This kind of property is not playable.";
             }
         }
 
