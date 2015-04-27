@@ -785,6 +785,7 @@ module CCS {
             });
         }
         return result;
+    }
 
     export function reachableProcessIterator(initialProcess : ProcessId, succGen : SuccessorGenerator) {
         var visitStack = [initialProcess],
@@ -807,22 +808,4 @@ module CCS {
         };
         return iterator;
     }
-    
-    export function expandBFS(process : Process, succGen : SuccessorGenerator, maxDepth : number) : {[id : number] : CCS.TransitionSet} {
-            var result : any = {},
-                queue = [[1, process]], //non-emptying array as queue.
-                depth, qIdx, fromProcess, transitions;
-            for (qIdx = 0; qIdx < queue.length; qIdx++) {
-                depth = queue[qIdx][0];
-                fromProcess = queue[qIdx][1];
-                result[fromProcess.id] = transitions = succGen.getSuccessors(fromProcess.id);
-                transitions.forEach(t => {
-                    if (!result[t.targetProcess.id] && depth < maxDepth) {
-                        queue.push([depth + 1, t.targetProcess]);
-                    }
-                });
-            }
-            return result;
-    }
-
 }
