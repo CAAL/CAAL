@@ -242,6 +242,12 @@ module Traverse {
         }
     }
     
+    export class TCCSUnguardedRecursionChecker extends UnguardedRecursionChecker implements TCCS.TCCSProcessDispatchHandler<boolean> {
+        public dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
+            return false;
+        }
+    }
+    
     export class TCCSProcessTreeReducer extends Traverse.ProcessTreeReducer implements CCS.ProcessVisitor<CCS.Process>, TCCS.TCCSProcessDispatchHandler<CCS.Process> {
         
         constructor(private tccsgraph : TCCS.TCCSGraph) {
