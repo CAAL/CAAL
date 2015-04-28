@@ -90,14 +90,10 @@ module TCCS {
             super(tccsgraph, cache);
         }
         
-        private getDelayLoop(process : CCS.Process) : DelayTransition {
-            return new DelayTransition(new Delay(1), process);
-        }
-        
         public dispatchNullProcess(process : CCS.NullProcess) : CCS.TransitionSet {
             var transitionSet = this.cache[process.id];
             if (!transitionSet) {
-                transitionSet = this.cache[process.id] = new CCS.TransitionSet([this.getDelayLoop(process)]);
+                transitionSet = this.cache[process.id] = new CCS.TransitionSet([new DelayTransition(new Delay(1), process)]);
             }
             return transitionSet;
         }
@@ -120,34 +116,26 @@ module TCCS {
                     }
                 });
                 
-                if (hasTau) { // Tau found. No further delays are allowed.
-                    process.subProcesses.forEach(subProcess => {
-                        if (!(subProcess instanceof DelayPrefixProcess)) {
-                            transitionSet.unionWith(subProcess.dispatchOn(this));
-                        }
-                    });
-                } else {
-                    if (hasDelay) { // Delay the entire summation.
-                        var processes = [];
-
-                        process.subProcesses.forEach(subProcess => {
-                            if (subProcess instanceof DelayPrefixProcess) {
-                                processes.push(subProcess.nextProcess);
-                            } else {
-                                processes.push(subProcess);
-                            }
-                        });
-
-                        var summation = this.graph.newSummationProcess(processes);
-                        transitionSet.add(new DelayTransition(new Delay(1), summation));
-                    }
+                if (!hasTau && hasDelay) { // Delay the entire summation
+                    var processes = [];
 
                     process.subProcesses.forEach(subProcess => {
-                        if (!(subProcess instanceof DelayPrefixProcess)) {
-                            transitionSet.unionWith(subProcess.dispatchOn(this));
+                        if (subProcess instanceof DelayPrefixProcess) {
+                            processes.push(subProcess.nextProcess);
+                        } else {
+                            processes.push(subProcess);
                         }
                     });
+
+                    var summation = this.graph.newSummationProcess(processes);
+                    transitionSet.add(new DelayTransition(new Delay(1), summation));
                 }
+                
+                process.subProcesses.forEach(subProcess => {
+                    if (!(subProcess instanceof DelayPrefixProcess)) {
+                        transitionSet.unionWith(subProcess.dispatchOn(this));
+                    }
+                });
 
                 return transitionSet;
             }
@@ -230,7 +218,7 @@ module TCCS {
             if (!transitionSet) {
                 transitionSet = super.dispatchActionPrefixProcess(process);
                 if (process.action.toString() !== "tau")
-                    transitionSet.add(this.getDelayLoop(process));
+                    transitionSet.add(new DelayTransition(new Delay(1), process));
             }
             return transitionSet;
         }
