@@ -90,12 +90,26 @@ module TCCS {
             super(tccsgraph, cache);
         }
         
-        public dispatchNullProcess(process : CCS.NullProcess) : CCS.TransitionSet {
-            var transitionSet = this.cache[process.id];
-            if (!transitionSet) {
-                transitionSet = this.cache[process.id] = new CCS.TransitionSet([new DelayTransition(new Delay(1), process)]);
+        public getSuccessors(processId : CCS.ProcessId) : CCS.TransitionSet {
+            var process = this.graph.processById(processId);
+            this.cache[process.id] = process.dispatchOn(this);
+            var addDelayLoop = true;
+            
+            this.cache[process.id].forEach(transition => {
+                if (addDelayLoop) { // continue looking
+                    if (transition instanceof CCS.ActionTransition && transition.action.toString() === "tau") {
+                        addDelayLoop = false;
+                    } else if(transition instanceof DelayTransition) {
+                        addDelayLoop = false;
+                    }
+                }
+            });
+            
+            if (addDelayLoop) {
+                this.cache[process.id].add(new DelayTransition(new Delay(1), process));
             }
-            return transitionSet;
+            
+            return this.cache[process.id];
         }
         
         public dispatchSummationProcess(process : CCS.SummationProcess) : CCS.TransitionSet {
@@ -210,16 +224,6 @@ module TCCS {
                 });
             }
 
-            return transitionSet;
-        }
-        
-        public dispatchActionPrefixProcess(process : CCS.ActionPrefixProcess) {
-            var transitionSet = this.cache[process.id];
-            if (!transitionSet) {
-                transitionSet = super.dispatchActionPrefixProcess(process);
-                if (process.action.toString() !== "tau")
-                    transitionSet.add(new DelayTransition(new Delay(1), process));
-            }
             return transitionSet;
         }
 
