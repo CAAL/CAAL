@@ -39,10 +39,10 @@ module TCCS {
 
     export class DelayTransition implements CCS.Transition {
 
-        constructor(public delay : Delay, public targetProcess : CCS.Process) {
+        public constructor(public delay : Delay, public targetProcess : CCS.Process) {
         }
 
-        equals(other : CCS.Transition) {
+        public equals(other : CCS.Transition) {
             if (!(other instanceof DelayTransition)) {
                 return false;
             }
@@ -50,7 +50,7 @@ module TCCS {
             return (this.delay.equals(other.delay) && this.targetProcess.id == other.targetProcess.id);
         }
 
-        toString() {
+        public toString() {
             if (this.targetProcess instanceof CCS.NamedProcess) {
                 return this.delay.toString() + "->" + (<CCS.NamedProcess>this.targetProcess).name;
             }
@@ -86,7 +86,33 @@ module TCCS {
 
     export class StrictSuccessorGenerator extends CCS.StrictSuccessorGenerator implements TCCSProcessDispatchHandler<CCS.TransitionSet> {
 
-        dispatchSummationProcess(process : CCS.SummationProcess) {
+        constructor(protected tccsgraph : TCCSGraph, cache?) {
+            super(tccsgraph, cache);
+        }
+        
+        public getSuccessors(processId : CCS.ProcessId) : CCS.TransitionSet {
+            var process = this.graph.processById(processId);
+            this.cache[process.id] = process.dispatchOn(this);
+            var addDelayLoop = true;
+            
+            this.cache[process.id].forEach(transition => {
+                if (addDelayLoop) { // continue looking
+                    if (transition instanceof CCS.ActionTransition && transition.action.toString() === "tau") {
+                        addDelayLoop = false;
+                    } else if(transition instanceof DelayTransition) {
+                        addDelayLoop = false;
+                    }
+                }
+            });
+            
+            if (addDelayLoop) {
+                this.cache[process.id].add(new DelayTransition(new Delay(1), process));
+            }
+            
+            return this.cache[process.id];
+        }
+        
+        public dispatchSummationProcess(process : CCS.SummationProcess) : CCS.TransitionSet {
             var transitionSet = this.cache[process.id];
             if (!transitionSet) {
                 transitionSet = this.cache[process.id] = new CCS.TransitionSet();
@@ -104,40 +130,32 @@ module TCCS {
                     }
                 });
                 
-                if (hasTau) { // Tau found. No further delays are allowed.
-                    process.subProcesses.forEach(subProcess => {
-                        if (!(subProcess instanceof DelayPrefixProcess)) {
-                            transitionSet.unionWith(subProcess.dispatchOn(this));
-                        }
-                    });
-                } else {
-                    if (hasDelay) { // Delay the entire summation.
-                        var processes = [];
-
-                        process.subProcesses.forEach(subProcess => {
-                            if (subProcess instanceof DelayPrefixProcess) {
-                                processes.push(subProcess.nextProcess);
-                            } else {
-                                processes.push(subProcess);
-                            }
-                        });
-
-                        var summation = this.graph.newSummationProcess(processes);
-                        transitionSet.add(new DelayTransition(new Delay(1), summation));
-                    }
+                if (!hasTau && hasDelay) { // Delay the entire summation
+                    var processes = [];
 
                     process.subProcesses.forEach(subProcess => {
-                        if (!(subProcess instanceof DelayPrefixProcess)) {
-                            transitionSet.unionWith(subProcess.dispatchOn(this));
+                        if (subProcess instanceof DelayPrefixProcess) {
+                            processes.push(subProcess.nextProcess);
+                        } else {
+                            processes.push(subProcess);
                         }
                     });
+
+                    var summation = this.graph.newSummationProcess(processes);
+                    transitionSet.add(new DelayTransition(new Delay(1), summation));
                 }
+                
+                process.subProcesses.forEach(subProcess => {
+                    if (!(subProcess instanceof DelayPrefixProcess)) {
+                        transitionSet.unionWith(subProcess.dispatchOn(this));
+                    }
+                });
 
                 return transitionSet;
             }
         }
 
-        dispatchCompositionProcess(process : CCS.CompositionProcess) {
+        public dispatchCompositionProcess(process : CCS.CompositionProcess) : CCS.TransitionSet {
             var transitionSet = this.cache[process.id];
 
             if (!transitionSet) {
@@ -209,10 +227,21 @@ module TCCS {
             return transitionSet;
         }
 
-        dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
+        public dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) : CCS.TransitionSet {
             var transitionSet = this.cache[process.id];
             if (!transitionSet) {
-                transitionSet = this.cache[process.id] = new CCS.TransitionSet([new DelayTransition(process.delay, process.nextProcess)]);
+                if (process.delay.getDelay() > 1) {
+                    var newDelay = new Delay(process.delay.getDelay() - 1);
+                    var newDelayProcess = this.tccsgraph.newDelayPrefixProcesses([newDelay], process.nextProcess);
+                    transitionSet = new CCS.TransitionSet([new DelayTransition(newDelay, newDelayProcess)]);
+                } else if (process.delay.getDelay() === 1) {
+                    transitionSet = new CCS.TransitionSet([new DelayTransition(process.delay, process.nextProcess)]);
+                } else {
+                    // this should never happen
+                    transitionSet = process.nextProcess.dispatchOn(this);
+                    throw "DelayPrefixProcess of delay 0";
+                }
+                this.cache[process.id] = transitionSet;
             }
             return transitionSet;
         }
@@ -242,7 +271,7 @@ module Traverse {
         }
     }
     
-    export class TCCSUnguardedRecursionChecker extends UnguardedRecursionChecker implements TCCS.TCCSProcessDispatchHandler<boolean> {
+    export class TCCSUnguardedRecursionChecker extends Traverse.UnguardedRecursionChecker implements TCCS.TCCSProcessDispatchHandler<boolean> {
         public dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
             return false;
         }
