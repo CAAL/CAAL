@@ -109,7 +109,7 @@ LabelList
 	= first:Label rest:(_ "," _ Label)* { return extractLabelList(first, rest); }
 
 Number "number"
-	= number:[0-9]+ { return number; }
+	= number:[0-9]+ { return parseInt(number.join(""), 10); }
 
 Whitespace "whitespace"
 	= [ \t]
