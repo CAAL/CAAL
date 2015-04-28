@@ -164,19 +164,20 @@ module TCCS {
                 var hasTau = false;
                 var hasDelay = false;
 
-                //COM3s
+                // COM3.
                 for (var i=0; i < subTransitionSets.length-1; i++) {
                     for (var j=i+1; j < subTransitionSets.length; j++) {
-                        //For each pairs in  P1 | P2 | P3 | P4, find COM3 transitions.
                         var left = subTransitionSets[i];
                         var right = subTransitionSets[j];
 
                         left.forEach(leftTransition => {
                             right.forEach(rightTransition => {
-                                if (!(leftTransition instanceof DelayTransition) && !(rightTransition instanceof DelayTransition)) {
-                                    if(leftTransition.action.getLabel() === "tau" || rightTransition.action.getLabel() === "tau") {
-                                        hasTau = true;
-                                    }
+                                if(leftTransition instanceof CCS.ActionTransition && leftTransition.action.getLabel() === "tau" ||
+                                   rightTransition instanceof CCS.ActionTransition && rightTransition.action.getLabel() === "tau") {
+                                    hasTau = true;
+                                }
+
+                                if (leftTransition instanceof CCS.ActionTransition && rightTransition instanceof CCS.ActionTransition) {
                                     if (leftTransition.action.getLabel() === rightTransition.action.getLabel() &&
                                         leftTransition.action.isComplement() !== rightTransition.action.isComplement()) {
                                         hasTau = true;
@@ -186,37 +187,46 @@ module TCCS {
                                         targetSubprocesses[i] = leftTransition.targetProcess;
                                         targetSubprocesses[j] = rightTransition.targetProcess;
 
+                                        targetSubprocesses = targetSubprocesses.filter(subProcess => {
+                                            return !(subProcess instanceof TCCS.DelayPrefixProcess)
+                                        });
+
                                         transitionSet.add(new CCS.ActionTransition(new CCS.Action("tau", false), this.graph.newCompositionProcess(targetSubprocesses)));
                                     }
-                                } else {
-                                    hasDelay = true;
                                 }
                             });
                         });
                     }
                 }
 
-                if (!hasTau && hasDelay) {
-                    var processes = [];
-
+                if (!hasTau) {
                     process.subProcesses.forEach(subProcess => {
                         if (subProcess instanceof DelayPrefixProcess) {
-                            processes.push(subProcess.nextProcess);
-                        } else {
-                            processes.push(subProcess);
+                            hasDelay = true;
                         }
                     });
 
-                    var composition = this.graph.newCompositionProcess(processes);
-                    transitionSet.add(new DelayTransition(new Delay(1), composition));
+                    if (hasDelay) {
+                        var processes = [];
+
+                        process.subProcesses.forEach(subProcess => {
+                            if (subProcess instanceof DelayPrefixProcess) {
+                                processes.push(subProcess.nextProcess);
+                            } else {
+                                processes.push(subProcess);
+                            }
+                        });
+
+                        var composition = this.graph.newCompositionProcess(processes);
+                        transitionSet.add(new DelayTransition(new Delay(1), composition));
+                    }
                 }
 
-                //COM1/2s
-                subTransitionSets.forEach( (subTransitionSet, index) => {
+                // COM1/COM2.
+                subTransitionSets.forEach((subTransitionSet, index) => {
                     subTransitionSet.forEach(subTransition => {
                         if (!(subTransition instanceof DelayTransition)) {
                             var targetSubprocesses = process.subProcesses.slice(0);
-                            //Only the index of the subprocess will have changed.
                             targetSubprocesses[index] = subTransition.targetProcess;
                             transitionSet.add(new CCS.ActionTransition(subTransition.action.clone(), this.graph.newCompositionProcess(targetSubprocesses)));
                         }

@@ -766,19 +766,43 @@ module CCS {
     }
 
     export function getSuccGenerator(graph, options) {
-        var settings = {succGen: "strong", reduce: true},
+        var settings = {inputMode: "CCS", succGen: "strong", reduce: true},
             resultGenerator : SuccessorGenerator = new StrictSuccessorGenerator(graph);
         for (var optionName in options) {
             settings[optionName] = options[optionName];
         }
-        if (settings.reduce) {
-            var treeReducer = new Traverse.ProcessTreeReducer(graph);
-            resultGenerator = new Traverse.ReducingSuccessorGenerator(resultGenerator, treeReducer);
+        if (settings.inputMode === "CCS") {
+            if (settings.reduce) {
+                var treeReducer = new Traverse.ProcessTreeReducer(graph);
+                resultGenerator = new Traverse.ReducingSuccessorGenerator(resultGenerator, treeReducer);
+            }
+            if (settings.succGen === "weak") {
+                resultGenerator = new Traverse.WeakSuccessorGenerator(resultGenerator);
+            }
+            return resultGenerator;
+        } else {
+            return new TCCS.StrictSuccessorGenerator(graph);
         }
-        if (settings.succGen === "weak") {
-            resultGenerator = new Traverse.WeakSuccessorGenerator(resultGenerator);
+    }
+
+    export function getNSuccessors(succGen : CCS.SuccessorGenerator, process : CCS.Process, maxDepth : number) : any {
+        var result = {},
+            queue = [[1, process]],
+            depth, fromProcess, transitions;
+
+        for (var i = 0; i < queue.length; i++) {
+            depth = queue[i][0];
+            fromProcess = queue[i][1];
+            result[fromProcess.id] = transitions = succGen.getSuccessors(fromProcess.id);
+
+            transitions.forEach(t => {
+                if (!result[t.targetProcess.id] && depth < maxDepth) {
+                    queue.push([depth + 1, t.targetProcess]);
+                }
+            });
         }
-        return resultGenerator;
+
+        return result;
     }
 
     export function reachableProcessIterator(initialProcess : ProcessId, succGen : SuccessorGenerator) {

@@ -100,7 +100,7 @@ Action "action"
 	/ label:Label { return new ccs.Action(label, false); }
 
 Delay "delay"
-	= delay:Number { return splitDelay(parseInt(delay)); }
+	= delay:Number { return splitDelay(delay); }
 
 Label "label"
 	= first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
