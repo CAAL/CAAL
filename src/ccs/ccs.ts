@@ -545,7 +545,7 @@ module CCS {
                 allCurrent = this.transitions,
                 i = 0;
             while (i < count) {
-                if (labels.contains(allCurrent[i].action.getLabel())) {
+                if (allCurrent[i] instanceof ActionTransition && labels.contains(allCurrent[i].action.getLabel())) {
                     allCurrent[i] = allCurrent[--count];
                 } else {
                     ++i;
@@ -559,11 +559,13 @@ module CCS {
             var allCurrent = this.transitions,
                 newAction, oldAction, transition;
             for (var i = 0, max = allCurrent.length; i < max; i++) {
-                transition = allCurrent[i];
-                oldAction = transition.action;
-                if (relabels.hasRelabelForLabel(transition.action.label)) {
-                    newAction = relabels.relabeledActionFor(transition.action);
-                    allCurrent[i] = new ActionTransition(newAction, transition.targetProcess);
+                if (allCurrent[i] instanceof ActionTransition){
+                    transition = allCurrent[i];
+                    oldAction = transition.action;
+                    if (relabels.hasRelabelForLabel(transition.action.label)) {
+                        newAction = relabels.relabeledActionFor(transition.action);
+                        allCurrent[i] = new ActionTransition(newAction, transition.targetProcess);
+                    }
                 }
             }
         }

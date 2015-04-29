@@ -35,6 +35,10 @@ module TCCS {
         public toString() {
             return this.delay.toString();
         }
+
+        public clone() {
+            return new Delay(this.delay);
+        }
     }
 
     export class DelayTransition implements CCS.Transition {
@@ -252,6 +256,44 @@ module TCCS {
                     throw "DelayPrefixProcess of delay 0";
                 }
                 this.cache[process.id] = transitionSet;
+            }
+            return transitionSet;
+        }
+
+        public dispatchRestrictionProcess(process : CCS.RestrictionProcess) {
+            var transitionSet = this.cache[process.id],
+                subTransitionSet;
+            if (!transitionSet) {
+                transitionSet = this.cache[process.id] = new CCS.TransitionSet();
+                subTransitionSet = process.subProcess.dispatchOn(this).clone();
+                subTransitionSet.applyRestrictionSet(process.restrictedLabels);
+                subTransitionSet.forEach(transition => {
+                    var newRestriction = this.graph.newRestrictedProcess(transition.targetProcess, process.restrictedLabels);
+                    if (transition instanceof DelayTransition) {
+                        transitionSet.add(new DelayTransition(transition.delay.clone(), newRestriction));
+                    } else if (transition instanceof CCS.ActionTransition) {
+                        transitionSet.add(new CCS.ActionTransition(transition.action.clone(), newRestriction));
+                    }
+                });
+            }
+            return transitionSet;
+        }
+
+        public dispatchRelabellingProcess(process : CCS.RelabellingProcess) {
+            var transitionSet = this.cache[process.id],
+                subTransitionSet;
+            if (!transitionSet) {
+                transitionSet = this.cache[process.id] = new CCS.TransitionSet();
+                subTransitionSet = process.subProcess.dispatchOn(this).clone();
+                subTransitionSet.applyRelabelSet(process.relabellings);
+                subTransitionSet.forEach(transition => {
+                    var newRelabelling = this.graph.newRelabelingProcess(transition.targetProcess, process.relabellings);
+                    if (transition instanceof DelayTransition) {
+                        transitionSet.add(new DelayTransition(transition.delay.clone(), newRelabelling));
+                    } else if (transition instanceof CCS.ActionTransition) {
+                        transitionSet.add(new CCS.ActionTransition(transition.action.clone(), newRelabelling));
+                    }
+                });
             }
             return transitionSet;
         }
