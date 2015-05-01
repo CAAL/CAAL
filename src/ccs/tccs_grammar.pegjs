@@ -27,7 +27,7 @@
 	// options is an arbitrary javascript object specified in the .parse(...) method
 	var ccs = options.ccs;
 	var tccs = options.tccs;
-	var g = options.graph || new tccs.TCCSGraph();
+	var g = options.graph || new tccs.Graph();
 }
 
 start

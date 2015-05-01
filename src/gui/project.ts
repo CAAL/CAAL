@@ -144,7 +144,7 @@ class Project {
             CCSParser.parse(this.ccs, {ccs: CCS, graph: graph});
             return graph;
         } else if (this.inputMode === InputMode.TCCS) {
-            graph = new TCCS.TCCSGraph();
+            graph = new TCCS.Graph();
             TCCSParser.parse(this.ccs, {ccs: CCS, tccs: TCCS, graph: graph});
             return graph;
         }
