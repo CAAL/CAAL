@@ -144,4 +144,14 @@ var examples : any[] = [
              "Spec = acc.'del.Spec;",
         properties:[]
     },
+    {
+        title: "Lightswitch",
+        ccs: "Off = press.Light;\n" +
+             "Bright = press.Off;\n" +
+             "Light = 2.tau.press.Off + press.Bright;\n\n" +
+             "FastUser = 'press.1.'press.FastUser;\n" +
+             "SlowUser = 'press.3.'press.SlowUser;\n\n" +
+             "Lightswitch = (FastUser | Off) \\ {press};",
+        properties:[]
+    }
 ]
