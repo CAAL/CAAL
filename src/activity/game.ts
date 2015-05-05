@@ -12,7 +12,6 @@ module Activity {
     import dg = DependencyGraph;
 
     export class Game extends Activity {
-        private project : Project;
         private changed : boolean;
         private graph : CCS.Graph;
         private succGen : CCS.SuccessorGenerator;
@@ -135,18 +134,6 @@ module Activity {
             }
 
             button.data("frozen", freeze);
-        }
-
-        protected checkPreconditions() : boolean {
-            var graph = Main.getGraph();
-            if (graph.error) {
-                this.showExplainDialog("Error", graph.error);
-                return false;
-            } else if (graph.graph.getNamedProcesses().length === 0) {
-                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
-                return false;
-            }
-            return true;
         }
         
         public onShow(configuration? : any) : void {
