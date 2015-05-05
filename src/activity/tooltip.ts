@@ -66,11 +66,11 @@ module Activity {
     }
     
     export class ProcessTooltip extends Tooltip {
-        private visitor : Traverse.CCSNotationVisitor;
+        private visitor : Traverse.TCCSNotationVisitor;
         private graph : CCS.Graph;
         
         constructor($container : JQuery) {
-            this.visitor = new Traverse.CCSNotationVisitor();
+            this.visitor = new Traverse.TCCSNotationVisitor();
             
             var getCCSNotation = this.ccsNotationForProcessId.bind(this);
             var titleFunction = function() {

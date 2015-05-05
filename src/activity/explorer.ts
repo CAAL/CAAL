@@ -81,14 +81,14 @@ module Activity {
         }
 
         protected checkPreconditions() : boolean {
-            var graph = Main.getGraph();
+            /*var graph = Main.getGraph();
             if (graph.error) {
                 this.showExplainDialog("Error", graph.error);
                 return false;
             } else if (graph.graph.getNamedProcesses().length === 0) {
                 this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
                 return false;
-            }
+            }*/
             return true;
         }
 
@@ -146,6 +146,14 @@ module Activity {
             for (var i = 0; i < processes.length; i++) {
                 list.append($("<option></option>").append(processes[i]));
             }
+
+            if (this.project.getInputMode() === InputMode.CCS) {
+                $("input[name=option-successor][value=weak]").parent().parent().show();
+                $("input[name=option-collapse]").parent().parent().show().next(".divider").show();
+            } else {
+                $("input[name=option-successor][value=weak]").parent().parent().hide();
+                $("input[name=option-collapse]").parent().parent().hide().next(".divider").hide();
+            }
         }
 
         private getOptions() : any {
@@ -153,7 +161,8 @@ module Activity {
                 process: $("#explorer-process-list :selected").text(),
                 successor: $("input[name=option-successor]:checked").val(),
                 collapse: $("input[name=option-collapse]:checked").val(),
-                simplify: $("#option-simplify").prop("checked")
+                simplify: $("#option-simplify").prop("checked"),
+                inputMode: InputMode[this.project.getInputMode()]
             };
         }
 
@@ -163,7 +172,7 @@ module Activity {
             this.resize(1);
 
             var options = this.getOptions();
-            this.succGenerator = CCS.getSuccGenerator(this.graph, {succGen: options.successor, reduce: options.simplify});
+            this.succGenerator = CCS.getSuccGenerator(this.graph, {inputMode: options.inputMode, succGen: options.successor, reduce: options.simplify});
             var process = this.succGenerator.getProcessByName(options.process);
 
             if (options.collapse !== "none") {
@@ -221,7 +230,7 @@ module Activity {
         private expand(process : CCS.Process) : void {
             this.selectedProcess = process;
 
-            var allTransitions = this.expandBFS(process, this.$depth.val());
+            var allTransitions = CCS.getNSuccessors(this.succGenerator, process, this.$depth.val());
             var data = this.uiGraph.getProcessDataObject(process.id.toString());
 
             if (!data || data.status === "unexpanded") {
@@ -234,11 +243,17 @@ module Activity {
                     var groupedByTargetProcessId = ArrayUtil.groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
 
                     Object.keys(groupedByTargetProcessId).forEach(strProcId => {
-                        var group = groupedByTargetProcessId[strProcId],
-                            datas = group.map(t => { return {label: t.action.toString()}; }),
-                            numId = parseInt(strProcId, 10);
+                        var group = groupedByTargetProcessId[strProcId];
+                        var data = group.map(t => {
+                            if (t instanceof CCS.ActionTransition) {
+                                return { label: t.action.toString() };
+                            } else if (t instanceof TCCS.DelayTransition) {
+                                return { label: t.delay.toString() };
+                            }
+                        });
+                        var numId = parseInt(strProcId, 10);
                         this.showProcess(this.graph.processById(numId));
-                        this.uiGraph.showTransitions(fromProcess.id, numId, datas);
+                        this.uiGraph.showTransitions(fromProcess.id, numId, data);
                     });
                 }
             }
@@ -248,24 +263,6 @@ module Activity {
             this.centerProcess(process);
         }
 
-        private expandBFS(process : CCS.Process, maxDepth : number) : any {
-            var result = {}, queue = [[1, process]], depth, qIdx, fromProcess, transitions;
-
-            for (qIdx = 0; qIdx < queue.length; qIdx++) {
-                depth = queue[qIdx][0];
-                fromProcess = queue[qIdx][1];
-                result[fromProcess.id] = transitions = this.succGenerator.getSuccessors(fromProcess.id);
-
-                transitions.forEach(t => {
-                    if (!result[t.targetProcess.id] && depth < maxDepth) {
-                        queue.push([depth + 1, t.targetProcess]);
-                    }
-                });
-            }
-
-            return result;
-        }
-
         private updateStatusTable(transitions : CCS.Transition[]) : void {
             this.$statusTable.empty();
 
@@ -273,15 +270,19 @@ module Activity {
                 var row = $("<tr>");
                 var $actionTd = $("<td>");
                 
-                if (this.succGenerator instanceof Traverse.WeakSuccessorGenerator) {
-                    var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.succGenerator;
-                    var $action = Tooltip.wrap(t.action.toString());
-                    Tooltip.setTooltip($action, Tooltip.strongSequence(weakSuccGen, this.selectedProcess, t.action, t.targetProcess));
-                    $actionTd.append($action);
-                } else {
-                    $actionTd.append(t.action.toString());
+                if (t instanceof CCS.ActionTransition) {
+                    if (this.succGenerator instanceof Traverse.WeakSuccessorGenerator) {
+                        var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.succGenerator;
+                        var $action = Tooltip.wrap(t.action.toString());
+                        Tooltip.setTooltip($action, Tooltip.strongSequence(weakSuccGen, this.selectedProcess, t.action, t.targetProcess));
+                        $actionTd.append($action);
+                    } else {
+                        $actionTd.append(t.action.toString());
+                    }
+                } else if (t instanceof TCCS.DelayTransition) {
+                    $actionTd.append(t.delay.toString());
                 }
-                
+
                 row.append($("<td>").append(this.sourceText(this.selectedProcess)));
                 row.append($actionTd);
                 row.append($("<td>").append(Tooltip.wrapProcess(this.labelFor(t.targetProcess))));

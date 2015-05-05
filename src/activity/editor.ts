@@ -40,7 +40,7 @@ module Activity {
 
             if (this.autosave.checkAutosave()) {
                 var autosaveProject = this.autosave.getAutosave();
-                this.project.update(0, autosaveProject.title, autosaveProject.ccs, autosaveProject.properties);
+                this.project.update(0, autosaveProject.title, autosaveProject.ccs, autosaveProject.properties, autosaveProject.inputMode);
             }
 
             this.$parse.on("click", () => this.parse());
@@ -133,6 +133,7 @@ module Activity {
             }
 
             this.project.setInputMode(inputMode);
+            this.editor.focus();
         }
 
         private setFontSize(e) : void {

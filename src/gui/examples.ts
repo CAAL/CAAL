@@ -43,7 +43,8 @@ var examples : any[] = [
                     secondProcess:"Spec"
                 }
             }
-        ]
+        ],
+        inputMode: "CCS"
     },
     {
         title: "Orchard",
@@ -71,7 +72,8 @@ var examples : any[] = [
                     secondProcess:"Spec"
                 }
             }
-        ]
+        ],
+        inputMode: "CCS"
     },
     {
         title: "Exercise 3.1",
@@ -86,7 +88,8 @@ var examples : any[] = [
              "T2 = a.T;\n" +
              "T3 = a.T4;\n" +
              "T4 = a.T;",   
-        properties:[]
+        properties:[],
+        inputMode: "CCS"
     },
         
     {
@@ -98,7 +101,8 @@ var examples : any[] = [
              "Q1 = b.Q2 + c.Q;\n" +
              "Q2 = a.Q3;\n" +
              "Q3 = b.Q + c.Q2;",    
-        properties:[]
+        properties:[],
+        inputMode: "CCS"
     },
     {
         title: "Exercise 4.1",
@@ -113,7 +117,8 @@ var examples : any[] = [
              "T1 = tau.T1;\n" +
              "T2 = 0;\n" +
              "T3 = 0;",
-        properties:[]
+        properties:[],
+        inputMode: "CCS"
     },
     {
         title: "Exercise 5.1",
@@ -122,7 +127,8 @@ var examples : any[] = [
              "S2 = a.S4;\n" +
              "S3 = a.S;\n" +
              "S4 = a.S;",   
-        properties:[]
+        properties:[],
+        inputMode: "CCS"
     },  
     {
         title: "Lecture Example",
@@ -142,6 +148,18 @@ var examples : any[] = [
              "\n" + 
              "Impl = (Send | Med |Rec) \\ L;\n" +
              "Spec = acc.'del.Spec;",
-        properties:[]
+        properties:[],
+        inputMode: "CCS"
     },
+    {
+        title: "Lightswitch",
+        ccs: "Off = press.Light;\n" +
+             "Bright = press.Off;\n" +
+             "Light = 2.tau.press.Off + press.Bright;\n\n" +
+             "FastUser = 'press.1.'press.FastUser;\n" +
+             "SlowUser = 'press.3.'press.SlowUser;\n\n" +
+             "Lightswitch = (FastUser | Off) \\ {press};",
+        properties:[],
+        inputMode: "TCCS"
+    }
 ]

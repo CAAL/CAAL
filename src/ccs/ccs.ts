@@ -35,6 +35,14 @@ module CCS {
         getSuccessors(processId : ProcessId) : TransitionSet;
     }
 
+    export interface Transition {
+        action?: Action;
+        delay?: TCCS.Delay;
+        targetProcess: Process;
+        equals(other : Transition): boolean;
+        toString(): string;
+    }
+
     export class NullProcess implements Process {
         constructor(public id : ProcessId) {
         }
@@ -169,7 +177,7 @@ module CCS {
     export class Graph {
         protected nextId : number = 1;
         private nullProcess = new NullProcess(0);
-        private structural = Object.create(null);
+        protected structural = Object.create(null);
         protected processes = {0: this.nullProcess};
         private namedProcesses = Object.create(null);
         private constructErrors = [];
@@ -464,14 +472,17 @@ module CCS {
     /*
         Always modifies inplace. Clone gives shallow clone
     */
-    export class Transition {
+    export class ActionTransition implements Transition {
 
-        constructor(public action : Action, public targetProcess : Process) {
+        constructor(public action : Action = null, public targetProcess : Process = null, public delay = null) {
         }
 
         equals(other : Transition) {
-            return (this.action.equals(other.action) &&
-                    this.targetProcess.id == other.targetProcess.id);
+            if (!(other instanceof ActionTransition)) {
+                return false;
+            }
+            
+            return (this.action.equals(other.action) && this.targetProcess.id == other.targetProcess.id);
         }
 
         toString() {
@@ -534,7 +545,7 @@ module CCS {
                 allCurrent = this.transitions,
                 i = 0;
             while (i < count) {
-                if (labels.contains(allCurrent[i].action.getLabel())) {
+                if (allCurrent[i] instanceof ActionTransition && labels.contains(allCurrent[i].action.getLabel())) {
                     allCurrent[i] = allCurrent[--count];
                 } else {
                     ++i;
@@ -548,11 +559,13 @@ module CCS {
             var allCurrent = this.transitions,
                 newAction, oldAction, transition;
             for (var i = 0, max = allCurrent.length; i < max; i++) {
-                transition = allCurrent[i];
-                oldAction = transition.action;
-                if (relabels.hasRelabelForLabel(transition.action.label)) {
-                    newAction = relabels.relabeledActionFor(transition.action);
-                    allCurrent[i] = new Transition(newAction, transition.targetProcess);
+                if (allCurrent[i] instanceof ActionTransition){
+                    transition = allCurrent[i];
+                    oldAction = transition.action;
+                    if (relabels.hasRelabelForLabel(transition.action.label)) {
+                        newAction = relabels.relabeledActionFor(transition.action);
+                        allCurrent[i] = new ActionTransition(newAction, transition.targetProcess);
+                    }
                 }
             }
         }
@@ -663,7 +676,7 @@ module CCS {
                                     var targetSubprocesses = process.subProcesses.slice(0);
                                     targetSubprocesses[i] = leftTransition.targetProcess;
                                     targetSubprocesses[j] = rightTransition.targetProcess;
-                                    transitionSet.add(new Transition(new Action("tau", false),
+                                    transitionSet.add(new ActionTransition(new Action("tau", false),
                                         this.graph.newCompositionProcess(targetSubprocesses)));
                                 }
                             });
@@ -676,7 +689,7 @@ module CCS {
                         var targetSubprocesses = process.subProcesses.slice(0);
                         //Only the index of the subprocess will have changed.
                         targetSubprocesses[index] = subTransition.targetProcess;
-                        transitionSet.add(new Transition(subTransition.action.clone(),
+                        transitionSet.add(new ActionTransition(subTransition.action.clone(),
                             this.graph.newCompositionProcess(targetSubprocesses)));
                     });
                 });
@@ -688,7 +701,7 @@ module CCS {
             var transitionSet = this.cache[process.id];
             if (!transitionSet) {
                 //process.nextProcess.dispatchOn(this).clone();
-                transitionSet = this.cache[process.id] = new TransitionSet([new Transition(process.action, process.nextProcess)]);
+                transitionSet = this.cache[process.id] = new TransitionSet([new ActionTransition(process.action, process.nextProcess)]);
             }
             return transitionSet;
         }
@@ -702,7 +715,7 @@ module CCS {
                 subTransitionSet.applyRestrictionSet(process.restrictedLabels);
                 subTransitionSet.forEach(transition => {
                     var newRestriction = this.graph.newRestrictedProcess(transition.targetProcess, process.restrictedLabels);
-                    transitionSet.add(new Transition(transition.action.clone(), newRestriction));
+                    transitionSet.add(new ActionTransition(transition.action.clone(), newRestriction));
                 });
             }
             return transitionSet;
@@ -717,7 +730,7 @@ module CCS {
                 subTransitionSet.applyRelabelSet(process.relabellings);
                 subTransitionSet.forEach(transition => {
                     var newRelabelling = this.graph.newRelabelingProcess(transition.targetProcess, process.relabellings);
-                    transitionSet.add(new Transition(transition.action.clone(), newRelabelling));
+                    transitionSet.add(new ActionTransition(transition.action.clone(), newRelabelling));
                 });
             }
             return transitionSet;
@@ -754,20 +767,58 @@ module CCS {
         }
     }
 
-    export function getSuccGenerator(graph, options) {
-        var settings = {succGen: "strong", reduce: true},
-            resultGenerator : SuccessorGenerator = new StrictSuccessorGenerator(graph);
+    export function getSuccGenerator(graph : Graph, options : any) : SuccessorGenerator {
+        var settings = { inputMode: "CCS", succGen: "strong", reduce: true },
+            succGenerator: SuccessorGenerator,
+            treeReducer: Traverse.ProcessTreeReducer;
+
         for (var optionName in options) {
             settings[optionName] = options[optionName];
         }
+
+        if (settings.inputMode === "CCS") {
+            succGenerator = new StrictSuccessorGenerator(graph);
+
+            if (settings.reduce) {
+                treeReducer = new Traverse.ProcessTreeReducer(graph);
+            }
+        } else {
+            succGenerator = new TCCS.StrictSuccessorGenerator(<TCCS.Graph> graph);
+
+            if (settings.reduce) {
+                treeReducer = new Traverse.TCCSProcessTreeReducer(<TCCS.Graph> graph);
+            }
+        }
+
         if (settings.reduce) {
-            var treeReducer = new Traverse.ProcessTreeReducer(graph);
-            resultGenerator = new Traverse.ReducingSuccessorGenerator(resultGenerator, treeReducer);
+            succGenerator = new Traverse.ReducingSuccessorGenerator(succGenerator, treeReducer);
         }
+
         if (settings.succGen === "weak") {
-            resultGenerator = new Traverse.WeakSuccessorGenerator(resultGenerator);
+            succGenerator = new Traverse.WeakSuccessorGenerator(succGenerator);
         }
-        return resultGenerator;
+
+        return succGenerator;
+    }
+
+    export function getNSuccessors(succGen : CCS.SuccessorGenerator, process : CCS.Process, maxDepth : number) : any {
+        var result = {},
+            queue = [[1, process]],
+            depth, fromProcess, transitions;
+
+        for (var i = 0; i < queue.length; i++) {
+            depth = queue[i][0];
+            fromProcess = queue[i][1];
+            result[fromProcess.id] = transitions = succGen.getSuccessors(fromProcess.id);
+
+            transitions.forEach(t => {
+                if (!result[t.targetProcess.id] && depth < maxDepth) {
+                    queue.push([depth + 1, t.targetProcess]);
+                }
+            });
+        }
+
+        return result;
     }
 
     export function reachableProcessIterator(initialProcess : ProcessId, succGen : SuccessorGenerator) {

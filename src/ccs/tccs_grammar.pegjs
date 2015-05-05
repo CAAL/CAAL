@@ -16,7 +16,7 @@
 	// options is an arbitrary javascript object specified in the .parse(...) method
 	var ccs = options.ccs;
 	var tccs = options.tccs;
-	var g = options.graph || new tccs.TCCSGraph();
+	var g = options.graph || new tccs.Graph();
 }
 
 start
@@ -89,7 +89,7 @@ Action "action"
 	/ label:Label { return new ccs.Action(label, false); }
 
 Delay "delay"
-	= delay:Number { return new tccs.Delay(parseInt(delay)); }
+	= delay:Number { return new tccs.Delay(delay); }
 
 Label "label"
 	= first:[a-z] rest:IdentifierRest { return strFirstAndRest(first, rest); }
@@ -98,7 +98,7 @@ LabelList
 	= first:Label rest:(_ "," _ Label)* { return extractLabelList(first, rest); }
 
 Number "number"
-	= number:[0-9]+ { return number; }
+	= number:[0-9]+ { return parseInt(number.join(""), 10); }
 
 Whitespace "whitespace"
 	= [ \t]

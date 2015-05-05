@@ -80,15 +80,6 @@ module Traverse {
         }
     }
 
-    export class TCCSLabelledBracketNotation extends LabelledBracketNotation implements ccs.ProcessVisitor<string>, TCCS.TCCSProcessDispatchHandler<void> {
-        dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
-            this.stringPieces.push("[DelayPrefix");
-            this.stringPieces.push(process.delay + ".");
-            process.nextProcess.dispatchOn(this);
-            this.stringPieces.push("]");
-        }
-    }
-
     export class SizeOfProcessTreeVisitor implements ccs.ProcessVisitor<number>, ccs.ProcessDispatchHandler<number> {
         //not very usable at the moment.
         constructor() {
@@ -135,7 +126,7 @@ module Traverse {
         }
     }
 
-    function wrapIfInstanceOf(stringRepr : string, object : any, classes) {
+    export function wrapIfInstanceOf(stringRepr : string, object : any, classes) {
         for (var i = 0; i < classes.length; i++) {
             if (object instanceof classes[i]) {
                 return "(" + stringRepr + ")";
@@ -147,7 +138,7 @@ module Traverse {
     export class CCSNotationVisitor implements ccs.ProcessVisitor<string>, ccs.ProcessDispatchHandler<string> {
 
         private insideNamedProcess = undefined;
-        private cache;
+        protected cache;
 
         constructor() {
             this.clearCache();
@@ -245,7 +236,7 @@ module Traverse {
             return result;
         }
     }
-
+    
     function safeHtml(str : string) : string {
         var entities = {
             "&": "&amp;",

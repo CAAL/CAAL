@@ -85,10 +85,4 @@ module Traverse {
             return process.subProcess.dispatchOn(this);
         }
     }
-
-    export class TCCSUnguardedRecursionChecker extends UnguardedRecursionChecker implements TCCS.TCCSProcessDispatchHandler<boolean> {
-        dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
-            return false;
-        }
-    }
 }

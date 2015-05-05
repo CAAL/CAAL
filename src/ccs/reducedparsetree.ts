@@ -7,7 +7,7 @@ module Traverse {
     import ccs = CCS;
 
     export class ProcessTreeReducer implements ccs.ProcessVisitor<ccs.Process>, ccs.ProcessDispatchHandler<ccs.Process> {
-        private cache : {[id : number] : ccs.Process} = Object.create(null);
+        protected cache : {[id : number] : ccs.Process} = Object.create(null);
 
         constructor(public graph : ccs.Graph) {
         }
@@ -172,7 +172,7 @@ module Traverse {
                 strongSuccessors;
             
             //Add  P --tau--> P
-            result.add(new ccs.Transition(new ccs.Action("tau", false), process));
+            result.add(new ccs.ActionTransition(new ccs.Action("tau", false), process));
 
             //Stage 1
             //Find all --tau-->* and
@@ -225,7 +225,7 @@ module Traverse {
 
                             toVisitStage2Processes.push(transition.targetProcess);
                             toVisitStage2Actions.push(visitingAction);
-                            var newTransition = new ccs.Transition(visitingAction, transition.targetProcess) 
+                            var newTransition = new ccs.ActionTransition(visitingAction, transition.targetProcess) 
                             result.add(newTransition);
                         }
                     });
@@ -245,7 +245,7 @@ module Traverse {
             var fromData = this.fromTable.get(new FullTransition(fromId, action, toId));
             if (!fromData) throw "Do not call getStrictPath with unknown data.";
             do {
-                path.push(new ccs.Transition(fromData.action, succGen.getProcessById(fromData.toId)));
+                path.push(new ccs.ActionTransition(fromData.action, succGen.getProcessById(fromData.toId)));
                 fromData = fromData.prev;
             } while (fromData && fromData.toId !== fromId);
 
@@ -255,7 +255,7 @@ module Traverse {
             var result = path.map(transition => {
                 var resultTransition = transition;
                 if (hasNonTau) {
-                    resultTransition = new ccs.Transition(tauAction, transition.targetProcess);
+                    resultTransition = new ccs.ActionTransition(tauAction, transition.targetProcess);
                 } else if (!tauAction.equals(transition.action)) {
                     hasNonTau = true;
                 }
