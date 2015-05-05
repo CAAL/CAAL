@@ -34,7 +34,7 @@ module DependencyGraph {
         getDefenderOptions(dgNodeId : DgNodeId) : [CCS.Process, DgNodeId][];
     }
 
-    export class MuCalculusMinModelCheckingDG implements PartialDependencyGraph, PlayableDependencyGraph, hml.FormulaDispatchHandler<any> {
+    export class MuCalculusMinModelCheckingDG implements PartialDependencyGraph, hml.FormulaDispatchHandler<any> {
         private TRUE_ID = 1;
         private FALSE_ID = 2;
         // the 0th index is set in the constructor.
@@ -44,7 +44,6 @@ module DependencyGraph {
         private nextIdx;
         private variableEdges = {};
         private maxFixPoints = {};
-
         private getForNodeId;
 
         constructor(private strongSuccGen : ccs.SuccessorGenerator,
@@ -54,14 +53,6 @@ module DependencyGraph {
             this.nextIdx = 3;
         }
         
-        public getAttackerOptions(dgNodeId : DgNodeId) : [CCS.Action, CCS.Process, DgNodeId, number][] {
-            return undefined; //TODO
-        }
-        
-        public getDefenderOptions(dgNodeId : DgNodeId) : [CCS.Process, DgNodeId][] {
-            return undefined; //TODO
-        }
-
         getHyperEdges(identifier : DgNodeId) : Hyperedge[] {
             var data, nodeId, formula, result;
             if (this.nodes[identifier]) {
@@ -165,6 +156,17 @@ module DependencyGraph {
             this.variableEdges[key] = variableEdge = this.nextIdx++;
             this.constructData[variableEdge] = [this.getForNodeId, this.formulaSet.formulaByName(formula.variable)];
             return [[variableEdge]];
+        }
+
+        describeDGNode(dgNodeId : DgNodeId) : {nodeId: DgNodeId; process: ccs.Process; formula: hml.Formula} {
+            var data = this.constructData[dgNodeId],
+                process = data[0],
+                formula = data[1];
+            return {
+                nodeId: dgNodeId,
+                process: process,
+                formula: formula
+            };
         }
     }
 

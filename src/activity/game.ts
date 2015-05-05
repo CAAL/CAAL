@@ -1001,68 +1001,6 @@ module Activity {
             return marking;
         }
     }
-    
-    class HmlGame extends DgGame {
-        
-        private processName : string;
-        private formula : HML.Formula;
-        private formulaSet : HML.FormulaSet;
-        
-        private satisfied : boolean;
-        private hmlDg : dg.MuCalculusMinModelCheckingDG;
-        
-        constructor(gameActivity : Game, graph : CCS.Graph,
-            processName : string, formula : HML.Formula, formulaSet : HML.FormulaSet) {
-            
-            this.processName = processName;
-            this.formula = formula;
-            this.formulaSet = formulaSet;
-            
-            var currentProcess = graph.processByName(this.processName);
-            
-            super(gameActivity, new GameLog(gameActivity), graph, currentProcess, this.formula);
-        }
-        
-        public isSatisfied() : boolean {
-            return this.satisfied;
-        }
-        
-        public getUniversalWinner() : Player {
-            return this.satisfied ? this.defender : this.attacker;
-        }
-        
-        public getCurrentWinner() : Player {
-            return this.marking.getMarking(this.currentNodeId) === this.marking.ZERO ? this.attacker : this.defender;
-        }
-        
-        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
-            var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
-            var weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: false});
-            return new dg.MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, currentLeft.id, this.formulaSet, currentRight);
-        }
-        
-        protected createMarking() : dg.LevelMarking {
-            var marking = super.createMarking();
-            this.satisfied = marking.getMarking(0) === marking.ONE;
-            return marking;
-        }
-        
-        public getBestWinningAttack(choices : any) : any {
-            return undefined; //TODO
-        }
-        
-        public getTryHardAttack(choices : any) : any {
-            return undefined; //TODO
-        }
-        
-        public getWinningDefend(choices : any) : any {
-            return undefined; //TODO
-        }
-        
-        public getTryHardDefend(choices : any) : any {
-            return undefined; //TODO
-        }
-    }
 
     class Player extends Abstract {
         

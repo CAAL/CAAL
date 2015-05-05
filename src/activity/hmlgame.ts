@@ -1,3 +1,4 @@
+/// <reference path="../../lib/util.d.ts" />
 /// <reference path="../gui/project.ts" />
 /// <reference path="../gui/gui.ts" />
 /// <reference path="../gui/widget/zoomable-process-explorer.ts" />
@@ -85,9 +86,9 @@ module Activity {
         private gamelog = new GUI.Widget.GameLog();
 
         private project : Project;
-        private currentProcess : CCS.Process = null;
-        private currentFormula : HML.Formula = null
-        private currentFormulaSet : HML.FormulaSet = null;
+        // private currentProcess : CCS.Process = null;
+        // private currentFormula : HML.Formula = null
+        // private currentFormulaSet : HML.FormulaSet = null;
         private hmlGameLogic : HmlGameLogic = null;
         private isWeak : boolean;
 
@@ -128,12 +129,10 @@ module Activity {
 
             this.$processList.on("change", () => {
                 this.loadGuiIntoConfig(this.configuration);
-                this.setCurrentProcFromProcesslist();
                 this.configure(this.configuration);
             });
             this.$formulaList.on("change", () => {
                 this.loadGuiIntoConfig(this.configuration);
-                this.setCurrentFormulaFromFormulalist();
                 this.configure(this.configuration);
             });
 
@@ -149,17 +148,13 @@ module Activity {
             this.fullscreen = new Fullscreen($("#hml-game-container")[0], $("#hml-game-fullscreen"), () => this.resize());
             
             this.transitionTable.onSelectListener = ((transition) => { 
-                var state = this.hmlGameLogic.selectedTransition(transition); // return the new state
-                this.currentFormula = state.formula; // has the modality <> [] popped 
-                this.currentProcess = state.process;
-                this.refresh(this.configuration);
+                this.hmlGameLogic.selectedTransition(transition); // return the new state
+                this.refresh();
             });
 
             this.hmlselector.onSelectListener = ((hmlSubFormula) => {
-                var state = this.hmlGameLogic.selectedFormula(hmlSubFormula);
-                this.currentFormula = state.formula;
-                this.currentProcess = state.process; // should remain the same
-                this.refresh(this.configuration);
+                this.hmlGameLogic.selectedFormula(hmlSubFormula);
+                this.refresh();
             });
 
             // when the ccs changes, set a flag, so when switching back to the activity we grab the new graph.
@@ -254,13 +249,13 @@ module Activity {
             return Main.getFormulaSets();
         }
 
-        private setFormulas(hmlFormulaSets : HML.FormulaSet[], selectecHMLSetIndex : number) : void {
+        private setFormulas(hmlFormulaSets : HML.FormulaSet[], selectedHMLSetIndex : number) : void {
             this.$formulaList.empty();
             hmlFormulaSets.forEach((hmlFSet, index) => {
                 var hmlvisitor = new Traverse.HMLNotationVisitor();
                 var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlFSet.getTopFormula()))
                 var optionsNode = $("<option></option>").attr("value", index).append(formulaStr);
-                if(index === selectecHMLSetIndex) {
+                if(index === selectedHMLSetIndex) {
                     optionsNode.prop("selected", true);
                 }
                 this.$formulaList.append(optionsNode);
@@ -286,17 +281,6 @@ module Activity {
             configuration.formulaId = this.getSelectedFormulaSet().getTopFormula().id;
         }
 
-        private setCurrentProcFromProcesslist() : void {
-            /*Updates the this.currentProcess with the newly selected process in processlist */
-            this.currentProcess = this.configuration.succGen.getProcessByName(this.getProcessListValue());
-        }
-
-        private setCurrentFormulaFromFormulalist() : void {
-            this.currentFormulaSet = this.getSelectedFormulaSet();
-            //this.hmlselector.setFormulaSet(this.currentFormulaSet);
-            this.currentFormula = this.currentFormulaSet.getTopFormula();
-        }
-
         private configure(configuration) : void {
             //This is/should-only-be called for change in either process, formula or succ generator.
             this.configuration = configuration;
@@ -306,17 +290,17 @@ module Activity {
             this.setFormulas(this.getFormulaSetList(), configuration.formulaSetIndex);
             
             /*Set the currentFormula/Process */
-            this.currentProcess = configuration.succGen.getProcessByName(configuration.processName);
-            this.currentFormulaSet = this.getFormulaSetList()[configuration.formulaSetIndex];
-            this.hmlselector.setFormulaSet(this.currentFormulaSet);
-            this.currentFormula = this.currentFormulaSet.getTopFormula();
+            var currentProcess = configuration.succGen.getProcessByName(configuration.processName);
+            var currentFormulaSet = this.getFormulaSetList()[configuration.formulaSetIndex];
+            this.hmlselector.setFormulaSet(currentFormulaSet);
+            var currentFormula = currentFormulaSet.getTopFormula();
 
             this.processExplorer.setSuccGenerator(this.configuration.succGen);
             this.isWeak = false;
-            this.processExplorer.exploreProcess(this.currentProcess); // explore the current selected process
+            this.processExplorer.exploreProcess(currentProcess); // explore the current selected process
 
-            this.hmlGameLogic = new HmlGameLogic(this.currentProcess, this.currentFormula, 
-                                                 this.currentFormulaSet, configuration.succGen, Main.getGraph().graph);
+            this.hmlGameLogic = new HmlGameLogic(currentProcess, currentFormula, 
+                                                 currentFormulaSet, configuration.succGen, Main.getGraph().graph);
             this.hmlGameLogic.setGamelogWriter((gameLogObject) => this.gamelog.printToGameLog(gameLogObject));
             
             this.computer = this.hmlGameLogic.getUniversalWinner();
@@ -331,11 +315,11 @@ module Activity {
             gameIntro.addLabel({text: (this.isWeak ? "weak" : "strong")});
             this.gamelog.printToGameLog(gameIntro);
 
-            this.refresh(configuration);
+            this.refresh();
         }
 
 
-        private refresh(configuration) : void {
+        private refresh() : void {
             /* Explores the currentProcess and updates the transitiontable with its successors transitions*/
             
             var isGameOver = this.hmlGameLogic.isGameOver();
@@ -347,26 +331,29 @@ module Activity {
                 this.printGameOver(winner, winReason);
             }
             else {
-                var currentPlayer = this.hmlGameLogic.getCurrentPlayer();
+                var currentPlayer = this.hmlGameLogic.getCurrentPlayer(),
+                    formula = this.hmlGameLogic.state.formula,
+                    process = this.hmlGameLogic.state.process,
+                    formulaSet = this.hmlGameLogic.state.formulaSet;
 
                 if(currentPlayer === this.computer) {
                     // TODO: make this work (so the computer always will play the correct choice.)
-                    // this.hmlGameLogic.AutoPlay(this.computer);
-                    this.printCurrentConfig(this.currentProcess, this.currentFormula);
-                    this.prepareGuiForUserAction();
+                    this.printCurrentConfig(process, formula);
+                    this.hmlGameLogic.AutoPlay(this.computer);
+                    this.refresh();
                 } 
                 else if(currentPlayer === this.human) {
-                    this.printCurrentConfig(this.currentProcess, this.currentFormula);
+                    this.printCurrentConfig(process, formula);
                     this.prepareGuiForUserAction();
                 }
                 else if(currentPlayer === Player.judge) {
                     // Judge plays
-                    this.currentFormula = this.hmlGameLogic.JudgeUnfold(this.currentFormula, this.currentFormulaSet);
-                    this.refresh(this.configuration);
+                    formula = this.hmlGameLogic.JudgeUnfold(formula, formulaSet);
+                    this.refresh();
                 }
             } 
             
-            this.processExplorer.exploreProcess(this.currentProcess);
+            this.processExplorer.exploreProcess(process);
         }
 
         private printGameOver(winner : Player, winReason : WinReason) : void {
@@ -405,12 +392,12 @@ module Activity {
         private prepareGuiForUserAction() {
             if(this.hmlGameLogic.getNextActionType() === ActionType.transition) {
                 this.setActionWidget(this.transitionTable) // set widget to be transition table
-                this.transitionTable.setTransitions(this.currentProcess, this.hmlGameLogic.getAvailableTransitions());
-                this.processExplorer.focusOnProcess(this.currentProcess);
+                this.transitionTable.setTransitions(this.hmlGameLogic.state.process, this.hmlGameLogic.getAvailableTransitions());
+                this.processExplorer.focusOnProcess(this.hmlGameLogic.state.process);
             } 
             else if (this.hmlGameLogic.getNextActionType() === ActionType.formula) {
                 this.setActionWidget(this.hmlselector) // set widget to be hml selector
-                var successorFormulas = this.hmlGameLogic.getAvailableFormulas(this.currentFormulaSet);
+                var successorFormulas = this.hmlGameLogic.getAvailableFormulas(this.hmlGameLogic.state.formulaSet);
                 this.hmlselector.setFormula(successorFormulas);
             }
         }
@@ -459,7 +446,35 @@ module Activity {
         constructor(public process : CCS.Process, 
                 public formula : HML.Formula,
                 public formulaSet : HML.FormulaSet, 
-                public isMinGame : boolean){}
+                public isMinGame : boolean) {}
+
+        withProcess(process : CCS.Process) : HmlGameState {
+            var result = this.clone();
+            result.process = process;
+            return result;
+        }
+
+        withFormula(formula : HML.Formula) : HmlGameState {
+            var result = this.clone();
+            result.formula = formula;
+            return result;   
+        }
+
+        withMinMax(isMinGame : boolean) : HmlGameState {
+            var result = this.clone();
+            result.isMinGame = isMinGame;
+            return result;      
+        }
+
+        private clone() : HmlGameState {
+            var copy = new HmlGameState(
+                this.process,
+                this.formula,
+                this.formulaSet,
+                this.isMinGame
+            );
+            return copy;
+        }
 
         toString() {
             var hmlNotationVisitor = new Traverse.HMLNotationVisitor();
@@ -473,15 +488,17 @@ module Activity {
     }
 
     class HmlGameLogic {
-        private state : HmlGameState;
-        private previousStates : HmlGameState[] = [];
+        public state : HmlGameState;
+        private previousStates : HmlGameState[];
         private gameIsOver : boolean = false;
         private writeToGamelog : Function;
         private stopGame : Function;
         private succGen : CCS.SuccessorGenerator;
-        private dGraph : dg.PlayableDependencyGraph;
+        //private dGraph : dg.PlayableDependencyGraph; //TODO: fix this
+        private dGraph : any;
         private marking : dg.LevelMarking;
-        private currentDgNodeId : dg.DgNodeId
+        private currentDgNodeId : dg.DgNodeId;
+        private choiceDgNodeId : dg.DgNodeId;
         private cycleCache;
 
 
@@ -499,7 +516,7 @@ module Activity {
         private createDependencyGraph(graph : CCS.Graph, process : CCS.Process, formula : HML.Formula) : dg.PlayableDependencyGraph {
             var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
             var weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: false});
-            return new dg.MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, process.id, this.state.formulaSet, formula);
+            return <any>(new dg.MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, process.id, this.state.formulaSet, formula));
         }
 
         private createMarking() : dg.LevelMarking {
@@ -525,62 +542,57 @@ module Activity {
         }
 
         public AutoPlay(player : Player) {
-            if (player === Player.attacker) {
-                var attkChoices = this.dGraph.getAttackerOptions(this.currentDgNodeId);
-                var winChoice = this.winningAttack(attkChoices);
-            } 
-            else if(player === Player.defender) {
-                var defChoices = this.dGraph.getDefenderOptions(this.currentDgNodeId);
-                var winChoice = this.winningDefend(defChoices);
-            } 
-            else {
-                throw "Unhandled player type in AutoPlay";
+            if (player === Player.judge) throw "Judge may not auto play";
+            var minimizeLevel = player === Player.attacker;
+            var choice = this.getChoice(minimizeLevel);
+            var actionType = this.getNextActionType();
+            if (actionType === ActionType.transition) {
+                //Find matching transition
+                var transition = null;
+                this.getAvailableTransitions().forEach(t => {
+                    if (t.targetProcess.id === choice.process) {
+                        transition = t;
+                    }
+                });
+                if (!transition) throw "Missing Transition";
+                this.selectedTransition(transition);
+            } else {
+                this.selectedFormula(choice.formula);
             }
         }
 
-        public selectedFormula(formula : HML.Formula) : HmlGameState {
-            if(!this.gameIsOver){
+        public selectedFormula(formula : HML.Formula) : void {
+            if (this.gameIsOver) throw "Game has ended";
                 
-                /* Gamelog */
-                var gameLogPlay = new GUI.Widget.GameLogObject();
-                gameLogPlay.setTemplate("{0} has chosen subformula {1}.")
-                gameLogPlay.addWrapper({tag: "<p>"});
-                gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
-                gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
-                this.writeToGamelog(gameLogPlay);
+            var gameLogPlay = new GUI.Widget.GameLogObject();
+            gameLogPlay.setTemplate("{0} has chosen subformula {1}.")
+            gameLogPlay.addWrapper({tag: "<p>"});
+            gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
+            gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
+            this.writeToGamelog(gameLogPlay);
 
-                // The player selected a formula.
-                this.previousStates.push(this.state);
-                this.state = new HmlGameState(this.state.process, formula, this.state.formulaSet, this.state.isMinGame);
-                
-                return this.state;
-            }
-
-            throw "Game has ended";
+            // The player selected a formula.
+            this.previousStates.push(this.state);
+            this.state = this.state.withFormula(formula);
+            this.currentDgNodeId = this.choiceDgNodeId;
         }
 
-        public selectedTransition(transition : CCS.Transition) : HmlGameState {
-            // The player selected a transition
-            if (!this.gameIsOver) {
+        public selectedTransition(transition : CCS.Transition) : void {
+            if (this.gameIsOver) throw "Game has ended";
 
-                /* Gamelog */
-                var gameLogPlay = new GUI.Widget.GameLogObject();
-                gameLogPlay.setTemplate("{0} played {1} {2} {3}.");
-                gameLogPlay.addWrapper({tag: "<p>"});
-                gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
-                gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(this.state.process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
-                gameLogPlay.addLabel({text: "-" + transition.action + "->", tag: "<span>", attr: [{name: "class", value: "monospace"}]});
-                gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(transition.targetProcess), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
-                this.writeToGamelog(gameLogPlay);
+            var gameLogPlay = new GUI.Widget.GameLogObject();
+            gameLogPlay.setTemplate("{0} played {1} {2} {3}.");
+            gameLogPlay.addWrapper({tag: "<p>"});
+            gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
+            gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(this.state.process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
+            gameLogPlay.addLabel({text: "-" + transition.action + "->", tag: "<span>", attr: [{name: "class", value: "monospace"}]});
+            gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(transition.targetProcess), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
+            this.writeToGamelog(gameLogPlay);
 
-                var hmlSubF = this.popModalityFormula(<Modality> this.state.formula);
-                this.previousStates.push(this.state);
-                this.state = new HmlGameState(transition.targetProcess, hmlSubF, this.state.formulaSet, this.state.isMinGame);
-
-                return this.state;
-            }
-
-            throw "Game has ended";
+            var hmlSubF = this.popModalityFormula(<Modality> this.state.formula);
+            this.previousStates.push(this.state);
+            this.state = this.state.withProcess(transition.targetProcess);
+            this.currentDgNodeId = this.choiceDgNodeId;
         }
 
         private cycleExists() : boolean {
@@ -649,12 +661,12 @@ module Activity {
         public JudgeUnfold(hml : HML.Formula, hmlFSet : HML.FormulaSet) : HML.Formula {
             if (hml instanceof HML.MinFixedPointFormula) {
                 this.previousStates.push(this.state);
-                this.state = new HmlGameState(this.state.process, hml.subFormula, this.state.formulaSet, true);
+                this.state = this.state.withFormula(hml.subFormula).withMinMax(true);
                 return hml.subFormula;
             }
             else if (hml instanceof HML.MaxFixedPointFormula) {
                 this.previousStates.push(this.state);
-                this.state = new HmlGameState(this.state.process, hml.subFormula, this.state.formulaSet, false);
+                this.state = this.state.withFormula(hml.subFormula).withMinMax(false);
                 return hml.subFormula;
             } 
             else if (hml instanceof HML.VariableFormula) {
@@ -713,46 +725,32 @@ module Activity {
             throw "Unhandled formula type in getAvailableFormulas";
         }
 
-        private winningDefend(choices : any) : void {
-            var choice = this.getWinningDefend(choices);
-            // game.play(this, choice.targetProcess, choice.nextNode);
-        }
-
-        private winningAttack(choices : any) : void {
-            var choice : any = this.getWinningAttack(choices);
-            // var move : Move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
+        public getChoice(minimizeLevel : boolean) : any {
+            var hyperEdges = this.dGraph.getHyperEdges(this.currentDgNodeId);
             
-            // game.play(this, choice.targetProcess, choice.nextNode, choice.action, move);
-        }
-
-        private getWinningAttack(choices : any) : any {
-            if (choices.length == 0)
-                throw "No choices for attacker";
-            
-            var bestCandidateIndex = 0;
-            var bestCandidateLevel = Infinity;
-            var ownLevel = this.marking.getLevel(this.currentDgNodeId);
-            
-            choices.forEach((choice, i) => {
-                var targetNodeLevel = this.marking.getLevel(choice.nextNode);
-                
-                if (targetNodeLevel < ownLevel && targetNodeLevel < bestCandidateLevel) {
-                    bestCandidateLevel = targetNodeLevel;
-                    bestCandidateIndex = i;
-                }
+            //Due to the construction, all hyperedges are either of the
+            //form [ [X], [Y], [Z], ...] or [ [X, Y, Z] ]
+            var describedEdges = hyperEdges.map(edge => {
+                //Get information about dg node and add level.
+                var descriptions = edge.map(dgNodeId => this.dGraph.describeDGNode(dgNodeId));
+                descriptions.forEach(desc => desc.level = this.marking.getLevel(desc.nodeId));
+                var edgeDescription : any = {level: Infinity, nodeDescriptions: descriptions};
+                var max2 = (a, b) => Math.max(a,b);
+                //Set max level for each hyperedge description
+                edgeDescription.level = descriptions.reduce((maxDesc, otherDesc) => {
+                    return otherDesc.level > maxDesc.level ? otherDesc : maxDesc;
+                }).level;
+                return edgeDescription;
             });
-            
-            return choices[bestCandidateIndex];
+
+            var isBetterFn = minimizeLevel ? ((x, y) => x.level < y.level) : ((x, y) => x.level > y.level);
+            //Pick desired hyperedge
+            var selectedHyperDescription = ArrayUtil.selectBest(describedEdges, isBetterFn);
+            var selectedTargetDescription = ArrayUtil.selectBest(selectedHyperDescription.nodeDescriptions, isBetterFn);
+
+            this.choiceDgNodeId = selectedTargetDescription.nodeId;
+            return selectedTargetDescription;
         }
 
-        private getWinningDefend(choices : any) : any {
-            for (var i = 0; i < choices.length; i++) {
-                if (this.marking.getMarking(choices[i].nextNode) === this.marking.ZERO) {
-                    return choices[i];
-                }
-            }
-            
-            throw "No defender moves";
-        }
     }
 }

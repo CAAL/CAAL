@@ -145,6 +145,10 @@ module Equivalence {
             return hyperedges;
         }
 
+        /*
+            Returns information about the attackers options P -- alpha --> Q that the defender than have to match.
+            returns: the action, alpha, leading to Q, Q itself, the next DG node, type of move (0,1,2).
+        */
         public getAttackerOptions(dgNodeId : dg.DgNodeId) : [CCS.Action, CCS.Process, dg.DgNodeId, number][] {
             if (this.constructData[dgNodeId][0] !== 0)
                 throw "Bad node for attacker options";
@@ -153,6 +157,8 @@ module Equivalence {
             var result = [];
             
             hyperedges.forEach(hyperedge => {
+                //The dg nodes are constructed such that each hyperedge only have one target node.
+                //therefore no need to loop over the hyperedge.
                 var targetNode = hyperedge[0];
                 var data = this.constructData[targetNode];
                 var action = data[1];
@@ -170,6 +176,10 @@ module Equivalence {
             return result;
         }
         
+        /*
+            Similar to getAttackerOptions, but returns instead the process the other side
+            matched with and the resulting dependency graph node
+        */
         public getDefenderOptions(dgNodeId : dg.DgNodeId) : [CCS.Process, dg.DgNodeId][] {
             if (this.constructData[dgNodeId][0] === 0)
                 throw "Bad node for defender options";
