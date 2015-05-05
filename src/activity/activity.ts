@@ -18,13 +18,10 @@ module Activity {
             return this.$button;
         }
 
-        protected showExplainDialog(title : string, message : string) : void {
-            var $dialog = $("#explain-dialog"),
-            $dialogTitle = $("#explain-dialog-title"),
-            $dialogBodyPar = $("#explain-dialog-body-par");
-            $dialogTitle.text(title);
-            $dialogBodyPar.text(message);
-            $dialog.modal("show");
+        protected showMessageBox(title : string, message : string) : void {
+            $("#message-box-title").text(title);
+            $("#message-box-body").text(message);
+            $("#message-box").modal("show");
         }
 
         protected checkPreconditions() : boolean {
@@ -32,18 +29,18 @@ module Activity {
                 var graph = this.project.getGraph();
 
                 if (graph.getNamedProcesses().length === 0) {
-                    this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
+                    this.showMessageBox("No Named Processes", "There must be at least one named process in the program.");
                     return false;
                 }
 
                 var errors = graph.getErrors();
 
                 if (errors.length > 0) {
-                    this.showExplainDialog("Error", errors.map(error => error.toString()).join("\n"));
+                    this.showMessageBox("Error", errors.map(error => error.toString()).join("\n"));
                     return false;
                 }
             } catch (error) {
-                this.showExplainDialog("Error", error);
+                this.showMessageBox("Error", error);
                 return false;
             }
 
