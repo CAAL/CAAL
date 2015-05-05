@@ -36,7 +36,7 @@ class Load extends MenuItem {
 
         reader.onload = () => {
             var project = JSON.parse(reader.result);
-            this.project.update(null, project.title, project.ccs, project.properties);
+            this.project.update(null, project.title, project.ccs, project.properties, project.inputMode === "CCS" ? InputMode.CCS : InputMode.TCCS);
             this.activityHandler.selectActivity("editor");
             this.$fileInput.replaceWith(this.$fileInput = this.$fileInput.clone(true)); // Clear input field.
         }
@@ -49,7 +49,7 @@ class Load extends MenuItem {
         var id = e.data.id;
         for (var i = 0; i < projects.length; i++) {
             if (projects[i].id === id) {
-                this.project.update(id, projects[i].title, projects[i].ccs, projects[i].properties);
+                this.project.update(id, projects[i].title, projects[i].ccs, projects[i].properties, projects[i].inputMode === "CCS" ? InputMode.CCS : InputMode.TCCS);
                 this.activityHandler.selectActivity("editor");
                 break;
             }
@@ -62,7 +62,7 @@ class Load extends MenuItem {
 
         for (var i = 0; i < examples.length; i++) {
             if (examples[i].title === title) {
-                this.project.update(null, examples[i].title, examples[i].ccs, examples[i].properties);
+                this.project.update(null, examples[i].title, examples[i].ccs, examples[i].properties, examples[i].inputMode === "CCS" ? InputMode.CCS : InputMode.TCCS);
                 this.activityHandler.selectActivity("editor");
                 break;
             }
