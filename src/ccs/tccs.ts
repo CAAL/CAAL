@@ -69,7 +69,7 @@ module TCCS {
             this.unguardedRecursionChecker = new Traverse.TCCSUnguardedRecursionChecker();
         }
         
-        private newDelayPrefixProcess(delay : Delay, nextProcess : CCS.Process) {
+        public newDelayPrefixProcess(delay : Delay, nextProcess : CCS.Process) {
             var key = "." + delay.getDelay() + "." + nextProcess.id;
             var existing = this.structural[key];
             if (!existing) {
@@ -77,14 +77,6 @@ module TCCS {
                 this.processes[existing.id] = existing;
             }
             return existing;
-        }
-        
-        public newDelayPrefixProcesses(delays : Delay[], nextProcess : CCS.Process) {
-            var next = nextProcess;
-            for (var i = 0; i < delays.length; i++) {
-                next = this.newDelayPrefixProcess(delays[i], next);
-            }
-            return this.processes[this.nextId-1];
         }
     }
 
@@ -338,7 +330,7 @@ module TCCS {
             if (!result) {
                 if (process.delay.getDelay() > 1) {
                     var newDelay = new Delay(process.delay.getDelay() - 1);
-                    this.cache[process.id] = result = this.graph.newDelayPrefixProcesses([newDelay], process.nextProcess);
+                    this.cache[process.id] = result = this.graph.newDelayPrefixProcess(newDelay, process.nextProcess);
                     this.delayFoundCache[process.id] = true;
                 } else if (process.delay.getDelay() === 1) {
                     this.cache[process.id] = result = process.nextProcess;
@@ -406,7 +398,7 @@ module Traverse {
                     resultProcess = this.cache[process.id] = nextProcess.dispatchOn(this);
                 } else {
                     nextProcess = nextProcess.dispatchOn(this);
-                    resultProcess = this.cache[process.id] = this.tccsgraph.newDelayPrefixProcesses([new TCCS.Delay(resultDelay)], nextProcess);
+                    resultProcess = this.cache[process.id] = this.tccsgraph.newDelayPrefixProcess(new TCCS.Delay(resultDelay), nextProcess);
                 }
             }
             
