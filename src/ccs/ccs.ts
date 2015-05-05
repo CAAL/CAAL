@@ -767,24 +767,38 @@ module CCS {
         }
     }
 
-    export function getSuccGenerator(graph, options) {
-        var settings = {inputMode: "CCS", succGen: "strong", reduce: true},
-            resultGenerator : SuccessorGenerator = new StrictSuccessorGenerator(graph);
+    export function getSuccGenerator(graph : Graph, options : any) : SuccessorGenerator {
+        var settings = { inputMode: "CCS", succGen: "strong", reduce: true },
+            succGenerator: SuccessorGenerator,
+            treeReducer: Traverse.ProcessTreeReducer;
+
         for (var optionName in options) {
             settings[optionName] = options[optionName];
         }
+
         if (settings.inputMode === "CCS") {
+            succGenerator = new StrictSuccessorGenerator(graph);
+
             if (settings.reduce) {
-                var treeReducer = new Traverse.ProcessTreeReducer(graph);
-                resultGenerator = new Traverse.ReducingSuccessorGenerator(resultGenerator, treeReducer);
+                treeReducer = new Traverse.ProcessTreeReducer(graph);
             }
-            if (settings.succGen === "weak") {
-                resultGenerator = new Traverse.WeakSuccessorGenerator(resultGenerator);
-            }
-            return resultGenerator;
         } else {
-            return new TCCS.StrictSuccessorGenerator(graph);
+            succGenerator = new TCCS.StrictSuccessorGenerator(<TCCS.Graph> graph);
+
+            if (settings.reduce) {
+                treeReducer = new Traverse.TCCSProcessTreeReducer(<TCCS.Graph> graph);
+            }
         }
+
+        if (settings.reduce) {
+            succGenerator = new Traverse.ReducingSuccessorGenerator(succGenerator, treeReducer);
+        }
+
+        if (settings.succGen === "weak") {
+            succGenerator = new Traverse.WeakSuccessorGenerator(succGenerator);
+        }
+
+        return succGenerator;
     }
 
     export function getNSuccessors(succGen : CCS.SuccessorGenerator, process : CCS.Process, maxDepth : number) : any {

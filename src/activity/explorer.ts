@@ -146,6 +146,14 @@ module Activity {
             for (var i = 0; i < processes.length; i++) {
                 list.append($("<option></option>").append(processes[i]));
             }
+
+            if (this.project.getInputMode() === InputMode.CCS) {
+                $("input[name=option-successor][value=weak]").parent().parent().show();
+                $("input[name=option-collapse]").parent().parent().show().next(".divider").show();
+            } else {
+                $("input[name=option-successor][value=weak]").parent().parent().hide();
+                $("input[name=option-collapse]").parent().parent().hide().next(".divider").hide();
+            }
         }
 
         private getOptions() : any {
