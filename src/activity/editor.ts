@@ -1,7 +1,6 @@
 module Activity {
 
     export class Editor extends Activity {
-        private project : Project;
         private $editor : JQuery;
         private $parse : JQuery;
         private editor : any;
@@ -48,6 +47,10 @@ module Activity {
 
             $("#input-mode").on("change", (e) => this.setInputMode(e));
             $("#font-size").on("change", (e) => this.setFontSize(e));
+        }
+
+        protected checkPreconditions() : boolean {
+            return true;
         }
 
         public onShow(configuration? : any) : void {

@@ -13,7 +13,6 @@
 module Activity {
 
     export class Explorer extends Activity {
-        private project: Project;
         private changed: boolean;
         private graph : CCS.Graph;
         private succGenerator : CCS.SuccessorGenerator;
@@ -78,18 +77,6 @@ module Activity {
             $(document).on("ccs-changed", () => this.changed = true);
 
             $("#explorer-process-list, input[name=option-collapse], input[name=option-successor], #option-simplify").on("change", () => this.draw());
-        }
-
-        protected checkPreconditions() : boolean {
-            /*var graph = Main.getGraph();
-            if (graph.error) {
-                this.showExplainDialog("Error", graph.error);
-                return false;
-            } else if (graph.graph.getNamedProcesses().length === 0) {
-                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
-                return false;
-            }*/
-            return true;
         }
 
         public onShow(configuration? : any) : void {

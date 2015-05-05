@@ -6,6 +6,7 @@ enum PropertyStatus {satisfied, unsatisfied, invalid, unknown};
 
 module Property {
     export class Property {
+        protected project : Project;
         private static counter : number = 0;
         private id : number;
         protected status : PropertyStatus;
@@ -29,8 +30,8 @@ module Property {
             "minus" : $("<i class='fa fa-minus-square'></i>")
         }
 
-
         public constructor(status : PropertyStatus = PropertyStatus.unknown) {
+            this.project = Project.getInstance();
             this.status = status;
             this.id = Property.counter;
             Property.counter++;
@@ -182,7 +183,7 @@ module Property {
             
             this.startTimer();
             
-            var program = Main.getProgram();
+            var program = this.project.getCCS();
             this.worker = new Worker("lib/workers/verifier.js");
             
             this.worker.postMessage({
@@ -301,7 +302,7 @@ module Property {
                 error = "There is no process selected.";
             } else {
                 // if they are defined check whether they are defined in the CCS-program
-                var processList = Main.getGraph().graph.getNamedProcesses()
+                var processList = this.project.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getProcess()) === -1 ) {
                     error = "The processes selected is not defined in the CCS program.";
                     isReady = false;
@@ -397,7 +398,7 @@ module Property {
                 error = "Two processes must be selected"
             } else {
                 // if they are defined check whether they are defined in the CCS-program
-                var processList = Main.getGraph().graph.getNamedProcesses()
+                var processList = this.project.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
                     isReady = false;
                     error = "One of the processes is not defined in the CCS program."
@@ -685,7 +686,7 @@ module Property {
                 error = "Two processes must be selected"
             } else {
                 // if they are defined check whether they are defined in the CCS-program
-                var processList = Main.getGraph().graph.getNamedProcesses()
+                var processList = this.project.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
                     error = "One of the processes selected is not defined in the CCS program."
                     isReady = false;
@@ -754,7 +755,7 @@ module Property {
                 error = "Two processes must be selected"
             } else {
                 // if they are defined check whether they are defined in the CCS-program
-                var processList = Main.getGraph().graph.getNamedProcesses()
+                var processList = this.project.getGraph().getNamedProcesses()
                 if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
                     error = "One of the processes selected is not defined in the CCS program."
                     isReady = false;
