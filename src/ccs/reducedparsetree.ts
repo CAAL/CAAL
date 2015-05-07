@@ -119,9 +119,9 @@ module Traverse {
     }
 
     function compareTransitionTuple(left : FullTransition, right : FullTransition) : number {
-        var fromIdDiff = left.fromId - right.fromId;
+        var fromIdDiff = left.fromId.localeCompare(right.fromId);
         if (fromIdDiff !== 0) return fromIdDiff;
-        var toIdDiff = left.toId - right.toId;
+        var toIdDiff = left.toId.localeCompare(right.toId);
         if (toIdDiff !== 0) return toIdDiff;
         return compareAction(left.action, right.action);
     }

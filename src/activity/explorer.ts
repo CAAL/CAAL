@@ -211,7 +211,7 @@ module Activity {
         }
 
         private labelFor(process : CCS.Process) : string {
-            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess>process).name : "" + process.id;
+            return this.graph.getLabel(process);
         }
 
         private expand(process : CCS.Process) : void {
@@ -238,9 +238,8 @@ module Activity {
                                 return { label: t.delay.toString() };
                             }
                         });
-                        var numId = parseInt(strProcId, 10);
-                        this.showProcess(this.graph.processById(numId));
-                        this.uiGraph.showTransitions(fromProcess.id, numId, data);
+                        this.showProcess(this.graph.processById(strProcId));
+                        this.uiGraph.showTransitions(fromProcess.id, strProcId, data);
                     });
                 }
             }

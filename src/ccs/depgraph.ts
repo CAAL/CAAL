@@ -39,8 +39,8 @@ module DependencyGraph {
         private FALSE_ID = 2;
         // the 0th index is set in the constructor.
         // nodes[1] is tt, nodes[2] is ff - described by hyper edges.
-        private nodes = [ undefined, [ [] ], [ ] ];
-        private constructData = {};
+        private nodes = Object.create(null);
+        private constructData = Object.create(null);
         private nextIdx;
         private variableEdges = {};
         private maxFixPoints = {};
@@ -50,6 +50,10 @@ module DependencyGraph {
         constructor(private strongSuccGen : ccs.SuccessorGenerator,
                     private weakSuccGen : ccs.SuccessorGenerator,
                     nodeId, private formulaSet : hml.FormulaSet, formula : hml.Formula) {
+            //Fill nodes with special values
+            this.nodes["0"] = undefined;
+            this.nodes["1"] = [ [] ];
+            this.nodes["2"] = [];
             this.constructData[0] = [nodeId, formula];
             this.nextIdx = 3;
         }
@@ -173,7 +177,7 @@ module DependencyGraph {
         private FALSE_ID = 2;
         // the 0th index is set in the constructor.
         // nodes[1] is tt, nodes[2] is ff - described by hyper edges.
-        private nodes = [ undefined, [ [] ], [ ] ];
+        private nodes = Object.create(null);
         private constructData = {};
         private nextIdx;
         private variableEdges = {};
@@ -184,6 +188,10 @@ module DependencyGraph {
         constructor(private strongSuccGen : ccs.SuccessorGenerator, 
                     private weakSuccGen : ccs.SuccessorGenerator,
                     nodeId, private formulaSet : hml.FormulaSet, formula : hml.Formula) {
+            this.nodes["0"] = undefined;
+            this.nodes["1"] = [ [] ];
+            this.nodes["2"] = [];
+
             this.constructData[0] = [nodeId, formula];
             this.nextIdx = 3;
         }
