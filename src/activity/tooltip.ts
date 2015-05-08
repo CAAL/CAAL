@@ -82,7 +82,7 @@ module Activity {
         }
         
         public ccsNotationForProcessId(name : string) : string {
-            var process = this.graph.processByName(name) || this.graph.processById(parseInt(name, 10));
+            var process = this.graph.processByName(name) || this.graph.processById(name);
 
             if (process) {
                 if (process instanceof ccs.NamedProcess) {

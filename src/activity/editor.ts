@@ -134,8 +134,9 @@ module Activity {
             } else if (inputMode === InputMode.TCCS) {
                 this.editor.getSession().setMode("ace/mode/tccs");
             }
-
+            
             this.project.setInputMode(inputMode);
+            this.project.setChanged(true);
             this.editor.focus();
         }
 

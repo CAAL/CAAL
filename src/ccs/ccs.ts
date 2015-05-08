@@ -3,7 +3,7 @@
 
 module CCS {
 
-    export type ProcessId = number;
+    export type ProcessId = string;
 
     export interface Process {
         id : ProcessId;
@@ -43,91 +43,145 @@ module CCS {
         toString(): string;
     }
 
+    /*
+        For the process type definitions, since toString is used 
+        called before any property lookup it should return a unique
+        string for each process, but always the same string for the same
+        process.
+
+        For backwards compatibility p.id should also return a unique string
+        suitable as a property key.
+
+        Neither of these are intended to be human readable.
+    */
+
     export class NullProcess implements Process {
-        constructor(public id : ProcessId) {
+        private ccs : string;
+        constructor() {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchNullProcess(this);
         }
         toString() {
-            return "NullProcess";
+            return "0";
+        }
+        get id() {
+            return this.toString();
         }
     }
 
     export class NamedProcess implements Process {
-        constructor(public id : ProcessId, public name : string, public subProcess : Process) {
+        private ccs : string;
+        constructor(public name : string, public subProcess : Process) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchNamedProcess(this);
         }
         toString() {
-            return "NamedProcess(" + this.name +")";
+            return this.name;
+        }
+        get id() {
+            return this.toString();
         }
     }
 
     export class SummationProcess implements Process {
-        constructor(public id : ProcessId, public subProcesses : Process[]) {
+        private ccs : string;
+        constructor(public subProcesses : Process[]) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchSummationProcess(this);
         }
         toString() {
-            return "Summation";
+            if (this.ccs) return this.ccs;
+            return this.ccs = this.subProcesses.map(p => "(" + p.toString() + ")").join(" + ");
+        }
+        get id() {
+            return this.toString();
         }
     }
 
     export class CompositionProcess implements Process {
-        constructor(public id : ProcessId, public subProcesses : Process[]) {
+        private ccs : string;
+        constructor(public subProcesses : Process[]) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchCompositionProcess(this);
         }
         toString() {
-            return "Composition";
+            if (this.ccs) return this.ccs;
+            return this.ccs = this.subProcesses.map(p => "(" + p.toString() + ")").join(" | ");
+        }
+        get id() {
+            return this.toString();
         }
     }
 
     export class ActionPrefixProcess implements Process {
-        constructor(public id : ProcessId, public action : Action, public nextProcess : Process) {
+        private ccs : string;
+        constructor(public action : Action, public nextProcess : Process) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchActionPrefixProcess(this);
         }
         toString() {
-            return "Action(" + this.action.toString() + ")";
+            if (this.ccs) return this.ccs;
+            return this.ccs = this.action.toString() + "." + this.nextProcess.toString();
+        }
+        get id() {
+            return this.toString();
         }
     }
     
     export class RestrictionProcess implements Process {
-        constructor(public id : ProcessId, public subProcess : Process, public restrictedLabels : LabelSet) {
+        private ccs : string;
+        constructor(public subProcess : Process, public restrictedLabels : LabelSet) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchRestrictionProcess(this);
         }
         toString() {
-            return "Restriction";
+            if (this.ccs) return this.ccs;
+            var parts = [];
+            this.restrictedLabels.forEach(label => parts.push(label.toString()));
+            return this.ccs = "(" + this.subProcess.toString() + ") \\ {" + parts.join(",") + "}";
+        }
+        get id() {
+            return this.toString();
         }
     }
 
     export class RelabellingProcess implements Process {
-        constructor(public id : ProcessId, public subProcess : Process, public relabellings : RelabellingSet) {
+        private ccs : string;
+        constructor(public subProcess : Process, public relabellings : RelabellingSet) {
         }
         dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchRelabellingProcess(this);
         }
         toString() {
-            return "Relabelling";
+            if (this.ccs) return this.ccs;
+            var parts = [];
+            this.relabellings.forEach((f, t) => parts.push(t.toString() + "/" + f.toString()));
+            return this.ccs = "(" + this.subProcess.toString() + ") [" + parts.join(",") + "]";
+        }
+        get id() {
+            return this.toString();
         }
     }
 
     export class CollapsedProcess implements Process {
-        constructor(public id : ProcessId, public subProcesses : Process[]) {
+        private ccs : string;
+        constructor(public subProcesses : Process[]) {
         }
         dispatchOn<T>(dispatcher : CollapsedDispatchHandler<T>) : T {
             return dispatcher.dispatchCollapsedProcess(this);
         }
         toString() {
-            return "CollapsedProcess";
+            if (this.ccs) return this.ccs;
+            return this.ccs = "{" + this.subProcesses.map(p => "(" + p.toString() + ")").join(",") + "}";
+        }
+        get id() {
+            return this.toString();
         }
     }
 
@@ -176,15 +230,17 @@ module CCS {
 
     export class Graph {
         protected nextId : number = 1;
-        private nullProcess = new NullProcess(0);
-        protected structural = Object.create(null);
-        protected processes = {0: this.nullProcess};
-        private namedProcesses = Object.create(null);
-        private constructErrors = [];
-        private definedSets = Object.create(null);
+        protected nullProcess = new NullProcess();
+        //Contains all processes by their .id
+        //is also used to optimize number of instances.
+        protected processes = {"0": this.nullProcess};
+        protected labels = Object.create(null);
+        protected namedProcesses = Object.create(null);
+        protected constructErrors = [];
+        protected definedSets = Object.create(null);
         //Uses index as uid.
-        private allRestrictedSets = new GrowingIndexedArraySet<LabelSet>();
-        private allRelabellings = new GrowingIndexedArraySet<RelabellingSet>();
+        protected allRestrictedSets = new GrowingIndexedArraySet<LabelSet>();
+        protected allRelabellings = new GrowingIndexedArraySet<RelabellingSet>();
         protected unguardedRecursionChecker = new Traverse.UnguardedRecursionChecker();
 
         constructor() {
@@ -193,7 +249,7 @@ module CCS {
         newNamedProcess(processName : string, process : Process) {
             var namedProcess = this.namedProcesses[processName];
             if (!namedProcess) {
-                namedProcess = this.namedProcesses[processName] = new NamedProcess(this.nextId++, processName, process);
+                namedProcess = this.namedProcesses[processName] = new NamedProcess(processName, process);
                 this.processes[namedProcess.id] = namedProcess;
             } else if (!namedProcess.subProcess) {
                 namedProcess.subProcess = process;
@@ -207,7 +263,7 @@ module CCS {
             var namedProcess = this.namedProcesses[processName];
             if (!namedProcess) {
                 //Null will be fixed, by newNamedProcess
-                namedProcess = this.namedProcesses[processName] = new NamedProcess(this.nextId++, processName, null);
+                namedProcess = this.namedProcesses[processName] = new NamedProcess(processName, null);
                 this.processes[namedProcess.id] = namedProcess;
             }
             return namedProcess;
@@ -218,54 +274,31 @@ module CCS {
         }
 
         newActionPrefixProcess(action : Action, nextProcess : Process) {
-            var key = "." + action.toString() + "." + nextProcess.id;
-            var existing = this.structural[key];
-            if (!existing) {
-                existing = this.structural[key] = new ActionPrefixProcess(this.nextId++, action, nextProcess);
-                this.processes[existing.id] = existing;
-            }
-            return existing;
+            var result = new ActionPrefixProcess(action, nextProcess);
+            return this.processes[result.id] = result;
         }
 
         newSummationProcess(subProcesses : Process[]) {
-            var temp, key, existing;
             //Ensure left.id <= right.id
             var newProcesses = subProcesses.slice(0);
-            newProcesses.sort((procA, procB) => procA.id - procB.id);
-            key = "+" + newProcesses.map(proc => proc.id).join(",");
-            existing = this.structural[key];
-            if (!existing) {
-                existing = this.structural[key] = new SummationProcess(this.nextId++, newProcesses);
-                this.processes[existing.id] = existing;
-            }
-            return existing;
+            newProcesses.sort();
+            var result = new SummationProcess(newProcesses);
+            return this.processes[result.id] = result;
         }
 
         newCompositionProcess(subProcesses : Process[]) {
-            var temp, key, existing;
             //Ensure left.id <= right.id
             var newProcesses = subProcesses.slice(0);
-            newProcesses.sort((procA, procB) => procA.id - procB.id);
-            key = "|" + newProcesses.map(proc => proc.id).join(",");
-            existing = this.structural[key];
-            if (!existing) {
-                existing = this.structural[key] = new CompositionProcess(this.nextId++, newProcesses);
-                this.processes[existing.id] = existing;
-            }
-            return existing;
+            newProcesses.sort();
+            var result = new CompositionProcess(newProcesses);
+            return this.processes[result.id] = result;
         }
 
         newRestrictedProcess(process, restrictedLabels : LabelSet) {
             //For now return just new instead of structural sharing
-            var key, existing;
             restrictedLabels = this.allRestrictedSets.getOrAdd(restrictedLabels);
-            key = "\\" + process.id + "," + this.allRestrictedSets.indexOf(restrictedLabels);
-            existing = this.structural[key];
-            if (!existing) {
-                existing = this.structural[key] = new RestrictionProcess(this.nextId++, process, restrictedLabels);
-                this.processes[existing.id] = existing;
-            }
-            return existing;
+            var result = new RestrictionProcess(process, restrictedLabels);
+            return this.processes[result.id] = result;
         }
 
         newRestrictedProcessOnSetName(process, setName) {
@@ -279,28 +312,16 @@ module CCS {
         }
 
         newRelabelingProcess(process, relabellings : RelabellingSet) {
-            var key, existing;
             relabellings = this.allRelabellings.getOrAdd(relabellings);
-            key = "[" + process.id + "," + this.allRelabellings.indexOf(relabellings);
-            existing = this.structural[key];
-            if (!existing) {
-                existing = this.structural[key] = new RelabellingProcess(this.nextId++, process, relabellings);
-                this.processes[existing.id] = existing;
-            }
-            return existing;
+            var result = new RelabellingProcess(process, relabellings);
+            return this.processes[result.id] = result;
         }
 
         newCollapsedProcess(subProcesses : Process[]) {
-            var key, existing;
             var newProcesses = subProcesses.slice(0);
-            newProcesses.sort((procA, procB) => procA.id - procB.id);
-            key = "collapse," + newProcesses.map(proc => proc.id).join(",");
-            existing = this.structural[key];
-            if (!existing) {
-                existing = this.structural[key] = new CollapsedProcess(this.nextId++, newProcesses);
-                this.processes[existing.id] = existing;
-            }
-            return existing;
+            newProcesses.sort();
+            var result = new CollapsedProcess(newProcesses);
+            return this.processes[result.id] = result;
         }
 
         defineNamedSet(name, labelSet : LabelSet) {
@@ -320,6 +341,14 @@ module CCS {
 
         getNamedProcesses() {
             return Object.keys(this.namedProcesses);
+        }
+
+        getLabel(process : Process) : string {
+            var label = this.labels[process.id];
+            if (!label) {
+                label = this.labels[process.id] = (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess>process).name : "" + this.nextId++;
+            }
+            return label;
         }
 
         getErrors() {

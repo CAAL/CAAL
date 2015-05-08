@@ -92,6 +92,7 @@ function createTscFileTask(targetFile, sourceFiles, options, comment, onFinish) 
         var command = TSC;
         if (options.definitionFile) command += ' -d';
         if (options.sourceMap) command += ' --sourcemap';
+        command += ' --target ES5';
         command += ' --out ' + targetFile + ' ' + sourceFiles.join(' ');
         jake.exec(command, {printStdout: true}, function () { onFinish(complete); });
     });

@@ -7,13 +7,18 @@ module TCCS {
     }
 
     export class DelayPrefixProcess implements CCS.Process {
-        constructor(public id : CCS.ProcessId, public delay : Delay, public nextProcess : CCS.Process) {
+        private ccs : string;
+        constructor(public delay : Delay, public nextProcess : CCS.Process) {
         }
         public dispatchOn<T>(dispatcher : ProcessDispatchHandler<T>) : T {
             return dispatcher.dispatchDelayPrefixProcess(this);
         }
         public toString() {
-            return "Delay(" + this.delay.toString() + ")";
+            if (this.ccs) return this.ccs;
+            return this.ccs = "." + this.delay.toString() + "." + this.nextProcess.toString();
+        }
+        get id() {
+            return this.toString();
         }
     }
     
@@ -70,13 +75,8 @@ module TCCS {
         }
         
         public newDelayPrefixProcess(delay : Delay, nextProcess : CCS.Process) {
-            var key = "." + delay.getDelay() + "." + nextProcess.id;
-            var existing = this.structural[key];
-            if (!existing) {
-                existing = this.structural[key] = new DelayPrefixProcess(this.nextId++, delay, nextProcess);
-                this.processes[existing.id] = existing;
-            }
-            return existing;
+            var result = new DelayPrefixProcess(delay, nextProcess);
+            return this.processes[result.id] = result;
         }
     }
 
