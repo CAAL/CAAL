@@ -683,9 +683,9 @@ module Activity {
         public getConfigurationStr(configuration : any) : string {
             var result = "(";
             
-            result += configuration.left instanceof CCS.NamedProcess ? (<CCS.NamedProcess>configuration.left).name : configuration.left.id.toString();
+            result += this.graph.getLabel(configuration.left);
             result += ", ";
-            result += configuration.right instanceof CCS.NamedProcess ? (<CCS.NamedProcess>configuration.right).name : configuration.right.id.toString();
+            result += this.graph.getLabel(configuration.right);
             result += ")"
 
             return result;
