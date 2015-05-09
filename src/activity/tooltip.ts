@@ -50,10 +50,8 @@ module Activity {
         }
         
         static strongSequence(weakSuccGen : Traverse.WeakSuccessorGenerator, source : CCS.Process, action : CCS.Action, target : CCS.Process) : string {
-            var labelFor = function(process : CCS.Process) {
-                return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString()
-            }
-            
+            var graph = Project.getInstance().getGraph();
+            var labelFor = graph.getLabel.bind(graph);
             var strictPath = weakSuccGen.getStrictPath(source.id, action, target.id);
             var strongActions = labelFor(source);
             
@@ -71,29 +69,29 @@ module Activity {
         
         constructor($container : JQuery) {
             this.visitor = new Traverse.TCCSNotationVisitor();
-            
             var getCCSNotation = this.ccsNotationForProcessId.bind(this);
+
+            var thisTooltip = this;
             var titleFunction = function() {
-                    var process = $(this).text();
+                    var process = thisTooltip.graph.processByLabel($(this).text());
                     return getCCSNotation(process);
                 };
                 
             super($container, titleFunction, "ccs-tooltip-process");
         }
         
-        public ccsNotationForProcessId(name : string) : string {
-            var process = this.graph.processByName(name) || this.graph.processById(name);
+        public ccsNotationForProcessId(idOrName : string) : string {
+            var process = this.graph.processByName(idOrName) || this.graph.processById(idOrName);
 
             if (process) {
                 if (process instanceof ccs.NamedProcess) {
-                    name = process.name;
                     var text = this.visitor.visit((<ccs.NamedProcess>process).subProcess);
                 } else {
                     var text = this.visitor.visit(process);
                 }
             }
 
-            return name + " = " + text;
+            return this.graph.getLabel(process) + " = " + text;
         }
         
         public setGraph(graph : CCS.Graph) : void {
