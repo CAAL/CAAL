@@ -232,7 +232,7 @@ module Activity {
                     Object.keys(groupedByTargetProcessId).forEach(strProcId => {
                         var group = groupedByTargetProcessId[strProcId];
                         var data = group.map(t => {
-                            if (t instanceof CCS.ActionTransition) {
+                            if (t instanceof CCS.Transition) {
                                 return { label: t.action.toString() };
                             } else if (t instanceof TCCS.DelayTransition) {
                                 return { label: t.delay.toString() };
@@ -256,7 +256,7 @@ module Activity {
                 var row = $("<tr>");
                 var $actionTd = $("<td>");
                 
-                if (t instanceof CCS.ActionTransition) {
+                if (t instanceof CCS.Transition) {
                     if (this.succGenerator instanceof Traverse.WeakSuccessorGenerator) {
                         var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.succGenerator;
                         var $action = Tooltip.wrap(t.action.toString());
@@ -266,7 +266,7 @@ module Activity {
                         $actionTd.append(t.action.toString());
                     }
                 } else if (t instanceof TCCS.DelayTransition) {
-                    $actionTd.append(t.delay.toString());
+                    $actionTd.append(t.action.toString());
                 }
 
                 row.append($("<td>").append(this.sourceText(this.selectedProcess)));

@@ -22,19 +22,19 @@ module TCCS {
         }
     }
     
-    export class Delay {
+    export class Delay extends CCS.Action { // treat delays like actions
         private delay : number;
         
         constructor(delay : number) {
+            // Let all delays be named 'Delay' so they all equal each other.
+            // No matter how big a delay, they can always delay by one.
+            super("Delay", false);
+            
             this.delay = delay;
         }
         
         public getDelay() : number {
             return this.delay;
-        }
-
-        public equals(other : Delay) {
-            return this.delay === other.getDelay();
         }
         
         public toString() {
@@ -46,9 +46,10 @@ module TCCS {
         }
     }
 
-    export class DelayTransition implements CCS.Transition {
+    export class DelayTransition extends CCS.Transition {
 
-        public constructor(public delay : Delay, public targetProcess : CCS.Process) {
+        public constructor(public delay : Delay, targetProcess : CCS.Process) {
+            super(delay, targetProcess);
         }
 
         public equals(other : CCS.Transition) {
@@ -56,7 +57,7 @@ module TCCS {
                 return false;
             }
             
-            return (this.delay.equals(other.delay) && this.targetProcess.id == other.targetProcess.id);
+            return (this.delay.equals((<DelayTransition>other).delay) && this.targetProcess.id === other.targetProcess.id);
         }
 
         public toString() {
@@ -91,7 +92,7 @@ module TCCS {
             this.delaySuccessor = new DelaySuccessor(tccsgraph);
         }
         
-        // use most of super to create ActionTransitions, identify if process can do tau,
+        // use most of super to create Transitions, identify if process can do tau,
         // if process cannot do tau then create a delay successor (there can only be one).
         public getSuccessors(processId : CCS.ProcessId) : CCS.TransitionSet {
             var process = this.graph.processById(processId);
@@ -111,7 +112,7 @@ module TCCS {
             if (!this.tauFoundCache[process.id]) {
                 var canDoTau = false;
                 transitions.forEach(transition => {
-                    if (transition.action.toString() === "tau") {
+                    if (transition.action.getLabel() === "tau") {
                         canDoTau = true;
                     }
                 });
@@ -164,8 +165,8 @@ module TCCS {
                     var newRestriction = this.graph.newRestrictedProcess(transition.targetProcess, process.restrictedLabels);
                     if (transition instanceof DelayTransition) {
                         transitionSet.add(new DelayTransition(transition.delay.clone(), newRestriction));
-                    } else if (transition instanceof CCS.ActionTransition) {
-                        transitionSet.add(new CCS.ActionTransition(transition.action.clone(), newRestriction));
+                    } else if (transition instanceof CCS.Transition) {
+                        transitionSet.add(new CCS.Transition(transition.action.clone(), newRestriction));
                     }
                 });
                 this.tauFoundCache[process.id] = this.tauFoundCache[process.subProcess.id];
@@ -184,8 +185,8 @@ module TCCS {
                     var newRelabelling = this.graph.newRelabelingProcess(transition.targetProcess, process.relabellings);
                     if (transition instanceof DelayTransition) {
                         transitionSet.add(new DelayTransition(transition.delay.clone(), newRelabelling));
-                    } else if (transition instanceof CCS.ActionTransition) {
-                        transitionSet.add(new CCS.ActionTransition(transition.action.clone(), newRelabelling));
+                    } else if (transition instanceof CCS.Transition) {
+                        transitionSet.add(new CCS.Transition(transition.action.clone(), newRelabelling));
                     }
                 });
                 this.tauFoundCache[process.id] = this.tauFoundCache[process.subProcess.id];
