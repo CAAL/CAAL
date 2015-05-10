@@ -234,7 +234,8 @@ module CCS {
         //Contains all processes by their .id
         //is also used to optimize number of instances.
         protected processes = {"0": this.nullProcess};
-        protected labels = Object.create(null);
+        protected labelsToProc = Object.create(null);
+        protected procsToLabel = Object.create(null);
         protected namedProcesses = Object.create(null);
         protected constructErrors = [];
         protected definedSets = Object.create(null);
@@ -339,14 +340,21 @@ module CCS {
             return this.namedProcesses[name] || null;
         }
 
+        processByLabel(label : string) : Process {
+            var proc = this.procsToLabel[label];
+            if (!proc) throw "processByLabel: unknown label '" + label + "'";
+            return proc;
+        }
+
         getNamedProcesses() {
             return Object.keys(this.namedProcesses);
         }
 
         getLabel(process : Process) : string {
-            var label = this.labels[process.id];
+            var label = this.labelsToProc[process.id];
             if (!label) {
-                label = this.labels[process.id] = (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess>process).name : "" + this.nextId++;
+                label = this.labelsToProc[process.id] = (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess>process).name : "" + this.nextId++;
+                this.procsToLabel[label] = process;
             }
             return label;
         }
