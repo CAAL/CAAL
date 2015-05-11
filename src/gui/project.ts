@@ -47,7 +47,6 @@ class Project {
         this.setTitle(title);
         this.setCCS(ccs);
         this.setProperties(properties);
-        this.setFormulaSets(this.properties);
     }
 
     public getId() : number {
@@ -106,16 +105,10 @@ class Project {
 
     public addProperty(property : Property.Property) : void {
         this.properties.push(property);
-        
-        if (property instanceof Property.HML)
-            this.addFormulaSet(property);
     }
 
     public deleteProperty(property : Property.Property) : void {
         var id = property.getId();
-        
-        if (property instanceof Property.HML)
-            this.deleteFormulaSet(property.getId());
 
         for (var i = 0; i < this.properties.length; i++) {
             if (this.properties[i].getId() === id) {
@@ -126,26 +119,16 @@ class Project {
 
     }
 
-    private setFormulaSets(properties : any[]) : void {
-        this.propertyFormulaSetMapping = {};
-        this.formulaSets = [];
+    public getFormulaSetsForProperties() {
+        var result = {};
 
-        properties.forEach((property) => {
-            if (property instanceof Property.HML) {
-                this.addFormulaSet(property);
+        this.properties.forEach((prop) => {
+            if (prop instanceof Property.HML){
+                result[prop.getId()] = this.createFormulaSetFromProperty(prop);
             }
         });
-        // TODO handle errors
-    }
 
-    private addFormulaSet(property : Property.HML) : void {
-        var formulaSet : HML.FormulaSet = this.createFormulaSetFromProperty(property)
-        this.propertyFormulaSetMapping[property.getId()] = formulaSet;
-        this.formulaSets.push(formulaSet);
-    }
-
-    private deleteFormulaSet(propertyId : number) : void {
-        delete this.propertyFormulaSetMapping[propertyId];
+        return result;
     }
 
     private createFormulaSetFromProperty(property : Property.HML) : HML.FormulaSet {
@@ -153,19 +136,6 @@ class Project {
         HMLParser.parse(property.getDefinitions(), {ccs: CCS, hml: HML, formulaSet: formulaSet});
         HMLParser.parse(property.getTopFormula(), {startRule: "TopFormula", ccs: CCS, hml: HML, formulaSet: formulaSet});
         return formulaSet;
-    }
-
-    public getFormulaSets() : HML.FormulaSet[] {       
-        return this.formulaSets;
-    }
-
-    public getIdxForFormulaSet(formulaSet : HML.FormulaSet) : number {
-        return this.formulaSets.indexOf(formulaSet);
-    }
-
-    public getFormulaSetForProperty(prop : Property.Property) : HML.FormulaSet {
-        var propertyIdx = this.properties.indexOf(prop);
-        return this.propertyFormulaSetMapping[propertyIdx];
     }
 
     public isChanged() : boolean {

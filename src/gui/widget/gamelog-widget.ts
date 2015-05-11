@@ -148,7 +148,7 @@ module GUI.Widget {
 
         public labelForFormula(formula : HML.Formula) : string {
             var hmlNotationVisitor = new Traverse.HMLNotationVisitor();
-            return hmlNotationVisitor.visit(formula);
+            return Traverse.safeHtml(hmlNotationVisitor.visit(formula));
         }
     }
 

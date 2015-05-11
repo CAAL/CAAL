@@ -84,17 +84,9 @@ module Main {
         }
         return {graph: graph, error: error};
     }
-
-    export function getFormulaSets() : HML.FormulaSet[] {
-        return Project.getInstance().getFormulaSets();
-    }
-
-    export function getFormulaForProperty(prop : Property.HML) : HML.FormulaSet {
-        return Project.getInstance().getFormulaSetForProperty(prop);
-    }
-
-    export function getIdxForFormulaSet(formulaSet : HML.FormulaSet) : number {
-        return Project.getInstance().getIdxForFormulaSet(formulaSet);
+    
+    export function getFormulaSetsForProperties() {
+        return Project.getInstance().getFormulaSetsForProperties();
     }
 
     export function getStrictSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {

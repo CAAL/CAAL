@@ -24,8 +24,8 @@ module GUI.Widget {
         private canvasContainer = document.createElement("div");
         private canvas : HTMLCanvasElement = document.createElement("canvas");
 
-        private renderer : Renderer = new Renderer(this.canvas);
-        private graphUI : GUI.ProcessGraphUI = new ArborGraph(this.renderer);
+        private renderer : Renderer;
+        private graphUI : GUI.ProcessGraphUI;
         private succGen : CCS.SuccessorGenerator = null;
 
         private currentZoom = 1;
@@ -41,6 +41,9 @@ module GUI.Widget {
             var $buttonDiv = $('<div class="widget-zoom-proces-explorer-toolbar"></div>').append(this.$zoomRange, $pullRight)
             $(this.canvasContainer).append(this.canvas);
             $(this.root).append($buttonDiv, this.canvasContainer);
+
+            this.renderer = new Renderer(this.canvas);
+            this.graphUI = new ArborGraph(this.renderer);
 
             this.graphUI.bindCanvasEvents();
         }
@@ -117,8 +120,11 @@ module GUI.Widget {
         focusOnProcess(process : CCS.Process) : void {
             var position = this.graphUI.getPosition(process.id.toString()),
                 $canvasContainer = $(this.canvasContainer);
-            $canvasContainer.scrollLeft(position.x - ($canvasContainer.width() / 2));
-            $canvasContainer.scrollTop(position.y - ($canvasContainer.height() / 2));
+
+            if(position){
+                $canvasContainer.scrollLeft(position.x - ($canvasContainer.width() / 2));
+                $canvasContainer.scrollTop(position.y - ($canvasContainer.height() / 2));
+            }
         }
 
         setSuccGenerator(succGen : CCS.SuccessorGenerator) {

@@ -399,13 +399,13 @@ module Activity {
             } 
             else if(property instanceof Property.HML) {
                     var gameType : any = "strong";
-                    var formulaSetForProperty = Main.getFormulaForProperty(property);
+                    var formulaSetForProperty = Main.getFormulaSetsForProperties()[property.getId()];
                     var HmlConfiguration = Object.create(null),
                         graph : ccs.Graph = Main.getGraph().graph;
 
                     HmlConfiguration.succGen = CCS.getSuccGenerator(graph, {succGen: gameType, reduce: false});
                     HmlConfiguration.processName = property.getProcess();
-                    HmlConfiguration.formulaSetIndex = Main.getIdxForFormulaSet(formulaSetForProperty);
+                    HmlConfiguration.propertyId = property.getId();
                     HmlConfiguration.formulaId = formulaSetForProperty.getTopFormula().id;
                     HmlConfiguration.type = "not default";
 
