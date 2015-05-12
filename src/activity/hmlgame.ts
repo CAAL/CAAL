@@ -101,6 +101,7 @@ module Activity {
 
         private $processList : JQuery;
         private $formulaList : JQuery;
+        private $logicSuccGenList : JQuery;
         private optionsDom;
         private $restartBtn;
         private fullscreen;
@@ -137,6 +138,10 @@ module Activity {
                 this.loadGuiIntoConfig(this.configuration);
                 this.configure(this.configuration);
             });
+            this.$logicSuccGenList.on("change", () => {
+                this.loadGuiIntoConfig(this.configuration);
+                this.configure(this.configuration);
+            })
 
             /*Explorer*/
             $("#hml-game-main").append(this.processExplorer.getRootElement());
@@ -171,12 +176,13 @@ module Activity {
             this.fullscreen.onShow();
             this.resize();
             this.formulaSets = Main.getFormulaSetsForProperties();
+            // this.tooltip.setGraph(configuration.succGen.graph);
 
             if (this.CCSChanged || configuration.type != "default" || this.configuration === null) {
                 // if either the CCS has changed, the configuration given is not the default one, 
                 // or this.configuration has not yet been initialized, then re-configure everything.
                 this.CCSChanged = false;
-                this.tooltip.setGraph(Main.getGraph().graph);
+                // this.tooltip.setGraph(Main.getGraph().graph);
                 this.configure(configuration);
             }
         }
@@ -206,6 +212,7 @@ module Activity {
             this.optionsDom = optionsContainer;
             this.$processList = $(optionsContainer).find("#hml-game-process");
             this.$formulaList = $(optionsContainer).find("#hml-game-formula");
+            this.$logicSuccGenList = $(optionsContainer).find("#hml-game-type");
         }
 
         getUIDom() {
@@ -215,10 +222,9 @@ module Activity {
 
         getDefaultConfiguration() : any {
             /*Return a default configurations*/
-            var configuration = Object.create(null),
-                graph : ccs.Graph = Main.getGraph().graph;
+            var configuration = Object.create(null);
             var formulaSets = Main.getFormulaSetsForProperties()
-            configuration.succGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
+            configuration.succGen = this.getSuccGenerator();
             configuration.processName = this.getNamedProcessList()[0];
             configuration.propertyId = Object.keys(formulaSets)[0]; //return the first formulaset
             // configuration.formulaSetIndex = this.getSelectedFormulaSetIndex() >= 0 ? this.getSelectedFormulaSetIndex() : 0;
@@ -231,6 +237,11 @@ module Activity {
         private getProcessListValue() : string {
             /*Returns the value from the processlist*/
             return this.$processList.val();
+        }
+
+        private getSuccGenerator() : CCS.SuccessorGenerator {
+            var graph : ccs.Graph = Main.getGraph().graph;
+            return CCS.getSuccGenerator(graph, {succGen: this.$logicSuccGenList.val(), reduce: false});
         }
 
         private getSelectedFormulaSetId() : number {
@@ -280,6 +291,7 @@ module Activity {
             configuration.processName = this.getProcessListValue();
             configuration.propertyId = this.getSelectedFormulaSetId();
             configuration.formulaId = this.getSelectedFormulaSet().getTopFormula().id;
+            configuration.succGen = this.getSuccGenerator();
         }
 
         private configure(configuration) : void {
@@ -299,6 +311,8 @@ module Activity {
             this.processExplorer.setSuccGenerator(this.configuration.succGen);
             this.isWeak = false;
             this.processExplorer.exploreProcess(currentProcess); // explore the current selected process
+            
+            this.tooltip.setGraph(this.configuration.succGen.graph);
 
             this.hmlGameLogic = new HmlGameLogic(currentProcess, currentFormula, 
                                                  currentFormulaSet, configuration.succGen, Main.getGraph().graph);
@@ -639,7 +653,6 @@ module Activity {
 
         private cycleExists() : boolean {
             var stateStr = this.state.toString()
-            console.log(stateStr);
             if (this.cycleCache[stateStr] != undefined) {
                 // cycle detected
                 return true;

@@ -26,7 +26,7 @@ module GUI.Widget {
 
         private renderer : Renderer;
         private graphUI : GUI.ProcessGraphUI;
-        private succGen : CCS.SuccessorGenerator = null;
+        public succGen : CCS.SuccessorGenerator = null;
 
         private currentZoom = 1;
         private expandDepth = 5;
@@ -128,8 +128,8 @@ module GUI.Widget {
         }
 
         setSuccGenerator(succGen : CCS.SuccessorGenerator) {
-            this.succGen = succGen;
             this.clear();
+            this.succGen = succGen;
         }
 
         clear() : void {

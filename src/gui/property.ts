@@ -464,8 +464,6 @@ module Property {
                     generationEnded();
                 }
             });
-
-
         }
 
         public getDescription() : string {
@@ -486,8 +484,50 @@ module Property {
             super(options, status);
         }
 
-        public generateDistinguishingFormula() {
-            return new HML({process: "", topFormula: "", definitions: ""});
+        public generateDistinguishingFormula(generationEnded : Function) : void {
+            // start the worker, and make the worker generationEnded with the result.
+            var program = Main.getProgram();
+            this.worker = new Worker("lib/workers/verifier.js");
+            
+            this.worker.postMessage({
+                type: "program",
+                program: program
+            });
+            
+            this.worker.postMessage({
+                type: "findDistinguishingFormula",
+                leftProcess: this.getFirstProcess(),
+                rightProcess: this.getSecondProcess(),
+                succGenType: "weak"
+            });
+            
+            this.worker.addEventListener("error", (error) => {
+                this.worker.terminate();
+                this.worker = null;
+                this.setInvalidateStatus(error.message);
+                this.stopTimer();
+                generationEnded();
+            }, false);
+            
+            this.worker.addEventListener("message", event => {
+                this.worker.terminate();
+                this.worker = null; 
+                
+                if (!event.data.result.isBisimilar) { //this should be false, for there to be distinguishing formula
+                    this.status = PropertyStatus.satisfied;
+                    var properties = {
+                        firstProperty : new HML({process: this.firstProcess, topFormula: event.data.result.formula, definitions: ""}),
+                        secondProperty : new HML({process: this.secondProcess, topFormula: event.data.result.formula, definitions: ""})
+                    }
+
+                    generationEnded(properties);
+                    // this.verifyHml(event.data.result.formula);
+                } else {
+                    this.setInvalidateStatus("The two selected processes are bisimilar, and no distinguishing formula exists.");
+                    this.stopTimer()
+                    generationEnded();
+                }
+            });
         }
 
         public getDescription() : string {

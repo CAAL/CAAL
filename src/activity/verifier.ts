@@ -431,7 +431,6 @@ module Activity {
             if (e) {
                 var property =  <Property.StrongBisimulation | Property.WeakBisimulation>e.data.property;
                 property.generateDistinguishingFormula((result) => this.generationEnded(result));
-                console.log("add the two hml properties here!", e);
             }
         }
 
@@ -441,7 +440,8 @@ module Activity {
                 this.project.addProperty(result.secondProperty);
                 this.displayProperties();
             } else {
-                throw "result was empty."
+                this.displayProperties();
+                throw "result was empty."; 
             }
         }
 
