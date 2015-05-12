@@ -107,6 +107,11 @@ module Activity {
                     id: "#property-playgame",
                     label: "Play",
                     click: (e) => this.playGame(e)
+                },
+                "distinguishing" : {
+                    id: "#property-distinguishing",
+                    label: "Distinguishing formula",
+                    click: (e) => this.generateDistinguishingFormula(e)
                 }
             };
 
@@ -250,8 +255,14 @@ module Activity {
                     properties[i].setToolMenuOptions(this.generateToolMenuOptions(["edit", "delete"]));
                     propertyRows = properties[i].toTableRow();
                 }
+                else if(properties[i] instanceof Property.StrongBisimulation || properties[i] instanceof Property.WeakBisimulation) { 
+                    /* Strong/Weak bisim*/
+                    properties[i].setRowClickHandlers(this.generateRowClickHandlers(["status", "description", "verify", "delete"]));
+                    properties[i].setToolMenuOptions(this.generateToolMenuOptions(["play", "edit", "delete", "distinguishing"]));
+                    propertyRows = properties[i].toTableRow();
+                }
                 else {
-                    /* Strong/Weak bisim and HML */
+                    /* HML */
                     properties[i].setRowClickHandlers(this.generateRowClickHandlers(["status", "description", "verify", "delete"]));
                     properties[i].setToolMenuOptions(this.generateToolMenuOptions(["play", "edit", "delete"]));
                     propertyRows = properties[i].toTableRow();
@@ -413,6 +424,24 @@ module Activity {
             } 
             else {
                 throw "This kind of property is not playable.";
+            }
+        }
+
+        private generateDistinguishingFormula(e = null) : void {            
+            if (e) {
+                var property =  <Property.StrongBisimulation | Property.WeakBisimulation>e.data.property;
+                property.generateDistinguishingFormula((result) => this.generationEnded(result));
+                console.log("add the two hml properties here!", e);
+            }
+        }
+
+        public generationEnded(result = null) { 
+            if (result) {
+                this.project.addProperty(result.firstProperty);
+                this.project.addProperty(result.secondProperty);
+                this.displayProperties();
+            } else {
+                throw "result was empty."
             }
         }
 
