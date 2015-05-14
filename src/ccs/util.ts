@@ -257,7 +257,7 @@ module Traverse {
         }
 
         clearCache() {
-            this.cache = {};
+            this.cache = Object.create(null);
         }
 
         visit(formula : hml.Formula) {
@@ -306,7 +306,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "<" + 
-                    formula.actionMatcher.actionMatchingString() + ">" +
+                    formula.actionMatcher.toString() + ">" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -317,7 +317,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "[" + 
-                    formula.actionMatcher.actionMatchingString() + "]" +
+                    formula.actionMatcher.toString() + "]" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -328,7 +328,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "<<" + 
-                    formula.actionMatcher.actionMatchingString() + ">>" +
+                    formula.actionMatcher.toString() + ">>" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -339,7 +339,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "[[" + 
-                    formula.actionMatcher.actionMatchingString() + "]]" +
+                    formula.actionMatcher.toString() + "]]" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -391,7 +391,7 @@ module Traverse {
             var tempFormulaSet = new hml.FormulaSet();
             tempFormulaSet.addFormula(formula);
             tempFormulaSet = this.visit(tempFormulaSet);
-            return tempFormulaSet.getAllFormulas()[0];
+            return tempFormulaSet.getTopLevelFormulas()[0];
         }
 
         dispatchDisjFormula(formula : hml.DisjFormula) {
