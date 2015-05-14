@@ -995,7 +995,7 @@ module Activity {
         private formulaSet : HML.FormulaSet;
         
         private satisfied : boolean;
-        private hmlDg : dg.MuCalculusMinModelCheckingDG;
+        private hmlDg : dg.MuCalculusDG;
         
         constructor(gameActivity : Game, graph : CCS.Graph,
             processName : string, formula : HML.Formula, formulaSet : HML.FormulaSet) {
@@ -1021,10 +1021,10 @@ module Activity {
             return this.marking.getMarking(this.currentNodeId) === this.marking.ZERO ? this.attacker : this.defender;
         }
         
-        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
+        protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : any {
             var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
             var weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: false});
-            return new dg.MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, currentLeft.id, this.formulaSet, currentRight);
+            return new dg.MuCalculusDG(strongSuccGen, weakSuccGen, this.formulaSet);
         }
         
         protected createMarking() : dg.LevelMarking {
