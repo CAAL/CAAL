@@ -406,4 +406,10 @@ module Traverse {
             return resultProcess;
         }
     }
+    
+    export class UntimedSuccessorGenerator extends Traverse.AbstractingSuccessorGenerator { // wrong
+        constructor(strictSuccGenerator : TCCS.StrictSuccessorGenerator, cache?) {
+            super(new TCCS.Delay(1), strictSuccGenerator, cache);
+        }
+    }
 }

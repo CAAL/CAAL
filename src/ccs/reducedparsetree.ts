@@ -126,14 +126,12 @@ module Traverse {
         return compareAction(left.action, right.action);
     }
 
-    var tauAction = new ccs.Action("tau", false);
-
-    export class WeakSuccessorGenerator implements ccs.SuccessorGenerator {
-
+    export class AbstractingSuccessorGenerator implements ccs.SuccessorGenerator {
+        
         private fromTable : MapUtil.Map<FullTransition, FromData> =
                 new MapUtil.OrderedMap<FullTransition, FromData>(compareTransitionTuple);
 
-        constructor(public strictSuccGenerator : ccs.SuccessorGenerator,  public cache?) {
+        constructor(private abstraction : ccs.Action, public strictSuccGenerator : ccs.SuccessorGenerator, public cache?) {
             this.cache = cache || {};
         }
 
@@ -154,9 +152,9 @@ module Traverse {
 
             
             //Manuall add tau loop to from set:  P ==tau=> P, by P -- tau -> P
-            var sourceFullTransition = new FullTransition(processId, tauAction, processId);
+            var sourceFullTransition = new FullTransition(processId, this.abstraction, processId);
             if (!this.fromTable.has(sourceFullTransition)) {
-                var sourceFromData = new FromData(null, tauAction, processId);
+                var sourceFromData = new FromData(null, this.abstraction, processId);
                 this.fromTable.set(sourceFullTransition, sourceFromData);
             }
 
@@ -172,7 +170,7 @@ module Traverse {
                 strongSuccessors;
             
             //Add  P --tau--> P
-            result.add(new ccs.Transition(new ccs.Action("tau", false), process));
+            result.add(new ccs.Transition(this.abstraction, process));
 
             //Stage 1
             //Find all --tau-->* and
@@ -181,7 +179,7 @@ module Traverse {
                 visitingProcess = toVisitProcesses.pop();
                 if (!visitedStage1[visitingProcess.id]) {
                     visitedStage1[visitingProcess.id] = true;
-                    var prevFromData = this.fromTable.get(new FullTransition(processId, tauAction, visitingProcess.id));
+                    var prevFromData = this.fromTable.get(new FullTransition(processId, this.abstraction, visitingProcess.id));
                     strongSuccessors = this.strictSuccGenerator.getSuccessors(visitingProcess.id);
                     strongSuccessors.forEach(transition => {
 
@@ -192,7 +190,7 @@ module Traverse {
                             this.fromTable.set(fullTransition, fromData);
                         }
 
-                        if (transition.action.getLabel() === "tau") {
+                        if (transition.action.getLabel() === this.abstraction.getLabel()) {
                             toVisitProcesses.push(transition.targetProcess);
                             result.add(transition);  // --tau--> x
                         } else {
@@ -215,7 +213,7 @@ module Traverse {
                     visitedStage2[visitingAction][visitingProcess.id] = true;
                     strongSuccessors = this.strictSuccGenerator.getSuccessors(visitingProcess.id);
                     strongSuccessors.forEach(transition => {
-                        if (transition.action.getLabel() === "tau") {
+                        if (transition.action.getLabel() === this.abstraction.getLabel()) {
 
                             var fullTransition = new FullTransition(processId, visitingAction, transition.targetProcess.id);
                             if (!this.fromTable.has(fullTransition)) {
@@ -255,14 +253,20 @@ module Traverse {
             var result = path.map(transition => {
                 var resultTransition = transition;
                 if (hasNonTau) {
-                    resultTransition = new ccs.Transition(tauAction, transition.targetProcess);
-                } else if (!tauAction.equals(transition.action)) {
+                    resultTransition = new ccs.Transition(this.abstraction, transition.targetProcess);
+                } else if (!this.abstraction.equals(transition.action)) {
                     hasNonTau = true;
                 }
                 return resultTransition;
             });
 
             return result;
+        }
+    }
+    
+    export class WeakSuccessorGenerator extends AbstractingSuccessorGenerator {
+        constructor(strictSuccGenerator : ccs.SuccessorGenerator, cache?) {
+            super(new ccs.Action("tau", false), strictSuccGenerator, cache);
         }
     }
 
