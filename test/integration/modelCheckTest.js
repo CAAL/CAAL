@@ -9,7 +9,7 @@ function checkFormula(program, processName, strFormula) {
         strongSuccGen = ccs.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
         weakSuccGen = new tvs.WeakSuccessorGenerator(strongSuccGen),
         formulaSet = HMLParser.parse(strFormula, {ccs: ccs, hml: hml}),
-        formula = formulaSet.getAllFormulas()[0];
+        formula = formulaSet.getTopLevelFormulas()[0];
     return dgMod.solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, graph.processByName(processName).id);
 }
 

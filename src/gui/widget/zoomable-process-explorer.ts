@@ -27,7 +27,7 @@ module GUI.Widget {
         private renderer : Renderer;
         private graphUI : GUI.ProcessGraphUI;
         public succGen : CCS.SuccessorGenerator = null;
-
+        public graph : CCS.Graph = null;
         private currentZoom = 1;
         private expandDepth = 10;
 
@@ -79,7 +79,7 @@ module GUI.Widget {
             if (zoomFactor > 1) {
                 this.$freezeBtn.parent().css("right", 30);
                 $canvasContainer.css("overflow", "auto");
-                this.focusOnProcess(this.succGen.getProcessById(parseInt(this.graphUI.getSelected())));
+                this.focusOnProcess(this.succGen.getProcessById(this.graphUI.getSelected()));
             } else {
                 this.$freezeBtn.parent().css("right", 10);
                 $canvasContainer.css("overflow", "hidden");
@@ -121,15 +121,10 @@ module GUI.Widget {
             var position = this.graphUI.getPosition(process.id.toString()),
                 $canvasContainer = $(this.canvasContainer);
 
-            if(position){
+            if (position){
                 $canvasContainer.scrollLeft(position.x - ($canvasContainer.width() / 2));
                 $canvasContainer.scrollTop(position.y - ($canvasContainer.height() / 2));
             }
-        }
-
-        setSuccGenerator(succGen : CCS.SuccessorGenerator) {
-            this.clear();
-            this.succGen = succGen;
         }
 
         clear() : void {
@@ -148,7 +143,7 @@ module GUI.Widget {
                 Object.keys(groupedByTargetProcessId).forEach(strProcId => {
                     var group = groupedByTargetProcessId[strProcId],
                         data = group.map(t => { return {label: t.action.toString()}; }),
-                        numId = parseInt(strProcId, 10);
+                        numId = strProcId;
                     this.showProcess(this.succGen.getProcessById(numId));
                     this.graphUI.showTransitions(fromProcess.id, numId, data);
                 });
@@ -160,12 +155,12 @@ module GUI.Widget {
 
         private showProcess(process : CCS.Process) : void {
             //Check if necessary for check
-            if (this.graphUI.getProcessDataObject(process.id)) return;
-            this.graphUI.showProcess(process.id, {label: this.labelFor(process)});
+            if (!process || this.graphUI.getProcessDataObject(process.id)) return;
+            this.graphUI.showProcess(process.id, {label: this.labelFor(process), status: "expanded"});
         }
 
         private labelFor(process : CCS.Process) : string {
-            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
+            return this.graph.getLabel(process);
         }
 
         private setupRange() {

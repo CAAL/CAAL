@@ -61,39 +61,4 @@ module Main {
             window.clearTimeout(timer);
         }, time);
     }
-
-    export function getProgram() : string {
-        return Project.getInstance().getCCS();
-    }
-
-    export function getGraph() : {graph: ccs.Graph; error: string; } {
-        var graph : ccs.Graph = new CCS.Graph(),
-            errors = [],
-            error = null;
-        try {
-            CCSParser.parse(Project.getInstance().getCCS(), {ccs: CCS, graph: graph});
-            if (graph.getErrors().length > 0) {
-                errors = graph.getErrors();
-            }
-        } catch (error) {
-            errors = [error];
-        }
-        if (errors.length > 0) {
-            graph = null;
-            error = errors.map(error => error.toString()).join("\n");
-        }
-        return {graph: graph, error: error};
-    }
-    
-    export function getFormulaSetsForProperties() {
-        return Project.getInstance().getFormulaSetsForProperties();
-    }
-
-    export function getStrictSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {
-        return CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true});
-    }
-
-    export function getWeakSuccGenerator(graph : ccs.Graph) : ccs.SuccessorGenerator {
-        return CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true});
-    }
 }

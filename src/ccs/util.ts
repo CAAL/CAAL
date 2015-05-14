@@ -80,15 +80,6 @@ module Traverse {
         }
     }
 
-    export class TCCSLabelledBracketNotation extends LabelledBracketNotation implements ccs.ProcessVisitor<string>, TCCS.TCCSProcessDispatchHandler<void> {
-        dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) {
-            this.stringPieces.push("[DelayPrefix");
-            this.stringPieces.push(process.delay + ".");
-            process.nextProcess.dispatchOn(this);
-            this.stringPieces.push("]");
-        }
-    }
-
     export class SizeOfProcessTreeVisitor implements ccs.ProcessVisitor<number>, ccs.ProcessDispatchHandler<number> {
         //not very usable at the moment.
         constructor() {
@@ -147,7 +138,7 @@ module Traverse {
     export class CCSNotationVisitor implements ccs.ProcessVisitor<string>, ccs.ProcessDispatchHandler<string> {
 
         private insideNamedProcess = undefined;
-        private cache;
+        protected cache;
 
         constructor() {
             this.clearCache();
@@ -266,7 +257,7 @@ module Traverse {
         }
 
         clearCache() {
-            this.cache = {};
+            this.cache = Object.create(null);
         }
 
         visit(formula : hml.Formula) {
@@ -315,7 +306,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "<" + 
-                    formula.actionMatcher.actionMatchingString() + ">" +
+                    formula.actionMatcher.toString() + ">" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -326,7 +317,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "[" + 
-                    formula.actionMatcher.actionMatchingString() + "]" +
+                    formula.actionMatcher.toString() + "]" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -337,7 +328,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "<<" + 
-                    formula.actionMatcher.actionMatchingString() + ">>" +
+                    formula.actionMatcher.toString() + ">>" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -348,7 +339,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "[[" + 
-                    formula.actionMatcher.actionMatchingString() + "]]" +
+                    formula.actionMatcher.toString() + "]]" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -506,7 +497,7 @@ module Traverse {
             var tempFormulaSet = new hml.FormulaSet();
             tempFormulaSet.addFormula(formula);
             tempFormulaSet = this.visit(tempFormulaSet);
-            return tempFormulaSet.getAllFormulas()[0];
+            return tempFormulaSet.getTopLevelFormulas()[0];
         }
 
         dispatchDisjFormula(formula : hml.DisjFormula) {

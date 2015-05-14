@@ -51,7 +51,7 @@ class Save extends MenuItem {
             }
         }
 
-        Main.showInfoBox("The project has been saved!", 1250);
+        Main.showInfoBox("Project \"" + this.project.getTitle() + "\" saved!", 1750);
         $(document).trigger("save");
     }
 

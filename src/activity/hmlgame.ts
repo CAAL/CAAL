@@ -63,12 +63,12 @@ module Activity {
         }
 
         protected checkPreconditions(): boolean {
-            var graph = Main.getGraph();
+            var graph = Project.getInstance().getGraph();
 
             if (!graph) {
                 this.showExplainDialog("Syntax Error", "Your program contains one or more syntax errors.");
                 return false;
-            } else if (graph.graph.getNamedProcesses().length === 0) {
+            } else if (graph.getNamedProcesses().length === 0) {
                 this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
                 return false;
             }
@@ -173,7 +173,7 @@ module Activity {
             $(window).on("resize", () => this.resize());
             this.fullscreen.onShow();
             this.resize();
-            this.formulaSets = Main.getFormulaSetsForProperties();
+            this.formulaSets = this.project.getFormulaSetsForProperties();
             // this.tooltip.setGraph(configuration.succGen.graph);
 
             if (this.CCSChanged || configuration.type != "default" || this.configuration === null) {
@@ -220,7 +220,7 @@ module Activity {
         getDefaultConfiguration() : any {
             /*Return a default configurations*/
             var configuration = Object.create(null);
-            var formulaSets = Main.getFormulaSetsForProperties()
+            var formulaSets = this.project.getFormulaSetsForProperties()
             /*configuration.strongSuccGen = this.getSuccGenerator("strong");
             configuration.weakSuccGen = this.getSuccGenerator("weak");*/
             configuration.processName = this.getNamedProcessList()[0];
@@ -248,7 +248,7 @@ module Activity {
 
         private getNamedProcessList() : string[] {
             /*Returns the named processes defined in the CCS-program*/
-            var namedProcesses = Main.getGraph().graph.getNamedProcesses().slice(0);
+            var namedProcesses = this.project.getGraph().getNamedProcesses().slice(0);
             namedProcesses.reverse();
             return namedProcesses;
         }
@@ -292,12 +292,12 @@ module Activity {
             //This is/should-only-be called for change in either process, formula or succ generator.
             this.configuration = configuration;
 
-            this.graph = Main.getGraph().graph;
+            this.graph = this.project.getGraph();
             this.strongSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             this.weakSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "weak", reduce: false});
             /*Fill the dropdown list with infomation*/            
             this.setProcesses(this.getNamedProcessList(), configuration.processName);
-            this.setFormulas(Main.getFormulaSetsForProperties(), configuration.propertyId);
+            this.setFormulas(this.formulaSets, configuration.propertyId);
             
             /*Set the currentFormula/Process */
             var currentProcess = this.strongSuccGen.getProcessByName(configuration.processName);
@@ -305,11 +305,15 @@ module Activity {
             this.hmlselector.setFormulaSet(currentFormulaSet);
             var currentFormula = currentFormulaSet.getTopFormula();
 
-            this.processExplorer.setSuccGenerator(this.strongSuccGen); // TODO, also weak?
+            /* Set graph in the widgets. */
+            this.processExplorer.clear();
+            this.processExplorer.graph = this.graph;
+            this.transitionTable.graph = this.graph;
+            this.tooltip.setGraph(this.graph);
+            this.processExplorer.succGen = this.strongSuccGen;
+
             this.processExplorer.exploreProcess(currentProcess); // explore the current selected process
             
-            this.tooltip.setGraph(this.graph);
-
             this.hmlGameLogic = new HmlGameLogic(currentProcess, currentFormula, 
                                                  currentFormulaSet, this.strongSuccGen, this.weakSuccGen, this.graph);
             this.hmlGameLogic.setGamelogWriter((gameLogObject) => this.gamelog.printToGameLog(gameLogObject));
@@ -320,7 +324,7 @@ module Activity {
             /* Gamelog */
             this.gamelog.reset();
             // print the intro
-            var gameIntro = new GUI.Widget.GameLogObject()
+            var gameIntro = new GUI.Widget.GameLogObject(this.graph)
             gameIntro.setTemplate("You are playing {0} in {1} HML game, and you will lose.")
             gameIntro.addLabel({text: (this.human === Player.defender ? "defender" : "attacker")});
             gameIntro.addLabel({text: (this.isWeak ? "weak" : "strong")});
@@ -365,7 +369,7 @@ module Activity {
 
         private printGameOver(winner : Player, winReason : WinReason) : void {
             /* Gamelog */
-            var gameLogObject = new GUI.Widget.GameLogObject();
+            var gameLogObject = new GUI.Widget.GameLogObject(this.graph);
             
             switch (winReason)
             {
@@ -418,7 +422,7 @@ module Activity {
 
         private printCurrentConfig(process : CCS.Process, formula : HML.Formula, isNewRound = true) : void{
             /* Gamelog */
-            var gameLogObject = new GUI.Widget.GameLogObject();
+            var gameLogObject = new GUI.Widget.GameLogObject(this.graph);
             
             if(isNewRound)
                 gameLogObject.setNewRound(true);
@@ -538,6 +542,7 @@ module Activity {
 
         //private dGraph : dg.PlayableDependencyGraph; //TODO: fix this
         private dGraph : any;
+        private graph : CCS.Graph;
         private marking : dg.LevelMarking;
         private currentDgNodeId : dg.DgNodeId;
         private choiceDgNodeId : dg.DgNodeId;
@@ -550,6 +555,7 @@ module Activity {
             this.state = new HmlGameState(process, formula, formulaSet, true);
             this.strongSuccGen = strongSuccGen;
             this.weakSuccGen = weakSuccGen;
+            this.graph = graph;
             
             // this.round = 0;
             this.currentDgNodeId = 0;
@@ -608,7 +614,7 @@ module Activity {
         public selectedFormula(formula : HML.Formula) : void {
             if (this.gameIsOver) throw "Game has ended";
 
-            var gameLogPlay = new GUI.Widget.GameLogObject();
+            var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
             gameLogPlay.setTemplate("{0} has chosen subformula {1}.")
             gameLogPlay.addWrapper({tag: "<p>"});
             gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
@@ -627,7 +633,7 @@ module Activity {
             if (this.gameIsOver) throw "Game has ended";          
 
 
-            var gameLogPlay = new GUI.Widget.GameLogObject();
+            var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
             gameLogPlay.setTemplate("{0} played {1} {2} {3}.");
             gameLogPlay.addWrapper({tag: "<p>"});
             gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
@@ -740,7 +746,7 @@ module Activity {
                     if (namedFormula instanceof HML.MinFixedPointFormula || namedFormula instanceof HML.MaxFixedPointFormula) {
                         var unfolded = this.JudgeUnfold(namedFormula, hmlFSet);
                         /* Gamelog */
-                        var gameLogPlay = new GUI.Widget.GameLogObject();
+                        var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
                         gameLogPlay.setTemplate("We have unfolded {0} to {1}.")
                         gameLogPlay.addWrapper({tag: "<p>"});
                         gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(hml), tag:"<span>", attr: [{name: "class", value: "monospace"}]});
@@ -756,7 +762,7 @@ module Activity {
             throw "Unhandled formula type in JudgeUnfold";
         }
 
-        private updateCurrentDgNode(id : number, describedEdges): void {
+        private updateCurrentDgNode(id : string, describedEdges): void {
             // update the currentDgNode after each play/unfolding.
             for (var descEdge in describedEdges){
                 var hyberedge = describedEdges[descEdge];

@@ -1,7 +1,6 @@
 module Activity {
 
     export class Editor extends Activity {
-        private project : Project;
         private $editor : JQuery;
         private $parse : JQuery;
         private editor : any;
@@ -40,7 +39,7 @@ module Activity {
 
             if (this.autosave.checkAutosave()) {
                 var autosaveProject = this.autosave.getAutosave();
-                this.project.update(0, autosaveProject.title, autosaveProject.ccs, autosaveProject.properties);
+                this.project.update(0, autosaveProject.title, autosaveProject.ccs, autosaveProject.properties, autosaveProject.inputMode);
             }
 
             this.$parse.on("click", () => this.parse());
@@ -48,6 +47,10 @@ module Activity {
 
             $("#input-mode").on("change", (e) => this.setInputMode(e));
             $("#font-size").on("change", (e) => this.setFontSize(e));
+        }
+
+        protected checkPreconditions() : boolean {
+            return true;
         }
 
         public onShow(configuration? : any) : void {
@@ -131,8 +134,10 @@ module Activity {
             } else if (inputMode === InputMode.TCCS) {
                 this.editor.getSession().setMode("ace/mode/tccs");
             }
-
+            
             this.project.setInputMode(inputMode);
+            this.project.setChanged(true);
+            this.editor.focus();
         }
 
         private setFontSize(e) : void {

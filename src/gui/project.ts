@@ -13,10 +13,9 @@ class Project {
     private $projectTitle : JQuery = $("#project-title");
     private ccs : string;
     private properties : Property.Property[];
-    private propertyFormulaSetMapping : Object;
-    private formulaSets : HML.FormulaSet[];
     private changed : boolean = false;
     private inputMode : InputMode = InputMode.CCS;
+    // private editor : any;
 
     public constructor() {
         if (Project.instance) {
@@ -24,7 +23,9 @@ class Project {
         } else {
             Project.instance = this;
         }
-
+        
+        // this.editor = ace.edit($("#editor")[0]);
+        
         this.reset();
         this.$projectTitle.keypress(function(e) {return e.which != 13}); // Disable line breaks. Can still be copy/pasted.
         this.$projectTitle.focusout(() => this.onTitleChanged());
@@ -39,14 +40,16 @@ class Project {
     }
 
     public reset() : void {
-        this.update(null, this.defaultTitle, this.defaultCCS, null);
+        this.update(null, this.defaultTitle, this.defaultCCS, null, InputMode.CCS);
     }
 
-    public update(id : number, title : string, ccs : string, properties : any[]) : void {
+    public update(id : number, title : string, ccs : string, properties : any[], inputMode : InputMode) : void {
         this.setId(id);
         this.setTitle(title);
         this.setCCS(ccs);
         this.setProperties(properties);
+        this.setInputMode(inputMode);
+        this.updateInputModeToggle();
     }
 
     public getId() : number {
@@ -88,7 +91,7 @@ class Project {
     }
 
     public setProperties(properties : any[]) : void {
-        this.properties = [];
+        this.properties = Array();
 
         if (properties) {
             if (properties.length !== 0) {
@@ -154,7 +157,11 @@ class Project {
     public getInputMode() : InputMode {
         return this.inputMode;
     }
-
+    
+    private updateInputModeToggle() : void {
+        $("#input-mode").find("input[value=" + InputMode[this.inputMode] + "]").click();
+    }
+    
     public setInputMode(inputMode : InputMode) : void {
         this.inputMode = inputMode;
     }
@@ -166,7 +173,7 @@ class Project {
             CCSParser.parse(this.ccs, {ccs: CCS, graph: graph});
             return graph;
         } else if (this.inputMode === InputMode.TCCS) {
-            graph = new TCCS.TCCSGraph();
+            graph = new TCCS.Graph();
             TCCSParser.parse(this.ccs, {ccs: CCS, tccs: TCCS, graph: graph});
             return graph;
         }
@@ -182,7 +189,8 @@ class Project {
             id: this.getId(),
             title: this.getTitle(),
             ccs: this.getCCS(),
-            properties: properties
+            properties: properties,
+            inputMode: this.inputMode === InputMode.CCS ? "CCS" : "TCCS"
         };
     }
 }

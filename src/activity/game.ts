@@ -12,7 +12,6 @@ module Activity {
     import dg = DependencyGraph;
 
     export class Game extends Activity {
-        private project : Project;
         private changed : boolean;
         private graph : CCS.Graph;
         private succGen : CCS.SuccessorGenerator;
@@ -135,18 +134,6 @@ module Activity {
             }
 
             button.data("frozen", freeze);
-        }
-
-        protected checkPreconditions() : boolean {
-            var graph = Main.getGraph();
-            if (graph.error) {
-                this.showExplainDialog("Error", graph.error);
-                return false;
-            } else if (graph.graph.getNamedProcesses().length === 0) {
-                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
-                return false;
-            }
-            return true;
         }
         
         public onShow(configuration? : any) : void {
@@ -340,10 +327,9 @@ module Activity {
 
                 Object.keys(groupedByTargetProcessId).forEach(strProcId => {
                     var group = groupedByTargetProcessId[strProcId],
-                        data = group.map(t => {return {label: t.action.toString()}}),
-                        numId = parseInt(strProcId, 10);
-                    this.showProcess(this.graph.processById(numId), graph);
-                    graph.showTransitions(fromProcess.id, numId, data);
+                        data = group.map(t => {return {label: t.action.toString()}});
+                    this.showProcess(this.graph.processById(strProcId), graph);
+                    graph.showTransitions(fromProcess.id, strProcId, data);
                 });
             }
 
@@ -351,7 +337,7 @@ module Activity {
         }
 
         private expandBFS(process : CCS.Process, maxDepth : number) : any {
-            var result = {},
+            var result = Object.create(null),
                 queue = [[1, process]],
                 processed = [],
                 strongSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false}),
@@ -454,8 +440,8 @@ module Activity {
             graph.clearAll();
         }
 
-        private labelFor(process : CCS.Process) : string {
-            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
+        public labelFor(process : CCS.Process) : string {
+            return this.graph.getLabel(process);
         }
 
         public centerNode(process : CCS.Process, move : Move) : void {
@@ -697,9 +683,9 @@ module Activity {
         public getConfigurationStr(configuration : any) : string {
             var result = "(";
             
-            result += configuration.left instanceof CCS.NamedProcess ? (<CCS.NamedProcess>configuration.left).name : configuration.left.id.toString();
+            result += this.graph.getLabel(configuration.left);
             result += ", ";
-            result += configuration.right instanceof CCS.NamedProcess ? (<CCS.NamedProcess>configuration.right).name : configuration.right.id.toString();
+            result += this.graph.getLabel(configuration.right);
             result += ")"
 
             return result;
@@ -1122,7 +1108,7 @@ module Activity {
         }
         
         private labelFor(process : CCS.Process) : string {
-            return process instanceof CCS.NamedProcess ? process.name : process.id.toString();
+            return this.gameActivity.labelFor(process);
         }
 
         private highlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
@@ -1352,7 +1338,7 @@ module Activity {
         }
 
         protected labelFor(process : CCS.Process) : string {
-            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess> process).name : process.id.toString();
+            return this.gameActivity.labelFor(process);
         }
         
         public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void { this.abstract(); }

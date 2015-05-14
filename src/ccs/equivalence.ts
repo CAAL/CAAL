@@ -23,8 +23,8 @@ module Equivalence {
             inverted **/
 
         private nextIdx;
-        private nodes = []; //Reference to node ids already constructed.
-        private constructData = []; //Data necessary to construct nodes.
+        private nodes = Object.create(null); //Reference to node ids already constructed.
+        private constructData = Object.create(null); //Data necessary to construct nodes.
         private leftPairs = {}; // leftPairs[P.id][Q.id] is a cache for solved process pairs.
         private isFullyConstructed = false;
 
@@ -262,15 +262,16 @@ module Equivalence {
             }
 
             //Apply union find algorithm
-            this.constructData.forEach((pair, i) => {
-                var pId, qId;
+            Object.keys(this.constructData).forEach(id => {
+                var pId, qId, pair;
+                pair = this.constructData[id];
                 if (pair[0] !== 0) return;
                 pId = pair[1];
                 qId = pair[2];
                 if (!sets[pId]) singleton(pId);
                 if (!sets[qId]) singleton(qId);
                 //is bisimilar?
-                if (marking.getMarking(i) === marking.ZERO) {
+                if (marking.getMarking(id) === marking.ZERO) {
                     union(pId, qId);
                 }
             });
@@ -279,7 +280,7 @@ module Equivalence {
             var collapses = {};
             Object.keys(sets).forEach(procId => {
                 var reprId = findRoot(procId).val,
-                    process = graph.processById(Number(procId));
+                    process = graph.processById(procId);
                 (collapses[reprId] = collapses[reprId] || []).push(process);
             });
 
@@ -615,7 +616,7 @@ module Equivalence {
                 
                 rightTransitions.forEach(rightTransition => {
                     if (rightTransition.action.equals(leftTransition.action)) {
-                        rightTargets.push(parseInt(rightTransition.targetProcess.id));
+                        rightTargets.push(rightTransition.targetProcess.id);
                     }
                 });
 

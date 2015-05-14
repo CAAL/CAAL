@@ -9,15 +9,14 @@ module GUI.Widget {
     export type HoverLeaveListener = SelectListener;
 
     export class TransitionTable {
-
         private table = document.createElement("table");
         private body = document.createElement("tbody");
         private transitions : CCS.Transition[] = [];
-        // private htmlNotationVisitor = new Traverse.TooltipHtmlCCSNotationVisitor();
 
         public onSelectListener : SelectListener = null;
         public onHoverEnterListener : HoverEnterListener = null;
         public onHoverLeaveListener : HoverLeaveListener = null;
+        public graph : CCS.Graph;
 
         constructor() {
             var $table = $(this.table);
@@ -56,7 +55,7 @@ module GUI.Widget {
         }
 
         private labelFor(process : CCS.Process) {
-            return (process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess>process).name : "" + process.id;
+            return this.graph.getLabel(process);
         }
 
         private transitionFromDelegateEvent(event) : CCS.Transition {
