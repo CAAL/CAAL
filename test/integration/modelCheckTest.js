@@ -85,10 +85,10 @@ QUnit.test("Weak ForAll", function ( assert ) {
 });
 
 QUnit.test("Others (simple)", function ( assert ) {
-    /*assert.ok(checkFormula(
+    assert.ok(checkFormula(
         "P = a.Q + a.R + y.P;" + "Q = b.P;" + "R = b.P;",
         "P",
-        "[a]<b>[z]ff;"), "should be true");*/
+        "[a]<b>[z]ff;"), "should be true");
 
     assert.ok(checkFormulaForVariable(
         "P = a.tau.b.P + c.tau.b.P;",
@@ -97,8 +97,8 @@ QUnit.test("Others (simple)", function ( assert ) {
         "X"
         ), "should be true");
 
-    // assert.ok(checkFormula("P = ('a.b.c.P | a.b.P) \\ {a};", "P", "<tau>[b](<b>tt or <c>tt);"), "should be true");
-    // assert.ok(checkFormula("P = (a.'b.c.0) [x/a, y/b, z/c];", "P", "<x><'y><z>tt;", "should be true"));
+    assert.ok(checkFormula("P = ('a.b.c.P | a.b.P) \\ {a};", "P", "<tau>[b](<b>tt or <c>tt);"), "should be true");
+    assert.ok(checkFormula("P = (a.'b.c.0) [x/a, y/b, z/c];", "P", "<x><'y><z>tt;", "should be true"));
 });
 
 QUnit.test("Minimal fixed point", function ( assert ) {
