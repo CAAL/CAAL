@@ -96,12 +96,11 @@ module Activity {
             processName: undefined,
             propertyId: undefined,
             formulaId: undefined,
-            succGen: null
+            // succGen: null
         };
 
         private $processList : JQuery;
         private $formulaList : JQuery;
-        private $logicSuccGenList : JQuery;
         private optionsDom;
         private $restartBtn;
         private fullscreen;
@@ -112,6 +111,9 @@ module Activity {
 
         private human : Player = null;
         private computer : Player = null;
+        private weakSuccGen : CCS.SuccessorGenerator;
+        private strongSuccGen : CCS.SuccessorGenerator;
+        private graph : any;
 
         /* Todo
             How to ensure leftProcess and right formula valid. Or just not draw until selected?
@@ -138,10 +140,6 @@ module Activity {
                 this.loadGuiIntoConfig(this.configuration);
                 this.configure(this.configuration);
             });
-            this.$logicSuccGenList.on("change", () => {
-                this.loadGuiIntoConfig(this.configuration);
-                this.configure(this.configuration);
-            })
 
             /*Explorer*/
             $("#hml-game-main").append(this.processExplorer.getRootElement());
@@ -193,10 +191,10 @@ module Activity {
 
         private constructOptionsDom() {
             var domString = '' +
-                '<select id="hml-game-type" class="form-control">' +
-                    '<option value="strong" selected>Strong Logic</option>' +
-                    '<option value="weak">Weak Logic</option>' +
-                '</select>' +
+                // '<select id="hml-game-type" class="form-control">' +
+                //     '<option value="strong" selected>Strong Logic</option>' +
+                //     '<option value="weak">Weak Logic</option>' +
+                // '</select>' +
                 '<select id="hml-game-process" class="form-control"></select>' +
                 '<select id="hml-game-formula" class="form-control"></select>';
                 // '<div class="btn-group" data-toggle="buttons">' +
@@ -212,7 +210,6 @@ module Activity {
             this.optionsDom = optionsContainer;
             this.$processList = $(optionsContainer).find("#hml-game-process");
             this.$formulaList = $(optionsContainer).find("#hml-game-formula");
-            this.$logicSuccGenList = $(optionsContainer).find("#hml-game-type");
         }
 
         getUIDom() {
@@ -224,7 +221,8 @@ module Activity {
             /*Return a default configurations*/
             var configuration = Object.create(null);
             var formulaSets = Main.getFormulaSetsForProperties()
-            configuration.succGen = this.getSuccGenerator();
+            /*configuration.strongSuccGen = this.getSuccGenerator("strong");
+            configuration.weakSuccGen = this.getSuccGenerator("weak");*/
             configuration.processName = this.getNamedProcessList()[0];
             configuration.propertyId = Object.keys(formulaSets)[0]; //return the first formulaset
             // configuration.formulaSetIndex = this.getSelectedFormulaSetIndex() >= 0 ? this.getSelectedFormulaSetIndex() : 0;
@@ -237,11 +235,6 @@ module Activity {
         private getProcessListValue() : string {
             /*Returns the value from the processlist*/
             return this.$processList.val();
-        }
-
-        private getSuccGenerator() : CCS.SuccessorGenerator {
-            var graph : ccs.Graph = Main.getGraph().graph;
-            return CCS.getSuccGenerator(graph, {succGen: this.$logicSuccGenList.val(), reduce: false});
         }
 
         private getSelectedFormulaSetId() : number {
@@ -291,31 +284,34 @@ module Activity {
             configuration.processName = this.getProcessListValue();
             configuration.propertyId = this.getSelectedFormulaSetId();
             configuration.formulaId = this.getSelectedFormulaSet().getTopFormula().id;
-            configuration.succGen = this.getSuccGenerator();
+            // configuration.strongSuccGen = this.getSuccGenerator("strong");
+            // configuration.weakSuccGen = this.getSuccGenerator("weak");
         }
 
         private configure(configuration) : void {
             //This is/should-only-be called for change in either process, formula or succ generator.
             this.configuration = configuration;
-            
+
+            this.graph = Main.getGraph().graph;
+            this.strongSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
+            this.weakSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "weak", reduce: false});
             /*Fill the dropdown list with infomation*/            
             this.setProcesses(this.getNamedProcessList(), configuration.processName);
             this.setFormulas(Main.getFormulaSetsForProperties(), configuration.propertyId);
             
             /*Set the currentFormula/Process */
-            var currentProcess = configuration.succGen.getProcessByName(configuration.processName);
+            var currentProcess = this.strongSuccGen.getProcessByName(configuration.processName);
             var currentFormulaSet : HML.FormulaSet = this.formulaSets[configuration.propertyId];
             this.hmlselector.setFormulaSet(currentFormulaSet);
             var currentFormula = currentFormulaSet.getTopFormula();
 
-            this.processExplorer.setSuccGenerator(this.configuration.succGen);
-            this.isWeak = false;
+            this.processExplorer.setSuccGenerator(this.strongSuccGen); // TODO, also weak?
             this.processExplorer.exploreProcess(currentProcess); // explore the current selected process
             
-            this.tooltip.setGraph(this.configuration.succGen.graph);
+            this.tooltip.setGraph(this.graph);
 
             this.hmlGameLogic = new HmlGameLogic(currentProcess, currentFormula, 
-                                                 currentFormulaSet, configuration.succGen, Main.getGraph().graph);
+                                                 currentFormulaSet, this.strongSuccGen, this.weakSuccGen, this.graph);
             this.hmlGameLogic.setGamelogWriter((gameLogObject) => this.gamelog.printToGameLog(gameLogObject));
             
             this.computer = this.hmlGameLogic.getUniversalWinner();
@@ -337,28 +333,26 @@ module Activity {
         private refresh() : void {
             /* Explores the currentProcess and updates the transitiontable with its successors transitions*/
             
-            var isGameOver = this.hmlGameLogic.isGameOver();
+            var isGameOver = this.hmlGameLogic.isGameOver(),
+            formula = this.hmlGameLogic.state.formula,
+            process = this.hmlGameLogic.state.process,
+            formulaSet = this.hmlGameLogic.state.formulaSet;
+
+            this.printCurrentConfig(process, formula);
             if (isGameOver) {
                 this.setActionWidget() // clear the widget div
                 var winner : Player = isGameOver.left;
                 var winReason = isGameOver.right;
-
                 this.printGameOver(winner, winReason);
             }
             else {
-                var currentPlayer = this.hmlGameLogic.getCurrentPlayer(),
-                    formula = this.hmlGameLogic.state.formula,
-                    process = this.hmlGameLogic.state.process,
-                    formulaSet = this.hmlGameLogic.state.formulaSet;
-
+                var currentPlayer = this.hmlGameLogic.getCurrentPlayer();
                 if(currentPlayer === this.computer) {
                     // TODO: make this work (so the computer always will play the correct choice.)
-                    this.printCurrentConfig(process, formula);
                     this.hmlGameLogic.AutoPlay(this.computer, (process) => {this.processExplorer.exploreProcess(process); this.processExplorer.focusOnProcess(process);});
                     this.refresh();
                 } 
                 else if(currentPlayer === this.human) {
-                    this.printCurrentConfig(process, formula);
                     this.prepareGuiForUserAction();
                 }
                 else if(currentPlayer === Player.judge) {
@@ -376,32 +370,32 @@ module Activity {
             switch (winReason)
             {
                 case WinReason.minGameCycle: {
-                   gameLogObject.setTemplate("A cycle has been detected. You({0}) {1}! <br>Final configuration ({2}, {3})");
+                   gameLogObject.setTemplate("A cycle has been detected. You({0}) {1}!");
                     gameLogObject.addLabel({text: (this.human === Player.attacker) ? "attacker" : "defender"});
                     gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
                     break;
                 }
                 case WinReason.maxGameCycle: {
-                    gameLogObject.setTemplate("A cycle has been detected. You({0}) {1}! <br>Final configuration ({2}, {3})");
+                    gameLogObject.setTemplate("A cycle has been detected. You({0}) {1}!");
                     gameLogObject.addLabel({text: (this.human === Player.attacker) ? "attacker" : "defender"});
                     gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
                     break;
                 }
                 case WinReason.trueFormula: {
-                    gameLogObject.setTemplate("Reached true formula, {0}({1}) won! <br>Final configuration ({2}, {3})");
+                    gameLogObject.setTemplate("Reached true formula, {0}({1}) won!");
                     gameLogObject.addLabel({text: (this.computer === winner) ? "the AI" : "you"});
                     gameLogObject.addLabel({text: (winner === Player.attacker) ? "attacker" : "defender"});
                     break;
                 }
                 case WinReason.falseFormula: {
-                    gameLogObject.setTemplate("Reached false formula, {0}({1}) won! <br>Final configuration ({2}, {3})");
+                    gameLogObject.setTemplate("Reached false formula, {0}({1}) won!");
                     gameLogObject.addLabel({text: (this.computer === winner) ? "the AI" : "you"});
                     gameLogObject.addLabel({text: (winner === Player.attacker) ? "attacker" : "defender"});
                     break;
                 }
 
                 case WinReason.stuck: {
-                    gameLogObject.setTemplate("{0}({1}) {2} no available transitions. You {3}! <br>Final configuration ({4}, {5})");
+                    gameLogObject.setTemplate("{0}({1}) {2} no available transitions. You {3}!");
                     gameLogObject.addLabel({text: (this.computer === winner) ? "You" : "The AI"});
                     gameLogObject.addLabel({text: (winner === Player.attacker) ? "defender" : "attacker"});
                     gameLogObject.addLabel({text: (this.computer === winner) ? "have" : "has"});
@@ -414,10 +408,10 @@ module Activity {
                 }
             }
 
-            gameLogObject.addLabel({text: gameLogObject.labelForProcess(this.hmlGameLogic.state.process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]})
-            gameLogObject.addLabel({text: gameLogObject.labelForFormula(this.hmlGameLogic.state.formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
+            // gameLogObject.addLabel({text: gameLogObject.labelForProcess(this.hmlGameLogic.state.process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]})
+            // gameLogObject.addLabel({text: gameLogObject.labelForFormula(this.hmlGameLogic.state.formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
 
-            gameLogObject.addWrapper({tag: "<p>", attr: [{name: "class", value: "outro"}]});
+            gameLogObject.addWrapper({tag: "<p>"/*, attr: [{name: "class", value: "outro"}]*/});
             this.gamelog.printToGameLog(gameLogObject);
 
         }
@@ -539,7 +533,9 @@ module Activity {
         private gameIsOver : boolean = false;
         private writeToGamelog : Function;
         private stopGame : Function;
-        private succGen : CCS.SuccessorGenerator;
+        private strongSuccGen : CCS.SuccessorGenerator;
+        private weakSuccGen : CCS.SuccessorGenerator;
+
         //private dGraph : dg.PlayableDependencyGraph; //TODO: fix this
         private dGraph : any;
         private marking : dg.LevelMarking;
@@ -548,22 +544,21 @@ module Activity {
         private cycleCache;
 
 
-        constructor(process : CCS.Process, formula : HML.Formula, formulaSet : HML.FormulaSet, succGen : CCS.SuccessorGenerator, graph : CCS.Graph) {
+        constructor(process : CCS.Process, formula : HML.Formula, formulaSet : HML.FormulaSet, strongSuccGen : CCS.SuccessorGenerator, weakSuccGen : CCS.SuccessorGenerator, graph : CCS.Graph) {
             this.cycleCache = {};
             this.previousStates = [];
             this.state = new HmlGameState(process, formula, formulaSet, true);
-            this.succGen = succGen;
+            this.strongSuccGen = strongSuccGen;
+            this.weakSuccGen = weakSuccGen;
             
             // this.round = 0;
             this.currentDgNodeId = 0;
-            this.dGraph = this.createDependencyGraph(graph, this.state.process, this.state.formula); 
+            this.dGraph = this.createDependencyGraph(this.state.process, this.state.formula); 
             this.marking = this.createMarking();
         }
 
-        private createDependencyGraph(graph : CCS.Graph, process : CCS.Process, formula : HML.Formula) : dg.PlayableDependencyGraph {
-            var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: false});
-            var weakSuccGen = CCS.getSuccGenerator(graph, {succGen: "weak", reduce: false});
-            return <any>(new dg.MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, process.id, this.state.formulaSet, formula));
+        private createDependencyGraph(process : CCS.Process, formula : HML.Formula) : dg.PlayableDependencyGraph {
+            return <any>(new dg.MuCalculusMinModelCheckingDG(this.strongSuccGen, this.weakSuccGen, process.id, this.state.formulaSet, formula));
         }
 
         private createMarking() : dg.LevelMarking {
@@ -637,7 +632,14 @@ module Activity {
             gameLogPlay.addWrapper({tag: "<p>"});
             gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
             gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(this.state.process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
-            gameLogPlay.addLabel({text: "-" + transition.action + "->", tag: "<span>", attr: [{name: "class", value: "monospace"}]});
+            if (this.isWeak()) {
+                var actionTransition = "=" + transition.action.toString() + "=>";
+                gameLogPlay.addLabel({text: actionTransition, tag: "<span>",attr: [{name: "class", value: "ccs-tooltip-data"},
+                {name: "data-tooltip", value: Tooltip.strongSequence(<Traverse.WeakSuccessorGenerator>this.weakSuccGen, this.state.process, transition.action, transition.targetProcess)}]});
+            } 
+            else {
+                gameLogPlay.addLabel({text: "-" + transition.action + "->", tag: "<span>", attr: [{name: "class", value: "monospace"}]});
+            }
             gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(transition.targetProcess), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
             this.writeToGamelog(gameLogPlay);
 
@@ -791,12 +793,31 @@ module Activity {
         public getAvailableTransitions() : CCS.Transition[] {
             if (this.getNextActionType() === ActionType.transition) {
                 var hml = <Modality>this.state.formula;
-                var allTransitions = this.succGen.getSuccessors(this.state.process.id).toArray();
+                
+                var allTransitions = null;
+                if(this.isWeak()){
+                    allTransitions = this.weakSuccGen.getSuccessors(this.state.process.id).toArray();
+                } 
+                else {
+                    allTransitions = this.strongSuccGen.getSuccessors(this.state.process.id).toArray();
+                }
+                
                 var availableTransitions = allTransitions.filter((transition) => hml.actionMatcher.matches(transition.action));
                 return availableTransitions;
             }
             return null;
             throw "Unhandled formula type in getAvailableTransitions";
+        }
+
+        public isWeak() : boolean { 
+            var weakMoves = [HML.WeakForAllFormula, HML.WeakExistsFormula];
+            var strongMoves = [HML.StrongForAllFormula, HML.StrongExistsFormula];
+            var isPrototypeOfCurrentFormula = (obj) => this.state.formula instanceof obj;
+
+            if(weakMoves.some(isPrototypeOfCurrentFormula)) return true;
+            if(strongMoves.some(isPrototypeOfCurrentFormula)) return false;
+
+            throw "Unhandled formula type, in isWeak";
         }
 
         public getAvailableFormulas(hmlFSet : HML.FormulaSet) : HML.Formula[] {

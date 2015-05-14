@@ -29,7 +29,7 @@ module GUI.Widget {
         public succGen : CCS.SuccessorGenerator = null;
 
         private currentZoom = 1;
-        private expandDepth = 5;
+        private expandDepth = 10;
 
         constructor() {
             $(this.root).addClass("widget-zoom-process-explorer");
