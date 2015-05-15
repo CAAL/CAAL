@@ -128,10 +128,18 @@ module Traverse {
 
     export class AbstractingSuccessorGenerator implements ccs.SuccessorGenerator {
         
+        private abstraction : ccs.Action;
+        private addLoop : boolean;
+        public strictSuccGenerator : ccs.SuccessorGenerator;
+        public cache;
+        
         private fromTable : MapUtil.Map<FullTransition, FromData> =
                 new MapUtil.OrderedMap<FullTransition, FromData>(compareTransitionTuple);
 
-        constructor(private abstraction : ccs.Action, public strictSuccGenerator : ccs.SuccessorGenerator, public cache?) {
+        constructor(abstraction : ccs.Action, addLoop : boolean, strictSuccGenerator : ccs.SuccessorGenerator, cache?) {
+            this.abstraction = abstraction;
+            this.addLoop = addLoop;
+            this.strictSuccGenerator = strictSuccGenerator;
             this.cache = cache || {};
         }
 
@@ -169,8 +177,10 @@ module Traverse {
                 visitingAction,
                 strongSuccessors;
             
-            //Add  P --tau--> P
-            result.add(new ccs.Transition(this.abstraction, process));
+            if (this.addLoop) {
+                //Add  P --tau--> P
+                result.add(new ccs.Transition(this.abstraction, process));
+            }
 
             //Stage 1
             //Find all --tau-->* and
@@ -266,7 +276,7 @@ module Traverse {
     
     export class WeakSuccessorGenerator extends AbstractingSuccessorGenerator {
         constructor(strictSuccGenerator : ccs.SuccessorGenerator, cache?) {
-            super(new ccs.Action("tau", false), strictSuccGenerator, cache);
+            super(new ccs.Action("tau", false), true, strictSuccGenerator, cache);
         }
     }
 

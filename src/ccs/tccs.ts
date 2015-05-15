@@ -407,9 +407,9 @@ module Traverse {
         }
     }
     
-    export class UntimedSuccessorGenerator extends Traverse.AbstractingSuccessorGenerator { // wrong
+    export class UntimedSuccessorGenerator extends Traverse.AbstractingSuccessorGenerator {
         constructor(strictSuccGenerator : TCCS.StrictSuccessorGenerator, cache?) {
-            super(new TCCS.Delay(1), strictSuccGenerator, cache);
+            super(new TCCS.Delay(1), false, strictSuccGenerator, cache);
         }
     }
 }
