@@ -186,7 +186,7 @@ module Activity {
                     process = collapseSuccGen.getCollapseForProcess(process.id);
                 }
             } else {
-                this.succGenerator = CCS.getSuccGenerator(this.graph, {inputMode: options.inputMode, succGen: options.successor, reduce: options.simplify});
+                this.succGenerator = CCS.getSuccGenerator(this.graph, {inputMode: options.inputMode, time: options.time, succGen: options.successor, reduce: options.simplify});
             }
 
             this.expand(process);
