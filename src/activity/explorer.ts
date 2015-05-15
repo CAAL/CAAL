@@ -23,6 +23,8 @@ module Activity {
         private $statusTable : JQuery;
         private tooltip : ProcessTooltip;
         private timeout : number;
+        private $ccsOptions: JQuery;
+        private $tccsOptions: JQuery;
         private $zoom : JQuery;
         private $depth : JQuery;
         private $freeze : JQuery;
@@ -40,6 +42,8 @@ module Activity {
             this.$statusContainer = $("#explorer-transitions");
             this.$statusTable = this.$statusContainer.find("tbody");
             this.tooltip = new ProcessTooltip(this.$statusTable);
+            this.$ccsOptions = $("#ccs-options");
+            this.$tccsOptions = $("#tccs-options");
             this.$zoom = $("#explorer-zoom");
             this.$depth = $("#explorer-depth");
             this.$freeze = $("#explorer-freeze");
@@ -76,7 +80,7 @@ module Activity {
 
             $(document).on("ccs-changed", () => this.changed = true);
 
-            $("#explorer-process-list, input[name=option-collapse], input[name=option-successor], #option-simplify").on("change", () => this.draw());
+            $("#explorer-process-list, input[name=option-collapse], input[name=option-successor], input[name=option-time], #option-simplify").on("change", () => this.draw());
         }
 
         public onShow(configuration? : any) : void {
@@ -135,20 +139,29 @@ module Activity {
             }
 
             if (this.project.getInputMode() === InputMode.CCS) {
-                $("input[name=option-collapse]").parent().parent().show().next(".divider").show();
+                this.$ccsOptions.show();
+                this.$tccsOptions.hide();
             } else {
-                $("input[name=option-collapse]").parent().parent().hide().next(".divider").hide();
+                this.$ccsOptions.hide();
+                this.$tccsOptions.show();
             }
         }
 
         private getOptions() : any {
-            return {
+            var options = {
                 process: $("#explorer-process-list :selected").text(),
                 successor: $("input[name=option-successor]:checked").val(),
-                collapse: $("input[name=option-collapse]:checked").val(),
                 simplify: $("#option-simplify").prop("checked"),
                 inputMode: InputMode[this.project.getInputMode()]
             };
+
+            if (this.project.getInputMode() === InputMode.CCS) {
+                options["collapse"] = $("input[name=option-collapse]:checked").val();
+            } else {
+                options["time"] = $("input[name=option-time]:checked").val();
+            }
+
+            return options;
         }
 
         private draw() : void {
@@ -160,16 +173,20 @@ module Activity {
             this.succGenerator = CCS.getSuccGenerator(this.graph, {inputMode: options.inputMode, succGen: options.successor, reduce: options.simplify});
             var process = this.succGenerator.getProcessByName(options.process);
 
-            if (options.collapse !== "none") {
-                //Always attack with strong succ generator (improves performance)
-                var attackSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
-                var defendSuccGen = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
-                var collapse = Equivalence.getBisimulationCollapse(attackSuccGen, defendSuccGen, process.id, process.id);
-                var collapseSuccGen = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
-                //Wrap the transition relation used in the collapse.
-                this.succGenerator = collapseSuccGen;
-                //Process have been replaced by collapse.
-                process = collapseSuccGen.getCollapseForProcess(process.id);
+            if (this.project.getInputMode() === InputMode.CCS) {
+                if (options.collapse !== "none") {
+                    //Always attack with strong succ generator (improves performance)
+                    var attackSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
+                    var defendSuccGen = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
+                    var collapse = Equivalence.getBisimulationCollapse(attackSuccGen, defendSuccGen, process.id, process.id);
+                    var collapseSuccGen = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
+                    //Wrap the transition relation used in the collapse.
+                    this.succGenerator = collapseSuccGen;
+                    //Process have been replaced by collapse.
+                    process = collapseSuccGen.getCollapseForProcess(process.id);
+                }
+            } else {
+                this.succGenerator = CCS.getSuccGenerator(this.graph, {inputMode: options.inputMode, succGen: options.successor, reduce: options.simplify});
             }
 
             this.expand(process);
