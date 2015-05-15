@@ -408,7 +408,7 @@ module Traverse {
     }
     
     export class UntimedSuccessorGenerator extends Traverse.AbstractingSuccessorGenerator {
-        constructor(strictSuccGenerator : TCCS.StrictSuccessorGenerator, cache?) {
+        constructor(strictSuccGenerator : CCS.SuccessorGenerator, cache?) {
             super(new TCCS.Delay(1), false, strictSuccGenerator, cache);
         }
     }
