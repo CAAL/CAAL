@@ -134,17 +134,17 @@
                                     <ul class="dropdown-menu">
                                         <li>
                                             <div class="yamm-content">
-                                                <div class="radio">
-                                                    <label>
-                                                        <input name="option-successor" value="strong" type="radio" checked>Strong Successors (&#x2192;)
-                                                    </label>
-                                                </div>
-                                                <div class="radio">
-                                                    <label>
-                                                        <input name="option-successor" value="weak" type="radio">Weak Successors (&#x21D2;)
-                                                    </label>
-                                                </div>
                                                 <span id="ccs-options">
+                                                    <div class="radio">
+                                                        <label>
+                                                            <input name="option-ccs-successor" value="strong" type="radio" checked>Strong Successors (&#x2192;)
+                                                        </label>
+                                                    </div>
+                                                    <div class="radio">
+                                                        <label>
+                                                            <input name="option-ccs-successor" value="weak" type="radio">Weak Successors (&#x21D2;)
+                                                        </label>
+                                                    </div>
                                                     <div class="divider"></div>
                                                     <div class="radio">
                                                         <label data-tooltip="collapse-none">
@@ -163,15 +163,24 @@
                                                     </div>
                                                 </span>
                                                 <span id="tccs-options">
-                                                    <div class="divider"></div>
                                                     <div class="radio">
-                                                        <label data-tooltip="timed">
-                                                            <input name="option-time" value="timed" type="radio" checked>Timed Transitions
+                                                        <label>
+                                                            <input name="option-tccs-successor" value="strong" data-time="timed" type="radio" checked>Strong Timed Successors (&#x2192;)
                                                         </label>
                                                     </div>
                                                     <div class="radio">
-                                                        <label data-tooltip="untimed">
-                                                            <input name="option-time" value="untimed" type="radio">Untimed Transitions
+                                                        <label>
+                                                            <input name="option-tccs-successor" value="strong" data-time="untimed" type="radio">Strong Untimed Successors (&#x2192;<sub>u</sub>)
+                                                        </label>
+                                                    </div>
+                                                    <div class="radio">
+                                                        <label>
+                                                            <input name="option-tccs-successor" value="weak" data-time="timed" type="radio">Weak Timed Successors (&#x21D2;)
+                                                        </label>
+                                                    </div>
+                                                    <div class="radio">
+                                                        <label>
+                                                            <input name="option-tccs-successor" value="weak" data-time="untimed" type="radio">Weak Untimed Successors (&#x21D2;<sub>u</sub>)
                                                         </label>
                                                     </div>
                                                 </span>

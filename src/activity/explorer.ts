@@ -80,7 +80,9 @@ module Activity {
 
             $(document).on("ccs-changed", () => this.changed = true);
 
-            $("#explorer-process-list, input[name=option-collapse], input[name=option-successor], input[name=option-time], #option-simplify").on("change", () => this.draw());
+            $("#explorer-process-list, #option-simplify").on("change", () => this.draw());
+            this.$ccsOptions.find("input").on("change", () => this.draw());
+            this.$tccsOptions.find("input").on("change", () => this.draw());
         }
 
         public onShow(configuration? : any) : void {
@@ -150,15 +152,16 @@ module Activity {
         private getOptions() : any {
             var options = {
                 process: $("#explorer-process-list :selected").text(),
-                successor: $("input[name=option-successor]:checked").val(),
                 simplify: $("#option-simplify").prop("checked"),
                 inputMode: InputMode[this.project.getInputMode()]
             };
 
             if (this.project.getInputMode() === InputMode.CCS) {
+                options["successor"] = $("input[name=option-ccs-successor]:checked").val();
                 options["collapse"] = $("input[name=option-collapse]:checked").val();
             } else {
-                options["time"] = $("input[name=option-time]:checked").val();
+                options["successor"] = $("input[name=option-tccs-successor]:checked").val();
+                options["time"] = $("input[name=option-tccs-successor]:checked").data("time");
             }
 
             return options;
