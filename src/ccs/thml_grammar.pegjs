@@ -5,7 +5,7 @@
         return first + rest.join('');
     }
 
-    function expandDelay(min, max, subFormula, isForAll) {
+    function expandDelay(min, max, subFormula, type) {
         var matcher = new hml.SingleActionMatcher(new tccs.Delay(1));
         var subFormulas = [];
 
@@ -13,15 +13,29 @@
             var next = subFormula;
 
             for (var j = i; j > 0; j--) {
-                if (isForAll) next = formulas.newStrongForAll(matcher, next);
-                else next = formulas.newStrongExists(matcher, next);
+                switch (type) {
+                    case "SE":
+                        next = formulas.newStrongExists(matcher, next);
+                        break;
+                    case "WE":
+                        next = formulas.newWeakExists(matcher, next);
+                        break;
+                    case "SFA":
+                        next = formulas.newStrongForAll(matcher, next);
+                        break;
+                    case "WFA":
+                        next = formulas.newWeakForAll(matcher, next);
+                        break;
+                }
             }
 
             subFormulas.push(next);
         }
 
-        if (isForAll) return formulas.newConj(subFormulas);
-        else return formulas.newDisj(subFormulas);
+        if (type === "SE" || type === "WE")
+            return formulas.newDisj(subFormulas);
+        else
+            return formulas.newConj(subFormulas);
     }
 
     var ccs = options.ccs,
@@ -32,7 +46,7 @@
 
 start
     = Ps:Statements _ { return formulas; }
-    / F:SimpleFormula _ ";" _ { console.log(formulas); return formulas; }
+    / F:SimpleFormula _ ";" _ { return formulas; }
     / _ { return formulas; }
 
 Statements
@@ -59,13 +73,20 @@ Conjunction
 
 Modal
     = _ "[" _ "[" _ AM:ActionList _ "]" _ "]" _ F:Modal { return formulas.newWeakForAll(AM, F); }
+    / _ "[" _ "[" _ delay:Delay _ "]" _ "]" _ F:Modal { return expandDelay(delay, delay, F, "WFA"); }
+    / _ "[" _ "[" _ min:Delay _ "," _ max:Delay _ "]" _ "]" _ F:Modal { return expandDelay(min, max, F, "WFA"); }
+
     / _ "<" _ "<" _ AM:ActionList _ ">" _ ">" _ F:Modal { return formulas.newWeakExists(AM, F); }
+    / _ "<" _ "<" _ delay:Delay _ ">" _ ">" _ F:Modal { return expandDelay(delay, delay, F, "NWE"); }
+    / _ "<" _ "<" _ min:Delay _ "," _ max:Delay _ ">" _ ">" _ F:Modal { return expandDelay(min, max, F, "NWE"); }
+
     / _ "[" _ AM:ActionList _ "]" _ F:Modal { return formulas.newStrongForAll(AM, F); }
-    / _ "[" _ delay:Delay _ "]" _ F:Modal { return expandDelay(delay, delay, F, true); }
-    / _ "[" _ min:Delay _ "," _ max:Delay _ "]" _ F:Modal { return expandDelay(min, max, F, true); }
+    / _ "[" _ delay:Delay _ "]" _ F:Modal { return expandDelay(delay, delay, F, "SFA"); }
+    / _ "[" _ min:Delay _ "," _ max:Delay _ "]" _ F:Modal { return expandDelay(min, max, F, "SFA"); }
+
     / _ "<" _ AM:ActionList _ ">" _ F:Modal { return formulas.newStrongExists(AM, F); }
-    / _ "<" _ delay:Delay _ ">" _ F:Modal { return expandDelay(delay, delay, F, false); }
-    / _ "<" _ min:Delay _ "," _ max:Delay _ ">" _ F:Modal { return expandDelay(min, max, F, false); }
+    / _ "<" _ delay:Delay _ ">" _ F:Modal { return expandDelay(delay, delay, F, "SE"); }
+    / _ "<" _ min:Delay _ "," _ max:Delay _ ">" _ F:Modal { return expandDelay(min, max, F, "SE"); }
     / Unary
 
 Unary "term"
@@ -96,7 +117,7 @@ Action "action"
     / label:Label { return new ccs.Action(label, false); }
 
 Delay "delay"
-    = number:([1-9][0-9]*) { return parseInt(number.join(""), 10); }
+    = number:[0-9]+ { return parseInt(number.join(""), 10); }
 
 Label "label"
     = first:[a-z] rest:IdentifierRestSym* { return strFirstAndRest(first, rest); }
