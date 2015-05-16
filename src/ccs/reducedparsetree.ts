@@ -181,7 +181,9 @@ module Traverse {
                 //Add  P --tau--> P
                 result.add(new ccs.Transition(this.abstraction, process));
             }
-
+            
+            var abstractions = 1;
+            
             //Stage 1
             //Find all --tau-->* and
             //     all --tau-->*  --x-->
@@ -201,6 +203,9 @@ module Traverse {
                         }
 
                         if (transition.action.getLabel() === this.abstraction.getLabel()) {
+                            if (this.abstraction.getLabel() === "Delay") {
+                                transition.action = new TCCS.Delay(abstractions++);
+                            }
                             toVisitProcesses.push(transition.targetProcess);
                             result.add(transition);  // --tau--> x
                         } else {
@@ -275,8 +280,8 @@ module Traverse {
     }
     
     export class WeakSuccessorGenerator extends AbstractingSuccessorGenerator {
-        constructor(strictSuccGenerator : ccs.SuccessorGenerator, cache?) {
-            super(new ccs.Action("tau", false), true, strictSuccGenerator, cache);
+        constructor(strictSuccGenerator : ccs.SuccessorGenerator, addLoops : boolean, cache?) {
+            super(new ccs.Action("tau", false), addLoops, strictSuccGenerator, cache);
         }
     }
 

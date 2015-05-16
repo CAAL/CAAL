@@ -797,7 +797,7 @@ module CCS {
     }
 
     export function getSuccGenerator(graph : Graph, options : any) : SuccessorGenerator {
-        var settings = { inputMode: "CCS", succGen: "strong", reduce: true, time: "timed" },
+        var settings = { inputMode: "CCS", succGen: "strong", reduce: true, time: "timed", visualise: false},
             succGenerator: SuccessorGenerator,
             treeReducer: Traverse.ProcessTreeReducer;
 
@@ -828,7 +828,7 @@ module CCS {
         }
 
         if (settings.succGen === "weak") {
-            succGenerator = new Traverse.WeakSuccessorGenerator(succGenerator);
+            succGenerator = new Traverse.WeakSuccessorGenerator(succGenerator, !settings.visualise);
         }
 
         return succGenerator;

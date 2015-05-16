@@ -170,14 +170,14 @@ module Activity {
             this.resize(1);
 
             var options = this.getOptions();
-            this.succGenerator = CCS.getSuccGenerator(this.graph, {inputMode: options.inputMode, succGen: options.successor, reduce: options.simplify});
+            this.succGenerator = CCS.getSuccGenerator(this.graph, {inputMode: options.inputMode, succGen: options.successor, reduce: options.simplify, visualise: true});
             var process = this.succGenerator.getProcessByName(options.process);
 
             if (this.project.getInputMode() === InputMode.CCS) {
                 if (options.collapse !== "none") {
                     //Always attack with strong succ generator (improves performance)
-                    var attackSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
-                    var defendSuccGen = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
+                    var attackSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify, visualise: true});
+                    var defendSuccGen = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify, visualise: true});
                     var collapse = Equivalence.getBisimulationCollapse(attackSuccGen, defendSuccGen, process.id, process.id);
                     var collapseSuccGen = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
                     //Wrap the transition relation used in the collapse.
@@ -186,7 +186,7 @@ module Activity {
                     process = collapseSuccGen.getCollapseForProcess(process.id);
                 }
             } else {
-                this.succGenerator = CCS.getSuccGenerator(this.graph, {inputMode: options.inputMode, time: options.time, succGen: options.successor, reduce: options.simplify});
+                this.succGenerator = CCS.getSuccGenerator(this.graph, {inputMode: options.inputMode, time: options.time, succGen: options.successor, reduce: options.simplify, visualise: true});
             }
 
             this.expand(process);
