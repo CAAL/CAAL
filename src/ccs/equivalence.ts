@@ -121,7 +121,7 @@ module Equivalence {
                 return result;
             }
             //Build the node.
-            var result = this.nextIdx++;
+            result = this.nextIdx++;
             if (!rightIds) this.leftPairs[leftId] = rightIds = {};
             rightIds[rightId] = result
             this.constructData[result] = [0, leftId, rightId];
