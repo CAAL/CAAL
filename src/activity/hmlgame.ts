@@ -319,6 +319,7 @@ module Activity {
             this.hmlGameLogic.setGamelogWriter((gameLogObject) => this.gamelog.printToGameLog(gameLogObject));
             
             this.computer = this.hmlGameLogic.getUniversalWinner();
+            console.log("AI role", this.computer);
             this.human = (this.computer === Player.attacker) ? Player.defender : Player.attacker;
 
             /* Gamelog */
@@ -541,12 +542,15 @@ module Activity {
         private weakSuccGen : CCS.SuccessorGenerator;
 
         //private dGraph : dg.PlayableDependencyGraph; //TODO: fix this
-        private dGraph : any;
+        private dGraph : dg.PartialDependencyGraph;
+        private dgNode : dg.MuCalculusNode;
+        private root : dg.MuCalculusNode;
         private graph : CCS.Graph;
         private marking : dg.LevelMarking;
         private currentDgNodeId : dg.DgNodeId;
         private choiceDgNodeId : dg.DgNodeId;
         private cycleCache;
+        private satisfied : boolean = false;
 
 
         constructor(process : CCS.Process, formula : HML.Formula, formulaSet : HML.FormulaSet, strongSuccGen : CCS.SuccessorGenerator, weakSuccGen : CCS.SuccessorGenerator, graph : CCS.Graph) {
@@ -559,22 +563,23 @@ module Activity {
             
             // this.round = 0;
             this.currentDgNodeId = 0;
-            this.dGraph = this.createDependencyGraph(this.state.process, this.state.formula); 
-            this.marking = this.createMarking();
+            this.root = new dg.MuCalculusNode(this.state.process, this.state.formula, this.state.isMinGame)
+            this.dgNode = this.root,
+            this.dGraph = new dg.MuCalculusDG(strongSuccGen, weakSuccGen, formulaSet)
+            console.log("dgGraph: ",this.dGraph);
+            this.marking = this.solveMuCalculus();
+            console.log(this.marking);
+            console.log("marking: ",this.marking.getMarking(this.root));
+            console.log("level: ",this.marking.getLevel(this.root));
         }
 
-        private createDependencyGraph(process : CCS.Process, formula : HML.Formula) : dg.PlayableDependencyGraph {
-            return <any>(new dg.MuCalculusMinModelCheckingDG(this.strongSuccGen, this.weakSuccGen, process.id, this.state.formulaSet, formula));
+        private solveMuCalculus() : dg.LevelMarking{
+            return dg.liuSmolkaLocal2(this.dgNode, this.dGraph);
         }
-
-        private createMarking() : dg.LevelMarking {
-            var marking = dg.liuSmolkaLocal2(this.currentDgNodeId, this.dGraph);
-            // var marking = dg.liuSmolkaGlobal(this.dGraph);
-            return marking;
-        }
-
+        
         public getUniversalWinner() : Player {
-            return (this.marking.getMarking(0) === this.marking.ONE) ? Player.defender : Player.attacker;
+
+            return (this.marking.getMarking(this.root) === this.marking.ONE) ? Player.defender : Player.attacker;
         }
 
         private popModalityFormula(hmlF : Modality) : HML.Formula {
@@ -600,7 +605,7 @@ module Activity {
                 //Find matching transition
                 var transition = null;
                 this.getAvailableTransitions().forEach(t => {
-                    if (t.targetProcess.id === choice.process) {
+                    if (t.targetProcess.id === choice.process.id) {
                         transition = t;
                     }
                 });
@@ -621,9 +626,9 @@ module Activity {
             gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
             this.writeToGamelog(gameLogPlay);
 
-            var describedEdges = this.getChoices(this.currentDgNodeId);
-            this.updateCurrentDgNode(formula.id, describedEdges);    
+            this.getChoices(this.dgNode);
 
+            this.dgNode = this.dgNode.newWithFormula(formula);
             // The player selected a formula.
             this.previousStates.push(this.state);
             this.state = this.state.withFormula(formula);
@@ -649,11 +654,11 @@ module Activity {
             gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(transition.targetProcess), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
             this.writeToGamelog(gameLogPlay);
 
-            var describedEdges = this.getChoices(this.currentDgNodeId);
-            this.updateCurrentDgNode(transition.targetProcess.id, describedEdges); 
+            this.getChoices(this.dgNode);
 
             var hmlSubF = this.popModalityFormula(<Modality> this.state.formula);
             this.previousStates.push(this.state);
+            this.dgNode = this.dgNode.newWithFormula(hmlSubF).newWithProcess(transition.targetProcess);
             this.state = this.state.withFormula(hmlSubF).withProcess(transition.targetProcess);            
 
             exploreProcess(this.state.process); // explore the process.
@@ -695,11 +700,14 @@ module Activity {
             // infinite run
             if (this.cycleExists()) {
                 if (this.state.isMinGame) {
+                    // minGame
                     this.gameIsOver = true;
-                    return new Pair(Player.defender, WinReason.minGameCycle);
-                } else {
+                    return new Pair(Player.attacker, WinReason.minGameCycle);
+                } 
+                else if (!this.state.isMinGame) {
+                    // maxGame
                     this.gameIsOver = true;
-                    return new Pair(Player.attacker, WinReason.maxGameCycle);
+                    return new Pair(Player.defender, WinReason.maxGameCycle);
                 }
             }
 
@@ -722,24 +730,27 @@ module Activity {
 
         public JudgeUnfold(hml : HML.Formula, hmlFSet : HML.FormulaSet) : HML.Formula {
             if (hml instanceof HML.MinFixedPointFormula) {
-                var describedEdges = this.getChoices(this.currentDgNodeId);
-                this.updateCurrentDgNode(hml.id, describedEdges);
+                // var describedEdges = this.getChoices(this.dgNode);
+                // this.updateCurrentDgNode(hml.id, describedEdges);
                 
                 this.previousStates.push(this.state);
                 this.state = this.state.withFormula(hml.subFormula).withMinMax(true);
+                this.dgNode = this.dgNode.newWithFormula(hml.subFormula)
                 return hml.subFormula;
             }
             else if (hml instanceof HML.MaxFixedPointFormula) {
-                var describedEdges = this.getChoices(this.currentDgNodeId);
-                this.updateCurrentDgNode(hml.id, describedEdges);
+                // var describedEdges = this.getChoices(this.dgNode);
+                // this.updateCurrentDgNode(hml.id, describedEdges);
                 
                 this.previousStates.push(this.state);
                 this.state = this.state.withFormula(hml.subFormula).withMinMax(false);
+                this.dgNode = this.dgNode.newWithFormula(hml.subFormula)
                 return hml.subFormula;
             } 
             else if (hml instanceof HML.VariableFormula) {
-                var describedEdges = this.getChoices(this.currentDgNodeId);
-                this.updateCurrentDgNode(hml.id, describedEdges);
+                // var describedEdges = this.getChoices(this.dgNode);
+                // this.dgNode = this.dgNode.
+                // this.updateCurrentDgNode(hml.id, describedEdges);
 
                 var namedFormula = hmlFSet.formulaByName(hml.variable);
                 if (namedFormula) {
@@ -837,21 +848,24 @@ module Activity {
             throw "Unhandled formula type in getAvailableFormulas";
         }
 
-        private getChoices(forDgNodeId : number = this.currentDgNodeId) : any {
-            var hyperEdges = this.dGraph.getHyperEdges(forDgNodeId);
-            
+        private getChoices(dgNode : dg.MuCalculusNode = this.dgNode) : any {
+            var hyperEdges = this.dGraph.getHyperEdges(dgNode);
+            console.log("node: ", dgNode, "hyperedges: ", hyperEdges);
             //Due to the construction, all hyperedges are either of the
             //form [ [X], [Y], [Z], ...] or [ [X, Y, Z] ]
-            var describedEdges = hyperEdges.map(edge => {
+            var describedEdges = hyperEdges.map(hyperEdge => {
                 //Get information about dg node and add level.
-                var descriptions = edge.map(dgNodeId => this.dGraph.describeDGNode(dgNodeId));
-                descriptions.forEach(desc => desc.level = this.marking.getLevel(desc.nodeId));
-                var edgeDescription : any = {level: Infinity, nodeDescriptions: descriptions};
-                var max2 = (a, b) => Math.max(a,b);
+                hyperEdge.forEach(targetNode => {
+                    targetNode.level = this.marking.getLevel(targetNode);
+                });
+                    
+                var edgeDescription : any = {level: Infinity, nodeDescriptions: hyperEdge};
+                // var max2 = (a, b) => Math.max(a,b);
                 //Set max level for each hyperedge description
-                edgeDescription.level = descriptions.reduce((maxDesc, otherDesc) => {
+                edgeDescription.level = hyperEdge.reduce((maxDesc, otherDesc) => {
                     return otherDesc.level > maxDesc.level ? otherDesc : maxDesc;
                 }).level;
+                
                 return edgeDescription;
             });
 
@@ -860,12 +874,13 @@ module Activity {
         }
 
         private getBestAIChoice(minimizeLevel : boolean) : any {
-            var describedEdges = this.getChoices(this.currentDgNodeId);
+            var describedEdges = this.getChoices(this.dgNode);
 
             var isBetterFn = minimizeLevel ? ((x, y) => x.level < y.level) : ((x, y) => x.level > y.level);
             //Pick desired hyperedge
             var selectedHyperDescription = ArrayUtil.selectBest(describedEdges, isBetterFn);
             var selectedTargetDescription = ArrayUtil.selectBest(selectedHyperDescription.nodeDescriptions, isBetterFn);
+            console.log("edges: ", describedEdges ,"selectedHyper: ", selectedHyperDescription, "selectedTarget: ", selectedTargetDescription);
 
             // this.choiceDgNodeId = selectedTargetDescription.nodeId;
             return selectedTargetDescription;

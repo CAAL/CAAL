@@ -52,17 +52,6 @@ module DependencyGraph {
         newWithFormula(formula : hml.Formula) : MuCalculusNode {
             return new MuCalculusNode(this.process, formula, this.isMin);
         }
-
-        describeDGNode(dgNodeId : DgNodeId) : {nodeId: DgNodeId; process: ccs.Process; formula: hml.Formula} {
-            var data = this.constructData[dgNodeId],
-                process = data[0],
-                formula = data[1];
-            return {
-                nodeId: dgNodeId,
-                process: process,
-                formula: formula
-            };
-        }
     }
     
     var fuckingCount = 0;
