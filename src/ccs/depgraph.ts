@@ -53,7 +53,6 @@ module DependencyGraph {
             return new MuCalculusNode(this.process, formula, this.isMin);
         }
     }
-    var fuckingCount = 0;
     export class MuCalculusDG implements PartialDependencyGraph, hml.FormulaDispatchHandler<any> {
         private variableEdges = {};
         private maxFixPoints = {};
@@ -66,11 +65,6 @@ module DependencyGraph {
 
         getHyperEdges(node : MuCalculusNode) : Hyperedge[] {
             this.currentNode = node;
-            if (fuckingCount < 100) {
-            console.log("node then formula");
-            console.log(node.toString());
-                fuckingCount++;
-            }
             return node.formula.dispatchOn(this);
         }
         

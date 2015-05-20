@@ -23,8 +23,8 @@ module Equivalence {
             inverted **/
 
         private nextIdx;
-        private nodes = Object.create(null); //Reference to node ids already constructed.
-        private constructData = Object.create(null); //Data necessary to construct nodes.
+        private nodes = []; //Reference to node ids already constructed.
+        private constructData = []; //Data necessary to construct nodes.
         private leftPairs = {}; // leftPairs[P.id][Q.id] is a cache for solved process pairs.
         private isFullyConstructed = false;
 
@@ -542,13 +542,13 @@ module Equivalence {
 
     export class TraceDG implements dg.DependencyGraph {
 
-        private nextIdx : dg.DgNodeId;
+        private nextIdx : number;
         private constructData = [];
         private nodes = [];
         private leftPairs = {};
         private isFullyConstructed = false;
         
-        constructor(leftNode : number, rightNode : number, private attackSuccGen : ccs.SuccessorGenerator) {
+        constructor(leftNode : ccs.ProcessId, rightNode : ccs.ProcessId, private attackSuccGen : ccs.SuccessorGenerator) {
             this.constructData[0] = [0, null, leftNode, [rightNode]];
             this.nextIdx = 1;
         }
@@ -610,7 +610,7 @@ module Equivalence {
                     }
                 });
 
-                rightTargets.sort( function(a, b){return a-b} );
+                rightTargets.sort();
                 rightTargets = ArrayUtil.removeConsecutiveDuplicates(rightTargets);
 
                 if(this.leftPairs[leftTransition.targetProcess.id] === undefined)
