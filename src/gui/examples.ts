@@ -161,5 +161,16 @@ var examples : any[] = [
              "Lightswitch = (FastUser | Off) \\ {press};",
         properties:[],
         inputMode: "TCCS"
+    },
+    {
+        title: "Airbag",
+        ccs: "Driver = drive.Driver + drive.Crash;\n"+
+             "Crash  = 'crash.(inflate.Driver + 2.tau.0);\n\n"+
+             "GoodAirbag = crash.1.tau.'inflate.GoodAirbag;\n"+
+             "BadAirbag  = crash.3.tau.'inflate.BadAirbag;\n\n"+
+             "Impl = (Driver | GoodAirbag) \\ {crash, inflate};\n"+
+             "Spec = drive.Spec;",
+        properties:[],
+        inputMode: "TCCS"
     }
 ]

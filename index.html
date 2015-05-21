@@ -134,32 +134,56 @@
                                     <ul class="dropdown-menu">
                                         <li>
                                             <div class="yamm-content">
-                                                <div class="radio">
-                                                    <label>
-                                                        <input name="option-successor" value="strong" type="radio" checked>Strong Successors (&#x2192;)
-                                                    </label>
-                                                </div>
-                                                <div class="radio">
-                                                    <label>
-                                                        <input name="option-successor" value="weak" type="radio">Weak Successors (&#x21D2;)
-                                                    </label>
-                                                </div>
-                                                <div class="divider"></div>
-                                                <div class="radio">
-                                                    <label data-tooltip="collapse-none">
-                                                        <input name="option-collapse" value="none" type="radio" checked>No Bisimulation Collapse
-                                                    </label>
-                                                </div>
-                                                <div class="radio">
-                                                    <label data-tooltip="collapse-strong">
-                                                        <input name="option-collapse" value="strong" type="radio">Strong Bisimulation Collapse
-                                                    </label>
-                                                </div>
-                                                <div class="radio">
-                                                    <label data-tooltip="collapse-weak">
-                                                        <input name="option-collapse" value="weak" type="radio">Weak Bisimulation Collapse
-                                                    </label>
-                                                </div>
+                                                <span id="ccs-options">
+                                                    <div class="radio">
+                                                        <label>
+                                                            <input name="option-ccs-successor" value="strong" type="radio" checked>Strong Successors (&#x2192;)
+                                                        </label>
+                                                    </div>
+                                                    <div class="radio">
+                                                        <label>
+                                                            <input name="option-ccs-successor" value="weak" type="radio">Weak Successors (&#x21D2;)
+                                                        </label>
+                                                    </div>
+                                                    <div class="divider"></div>
+                                                    <div class="radio">
+                                                        <label data-tooltip="collapse-none">
+                                                            <input name="option-collapse" value="none" type="radio" checked>No Bisimulation Collapse
+                                                        </label>
+                                                    </div>
+                                                    <div class="radio">
+                                                        <label data-tooltip="collapse-strong">
+                                                            <input name="option-collapse" value="strong" type="radio">Strong Bisimulation Collapse
+                                                        </label>
+                                                    </div>
+                                                    <div class="radio">
+                                                        <label data-tooltip="collapse-weak">
+                                                            <input name="option-collapse" value="weak" type="radio">Weak Bisimulation Collapse
+                                                        </label>
+                                                    </div>
+                                                </span>
+                                                <span id="tccs-options">
+                                                    <div class="radio">
+                                                        <label>
+                                                            <input name="option-tccs-successor" value="strong" data-time="timed" type="radio" checked>Strong Timed Successors (&#x2192;)
+                                                        </label>
+                                                    </div>
+                                                    <div class="radio">
+                                                        <label>
+                                                            <input name="option-tccs-successor" value="strong" data-time="untimed" type="radio">Strong Untimed Successors (&#x2192;<sub>u</sub>)
+                                                        </label>
+                                                    </div>
+                                                    <div class="radio">
+                                                        <label>
+                                                            <input name="option-tccs-successor" value="weak" data-time="timed" type="radio">Weak Timed Successors (&#x21D2;)
+                                                        </label>
+                                                    </div>
+                                                    <div class="radio">
+                                                        <label>
+                                                            <input name="option-tccs-successor" value="weak" data-time="untimed" type="radio">Weak Untimed Successors (&#x21D2;<sub>u</sub>)
+                                                        </label>
+                                                    </div>
+                                                </span>
                                                 <div class="divider"></div>
                                                 <div class="checkbox">
                                                     <label>
@@ -397,15 +421,15 @@
             </div>
         </div>
    
-        <div class="modal fade" id="explain-dialog" tabindex="-1">
+        <div class="modal fade" id="message-box" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                        <h4 class="modal-title" id="explain-dialog-title"></h4>
+                        <h4 class="modal-title" id="message-box-title"></h4>
                     </div>
                     <div class="modal-body">
-                        <p id="explain-dialog-body-par"></p>
+                        <p id="message-box-body"></p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>

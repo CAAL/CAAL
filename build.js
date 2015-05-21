@@ -20,6 +20,9 @@ pegjs(tccsGrammar, _P('src/ccs/tccs_grammar.pegjs'), 'TCCSParser');
 var hmlGrammar = _P('lib/hml_grammar.js');
 pegjs(hmlGrammar, _P('src/ccs/hml_grammar.pegjs'), 'HMLParser', ["--allowed-start-rules", "start,TopFormula"]);
 
+var thmlGrammar = _P('lib/thml_grammar.js');
+pegjs(thmlGrammar, _P('src/ccs/thml_grammar.pegjs'), 'THMLParser', ["--allowed-start-rules", "start,TopFormula"]);
+
 // util.js
 var utilTargetFile = _P('lib/util.js');
 var utilSourceFiles = getFilesMatchingGlob('src/util/*.ts');
@@ -42,7 +45,7 @@ var workerVerifier = _P('lib/workers/verifier.js');
 createTscFileTask(workerVerifier, [_P('src/workers/verifier.ts')]);
 
 // build ace
-task('ace-integration', [ccsTargetFile, ccsGrammar, tccsGrammar, hmlGrammar], function () {
+task('ace-integration', [ccsTargetFile, ccsGrammar, tccsGrammar, hmlGrammar, thmlGrammar], function () {
     jake.mkdirP('modules/ace/lib/ace/mode/ccs');
     var moduleHeader = 'define(function(require, exports, module) {\n';
         toWrap = [
@@ -51,7 +54,8 @@ task('ace-integration', [ccsTargetFile, ccsGrammar, tccsGrammar, hmlGrammar], fu
             {source: ccsTargetFile, header: moduleHeader + 'var ArrayUtil = require("./util").ArrayUtil;\n', target: _P('modules/ace/lib/ace/mode/ccs/ccs.js'), footer: '\nmodule.exports.CCS = CCS; module.exports.HML = HML; module.exports.TCCS = TCCS; });'},
             {source: ccsGrammar, header: moduleHeader, target: _P('modules/ace/lib/ace/mode/ccs/ccs_grammar.js'), footer: '\nmodule.exports.CCSParser = CCSParser; });'},
             {source: tccsGrammar, header: moduleHeader, target: _P('modules/ace/lib/ace/mode/ccs/tccs_grammar.js'), footer: '\nmodule.exports.TCCSParser = TCCSParser; });'},
-            {source: hmlGrammar, header: moduleHeader, target: _P('modules/ace/lib/ace/mode/ccs/hml_grammar.js'), footer: '\nmodule.exports.HMLParser = HMLParser; });'}
+            {source: hmlGrammar, header: moduleHeader, target: _P('modules/ace/lib/ace/mode/ccs/hml_grammar.js'), footer: '\nmodule.exports.HMLParser = HMLParser; });'},
+            {source: thmlGrammar, header: moduleHeader, target: _P('modules/ace/lib/ace/mode/ccs/thml_grammar.js'), footer: '\nmodule.exports.THMLParser = THMLParser; });'}
         ];
     toWrap.forEach(function (data) {
         fs.writeFileSync(data.target, data.header);
@@ -69,7 +73,7 @@ var mainTargetFile = _P('lib/main.js');
 var mainSourceFiles = ['src/main.ts'].map(_P);
 createTscFileTask(mainTargetFile, mainSourceFiles, {definitionFile: true, sourceMap: true}, 'Compile Main', addVersion);
 
-task('grammars', [ccsGrammar, tccsGrammar, hmlGrammar]);
+task('grammars', [ccsGrammar, tccsGrammar, hmlGrammar, thmlGrammar]);
 
 task('all', [dataTargetFile, utilTargetFile, 'grammars', ccsTargetFile, 'ace', workerVerifier, mainTargetFile], function() {
     console.log('Done Building');
