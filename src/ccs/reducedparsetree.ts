@@ -280,8 +280,8 @@ module Traverse {
     }
     
     export class WeakSuccessorGenerator extends AbstractingSuccessorGenerator {
-        constructor(strictSuccGenerator : ccs.SuccessorGenerator, addLoops : boolean, cache?) {
-            super(new ccs.Action("tau", false), addLoops, strictSuccGenerator, cache);
+        constructor(strictSuccGenerator : ccs.SuccessorGenerator, cache?) {
+            super(new ccs.Action("tau", false), true, strictSuccGenerator, cache);
         }
     }
 
