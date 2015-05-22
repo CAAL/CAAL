@@ -30,7 +30,7 @@ messageHandlers.program = data => {
 };
 
 messageHandlers.isStronglyBisimilar = data => {
-    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, succGen: "strong", reduce: true}),
+    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "strong", reduce: true}),
         defendSuccGen = attackSuccGen,
         leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
         rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
@@ -41,8 +41,8 @@ messageHandlers.isStronglyBisimilar = data => {
 };
 
 messageHandlers.isWeaklyBisimilar = data => {
-    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, succGen: "strong", reduce: true}),
-        defendSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, succGen: "weak", reduce: true}),
+    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "strong", reduce: true}),
+        defendSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "weak", reduce: true}),
         leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
         rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
         isBisimilar = Equivalence.isBisimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
@@ -51,7 +51,7 @@ messageHandlers.isWeaklyBisimilar = data => {
 };
 
 messageHandlers.isStronglySimilar = data => {
-    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, succGen: "strong", reduce: true}),
+    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "strong", reduce: true}),
         defendSuccGen = attackSuccGen,
         leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
         rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
@@ -61,8 +61,8 @@ messageHandlers.isStronglySimilar = data => {
 };
 
 messageHandlers.isWeaklySimilar = data => {
-    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, succGen: "strong", reduce: true}),
-        defendSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, succGen: "weak", reduce: true}),
+    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "strong", reduce: true}),
+        defendSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "weak", reduce: true}),
         leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
         rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
         isSimilar = Equivalence.isSimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id);
@@ -71,7 +71,7 @@ messageHandlers.isWeaklySimilar = data => {
 };
 
 messageHandlers.isStronglyTraceIncluded = data => {
-    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, succGen: "strong", reduce: true});
+    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "strong", reduce: true});
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
@@ -87,7 +87,7 @@ messageHandlers.isStronglyTraceIncluded = data => {
 };
 
 messageHandlers.isWeaklyTraceIncluded = data => {
-    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, succGen: "weak", reduce: true});
+    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "weak", reduce: true});
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
@@ -103,7 +103,7 @@ messageHandlers.isWeaklyTraceIncluded = data => {
 };
 
 messageHandlers.isStronglyTraceEq = data => {
-    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, succGen: "strong", reduce: true});
+    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "strong", reduce: true});
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
@@ -114,7 +114,7 @@ messageHandlers.isStronglyTraceEq = data => {
 };
 
 messageHandlers.isWeaklyTraceEq = data => {
-    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, succGen: "weak", reduce: true});
+    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "weak", reduce: true});
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
@@ -157,8 +157,8 @@ messageHandlers.checkFormulaForVariable = data => {
 };
 
 messageHandlers.findDistinguishingFormula = data => {
-    var strongSuccGen = CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
-        weakSuccGen = data.succGenType === "weak" ? CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true}) : strongSuccGen,
+    var strongSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "strong", reduce: true}),
+        weakSuccGen = data.succGenType === "weak" ? CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "weak", reduce: true}) : strongSuccGen,
         leftProcess = strongSuccGen.getProcessByName(data.leftProcess),
         rightProcess = strongSuccGen.getProcessByName(data.rightProcess);
         var bisimilarDg = new Equivalence.BisimulationDG(strongSuccGen, weakSuccGen, leftProcess.id, rightProcess.id),
