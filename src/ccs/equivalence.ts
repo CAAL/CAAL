@@ -536,7 +536,7 @@ module Equivalence {
             if (leftProcessId != rightProcessId) {
                 bisimDG.addReachablePairs(rightProcessId);
             }
-            var marking = dg.liuSmolkaGlobal(bisimDG);
+            var marking = dg.solveDgGlobalLevel(bisimDG);
             return bisimDG.getBisimulationCollapse(marking, attackSuccGen.getGraph());
         }
 
