@@ -135,3 +135,28 @@ QUnit.test("Nested fixed points", function ( assert ) {
     assert.ok(checkFormulaForVariable(lts, "S", formulaStr, "Y"), "Y should hold for S");
     assert.ok(!checkFormulaForVariable(lts, "T", formulaStr, "Y"), "Y should not hold for T");
 });
+
+
+QUnit.test("Distinguishing Formula Greedy Simplication", function ( assert ) {
+    var program = [
+                    "P = a.(c.0 + d.0);",
+                    "Q = a.b.0 + a.c.0;"
+            ].join('\n'),
+        leftProcess = "P",
+        rightProcess = "Q";
+
+    var graph = new CCSParser.parse(program, {ccs: CCS}),
+        strongSuccGen = ccs.getSuccGenerator(graph, {succGen: "strong", reduce: true}),
+        weakSuccGen = new tvs.WeakSuccessorGenerator(strongSuccGen),
+        leftProcess = strongSuccGen.getProcessByName(leftProcess),
+        rightProcess = strongSuccGen.getProcessByName(rightProcess),
+        bisimilarDg = new Equivalence.BisimulationDG(strongSuccGen, weakSuccGen, leftProcess.id, rightProcess.id),
+        marking = DependencyGraph.solveDgGlobalLevel(bisimilarDg),
+        formula = bisimilarDg.findDistinguishingFormula(marking, false);
+        
+    var formulaSet = new HMLParser.parse("<a><d>T;", {ccs: CCS, hml: HML});
+    assert.ok(formula.id === formulaSet.getTopLevelFormulas()[0].id, "Simplified correctly vs (<a>(<c>T and <d>T);)");
+
+    hmlNotation = new Traverse.HMLNotationVisitor();
+    console.log(hmlNotation.visit(formula));
+});

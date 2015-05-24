@@ -375,8 +375,8 @@ module Traverse {
     /*
         This class should hold any simplications that can be done to the HML formulas.
 
-        Since simplifying conjunction and disjunction is done on construction of formulas,
-        this class currently only remove redundan taus.
+        This class currenly only remove redundant taus and simplifies conjunction
+        and disjunction with only one term.
     */
     export class HMLSimplifier implements hml.FormulaDispatchHandler<hml.Formula> {
 
@@ -384,24 +384,26 @@ module Traverse {
 
         visit(formulaSet : hml.FormulaSet) : hml.FormulaSet {
             this.prevSet = formulaSet;
-            return formulaSet.map(formula => formula.dispatchOn(this));
+            var result = formulaSet.map(formula => formula.dispatchOn(this));
+            this.prevSet = null;
+            return result;
         }
 
-        visitFormula(formula : hml.Formula) : hml.Formula {
-            var tempFormulaSet = new hml.FormulaSet();
-            tempFormulaSet.addFormula(formula);
-            tempFormulaSet = this.visit(tempFormulaSet);
-            return tempFormulaSet.getTopLevelFormulas()[0];
+        visitVariableFreeFormula(formula : hml.Formula) {
+            this.prevSet = new hml.FormulaSet();
+            var result = formula.dispatchOn(this);
+            this.prevSet = null;
+            return result;
         }
 
         dispatchDisjFormula(formula : hml.DisjFormula) {
             var subFormulas = formula.subFormulas.map(subF => subF.dispatchOn(this));
-            return this.prevSet.newDisj(subFormulas);
+            return subFormulas.length > 1 ? this.prevSet.newDisj(subFormulas) : subFormulas[0];
         }
 
         dispatchConjFormula(formula : hml.ConjFormula) {
             var subFormulas = formula.subFormulas.map(subF => subF.dispatchOn(this));
-            return this.prevSet.newConj(subFormulas);
+            return subFormulas.length > 1 ? this.prevSet.newConj(subFormulas) : subFormulas[0];
         }
 
         dispatchTrueFormula(formula : hml.TrueFormula) {
