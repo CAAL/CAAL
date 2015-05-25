@@ -52,13 +52,13 @@ module TCCS {
             super(delay, targetProcess);
         }
 
-        public equals(other : CCS.Transition) {
-            if (!(other instanceof DelayTransition)) {
-                return false;
-            }
-            
-            return (this.delay.equals((<DelayTransition>other).delay) && this.targetProcess.id === other.targetProcess.id);
-        }
+        // public equals(other : CCS.Transition) {
+        //     if (!(other instanceof DelayTransition)) {
+        //         return false;
+        //     }
+        //     console.log(other, this, (this.delay.equals((<DelayTransition>other).delay) && this.targetProcess.id === other.targetProcess.id));
+        //     return (this.delay.equals((<DelayTransition>other).delay) && this.targetProcess.id === other.targetProcess.id);
+        // }
 
         public toString() {
             if (this.targetProcess instanceof CCS.NamedProcess) {
@@ -409,7 +409,13 @@ module Traverse {
     
     export class UntimedSuccessorGenerator extends Traverse.AbstractingSuccessorGenerator {
         constructor(strictSuccGenerator : CCS.SuccessorGenerator, cache?) {
-            super(new TCCS.Delay(1), false, strictSuccGenerator, cache);
+            super([new TCCS.Delay(1)], true, strictSuccGenerator, cache);
+        }
+    }
+    
+    export class WeakUntimedSuccessorGenerator extends Traverse.AbstractingSuccessorGenerator {
+        constructor(strictSuccGenerator : CCS.SuccessorGenerator, cache?) {
+            super([new CCS.Action("tau", false), new TCCS.Delay(1)], true, strictSuccGenerator, cache);
         }
     }
 }
