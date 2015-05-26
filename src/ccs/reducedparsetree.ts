@@ -126,14 +126,20 @@ module Traverse {
         return compareAction(left.action, right.action);
     }
 
-    var tauAction = new ccs.Action("tau", false);
-
-    export class WeakSuccessorGenerator implements ccs.SuccessorGenerator {
-
+    export class AbstractingSuccessorGenerator implements ccs.SuccessorGenerator {
+        
+        private abstraction : ccs.Action;
+        private addLoop : boolean;
+        public strictSuccGenerator : ccs.SuccessorGenerator;
+        public cache;
+        
         private fromTable : MapUtil.Map<FullTransition, FromData> =
                 new MapUtil.OrderedMap<FullTransition, FromData>(compareTransitionTuple);
 
-        constructor(public strictSuccGenerator : ccs.SuccessorGenerator,  public cache?) {
+        constructor(abstraction : ccs.Action, addLoop : boolean, strictSuccGenerator : ccs.SuccessorGenerator, cache?) {
+            this.abstraction = abstraction;
+            this.addLoop = addLoop;
+            this.strictSuccGenerator = strictSuccGenerator;
             this.cache = cache || {};
         }
 
@@ -154,9 +160,9 @@ module Traverse {
 
             
             //Manuall add tau loop to from set:  P ==tau=> P, by P -- tau -> P
-            var sourceFullTransition = new FullTransition(processId, tauAction, processId);
+            var sourceFullTransition = new FullTransition(processId, this.abstraction, processId);
             if (!this.fromTable.has(sourceFullTransition)) {
-                var sourceFromData = new FromData(null, tauAction, processId);
+                var sourceFromData = new FromData(null, this.abstraction, processId);
                 this.fromTable.set(sourceFullTransition, sourceFromData);
             }
 
@@ -171,9 +177,13 @@ module Traverse {
                 visitingAction,
                 strongSuccessors;
             
-            //Add  P --tau--> P
-            result.add(new ccs.ActionTransition(new ccs.Action("tau", false), process));
-
+            if (this.addLoop) {
+                //Add  P --tau--> P
+                result.add(new ccs.Transition(this.abstraction, process));
+            }
+            
+            var abstractions = 1;
+            
             //Stage 1
             //Find all --tau-->* and
             //     all --tau-->*  --x-->
@@ -181,7 +191,7 @@ module Traverse {
                 visitingProcess = toVisitProcesses.pop();
                 if (!visitedStage1[visitingProcess.id]) {
                     visitedStage1[visitingProcess.id] = true;
-                    var prevFromData = this.fromTable.get(new FullTransition(processId, tauAction, visitingProcess.id));
+                    var prevFromData = this.fromTable.get(new FullTransition(processId, this.abstraction, visitingProcess.id));
                     strongSuccessors = this.strictSuccGenerator.getSuccessors(visitingProcess.id);
                     strongSuccessors.forEach(transition => {
 
@@ -192,7 +202,10 @@ module Traverse {
                             this.fromTable.set(fullTransition, fromData);
                         }
 
-                        if (transition.action.getLabel() === "tau") {
+                        if (transition.action.getLabel() === this.abstraction.getLabel()) {
+                            if (this.abstraction.getLabel() === "Delay") {
+                                transition.action = new TCCS.Delay(abstractions++);
+                            }
                             toVisitProcesses.push(transition.targetProcess);
                             result.add(transition);  // --tau--> x
                         } else {
@@ -215,7 +228,7 @@ module Traverse {
                     visitedStage2[visitingAction][visitingProcess.id] = true;
                     strongSuccessors = this.strictSuccGenerator.getSuccessors(visitingProcess.id);
                     strongSuccessors.forEach(transition => {
-                        if (transition.action.getLabel() === "tau") {
+                        if (transition.action.getLabel() === this.abstraction.getLabel()) {
 
                             var fullTransition = new FullTransition(processId, visitingAction, transition.targetProcess.id);
                             if (!this.fromTable.has(fullTransition)) {
@@ -225,7 +238,7 @@ module Traverse {
 
                             toVisitStage2Processes.push(transition.targetProcess);
                             toVisitStage2Actions.push(visitingAction);
-                            var newTransition = new ccs.ActionTransition(visitingAction, transition.targetProcess) 
+                            var newTransition = new ccs.Transition(visitingAction, transition.targetProcess) 
                             result.add(newTransition);
                         }
                     });
@@ -245,7 +258,7 @@ module Traverse {
             var fromData = this.fromTable.get(new FullTransition(fromId, action, toId));
             if (!fromData) throw "Do not call getStrictPath with unknown data.";
             do {
-                path.push(new ccs.ActionTransition(fromData.action, succGen.getProcessById(fromData.toId)));
+                path.push(new ccs.Transition(fromData.action, succGen.getProcessById(fromData.toId)));
                 fromData = fromData.prev;
             } while (fromData && fromData.toId !== fromId);
 
@@ -255,14 +268,20 @@ module Traverse {
             var result = path.map(transition => {
                 var resultTransition = transition;
                 if (hasNonTau) {
-                    resultTransition = new ccs.ActionTransition(tauAction, transition.targetProcess);
-                } else if (!tauAction.equals(transition.action)) {
+                    resultTransition = new ccs.Transition(this.abstraction, transition.targetProcess);
+                } else if (!this.abstraction.equals(transition.action)) {
                     hasNonTau = true;
                 }
                 return resultTransition;
             });
 
             return result;
+        }
+    }
+    
+    export class WeakSuccessorGenerator extends AbstractingSuccessorGenerator {
+        constructor(strictSuccGenerator : ccs.SuccessorGenerator, cache?) {
+            super(new ccs.Action("tau", false), true, strictSuccGenerator, cache);
         }
     }
 

@@ -184,11 +184,13 @@ module Property {
             this.startTimer();
             
             var program = this.project.getCCS();
+            var inputMode = InputMode[this.project.getInputMode()];
             this.worker = new Worker("lib/workers/verifier.js");
             
             this.worker.postMessage({
                 type: "program",
-                program: program
+                program: program,
+                inputMode: inputMode
             });
             
             this.worker.postMessage(this.getWorkerMessage());

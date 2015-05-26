@@ -1,7 +1,6 @@
 {
-  "name": "ccs-workbench",
+  "name": "CAAL",
   "version": "0.0.1",
-  "description": "Workbench for CCS",
   "main": "",
   "dependencies": {
     "typescript": "1.4.x",

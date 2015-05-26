@@ -66,10 +66,10 @@ module Activity {
             var graph = Project.getInstance().getGraph();
 
             if (!graph) {
-                this.showExplainDialog("Syntax Error", "Your program contains one or more syntax errors.");
+                this.showMessageBox("Syntax Error", "Your program contains one or more syntax errors.");
                 return false;
             } else if (graph.getNamedProcesses().length === 0) {
-                this.showExplainDialog("No Named Processes", "There must be at least one named process in the program.");
+                this.showMessageBox("No Named Processes", "There must be at least one named process in the program.");
                 return false;
             }
 
@@ -592,7 +592,7 @@ module Activity {
 
         public AutoPlay(player : Player, exploreProcess? : Function) {
             if (player === Player.judge) throw "Judge may not auto play";
-            var minimizeLevel = player === Player.attacker;
+            var minimizeLevel = player === Player.defender;
             var choice = this.getBestAIChoice(minimizeLevel);
             
             var actionType = this.getNextActionType();
@@ -869,7 +869,7 @@ module Activity {
 
         private getBestAIChoice(minimizeLevel : boolean) : any {
             var describedEdges = this.getChoices(this.dgNode);
-
+            console.log(describedEdges);
             var isBetterFn = minimizeLevel ? ((x, y) => x.level < y.level) : ((x, y) => x.level > y.level);
             //Pick desired hyperedge
             var selectedHyperDescription = ArrayUtil.selectBest(describedEdges, isBetterFn);

@@ -53,8 +53,7 @@ module DependencyGraph {
             return new MuCalculusNode(this.process, formula, this.isMin);
         }
     }
-    
-    var fuckingCount = 0;
+
     export class MuCalculusDG implements PartialDependencyGraph, hml.FormulaDispatchHandler<any> {
         private variableEdges = {};
         private maxFixPoints = {};
@@ -67,11 +66,6 @@ module DependencyGraph {
 
         getHyperEdges(node : MuCalculusNode) : Hyperedge[] {
             this.currentNode = node;
-            if (fuckingCount < 100) {
-            console.log("node then formula");
-            console.log(node.toString());
-                fuckingCount++;
-            }
             return node.formula.dispatchOn(this);
         }
         
@@ -214,192 +208,107 @@ module DependencyGraph {
         getLevel(any) : number;
     }
 
-    export function liuSmolkaLocal2(m : DgNodeId, graph : PartialDependencyGraph) : LevelMarking {
-        var S_ZERO = 1, S_ONE = 2, S_BOTTOM = 3;
-
-        var Level = (function () {
-            var a = {};
-            var o = {
-                get: function(k) {
-                    return a[k] || Infinity;
-                },
-                set: function(k, level) {
-                    a[k] = level;
-                }
-            };
-            return o;
-        }());
+    export class MinFixedPointCalculator {
+        private Deps = Object.create(null);
+        private Level = Object.create(null);
+        private nodesToBeSolved = [];
         
-        // A[k]
-        var A = (function () {
-            var a = {};
-            var o = {
-                get: function(k) {
-                    return a[k] || S_BOTTOM;
-                },
-                set: function(k, status) {
-                    a[k] = status;
-                },
-                dump: function() {
-                    return a;
-                }
-            };
-            return o;
-        }());
+        BOTTOM = 1;
+        ZERO = 2;
+        ONE = 3;
 
-        // D[k]
-        var D = (function () {
-            var d = {};
-            var o = {
-                empty: function(k) {
-                    d[k] = [];
-                },
-                add: function(k, edgeL) {
-                    d[k] = d[k] || [];
-                    d[k].push(edgeL);
-                },
-                get: function(k) {
-                    return d[k] || [];
-                }
-            };
-            return o;
-        }());
-
-        function getSucc(k) {
-            return graph.getHyperEdges(k);
+        constructor(private nodeSuccGen) {
         }
 
-        function load(k) {
-            var l = getSucc(k);
-            while (l.length > 0) {
-                W.push([k, l.pop()]);
+        solve(solveNode?) : void {
+            var Level = this.Level;
+            var Deps = this.Deps;
+            var succGen = this.nodeSuccGen;
+            var W = [];
+
+            if (solveNode !== undefined) {
+                this.nodesToBeSolved.push(solveNode);
             }
-        }
 
-        A.set(m, S_ZERO);
-        D.empty(m);
-        var W = [];
-        load(m);
+            function load(node) {
+                var hyperedges = succGen(node);
+                for (var i=0; i < hyperedges.length; ++i) {
+                    W.push([node, hyperedges[i]]);
+                }
+            }
 
-        while (W.length > 0) {
-            var next = W.pop();
-            var k = next[0];
-            var l = next[1];
-            if (A.get(k) === S_ZERO) {
-                
-                var bestLevel : number = Level.get(k);
-                
-                if (l.length > 0) {
-                    var headL = l[l.length-1];
-                    while (l.length > 0 && A.get(headL) === S_ONE) {
-                        var v_prime = l.pop();
-                        headL = l[l.length-1];
-                        
-                        var level = Level.get(v_prime) + 1;
-                        if (level < bestLevel)
-                            bestLevel = level;
+            this.nodesToBeSolved.forEach(node => {
+                if (!Level[node]) { //Bottom
+                    Level[node] = Infinity; //Set ZERO
+                    Deps[node] = [];
+                }
+                load(node);
+            });
+
+            this.nodesToBeSolved = [];
+            
+            var BOTTOM = this.BOTTOM, ZERO = this.ZERO, ONE = this.ONE;
+            while (W.length > 0) {
+                var hEdge = W.pop();
+                var source = hEdge[0];
+                var tNodes = hEdge[1];
+                var numOnes = 0;
+                var maxTargetLevel = 0;
+                for (var i=0; i < tNodes.length; ++i) {
+                    var tNode = tNodes[i];
+                    var tNodeMarking = this.getMarking(tNode);
+                    if (tNodeMarking === ONE) {
+                        ++numOnes;
+                        maxTargetLevel = Math.max(maxTargetLevel, Level[tNode]);
+                    } else if (tNodeMarking === ZERO) {
+                        Deps[tNode].push(hEdge);
+                    } else {
+                        Level[tNode] = Infinity;
+                        Deps[tNode] = [hEdge];
+                        load(tNode);
                     }
                 }
-                if (l.length === 0) {
-                    A.set(k, S_ONE);
-                    W = W.concat(D.get(k));
-                    
-                    if (bestLevel === Infinity) bestLevel = 1;
-                    Level.set(k, bestLevel);
-                }
-                else if (A.get(headL) === S_ZERO) {
-                    D.add(headL, [k, l]);
-                }
-                else if (A.get(headL) === S_BOTTOM) {
-                    A.set(headL, S_ZERO);
-                    D.empty(headL);
-                    D.add(headL, [k, l]); //Missing in smolka paper
-                    load(headL);
+                //Check if improved levels. Also prevents cycle-induced infinity looping.
+                var sourceLevel = Level[source] || Infinity;
+                //No early exit since hyperedges of nodesToBeSolved-nodes may still be in W.
+                if (numOnes === tNodes.length && sourceLevel > (maxTargetLevel+1)) {
+                    Level[source] = maxTargetLevel+1;
+                    W = W.concat(Deps[source]);
                 }
             }
         }
-        return {
-            getMarking: function(dgNodeId : DgNodeId) {
-                return A.get(dgNodeId);
-            },
-            getLevel: function(dgNodeId : DgNodeId) {
-                return Level.get(dgNodeId);
-            },
-            ZERO: S_ZERO,
-            ONE: S_ONE,
-            UNKNOWN: S_BOTTOM
+
+        addNodeToBeSolved(node) {
+            this.nodesToBeSolved.push(node);
+        }
+
+        getMarking(node) : any {
+            var level = this.Level[node];
+            if (level == undefined) return this.BOTTOM;
+            return level === Infinity ? this.ZERO : this.ONE;
+        }
+
+        getLevel(node) : number {
+            var level = this.Level[node];
+            if (!level) throw "Level not found for node";
+            return level;
         }
     }
 
-    export function liuSmolkaGlobal(graph : DependencyGraph) : any {
-        var S_ZERO = 1, S_ONE = 2;
-        // A[k]
-        var A = (function () {
-            var a = {};
-            var o = {
-                get: function(k) {
-                    return a[k] || S_ZERO;
-                },
-                set: function(k, status) {
-                    a[k] = status;
-                }
-            };
-            return o;
-        }());
-
-        // D[k]
-        var D = (function () {
-            var d = {};
-            var o = {
-                empty: function(k) {
-                    d[k] = [];
-                },
-                add: function(k, edgeL) {
-                    d[k] = d[k] || [];
-                    d[k].push(edgeL);
-                },
-                get: function(k) {
-                    return d[k] || [];
-                }
-            };
-            return o;
-        }());
-
-        var W = [];
-        //Unpack hyperedges
-        graph.getAllHyperEdges().forEach(pair => {
-            var sourceNode = pair[0];
-            pair[1].forEach(hyperEdge => W.push([sourceNode, hyperEdge]));
-        });
-
-        while (W.length > 0) {
-            var next = W.pop();
-            var k = next[0];
-            var l = next[1];
-            if (A.get(k) === S_ZERO) {
-                if (l.length > 0) {
-                    var headL = l[l.length-1];
-                    while (l.length > 0 && A.get(headL) === S_ONE) {
-                        l.pop();
-                        headL = l[l.length-1];
-                    }
-                }
-                if (l.length === 0) {
-                    A.set(k, S_ONE);
-                    W = W.concat(D.get(k));
-                } else {
-                    D.add(headL, [k, l]);
-                }
-            }
-        }
+    /*
+        Backwards compatible
+    */
+    export function liuSmolkaLocal2(m : DgNodeId, graph : PartialDependencyGraph) : LevelMarking {
+        var calculator = new MinFixedPointCalculator(k => graph.getHyperEdges(k));
+        calculator.solve(m);
 
         return {
-            getMarking: function(dgNodeId : DgNodeId) {
-                return A.get(dgNodeId);
-            },
-            ZERO: S_ZERO,
-            ONE: S_ONE
-        }
+            getMarking: calculator.getMarking.bind(calculator),
+            getLevel: calculator.getLevel.bind(calculator),
+            ZERO: calculator.ZERO,
+            ONE: calculator.ONE,
+            UNKNOWN: calculator.BOTTOM
+        };
     }
 
     export function solveDgGlobalLevel(graph : DependencyGraph) : LevelMarking {

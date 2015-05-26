@@ -43,8 +43,7 @@ module Traverse {
                 .forEach(tSet => {
                     tSet.forEach(transition => {
                         var targetRepr = getRepresentative(transition.targetProcess.id);
-
-                        result.add(new ccs.ActionTransition(transition.action, targetRepr));
+                        result.add(new ccs.Transition(transition.action, targetRepr));
                     });
                 });
 
