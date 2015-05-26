@@ -319,7 +319,6 @@ module Activity {
             this.hmlGameLogic.setGamelogWriter((gameLogObject) => this.gamelog.printToGameLog(gameLogObject));
             
             this.computer = this.hmlGameLogic.getUniversalWinner();
-            console.log("AI role", this.computer);
             this.human = (this.computer === Player.attacker) ? Player.defender : Player.attacker;
 
             /* Gamelog */
@@ -566,11 +565,7 @@ module Activity {
             this.root = new dg.MuCalculusNode(this.state.process, this.state.formula, this.state.isMinGame)
             this.dgNode = this.root,
             this.dGraph = new dg.MuCalculusDG(strongSuccGen, weakSuccGen, formulaSet)
-            console.log("dgGraph: ",this.dGraph);
             this.marking = this.solveMuCalculus();
-            console.log(this.marking);
-            console.log("marking: ",this.marking.getMarking(this.root));
-            console.log("level: ",this.marking.getLevel(this.root));
         }
 
         private solveMuCalculus() : dg.LevelMarking{
@@ -850,7 +845,6 @@ module Activity {
 
         private getChoices(dgNode : dg.MuCalculusNode = this.dgNode) : any {
             var hyperEdges = this.dGraph.getHyperEdges(dgNode);
-            console.log("node: ", dgNode, "hyperedges: ", hyperEdges);
             //Due to the construction, all hyperedges are either of the
             //form [ [X], [Y], [Z], ...] or [ [X, Y, Z] ]
             var describedEdges = hyperEdges.map(hyperEdge => {
@@ -880,7 +874,6 @@ module Activity {
             //Pick desired hyperedge
             var selectedHyperDescription = ArrayUtil.selectBest(describedEdges, isBetterFn);
             var selectedTargetDescription = ArrayUtil.selectBest(selectedHyperDescription.nodeDescriptions, isBetterFn);
-            console.log("edges: ", describedEdges ,"selectedHyper: ", selectedHyperDescription, "selectedTarget: ", selectedTargetDescription);
 
             // this.choiceDgNodeId = selectedTargetDescription.nodeId;
             return selectedTargetDescription;
