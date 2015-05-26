@@ -155,7 +155,7 @@ QUnit.test("Distinguishing Formula Greedy Simplication", function ( assert ) {
         formula = bisimilarDg.findDistinguishingFormula(marking, false);
         
     var formulaSet = new HMLParser.parse("<a><d>T;", {ccs: CCS, hml: HML});
-    assert.ok(formula.id === formulaSet.getTopLevelFormulas()[0].id, "Simplified correctly vs (<a>(<c>T and <d>T);)");
+    assert.ok(formula.id === formulaSet.getTopLevelFormulas()[0].id, "Simplified correctly (<a>(<c>T and <d>T);) to <a><d>T");
 
     hmlNotation = new Traverse.HMLNotationVisitor();
     console.log(hmlNotation.visit(formula));
