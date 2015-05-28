@@ -214,7 +214,6 @@ module Equivalence {
                 if (count++ > maxCount) throw "Too many process pairs";
                 reachableProcessIds.push(iterator.next());
             }
-
             for (var leftIndex = 0; leftIndex < reachableProcessIds.length; ++leftIndex) {
                 for (var rightIndex = 0; rightIndex < reachableProcessIds.length; ++rightIndex) {
                     if (leftIndex != rightIndex) {
@@ -604,11 +603,7 @@ module Equivalence {
         return marking.getMarking(0) === marking.ZERO;
     }
 
-    export function getBisimulationCollapse(
-        attackSuccGen : ccs.SuccessorGenerator,
-        defendSuccGen : ccs.SuccessorGenerator,
-        leftProcessId,
-        rightProcessId) : Traverse.Collapse {
+    export function getBisimulationCollapse(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId) : Traverse.Collapse {
             var bisimDG = new Equivalence.BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId);
             bisimDG.addReachablePairs(leftProcessId);
             if (leftProcessId != rightProcessId) {

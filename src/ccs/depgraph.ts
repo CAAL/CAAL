@@ -49,6 +49,9 @@ module DependencyGraph {
         newWithProcess(process : ccs.Process) : MuCalculusNode {
             return new MuCalculusNode(process, this.formula, this.isMin);
         }
+        newWithMinMax(value : boolean) : MuCalculusNode {
+            return new MuCalculusNode(this.process, this.formula, value);
+        }
         newWithFormula(formula : hml.Formula) : MuCalculusNode {
             return new MuCalculusNode(this.process, formula, this.isMin);
         }

@@ -592,7 +592,7 @@ module Activity {
 
         public AutoPlay(player : Player, exploreProcess? : Function) {
             if (player === Player.judge) throw "Judge may not auto play";
-            var minimizeLevel = player === Player.defender;
+            var minimizeLevel = player === Player.defender; //TODO does this makes sense?
             var choice = this.getBestAIChoice(minimizeLevel);
             
             var actionType = this.getNextActionType();
@@ -730,7 +730,7 @@ module Activity {
                 
                 this.previousStates.push(this.state);
                 this.state = this.state.withFormula(hml.subFormula).withMinMax(true);
-                this.dgNode = this.dgNode.newWithFormula(hml.subFormula)
+                this.dgNode = this.dgNode.newWithFormula(hml.subFormula).newWithMinMax(true);
                 return hml.subFormula;
             }
             else if (hml instanceof HML.MaxFixedPointFormula) {
@@ -739,7 +739,7 @@ module Activity {
                 
                 this.previousStates.push(this.state);
                 this.state = this.state.withFormula(hml.subFormula).withMinMax(false);
-                this.dgNode = this.dgNode.newWithFormula(hml.subFormula)
+                this.dgNode = this.dgNode.newWithFormula(hml.subFormula).newWithMinMax(false);
                 return hml.subFormula;
             } 
             else if (hml instanceof HML.VariableFormula) {
@@ -869,7 +869,7 @@ module Activity {
 
         private getBestAIChoice(minimizeLevel : boolean) : any {
             var describedEdges = this.getChoices(this.dgNode);
-            console.log(describedEdges);
+            
             var isBetterFn = minimizeLevel ? ((x, y) => x.level < y.level) : ((x, y) => x.level > y.level);
             //Pick desired hyperedge
             var selectedHyperDescription = ArrayUtil.selectBest(describedEdges, isBetterFn);
