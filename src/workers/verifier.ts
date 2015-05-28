@@ -20,6 +20,9 @@ self.addEventListener("message", (event : MessageEvent) => {
 
 messageHandlers.program = data => {
     inputMode = data.inputMode;
+    if (!inputMode){
+        throw "language not defined."
+    }
     if (inputMode === "CCS") {
         graph = new CCS.Graph();
         CCSParser.parse(data.program, {ccs: CCS, graph: graph});

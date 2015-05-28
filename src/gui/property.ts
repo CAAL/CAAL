@@ -442,7 +442,8 @@ module Property {
             
             this.worker.postMessage({
                 type: "program",
-                program: program
+                program: program,
+                inputMode: InputMode[this.project.getInputMode()]
             });
             
             this.worker.postMessage({
@@ -506,7 +507,8 @@ module Property {
             
             this.worker.postMessage({
                 type: "program",
-                program: program
+                program: program,
+                inputMode: InputMode[this.project.getInputMode()]
             });
             
             this.worker.postMessage({
