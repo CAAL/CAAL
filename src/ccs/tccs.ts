@@ -409,13 +409,13 @@ module Traverse {
     
     export class UntimedSuccessorGenerator extends Traverse.AbstractingSuccessorGenerator {
         constructor(strictSuccGenerator : CCS.SuccessorGenerator, cache?) {
-            super([new TCCS.Delay(1)], true, strictSuccGenerator, cache);
+            super([new TCCS.Delay(1)], strictSuccGenerator, cache);
         }
     }
     
     export class WeakUntimedSuccessorGenerator extends Traverse.AbstractingSuccessorGenerator {
         constructor(strictSuccGenerator : CCS.SuccessorGenerator, cache?) {
-            super([new CCS.Action("tau", false), new TCCS.Delay(1)], true, strictSuccGenerator, cache);
+            super([new CCS.Action("tau", false), new TCCS.Delay(1)], strictSuccGenerator, cache);
         }
     }
 }
