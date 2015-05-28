@@ -818,21 +818,33 @@ module CCS {
         } else {
             succGenerator = new TCCS.StrictSuccessorGenerator(<TCCS.Graph> graph);
 
-            if (settings.time === "untimed") {
-                succGenerator = new Traverse.UntimedSuccessorGenerator(succGenerator);
-            }
-
             if (settings.reduce) {
                 treeReducer = new Traverse.TCCSProcessTreeReducer(<TCCS.Graph> graph);
             }
         }
 
+
         if (settings.reduce) {
             succGenerator = new Traverse.ReducingSuccessorGenerator(succGenerator, treeReducer);
         }
-
-        if (settings.succGen === "weak") {
-            succGenerator = new Traverse.WeakSuccessorGenerator(succGenerator);
+        
+        
+        if (settings.inputMode === "CCS") {
+            if (settings.succGen === "weak") {
+                succGenerator = new Traverse.WeakSuccessorGenerator(succGenerator);
+            }
+        } else {
+            if (settings.succGen === "weak") {
+                if (settings.time === "untimed") {
+                    succGenerator = new Traverse.WeakUntimedSuccessorGenerator(succGenerator);
+                } else {
+                    succGenerator = new Traverse.WeakSuccessorGenerator(succGenerator);
+                }
+            } else {
+                if (settings.time === "untimed") {
+                    succGenerator = new Traverse.UntimedSuccessorGenerator(succGenerator);
+                }
+            }
         }
 
         return succGenerator;

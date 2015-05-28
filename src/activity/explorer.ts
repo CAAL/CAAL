@@ -274,16 +274,12 @@ module Activity {
                 var row = $("<tr>");
                 var $actionTd = $("<td>");
                 
-                if (t instanceof CCS.Transition) {
-                    if (this.succGenerator instanceof Traverse.WeakSuccessorGenerator) {
-                        var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.succGenerator;
-                        var $action = Tooltip.wrap(t.action.toString());
-                        Tooltip.setTooltip($action, Tooltip.strongSequence(weakSuccGen, this.selectedProcess, t.action, t.targetProcess));
-                        $actionTd.append($action);
-                    } else {
-                        $actionTd.append(t.action.toString());
-                    }
-                } else if (t instanceof TCCS.DelayTransition) {
+                if (this.succGenerator instanceof Traverse.AbstractingSuccessorGenerator && !(this.succGenerator instanceof Traverse.WeakUntimedSuccessorGenerator)) {
+                    var abstractingSuccGen = <Traverse.AbstractingSuccessorGenerator>this.succGenerator;
+                    var $action = Tooltip.wrap(t.action.toString());
+                    Tooltip.setTooltip($action, Tooltip.strongSequence(abstractingSuccGen, this.selectedProcess, t.action, t.targetProcess));
+                    $actionTd.append($action);
+                } else {
                     $actionTd.append(t.action.toString());
                 }
 

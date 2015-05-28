@@ -274,7 +274,7 @@ module Activity {
             else if (options.gameType === "weaksim")
                 var gameType = "weak";
                 
-            this.succGen = CCS.getSuccGenerator(this.graph, {succGen: gameType, reduce: false});
+            this.succGen = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], succGen: gameType, reduce: false});
 
             if (drawLeft || !this.leftGraph.getNode(this.succGen.getProcessByName(options.leftProcess).id.toString())) {
                 this.clear(this.leftGraph);
@@ -290,7 +290,7 @@ module Activity {
                 this.toggleFreeze(this.rightGraph, false, this.$rightFreeze);
             }
             
-            var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
+            var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = this.succGen; //CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
 
             if (this.dgGame !== undefined) {this.dgGame.stopGame()};
@@ -340,7 +340,7 @@ module Activity {
             var result = Object.create(null),
                 queue = [[1, process]],
                 processed = [],
-                strongSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false}),
+                strongSuccGen = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], succGen: "strong", reduce: false}),
                 currentDepth, sourceProcess, hasTau;
 
             for (var i = 0; i < queue.length; i++) {

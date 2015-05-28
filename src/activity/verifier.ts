@@ -309,20 +309,21 @@ module Activity {
 
             switch(type) {
                 case "strong":
-                    property = new Property.StrongBisimulation({firstProcess: "", secondProcess: ""});
+                    property = new Property.StrongBisimulation({time: "", firstProcess: "", secondProcess: ""});
                     break;
                 case "weak":
-                    property = new Property.WeakBisimulation({firstProcess: "", secondProcess: ""});
+                    property = new Property.WeakBisimulation({time: "", firstProcess: "", secondProcess: ""});
                     break;
                 case "strongsim":
-                    property = new Property.StrongSimulation({firstProcess: "", secondProcess: ""});
+                    property = new Property.StrongSimulation({time: "", firstProcess: "", secondProcess: ""});
                     break;
                 case "weaksim":
-                    property = new Property.WeakSimulation({firstProcess: "", secondProcess: ""});
+                    property = new Property.WeakSimulation({time: "", firstProcess: "", secondProcess: ""});
                     break;
                 case "strongtraceinclusion":
                     property = new Property.StrongTraceInclusion(
                         {
+                            time: "",
                             firstHMLProperty: {process: "", topFormula: "", definitions: ""},
                             secondHMLProperty: {process: "", topFormula: "", definitions: ""}
                         });
@@ -330,15 +331,16 @@ module Activity {
                 case "weaktraceinclusion":
                     property = new Property.WeakTraceInclusion(
                         {
+                            time: "",
                             firstHMLProperty: {process: "", topFormula: "", definitions: ""}, 
                             secondHMLProperty: {process: "", topFormula: "", definitions: ""}
                         });
                     break;
                 case "strongtraceeq":
-                    property = new Property.StrongTraceEq({firstProcess: "", secondProcess: ""});
+                    property = new Property.StrongTraceEq({time: "", firstProcess: "", secondProcess: ""});
                     break;
                 case "weaktraceeq":
-                    property = new Property.WeakTraceEq({firstProcess: "", secondProcess: ""});
+                    property = new Property.WeakTraceEq({time: "", firstProcess: "", secondProcess: ""});
                     break;
                 case "hml":
                     property = new Property.HML({process: "", topFormula: "", definitions: ""});
@@ -346,6 +348,7 @@ module Activity {
                 case "distinguishing-strong":
                     property = new Property.DistinguishingBisimulationFormula(
                         {
+                            time: "",
                             firstHMLProperty: {process: "", topFormula: "", definitions: ""}, 
                             secondHMLProperty: {process: "", topFormula: "", definitions: ""},
                             succGenType: "strong"
@@ -354,6 +357,7 @@ module Activity {
                 case "distinguishing-weak":
                     property = new Property.DistinguishingBisimulationFormula(
                         {
+                            time: "",
                             firstHMLProperty: {process: "", topFormula: "", definitions: ""}, 
                             secondHMLProperty: {process: "", topFormula: "", definitions: ""},
                             succGenType: "weak"

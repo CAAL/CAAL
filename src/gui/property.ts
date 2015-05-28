@@ -341,12 +341,22 @@ module Property {
     export class Equivalence extends Property { // equivalence is a bad name, it also covers preorders
         public firstProcess : string;
         public secondProcess : string;
+        public time : string;
 
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(status);
             
+            this.time = options.time;
             this.firstProcess = options.firstProcess;
             this.secondProcess = options.secondProcess;
+        }
+        
+        public getTime() : string {
+            return this.time;
+        }
+        
+        public setTime(time : string) : void {
+            this.time = time;
         }
         
         public getFirstProcess() : string {
@@ -371,6 +381,7 @@ module Property {
             return {
                 type: this.getType(),
                 status: this.status,
+                time: this.time,
                 options : {
                     firstProcess: this.firstProcess,
                     secondProcess: this.secondProcess
@@ -381,6 +392,7 @@ module Property {
         protected getWorkerMessage() : any {
             return {
                 type: this.getWorkerHandler(),
+                time: this.time,
                 leftProcess: this.firstProcess,
                 rightProcess: this.secondProcess
             };
@@ -619,6 +631,7 @@ module Property {
     }
     
     export class DistinguishingFormula extends Property {
+        protected time : string;
         protected firstHMLProperty : Property.HML;
         protected secondHMLProperty : Property.HML;
         private isexpanded : boolean = true;
@@ -630,8 +643,17 @@ module Property {
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(status);
             
+            this.time = options.time;
             this.firstHMLProperty = new HML(options.firstHMLProperty);
             this.secondHMLProperty = new HML(options.secondHMLProperty);
+        }
+
+        public getTime() : string {
+            return this.time;
+        }
+        
+        public setTime(time : string) : void {
+            this.time = time;
         }
 
         public isExpanded(){
@@ -759,6 +781,7 @@ module Property {
             return {
                 type: "DistinguishingBisimulationFormula",
                 status: this.status,
+                time: this.time,
                 options : {
                     firstHMLProperty: this.firstHMLProperty.toJSON().options,
                     secondHMLProperty: this.secondHMLProperty.toJSON().options,
@@ -802,6 +825,7 @@ module Property {
         
         protected getWorkerMessage() : any {
             return {
+                time: this.time,
                 type: "findDistinguishingFormula",
                 leftProcess: this.firstHMLProperty.getProcess(),
                 rightProcess: this.secondHMLProperty.getProcess(),
@@ -834,6 +858,7 @@ module Property {
             return {
                 type: this.getType(),
                 status: this.status,
+                time: this.time,
                 options: {
                     firstHMLProperty: this.firstHMLProperty.toJSON().options,
                     secondHMLProperty: this.secondHMLProperty.toJSON().options
@@ -865,6 +890,7 @@ module Property {
         
         protected getWorkerMessage() : any {
             return {
+                time: this.time,
                 type: this.getWorkerHandler(),
                 leftProcess: this.firstHMLProperty.getProcess(),
                 rightProcess: this.secondHMLProperty.getProcess()

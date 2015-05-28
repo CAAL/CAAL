@@ -49,10 +49,10 @@ module Activity {
             return $element;
         }
         
-        static strongSequence(weakSuccGen : Traverse.WeakSuccessorGenerator, source : CCS.Process, action : CCS.Action, target : CCS.Process) : string {
+        static strongSequence(abstractingSuccGen : Traverse.AbstractingSuccessorGenerator, source : CCS.Process, action : CCS.Action, target : CCS.Process) : string {
             var graph = Project.getInstance().getGraph();
             var labelFor = graph.getLabel.bind(graph);
-            var strictPath = weakSuccGen.getStrictPath(source.id, action, target.id);
+            var strictPath = abstractingSuccGen.getStrictPath(source.id, action, target.id);
             var strongActions = labelFor(source);
             
             for (var i = 0; i < strictPath.length; i++) {
