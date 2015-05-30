@@ -258,7 +258,7 @@ module Activity {
             
             for (var propId in hmlFormulaSets){
                 var hmlvisitor = new Traverse.HMLNotationVisitor();
-                var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlFormulaSets[propId].getTopFormula()))
+                var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlFormulaSets[propId].getTopFormula())).slice(0, -1); //slice is used to remove the ";"
                 var optionsNode = $("<option></option>").attr("value", propId).append(formulaStr);
                 if(parseInt(propId) == selectedPropertyId) {
                     optionsNode.prop("selected", true);
@@ -325,9 +325,8 @@ module Activity {
             this.gamelog.reset();
             // print the intro
             var gameIntro = new GUI.Widget.GameLogObject(this.graph)
-            gameIntro.setTemplate("You are playing {0} in {1} HML game, and you will lose.")
+            gameIntro.setTemplate("You are playing {0} in HML game, and you will lose.")
             gameIntro.addLabel({text: (this.human === Player.defender ? "defender" : "attacker")});
-            gameIntro.addLabel({text: (this.isWeak ? "weak" : "strong")});
             this.gamelog.printToGameLog(gameIntro);
 
             this.refresh();
@@ -336,7 +335,8 @@ module Activity {
 
         private refresh() : void {
             /* Explores the currentProcess and updates the transitiontable with its successors transitions*/
-            
+            this.gamelog.deleteTempRows();
+
             var isGameOver = this.hmlGameLogic.isGameOver(),
             formula = this.hmlGameLogic.state.formula,
             process = this.hmlGameLogic.state.process,
@@ -352,7 +352,6 @@ module Activity {
             else {
                 var currentPlayer = this.hmlGameLogic.getCurrentPlayer();
                 if(currentPlayer === this.computer) {
-                    // TODO: make this work (so the computer always will play the correct choice.)
                     this.hmlGameLogic.AutoPlay(this.computer, (process) => {this.processExplorer.exploreProcess(process); this.processExplorer.focusOnProcess(process);});
                     this.refresh();
                 } 
@@ -374,26 +373,24 @@ module Activity {
             switch (winReason)
             {
                 case WinReason.minGameCycle: {
-                   gameLogObject.setTemplate("A cycle has been detected. You({0}) {1}!");
-                    gameLogObject.addLabel({text: (this.human === Player.attacker) ? "attacker" : "defender"});
-                    gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
+                   gameLogObject.setTemplate("A cycle in the context of {0} fixed point was detected. {1} wins!");
+                    gameLogObject.addLabel({text: "minimum"});
+                    gameLogObject.addLabel({text: (winner === Player.attacker) ? "attacker" : "defender"});
                     break;
                 }
                 case WinReason.maxGameCycle: {
-                    gameLogObject.setTemplate("A cycle has been detected. You({0}) {1}!");
-                    gameLogObject.addLabel({text: (this.human === Player.attacker) ? "attacker" : "defender"});
-                    gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
+                    gameLogObject.setTemplate("A cycle in the context of {0} fixed point was detected. {1} wins!");
+                    gameLogObject.addLabel({text: "maximum"});
+                    gameLogObject.addLabel({text: (winner === Player.attacker) ? "attacker" : "defender"});
                     break;
                 }
                 case WinReason.trueFormula: {
-                    gameLogObject.setTemplate("Reached true formula, {0}({1}) won!");
-                    gameLogObject.addLabel({text: (this.computer === winner) ? "the AI" : "you"});
+                    gameLogObject.setTemplate("The formula true has been reached, {0} wins!");
                     gameLogObject.addLabel({text: (winner === Player.attacker) ? "attacker" : "defender"});
                     break;
                 }
                 case WinReason.falseFormula: {
-                    gameLogObject.setTemplate("Reached false formula, {0}({1}) won!");
-                    gameLogObject.addLabel({text: (this.computer === winner) ? "the AI" : "you"});
+                    gameLogObject.setTemplate("The formula false has been reached, {0} wins!");
                     gameLogObject.addLabel({text: (winner === Player.attacker) ? "attacker" : "defender"});
                     break;
                 }
@@ -411,9 +408,6 @@ module Activity {
                     console.log("something went wrong");
                 }
             }
-
-            // gameLogObject.addLabel({text: gameLogObject.labelForProcess(this.hmlGameLogic.state.process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]})
-            // gameLogObject.addLabel({text: gameLogObject.labelForFormula(this.hmlGameLogic.state.formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
 
             gameLogObject.addWrapper({tag: "<p>"/*, attr: [{name: "class", value: "outro"}]*/});
             this.gamelog.printToGameLog(gameLogObject);
@@ -435,11 +429,20 @@ module Activity {
         }
 
         private prepareGuiForUserAction() {
+            var gameLogObject = new GUI.Widget.GameLogObject(this.graph);
             if(this.hmlGameLogic.getNextActionType() === ActionType.transition) {
+                gameLogObject.setTemplate("Select a transition")
+                gameLogObject.addWrapper({tag: "<p>", attr: [{name: "id", value: "temprow"}]});
+                this.gamelog.printToGameLog(gameLogObject);
+
                 this.setActionWidget(this.transitionTable) // set widget to be transition table
                 this.transitionTable.setTransitions(this.hmlGameLogic.state.process, this.hmlGameLogic.getAvailableTransitions());
             } 
             else if (this.hmlGameLogic.getNextActionType() === ActionType.formula) {
+                gameLogObject.setTemplate("Select a subformula")
+                gameLogObject.addWrapper({tag: "<p>", attr: [{name: "id", value: "temprow"}]});
+                this.gamelog.printToGameLog(gameLogObject);
+
                 this.setActionWidget(this.hmlselector) // set widget to be hml selector
                 var successorFormulas = this.hmlGameLogic.getAvailableFormulas(this.hmlGameLogic.state.formulaSet);
                 this.hmlselector.setFormula(successorFormulas);
@@ -615,7 +618,7 @@ module Activity {
             if (this.gameIsOver) throw "Game has ended";
 
             var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
-            gameLogPlay.setTemplate("{0} has chosen subformula {1}.")
+            gameLogPlay.setTemplate("{0} selected subformula {1}.")
             gameLogPlay.addWrapper({tag: "<p>"});
             gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
             gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
@@ -697,12 +700,12 @@ module Activity {
                 if (this.state.isMinGame) {
                     // minGame
                     this.gameIsOver = true;
-                    return new Pair(Player.attacker, WinReason.minGameCycle);
+                    return new Pair(Player.attacker, WinReason.minGameCycle); //winner
                 } 
                 else if (!this.state.isMinGame) {
                     // maxGame
                     this.gameIsOver = true;
-                    return new Pair(Player.defender, WinReason.maxGameCycle);
+                    return new Pair(Player.defender, WinReason.maxGameCycle); //winner
                 }
             }
 
@@ -750,14 +753,18 @@ module Activity {
                 var namedFormula = hmlFSet.formulaByName(hml.variable);
                 if (namedFormula) {
                     if (namedFormula instanceof HML.MinFixedPointFormula || namedFormula instanceof HML.MaxFixedPointFormula) {
+                        var isMinVariable = (namedFormula instanceof HML.MinFixedPointFormula);
                         var unfolded = this.JudgeUnfold(namedFormula, hmlFSet);
                         /* Gamelog */
                         var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
-                        gameLogPlay.setTemplate("We have unfolded {0} to {1}.")
+                        gameLogPlay.setTemplate("The variable {0} has been unfolded to {1}.<br>As {2} is defined as {3} fixed point,<br>a detected loop will become a win for {4}.")
                         gameLogPlay.addWrapper({tag: "<p>"});
                         gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(hml), tag:"<span>", attr: [{name: "class", value: "monospace"}]});
-                        // gameLogPlay.addLabel({text: " --> ", tag:"<span>", attr: [{name: "class", value: "monospace"}]});
                         gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(unfolded), tag:"<span>", attr: [{name: "class", value: "monospace"}]});
+                        gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(hml), tag:"<span>", attr: [{name: "class", value: "monospace"}]});
+                        gameLogPlay.addLabel({text: (isMinVariable ? "minimum" : "maximum")});
+                        gameLogPlay.addLabel({text: (isMinVariable ? "attacker" : "defender")});
+
                         this.writeToGamelog(gameLogPlay);
 
                         return unfolded;

@@ -35,6 +35,12 @@ module GUI.Widget {
             this.round = 0;
         }
 
+        public deleteTempRows() {
+            var $log = $(this.log);
+            var $temprows = $log.find("#temprow");
+            $temprows.remove()
+        }
+
         private newRound() {
             var $log = $(this.log);
             var $round = $("<h4></h4>").append("Round " + (++this.round).toString());
@@ -148,7 +154,7 @@ module GUI.Widget {
 
         public labelForFormula(formula : HML.Formula) : string {
             var hmlNotationVisitor = new Traverse.HMLNotationVisitor();
-            return Traverse.safeHtml(hmlNotationVisitor.visit(formula));
+            return Traverse.safeHtml(hmlNotationVisitor.visit(formula)).slice(0,-1); //slice is used to remove ";"
         }
     }
 }
