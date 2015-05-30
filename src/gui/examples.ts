@@ -166,8 +166,8 @@ var examples : any[] = [
         title: "Airbag",
         ccs: "Driver = drive.Driver + drive.Crash;\n"+
              "Crash  = 'crash.(inflate.Driver + 2.tau.0);\n\n"+
-             "GoodAirbag = crash.1.tau.'inflate.GoodAirbag;\n"+
-             "BadAirbag  = crash.3.tau.'inflate.BadAirbag;\n\n"+
+             "GoodAirbag = crash.1.'inflate.GoodAirbag;\n"+
+             "BadAirbag  = crash.3.'inflate.BadAirbag;\n\n"+
              "Impl = (Driver | GoodAirbag) \\ {crash, inflate};\n"+
              "Spec = drive.Spec;",
         properties:[],
