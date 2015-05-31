@@ -63,13 +63,20 @@ module Activity {
         }
 
         protected checkPreconditions(): boolean {
-            var graph = Project.getInstance().getGraph();
+            var project = Project.getInstance();
+            var graph = project.getGraph();
 
             if (!graph) {
                 this.showMessageBox("Syntax Error", "Your program contains one or more syntax errors.");
                 return false;
             } else if (graph.getNamedProcesses().length === 0) {
                 this.showMessageBox("No Named Processes", "There must be at least one named process in the program.");
+                return false;
+            }
+
+            var hmlFormulaSets = project.getFormulaSetsForProperties();
+            if (Object.keys(hmlFormulaSets).length === 0) {
+                this.showMessageBox("No hml formula defined", "There must be at least one HML formula defined in the verifier.");                
                 return false;
             }
 
