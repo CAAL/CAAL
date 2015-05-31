@@ -237,7 +237,8 @@ module Activity {
                     properties[i].setToolMenuOptions(this.generateToolMenuOptions(["edit", "delete"]));
                     propertyRows = properties[i].toTableRow();
                 }
-                else if (properties[i] instanceof Property.StrongTraceInclusion || properties[i] instanceof Property.WeakTraceInclusion || properties[i] instanceof Property.WeakTraceEq || properties[i] instanceof Property.StrongTraceEq) {
+                else if (properties[i] instanceof Property.StrongTraceInclusion || properties[i] instanceof Property.WeakTraceInclusion || 
+                         properties[i] instanceof Property.WeakTraceEq || properties[i] instanceof Property.StrongTraceEq) {
                     properties[i].setRowClickHandlers(this.generateRowClickHandlers(["description", "verify"]));
                     properties[i].setToolMenuOptions(this.generateToolMenuOptions(["edit", "delete"]));
                     propertyRows = properties[i].toTableRow();
