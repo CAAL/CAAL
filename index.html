@@ -64,8 +64,12 @@
                         <li id="edit-btn" class="active"><a>Edit</a></li>
                         <li id="explore-btn"><a>Explore</a></li>
                         <li id="verify-btn"><a>Verify</a></li>
-                        <li id="game-btn"><a>Games</a></li>
-                        <li id="hml-game-btn"><a>HML Games</a></li>
+                        <li><a>Games</a>
+                            <ul class="dropdown-menu">
+                                <li id="game-btn"><a>Equivalence games</a></li>
+                                <li id="hml-game-btn"><a>HML game</a></li>
+                            </ul>
+                        </li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right no-highlight">
                         <li button onclick="$('#about-dialog').modal('show');"><a>About</a></li>
