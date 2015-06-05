@@ -359,6 +359,13 @@ module Property {
             this.time = time;
         }
         
+        protected getTimeSubscript() : string {
+            if (this.project.getInputMode() === InputMode.CCS)
+                return "";
+            else
+                return "<sub>" + (this.time === "untimed" ? "u" : "t") + "</sub>";
+        }
+        
         public getFirstProcess() : string {
             return this.firstProcess;
         }
@@ -436,7 +443,7 @@ module Property {
         }
 
         public getDescription() : string {
-            return this.firstProcess + " &#8764; " + this.secondProcess;
+            return this.firstProcess + " &#8764;" + super.getTimeSubscript() + " " + this.secondProcess;
         }
 
         public getType() : string {
@@ -454,7 +461,7 @@ module Property {
         }
 
         public getDescription() : string {
-            return this.firstProcess + " &#8776; " + this.secondProcess;
+            return this.firstProcess + " &#8776;" + super.getTimeSubscript() + " " + this.secondProcess;
         }
         
         public getType() : string {
@@ -472,7 +479,7 @@ module Property {
         }
 
         public getDescription() : string {
-            return this.firstProcess + " sim<sub>&#8594;</sub> " + this.secondProcess;
+            return this.firstProcess + " sim<sub>&#8594;" + super.getTimeSubscript() +"</sub> " + this.secondProcess;
         }
         
         public getType() : string {
@@ -490,7 +497,7 @@ module Property {
         }
 
         public getDescription() : string {
-            return this.firstProcess + " sim<sub>&#8658;</sub> " + this.secondProcess;
+            return this.firstProcess + " sim<sub>&#8658;" + super.getTimeSubscript() + "</sub> " + this.secondProcess;
         }
         
         public getType() : string {
@@ -508,7 +515,7 @@ module Property {
         }
         
         public getDescription() : string {
-            return "Traces<sub>&#8594;</sub>(" + this.firstProcess + ") = Traces<sub>&#8594;</sub>(" + this.secondProcess + ")";
+            return "Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.firstProcess + ") = Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.secondProcess + ")";
         }
         
         public getType() : string {
@@ -526,7 +533,7 @@ module Property {
         }
         
         public getDescription() : string {
-            return "Traces<sub>&#8658;</sub>(" + this.firstProcess + ") = Traces<sub>&#8658;</sub>(" + this.secondProcess + ")";
+            return "Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.firstProcess + ") = Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.secondProcess + ")";
         }
         
         public getType() : string {
@@ -758,8 +765,27 @@ module Property {
     }
     
     export class TraceInclusion extends DistinguishingFormula {
+        public time : string;
+        
         constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
+            
+            this.time = options.time;
+        }
+        
+        public getTime() : string {
+            return this.time;
+        }
+        
+        public setTime(time : string) : void {
+            this.time = time;
+        }
+        
+        protected getTimeSubscript() : string {
+            if (this.project.getInputMode() === InputMode.CCS)
+                return "";
+            else
+                return "<sub>" + (this.time === "untimed" ? "u" : "t") + "</sub>";
         }
         
         public toJSON() : any {
@@ -832,7 +858,7 @@ module Property {
         }
         
         public getDescription() : string {
-            return "Traces<sub>&#8594;</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8594;</sub>(" + this.getSecondProcess() + ")";
+            return "Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.getSecondProcess() + ")";
         }
         
         public getType() : string {
@@ -850,7 +876,7 @@ module Property {
         }
         
         public getDescription() : string {
-            return "Traces<sub>&#8658;</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8658;</sub>(" + this.getSecondProcess() + ")";
+            return "Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.getSecondProcess() + ")";
         }
         
         public getType() : string {
