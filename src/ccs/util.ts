@@ -236,8 +236,8 @@ module Traverse {
             return result;
         }
     }
-    
-    function safeHtml(str : string) : string {
+
+    export function safeHtml(str : string) : string {
         var entities = {
             "&": "&amp;",
             "<": "&lt;",
@@ -257,7 +257,7 @@ module Traverse {
         }
 
         clearCache() {
-            this.cache = {};
+            this.cache = Object.create(null);
         }
 
         visit(formula : hml.Formula) {
@@ -306,7 +306,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "<" + 
-                    formula.actionMatcher.actionMatchingString() + ">" +
+                    formula.actionMatcher.toString() + ">" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -317,7 +317,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "[" + 
-                    formula.actionMatcher.actionMatchingString() + "]" +
+                    formula.actionMatcher.toString() + "]" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -328,7 +328,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "<<" + 
-                    formula.actionMatcher.actionMatchingString() + ">>" +
+                    formula.actionMatcher.toString() + ">>" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -339,7 +339,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "[[" + 
-                    formula.actionMatcher.actionMatchingString() + "]]" +
+                    formula.actionMatcher.toString() + "]]" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -372,11 +372,117 @@ module Traverse {
         }
     }
 
+    export class HMLSuccGenVisitor implements HML.FormulaVisitor<Array<HML.Formula>>, HML.FormulaDispatchHandler<Array<HML.Formula>> { 
+        private isFirst = true;
+
+        constructor(private hmlFormulaSet : HML.FormulaSet) {
+        }
+
+        visit(formula : HML.Formula) {
+            return formula.dispatchOn(this);
+        }
+
+        private isFirstFormula() : boolean {
+            if(this.isFirst){
+                this.isFirst = !this.isFirst;
+                return true;
+            }
+
+            return false;
+        }
+
+        dispatchDisjFormula(formula : HML.DisjFormula) {
+            return formula.subFormulas;
+        }
+
+        dispatchConjFormula(formula : HML.ConjFormula) {
+            return formula.subFormulas;
+        }
+
+        dispatchTrueFormula(formula : HML.TrueFormula) {
+            var result = [];
+
+            result.push(null);
+
+            return result;
+        }
+
+        dispatchFalseFormula(formula : HML.FalseFormula) {
+            var result = [];
+
+            result.push(null);
+
+            return result;
+        }
+
+        dispatchStrongExistsFormula(formula : HML.StrongExistsFormula) {
+            var result = [];
+            
+            result.push(formula.subFormula);
+
+            return result;
+        }
+
+        dispatchStrongForAllFormula(formula : HML.StrongForAllFormula) {
+            var result = [];
+                
+            result.push(formula.subFormula);
+
+            return result;
+        }
+
+        dispatchWeakExistsFormula(formula : HML.WeakExistsFormula) {
+            var result = []
+            
+            result.push(formula.subFormula);
+
+            return result;
+        }
+
+        dispatchWeakForAllFormula(formula : HML.WeakForAllFormula) {
+            var result = [];
+
+            result.push(formula.subFormula);
+
+            return result;
+        }
+
+        dispatchMinFixedPointFormula(formula : HML.MinFixedPointFormula) {
+            var result = [];
+           
+            result.push(formula.subFormula);
+
+            return result;
+        }
+
+        dispatchMaxFixedPointFormula(formula : HML.MaxFixedPointFormula) {
+            var result = [];
+            
+            result.push(formula.subFormula);
+        
+            return result;
+        }
+
+        dispatchVariableFormula(formula : HML.VariableFormula) {
+            var result = [];
+            var namedFormulaDef = <HML.MinFixedPointFormula | HML.MaxFixedPointFormula>this.hmlFormulaSet.formulaByName(formula.variable);
+
+            if (namedFormulaDef) {
+                result.push(namedFormulaDef.subFormula);
+            } 
+            else {
+                throw "HML variable " + formula.variable + " has no definition";
+            }
+        
+            return result;
+        }
+    }
+
     /*
         This class should hold any simplications that can be done to the HML formulas.
 
-        Since simplifying conjunction and disjunction is done on construction of formulas,
-        this class currently only remove redundan taus.
+        This class currenly only remove redundant taus and simplifies conjunction
+        and disjunction with only one term.
     */
     export class HMLSimplifier implements hml.FormulaDispatchHandler<hml.Formula> {
 
@@ -384,24 +490,26 @@ module Traverse {
 
         visit(formulaSet : hml.FormulaSet) : hml.FormulaSet {
             this.prevSet = formulaSet;
-            return formulaSet.map(formula => formula.dispatchOn(this));
+            var result = formulaSet.map(formula => formula.dispatchOn(this));
+            this.prevSet = null;
+            return result;
         }
 
-        visitFormula(formula : hml.Formula) : hml.Formula {
-            var tempFormulaSet = new hml.FormulaSet();
-            tempFormulaSet.addFormula(formula);
-            tempFormulaSet = this.visit(tempFormulaSet);
-            return tempFormulaSet.getAllFormulas()[0];
+        visitVariableFreeFormula(formula : hml.Formula) {
+            this.prevSet = new hml.FormulaSet();
+            var result = formula.dispatchOn(this);
+            this.prevSet = null;
+            return result;
         }
 
         dispatchDisjFormula(formula : hml.DisjFormula) {
             var subFormulas = formula.subFormulas.map(subF => subF.dispatchOn(this));
-            return this.prevSet.newDisj(subFormulas);
+            return subFormulas.length > 1 ? this.prevSet.newDisj(subFormulas) : subFormulas[0];
         }
 
         dispatchConjFormula(formula : hml.ConjFormula) {
             var subFormulas = formula.subFormulas.map(subF => subF.dispatchOn(this));
-            return this.prevSet.newConj(subFormulas);
+            return subFormulas.length > 1 ? this.prevSet.newConj(subFormulas) : subFormulas[0];
         }
 
         dispatchTrueFormula(formula : hml.TrueFormula) {

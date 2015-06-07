@@ -1,0 +1,18 @@
+div.widget-zoom-process-explorer {
+	border: 1px solid #e7e7e7;
+    overflow: auto;
+    position: relative;
+}
+
+div.widget-zoom-process-explorer input[type=range] {
+    position: absolute;
+    top: 15px;
+    left: 10px;
+    width: 100px;
+    cursor: pointer;
+}
+
+div.widget-zoom-process-explorer div.button-row {
+	top: 10px;
+    position: absolute;
+}

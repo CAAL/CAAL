@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "main": "",
   "dependencies": {
-    "typescript": ">=1.4",
+    "typescript": "1.4.x",
     "pegjs": "~0.8.0",
     "jake": "latest"
   },

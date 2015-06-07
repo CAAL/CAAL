@@ -106,6 +106,11 @@ module Activity {
                     id: "#property-playgame",
                     label: "Play",
                     click: (e) => this.playGame(e)
+                },
+                "distinguishing" : {
+                    id: "#property-distinguishing",
+                    label: "Distinguishing formula",
+                    click: (e) => this.generateDistinguishingFormula(e)
                 }
             };
 
@@ -232,13 +237,20 @@ module Activity {
                     properties[i].setToolMenuOptions(this.generateToolMenuOptions(["edit", "delete"]));
                     propertyRows = properties[i].toTableRow();
                 }
-                else if (properties[i] instanceof Property.StrongTraceInclusion || properties[i] instanceof Property.WeakTraceInclusion || properties[i] instanceof Property.WeakTraceEq || properties[i] instanceof Property.StrongTraceEq) {
+                else if (properties[i] instanceof Property.StrongTraceInclusion || properties[i] instanceof Property.WeakTraceInclusion || 
+                         properties[i] instanceof Property.WeakTraceEq || properties[i] instanceof Property.StrongTraceEq) {
                     properties[i].setRowClickHandlers(this.generateRowClickHandlers(["description", "verify"]));
                     properties[i].setToolMenuOptions(this.generateToolMenuOptions(["edit", "delete"]));
                     propertyRows = properties[i].toTableRow();
                 }
+                else if(properties[i] instanceof Property.StrongBisimulation || properties[i] instanceof Property.WeakBisimulation) { 
+                    /* Strong/Weak bisim*/
+                    properties[i].setRowClickHandlers(this.generateRowClickHandlers(["status", "description", "verify", "delete"]));
+                    properties[i].setToolMenuOptions(this.generateToolMenuOptions(["play", "edit", "delete", "distinguishing"]));
+                    propertyRows = properties[i].toTableRow();
+                }
                 else {
-                    /* Strong/Weak bisim and HML */
+                    /* HML */
                     properties[i].setRowClickHandlers(this.generateRowClickHandlers(["status", "description", "verify", "delete"]));
                     properties[i].setToolMenuOptions(this.generateToolMenuOptions(["play", "edit", "delete"]));
                     propertyRows = properties[i].toTableRow();
@@ -359,10 +371,14 @@ module Activity {
             this.editProperty({data: {property: property}});
         }
 
-        private playGame(e){
-            var property = e.data.property;
+        private playGame(e) : void {
+            var property =  <Property.Property>e.data.property;
+            
+            if(property.getStatus() != PropertyStatus.satisfied && property.getStatus() != PropertyStatus.unsatisfied) {
+                throw "Property has not yet been evaluated";
+            }
+
             if (property instanceof Property.Equivalence) {
-                if(property.status === PropertyStatus.satisfied || property.status === PropertyStatus.unsatisfied) {       
                     var equivalence = <Property.Equivalence> property,
                         gameType,
                         playerType = (equivalence.getStatus() === PropertyStatus.satisfied) ? "attacker" : "defender";
@@ -376,14 +392,48 @@ module Activity {
                     else
                         gameType = "weaksim";
                     
-                    var configuration = {
+                    var EquivConfiguration = {
                             gameType: gameType,
                             playerType: playerType,
                             leftProcess: equivalence.firstProcess,
                             rightProcess: equivalence.secondProcess
-                        };
-                    Main.activityHandler.selectActivity("game", configuration);
-                }
+                    };
+                    Main.activityHandler.selectActivity("game", EquivConfiguration);
+            } 
+            else if(property instanceof Property.HML) {
+                    var gameType : any = "strong";
+                    var formulaSetForProperty = this.project.getFormulaSetsForProperties()[property.getId()];
+                    var HmlConfiguration = Object.create(null),
+                        graph : ccs.Graph = this.project.getGraph();
+
+                    HmlConfiguration.succGen = CCS.getSuccGenerator(graph, {succGen: gameType, reduce: false});
+                    HmlConfiguration.processName = property.getProcess();
+                    HmlConfiguration.propertyId = property.getId();
+                    HmlConfiguration.formulaId = formulaSetForProperty.getTopFormula().id;
+                    HmlConfiguration.type = "not default";
+
+                    Main.activityHandler.selectActivity("hmlgame", HmlConfiguration);
+            } 
+            else {
+                throw "This kind of property is not playable.";
+            }
+        }
+
+        private generateDistinguishingFormula(e = null) : void {            
+            if (e) {
+                var property =  <Property.StrongBisimulation | Property.WeakBisimulation>e.data.property;
+                property.generateDistinguishingFormula((result) => this.generationEnded(result));
+            }
+        }
+
+        public generationEnded(result = null) { 
+            if (result) {
+                this.project.addProperty(result.firstProperty);
+                this.project.addProperty(result.secondProperty);
+                this.displayProperties();
+            } else {
+                this.displayProperties();
+                throw "result was empty."; 
             }
         }
 

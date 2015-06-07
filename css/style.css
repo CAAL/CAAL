@@ -1,3 +1,8 @@
+@import url("hml-game.css");
+@import url("widget.transition-table.css");
+@import url("widget.zoom-process-explorer.css");
+@import url("widget.hmlformula-selector.css");
+
 html, body {
     margin: 0;
     padding: 0;
@@ -125,9 +130,8 @@ textarea {
  * Activity styles
  */
 
-#editor-container, #explorer-container, #verifier-container, #game-container {
+#editor-container, #explorer-container, #verifier-container, #game-container, #hml-game-container {
     margin-bottom: 20px;
-    display: none;
 }
 
 #game-container:-webkit-full-screen {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
@@ -136,7 +140,6 @@ textarea {
 #game-container:-o-full-screen      {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
 #game-container:full-screen         {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
 #game-container:fullscreen          {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-
 
 /*
  * Editor activity styles
@@ -289,7 +292,7 @@ textarea {
 
 
 /*
- * Game activity styles
+ * Bisim Game activity styles
  */
 
 #game-options {
@@ -473,7 +476,6 @@ td.inconsolata{
 p.small {
   font-variant: small-caps;
 }
-
 
 /*
  *  Tooltip and popover styles

@@ -63,4 +63,18 @@ module ArrayUtil {
         return groupings;
     }
 
+    export function first<T>(arr : T[], pred : (T) => boolean) : T {
+        var result = null;
+
+        for (var i = 0; i < arr.length; i++) {
+            var element = arr[i];
+            if (pred(element)) {
+                result = element;
+                break;
+            }
+
+        }
+        return result;
+    } 
+
 }

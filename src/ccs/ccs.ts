@@ -11,13 +11,17 @@ module CCS {
     }
 
     export interface ProcessDispatchHandler<T> {
-        dispatchNullProcess(process : NullProcess, ... args) : T
-        dispatchNamedProcess(process : NamedProcess, ... args) : T
-        dispatchSummationProcess(process : SummationProcess, ... args) : T
-        dispatchCompositionProcess(process : CompositionProcess, ... args) : T
-        dispatchActionPrefixProcess(process : ActionPrefixProcess, ... args) : T
-        dispatchRestrictionProcess(process : RestrictionProcess, ... args) : T
-        dispatchRelabellingProcess(process : RelabellingProcess, ... args) : T
+        dispatchNullProcess(process : NullProcess, ... args) : T;
+        dispatchNamedProcess(process : NamedProcess, ... args) : T;
+        dispatchSummationProcess(process : SummationProcess, ... args) : T;
+        dispatchCompositionProcess(process : CompositionProcess, ... args) : T;
+        dispatchActionPrefixProcess(process : ActionPrefixProcess, ... args) : T;
+        dispatchRestrictionProcess(process : RestrictionProcess, ... args) : T;
+        dispatchRelabellingProcess(process : RelabellingProcess, ... args) : T;
+    }
+
+    export interface CollapsedDispatchHandler<T> extends ProcessDispatchHandler<T> {
+        dispatchCollapsedProcess(process : CollapsedProcess, ... args) : T
     }
 
     export interface CollapsedDispatchHandler<T> extends ProcessDispatchHandler<T> {
@@ -887,4 +891,22 @@ module CCS {
         };
         return iterator;
     }
+
+    export function expandBFS(process : Process, succGen : SuccessorGenerator, maxDepth : number) : {[id : number] : CCS.TransitionSet} {
+        var result : any = {},
+            queue = [[1, process]], //non-emptying array as queue.
+            depth, qIdx, fromProcess, transitions;
+        for (qIdx = 0; qIdx < queue.length; qIdx++) {
+            depth = queue[qIdx][0];
+            fromProcess = queue[qIdx][1];
+            result[fromProcess.id] = transitions = succGen.getSuccessors(fromProcess.id);
+            transitions.forEach(t => {
+                if (!result[t.targetProcess.id] && depth < maxDepth) {
+                    queue.push([depth + 1, t.targetProcess]);
+                }
+            });
+        }
+        return result;
+    }
+
 }

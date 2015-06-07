@@ -23,8 +23,8 @@ module Equivalence {
             inverted **/
 
         private nextIdx;
-        private nodes = Object.create(null); //Reference to node ids already constructed.
-        private constructData = Object.create(null); //Data necessary to construct nodes.
+        private nodes = []; //Reference to node ids already constructed.
+        private constructData = []; //Data necessary to construct nodes.
         private leftPairs = {}; // leftPairs[P.id][Q.id] is a cache for solved process pairs.
         private isFullyConstructed = false;
 
@@ -121,7 +121,7 @@ module Equivalence {
                 return result;
             }
             //Build the node.
-            var result = this.nextIdx++;
+            result = this.nextIdx++;
             if (!rightIds) this.leftPairs[leftId] = rightIds = {};
             rightIds[rightId] = result
             this.constructData[result] = [0, leftId, rightId];
@@ -145,6 +145,10 @@ module Equivalence {
             return hyperedges;
         }
 
+        /*
+            Returns information about the attackers options P -- alpha --> Q that the defender than have to match.
+            returns: the action, alpha, leading to Q, Q itself, the next DG node, type of move (0,1,2).
+        */
         public getAttackerOptions(dgNodeId : dg.DgNodeId) : [CCS.Action, CCS.Process, dg.DgNodeId, number][] {
             if (this.constructData[dgNodeId][0] !== 0)
                 throw "Bad node for attacker options";
@@ -153,6 +157,8 @@ module Equivalence {
             var result = [];
             
             hyperedges.forEach(hyperedge => {
+                //The dg nodes are constructed such that each hyperedge only have one target node.
+                //therefore no need to loop over the hyperedge.
                 var targetNode = hyperedge[0];
                 var data = this.constructData[targetNode];
                 var action = data[1];
@@ -170,6 +176,10 @@ module Equivalence {
             return result;
         }
         
+        /*
+            Similar to getAttackerOptions, but returns instead the process the other side
+            matched with and the resulting dependency graph node
+        */
         public getDefenderOptions(dgNodeId : dg.DgNodeId) : [CCS.Process, dg.DgNodeId][] {
             if (this.constructData[dgNodeId][0] === 0)
                 throw "Bad node for defender options";
@@ -204,7 +214,6 @@ module Equivalence {
                 if (count++ > maxCount) throw "Too many process pairs";
                 reachableProcessIds.push(iterator.next());
             }
-
             for (var leftIndex = 0; leftIndex < reachableProcessIds.length; ++leftIndex) {
                 for (var rightIndex = 0; rightIndex < reachableProcessIds.length; ++rightIndex) {
                     if (leftIndex != rightIndex) {
@@ -294,10 +303,10 @@ module Equivalence {
             }
         }
 
-        findDistinguishingFormula(marking : dg.LevelMarking, defendSuccGenType : string) : hml.Formula {
+        findDistinguishingFormula(marking : dg.LevelMarking, isWeak : boolean) : hml.Formula {
             var that = this,
-            formulaSet = new hml.FormulaSet(),
-            trace;
+                formulaSet = new hml.FormulaSet(),
+                trace;
             if (marking.getMarking(0) !== marking.ONE) throw "Error: Processes are bisimilar";
 
             function selectMinimaxLevel(node : dg.DgNodeId) {
@@ -328,16 +337,79 @@ module Equivalence {
                 return bestNode;
             }
 
+            //Remove terms in con/dis-junctions
+            var muDG = new dg.MuCalculusDG(this.attackSuccGen, this.defendSuccGen, formulaSet);
+            var minfpCalc = new dg.MinFixedPointCalculator(node => muDG.getHyperEdges(node));
+
+            function simplifyConjOrDisjunctions(processes : ccs.Process[], terms : hml.Formula[], mustSatisfy : boolean) {
+                if (terms.length < 2) return terms.slice();
+                var desiredMarking = mustSatisfy ? minfpCalc.ONE : minfpCalc.ZERO;
+                var table = Object.create(null);
+                
+                terms.forEach(t => {
+                    processes.forEach(p => {
+                        var node = new dg.MuCalculusNode(p, t, true);
+                        minfpCalc.solve(node);
+                        table[node.id] = minfpCalc.getMarking(node) === desiredMarking ? 1 : 0;
+                    });
+                });
+               
+                function fulfilledProcesses(term) {
+                    var result = [];
+                    processes.forEach(p => {
+                        var node = new dg.MuCalculusNode(p, term, true);
+                        if (table[node.id] === 1) {
+                            result.push(p);
+                        }
+                    });
+                    return result;
+                }
+
+                function clearProcs(procs) {
+                    terms.forEach(t => {
+                        procs.forEach(p => {
+                            var node = new dg.MuCalculusNode(p, t, true);
+                            table[node.id] = 0;
+                        });
+                    });
+                }
+
+                var resultTerms = [];
+                var fulfilledProcs = 0;
+                function greedySelect() {
+                    var fProcesses = terms.map(fulfilledProcesses);
+                    var scores = fProcesses.map(fprocs => fprocs.length);
+                    var bestTermIdx = 0;
+                    for (var i=1; i < terms.length; ++i) {
+                        if (scores[i] > scores[bestTermIdx]) bestTermIdx = i;
+                    }
+                    resultTerms.push(terms[bestTermIdx]);
+                    fulfilledProcs += scores[bestTermIdx];
+                    clearProcs(fProcesses[bestTermIdx]);
+                }
+                while (fulfilledProcs < processes.length) {
+                    greedySelect();
+                }
+                return resultTerms;
+            }
+
             //We use the internal implementation details
             //Hyperedges of type 0, have hyperedges of: [ [X], [Y], [Z] ]
             //Hyperedges of type 1/2, have the form: [ [P, Q, R, S, T] ]
-
             var selectSuccessor = selectMinimaxLevel;
             var existConstructor = (matcher, sub) => formulaSet.newStrongExists(matcher, sub);
             var forallConstructor = (matcher, sub) => formulaSet.newStrongForAll(matcher, sub);
-            if (defendSuccGenType === "weak") {
+            if (isWeak) {
                 existConstructor = (matcher, sub) => formulaSet.newWeakExists(matcher, sub);
                 forallConstructor = (matcher, sub) => formulaSet.newWeakForAll(matcher, sub);
+            }
+
+            var succGen = that.attackSuccGen;
+
+            function getTargetProcs(pairs, getRight : boolean) {
+                var index = getRight ? 2 : 1;
+                var procIds = pairs.map(node => that.constructData[node][index]);
+                return procIds.map(pId => succGen.getProcessById(pId));
             }
 
             function formulaForBranch(node : dg.DgNodeId) : hml.Formula {
@@ -350,6 +422,8 @@ module Equivalence {
                     var actionMatcher = new hml.SingleActionMatcher(cData[1]);
                     if (targetPairNodes.length > 0) {
                         var subFormulas = targetPairNodes.map(formulaForBranch);
+                        var subProcesses = getTargetProcs(targetPairNodes, true);
+                        subFormulas = simplifyConjOrDisjunctions(subProcesses, subFormulas, false);
                         return existConstructor(actionMatcher, formulaSet.newConj(subFormulas));
                     } else {
                         return existConstructor(actionMatcher, formulaSet.newTrue());
@@ -359,14 +433,17 @@ module Equivalence {
                     var actionMatcher = new hml.SingleActionMatcher(cData[1]);
                     if (targetPairNodes.length > 0) {
                         var subFormulas = targetPairNodes.map(formulaForBranch);
+                        var subProcesses = getTargetProcs(targetPairNodes, false);
+                        subFormulas = simplifyConjOrDisjunctions(subProcesses, subFormulas, true);
                         return forallConstructor(actionMatcher, formulaSet.newDisj(subFormulas));
                     } else {
                         return forallConstructor(actionMatcher, formulaSet.newFalse());
                     }
                 }
             }
-
-            return new Traverse.HMLSimplifier().visitFormula(formulaForBranch(0));
+            
+            var formula = formulaForBranch(0);
+            return new Traverse.HMLSimplifier().visitVariableFreeFormula(formula);
         }
     }
 
@@ -526,29 +603,25 @@ module Equivalence {
         return marking.getMarking(0) === marking.ZERO;
     }
 
-    export function getBisimulationCollapse(
-        attackSuccGen : ccs.SuccessorGenerator,
-        defendSuccGen : ccs.SuccessorGenerator,
-        leftProcessId,
-        rightProcessId) : Traverse.Collapse {
+    export function getBisimulationCollapse(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId) : Traverse.Collapse {
             var bisimDG = new Equivalence.BisimulationDG(attackSuccGen, defendSuccGen, leftProcessId, rightProcessId);
             bisimDG.addReachablePairs(leftProcessId);
             if (leftProcessId != rightProcessId) {
                 bisimDG.addReachablePairs(rightProcessId);
             }
-            var marking = dg.liuSmolkaGlobal(bisimDG);
+            var marking = dg.solveDgGlobalLevel(bisimDG);
             return bisimDG.getBisimulationCollapse(marking, attackSuccGen.getGraph());
         }
 
     export class TraceDG implements dg.DependencyGraph {
 
-        private nextIdx : dg.DgNodeId;
+        private nextIdx : number;
         private constructData = [];
         private nodes = [];
         private leftPairs = {};
         private isFullyConstructed = false;
         
-        constructor(leftNode : number, rightNode : number, private attackSuccGen : ccs.SuccessorGenerator) {
+        constructor(leftNode : ccs.ProcessId, rightNode : ccs.ProcessId, private attackSuccGen : ccs.SuccessorGenerator) {
             this.constructData[0] = [0, null, leftNode, [rightNode]];
             this.nextIdx = 1;
         }
@@ -610,7 +683,7 @@ module Equivalence {
                     }
                 });
 
-                rightTargets.sort( function(a, b){return a-b} );
+                rightTargets.sort();
                 rightTargets = ArrayUtil.removeConsecutiveDuplicates(rightTargets);
 
                 if(this.leftPairs[leftTransition.targetProcess.id] === undefined)

@@ -9,8 +9,8 @@ module DependencyGraph {
     import ccs = CCS;
     import hml = HML;
 
-    export type Hyperedge = Array<number>;
-    export type DgNodeId = number;
+    export type DgNodeId = any; //toString()-able
+    export type Hyperedge = Array<DgNodeId>;
 
     export function copyHyperEdges(hyperEdges : Hyperedge[]) : Hyperedge[] {
         var result = [];
@@ -34,286 +34,171 @@ module DependencyGraph {
         getDefenderOptions(dgNodeId : DgNodeId) : [CCS.Process, DgNodeId][];
     }
 
-    export class MuCalculusMinModelCheckingDG implements PartialDependencyGraph, PlayableDependencyGraph, hml.FormulaDispatchHandler<any> {
-        private TRUE_ID = 1;
-        private FALSE_ID = 2;
-        // the 0th index is set in the constructor.
-        // nodes[1] is tt, nodes[2] is ff - described by hyper edges.
-        private nodes = Object.create(null);
-        private constructData = Object.create(null);
-        private nextIdx;
+    export class MuCalculusNode {
+        constructor(public process : ccs.Process, public formula : hml.Formula, public isMin? : boolean) {
+            if (isMin == undefined) {
+                this.isMin = true;
+            }
+        }
+        toString() {
+            return [this.isMin ? "MIN" : "MAX", this.process.toString(), this.formula.toString()].join("@");
+        }
+        get id() {
+            return this.toString();
+        }
+        newWithProcess(process : ccs.Process) : MuCalculusNode {
+            return new MuCalculusNode(process, this.formula, this.isMin);
+        }
+        newWithMinMax(value : boolean) : MuCalculusNode {
+            return new MuCalculusNode(this.process, this.formula, value);
+        }
+        newWithFormula(formula : hml.Formula) : MuCalculusNode {
+            return new MuCalculusNode(this.process, formula, this.isMin);
+        }
+    }
+
+    export class MuCalculusDG implements PartialDependencyGraph, hml.FormulaDispatchHandler<any> {
         private variableEdges = {};
         private maxFixPoints = {};
-
-        private getForNodeId;
+        private currentNode : MuCalculusNode;
 
         constructor(private strongSuccGen : ccs.SuccessorGenerator,
                     private weakSuccGen : ccs.SuccessorGenerator,
-                    nodeId, private formulaSet : hml.FormulaSet, formula : hml.Formula) {
-            //Fill nodes with special values
-            this.nodes["0"] = undefined;
-            this.nodes["1"] = [ [] ];
-            this.nodes["2"] = [];
-            this.constructData[0] = [nodeId, formula];
-            this.nextIdx = 3;
-        }
-        
-        public getAttackerOptions(dgNodeId : DgNodeId) : [CCS.Action, CCS.Process, DgNodeId, number][] {
-            return undefined; //TODO
-        }
-        
-        public getDefenderOptions(dgNodeId : DgNodeId) : [CCS.Process, DgNodeId][] {
-            return undefined; //TODO
+                    private formulaSet : hml.FormulaSet) {
         }
 
-        getHyperEdges(identifier : DgNodeId) : Hyperedge[] {
-            var data, nodeId, formula, result;
-            if (this.nodes[identifier]) {
-                result = this.nodes[identifier];
-            } else {
-                data = this.constructData[identifier];
-                nodeId = data[0];
-                formula = data[1];
-                this.getForNodeId = nodeId;
-                result = formula.dispatchOn(this);
-                this.nodes[identifier] = result;
-            }
-            return copyHyperEdges(result);
+        getHyperEdges(node : MuCalculusNode) : Hyperedge[] {
+            this.currentNode = node;
+            return node.formula.dispatchOn(this);
         }
-
+        
         dispatchDisjFormula(formula : hml.DisjFormula) {
             var hyperEdges = [];
-            formula.subFormulas.forEach(subFormula => {
-                var newIndex = this.nextIdx++;
-                this.constructData[newIndex] = [this.getForNodeId, subFormula];
-                hyperEdges.push([newIndex]);
-            });
+            if (this.currentNode.isMin) {
+                formula.subFormulas.forEach(subFormula => {
+                    hyperEdges.push([this.currentNode.newWithFormula(subFormula)]);
+                });
+            } else {
+                var targetNodes = [];
+                formula.subFormulas.forEach(subFormula => {
+                    targetNodes.push(this.currentNode.newWithFormula(subFormula));
+                });
+                hyperEdges.push(targetNodes);
+            }
             return hyperEdges;
         }
 
         dispatchConjFormula(formula : hml.ConjFormula) {
-            var targetNodes = [];
-            formula.subFormulas.forEach(subFormula => {
-                var newIndex = this.nextIdx++;
-                this.constructData[newIndex] = [this.getForNodeId, subFormula];
-                targetNodes.push(newIndex);
-            });
+            var hyperEdges = [];
+            if (this.currentNode.isMin) {
+                var targetNodes = [];
+                formula.subFormulas.forEach(subFormula => {
+                    targetNodes.push(this.currentNode.newWithFormula(subFormula));
+                });
+                hyperEdges.push(targetNodes);
+            } else {
+                formula.subFormulas.forEach(subFormula => {
+                    hyperEdges.push([this.currentNode.newWithFormula(subFormula)]);
+                });
+            }
             //Return single hyperedge
-            return [targetNodes];
+            return hyperEdges;
         }
 
         dispatchTrueFormula(formula : hml.TrueFormula) {
-            return this.nodes[this.TRUE_ID];
+            //Hyperedge with no targets
+            if (this.currentNode.isMin) {
+                return [[]];
+            } else {
+                return [];
+            }
         }
 
         dispatchFalseFormula(formula : hml.FalseFormula) {
-            return this.nodes[this.FALSE_ID];
+            //No hyperedges
+            if (this.currentNode.isMin) {
+                return [];
+            } else {
+                return [[]];
+            }
         }
 
         private existsFormula(formula, succGen : ccs.SuccessorGenerator) {
-            var hyperedges = [],
-            transitionSet = succGen.getSuccessors(this.getForNodeId);
+            var hyperEdges = [],
+                transitionSet = succGen.getSuccessors(this.currentNode.process.id);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
-                    var newIdx = this.nextIdx++;
-                    this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
-                    hyperedges.push([newIdx]);
+                    hyperEdges.push([new MuCalculusNode(transition.targetProcess, formula.subFormula, this.currentNode.isMin)]);
                 }
             });
-            return hyperedges;            
+            return hyperEdges;            
         }
 
         private forallFormula(formula, succGen : ccs.SuccessorGenerator) {
-            var hyperedges = [],
-            transitionSet = succGen.getSuccessors(this.getForNodeId);
+            var targetNodes = [],
+                transitionSet = succGen.getSuccessors(this.currentNode.process.id);
             transitionSet.forEach(transition => {
                 if (formula.actionMatcher.matches(transition.action)) {
-                    var newIdx = this.nextIdx++;
-                    this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
-                    hyperedges.push(newIdx);
+                    targetNodes.push(new MuCalculusNode(transition.targetProcess, formula.subFormula, this.currentNode.isMin));
                 }
             });
-            return [hyperedges];
-        }
-
-        dispatchStrongExistsFormula(formula : hml.StrongExistsFormula) {
-            return this.existsFormula(formula, this.strongSuccGen);
-        }
-
-        dispatchStrongForAllFormula(formula : hml.StrongForAllFormula) {
-            return this.forallFormula(formula, this.strongSuccGen);
-        }
-
-        dispatchWeakExistsFormula(formula : hml.WeakExistsFormula) {
-            return this.existsFormula(formula, this.weakSuccGen);
-        }
-
-        dispatchWeakForAllFormula(formula : hml.WeakForAllFormula) {
-            return this.forallFormula(formula, this.weakSuccGen);
-        }
-
-        dispatchMinFixedPointFormula(formula : hml.MinFixedPointFormula) {
-            return formula.subFormula.dispatchOn(this);
-        }
-
-        dispatchMaxFixedPointFormula(formula : hml.MaxFixedPointFormula) {
-            var maxDg = new MuCalculusMaxModelCheckingDG(this.strongSuccGen, this.weakSuccGen, this.getForNodeId, this.formulaSet, formula);
-            var marking = solveMuCalculusInternal(maxDg);
-            return marking.getMarking(0) === marking.ZERO ? this.nodes[this.TRUE_ID] : this.nodes[this.FALSE_ID];
-        }
-
-        dispatchVariableFormula(formula : hml.VariableFormula) {
-            var key = this.getForNodeId + "@" + formula.variable;
-            var variableEdge = this.variableEdges[key];
-            if (variableEdge) return [[variableEdge]];
-            this.variableEdges[key] = variableEdge = this.nextIdx++;
-            this.constructData[variableEdge] = [this.getForNodeId, this.formulaSet.formulaByName(formula.variable)];
-            return [[variableEdge]];
-        }
-    }
-
-    class MuCalculusMaxModelCheckingDG implements PartialDependencyGraph, hml.FormulaDispatchHandler<any> {
-        private TRUE_ID = 1;
-        private FALSE_ID = 2;
-        // the 0th index is set in the constructor.
-        // nodes[1] is tt, nodes[2] is ff - described by hyper edges.
-        private nodes = Object.create(null);
-        private constructData = {};
-        private nextIdx;
-        private variableEdges = {};
-        private maxFixPoints = {};
-
-        private getForNodeId;
-
-        constructor(private strongSuccGen : ccs.SuccessorGenerator, 
-                    private weakSuccGen : ccs.SuccessorGenerator,
-                    nodeId, private formulaSet : hml.FormulaSet, formula : hml.Formula) {
-            this.nodes["0"] = undefined;
-            this.nodes["1"] = [ [] ];
-            this.nodes["2"] = [];
-
-            this.constructData[0] = [nodeId, formula];
-            this.nextIdx = 3;
-        }
-
-        getHyperEdges(identifier : DgNodeId) : Hyperedge[] {
-            var data, nodeId, formula, result;
-            if (this.nodes[identifier]) {
-                result = this.nodes[identifier];
-            } else {
-                data = this.constructData[identifier];
-                nodeId = data[0];
-                formula = data[1];
-                //Prevents having to pass around the node identifier.
-                this.getForNodeId = nodeId;
-                result = formula.dispatchOn(this);
-                this.nodes[identifier] = result;
-            }
-            return copyHyperEdges(result);
-        }
-
-        /* Remember Max fixed point - dependency graph should be "inverted" */
-        dispatchDisjFormula(formula : hml.DisjFormula) {
-            var targetNodes = [];
-            formula.subFormulas.forEach(subFormula => {
-                var newIndex = this.nextIdx++;
-                this.constructData[newIndex] = [this.getForNodeId, subFormula];
-                targetNodes.push(newIndex);
-            });
-            //Return single hyperedge
             return [targetNodes];
         }
 
-        dispatchConjFormula(formula : hml.ConjFormula) {
-            var hyperEdges = [];
-            formula.subFormulas.forEach(subFormula => {
-                var newIndex = this.nextIdx++;
-                this.constructData[newIndex] = [this.getForNodeId, subFormula];
-                hyperEdges.push([newIndex]);
-            });
-            return hyperEdges;
-        }
-
-        dispatchTrueFormula(formula : hml.TrueFormula) {
-            return this.nodes[this.FALSE_ID];
-        }
-
-        dispatchFalseFormula(formula : hml.FalseFormula) {
-            return this.nodes[this.TRUE_ID];
-        }
-
-        private existsFormula(formula : any, succGen : ccs.SuccessorGenerator) {
-            var hyperedges = [],
-            transitionSet = succGen.getSuccessors(this.getForNodeId);
-            transitionSet.forEach(transition => {
-                if (formula.actionMatcher.matches(transition.action)) {
-                    var newIdx = this.nextIdx++;
-                    this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
-                    hyperedges.push(newIdx);
-                }
-            });
-            return [hyperedges];
-        }
-
-        private forallFormula(formula : any, succGen : ccs.SuccessorGenerator) {
-            var hyperedges = [],
-            transitionSet = succGen.getSuccessors(this.getForNodeId);
-            transitionSet.forEach(transition => {
-                if (formula.actionMatcher.matches(transition.action)) {
-                    var newIdx = this.nextIdx++;
-                    this.constructData[newIdx] = [transition.targetProcess.id, formula.subFormula];
-                    hyperedges.push([newIdx]);
-                }
-            });
-            return hyperedges;
-        }
-
         dispatchStrongExistsFormula(formula : hml.StrongExistsFormula) {
-            return this.existsFormula(formula, this.strongSuccGen);
+            return this.currentNode.isMin ? this.existsFormula(formula, this.strongSuccGen) : this.forallFormula(formula, this.strongSuccGen);
         }
 
         dispatchStrongForAllFormula(formula : hml.StrongForAllFormula) {
-            return this.forallFormula(formula, this.strongSuccGen);
+            return this.currentNode.isMin ? this.forallFormula(formula, this.strongSuccGen) : this.existsFormula(formula, this.strongSuccGen);
         }
 
         dispatchWeakExistsFormula(formula : hml.WeakExistsFormula) {
-            return this.existsFormula(formula, this.weakSuccGen);
+            return this.currentNode.isMin ? this.existsFormula(formula, this.weakSuccGen) : this.forallFormula(formula, this.weakSuccGen);
         }
 
         dispatchWeakForAllFormula(formula : hml.WeakForAllFormula) {
-            return this.forallFormula(formula, this.weakSuccGen);
+            return this.currentNode.isMin ? this.forallFormula(formula, this.weakSuccGen) : this.existsFormula(formula, this.weakSuccGen);
         }
 
         dispatchMinFixedPointFormula(formula : hml.MinFixedPointFormula) {
-            var minDg = new MuCalculusMinModelCheckingDG(this.strongSuccGen, this.weakSuccGen, this.getForNodeId, this.formulaSet, formula);
-            var marking = solveMuCalculusInternal(minDg);
-            return marking.getMarking(0) === marking.ZERO ? this.nodes[this.TRUE_ID] : this.nodes[this.FALSE_ID];
+            if (this.currentNode.isMin) {
+                return formula.subFormula.dispatchOn(this);
+            } else {
+                var minNode = new MuCalculusNode(this.currentNode.process, formula.subFormula, true);
+                var minDg = new MuCalculusDG(this.strongSuccGen, this.weakSuccGen, this.formulaSet);
+                var marking = solveMuCalculusInternal(minDg, minNode);
+                return marking.getMarking(minNode) === marking.ZERO ? [[]] : [];
+            }
         }
-
+        //X max= <<a>>[[b]]X and Y;
         dispatchMaxFixedPointFormula(formula : hml.MaxFixedPointFormula) {
-            return formula.subFormula.dispatchOn(this);
+            if (!this.currentNode.isMin) {
+                return formula.subFormula.dispatchOn(this);
+            } else {
+                var maxNode = new MuCalculusNode(this.currentNode.process, formula.subFormula, false);
+                var maxDg = new MuCalculusDG(this.strongSuccGen, this.weakSuccGen, this.formulaSet);
+                var marking = solveMuCalculusInternal(maxDg, maxNode);
+                return marking.getMarking(maxNode) === marking.ONE ? [] : [[]];
+            }
         }
 
         dispatchVariableFormula(formula : hml.VariableFormula) {
-            var key = this.getForNodeId + "@" + formula.variable;
-            var variableEdge = this.variableEdges[key];
-            if (variableEdge) return [[variableEdge]];
-            variableEdge = this.nextIdx++;
-            this.variableEdges[key] = variableEdge;
-            this.constructData[variableEdge] = [this.getForNodeId, this.formulaSet.formulaByName(formula.variable)];
-            return [[variableEdge]];
+            return [[this.currentNode.newWithFormula(this.formulaSet.formulaByName(formula.variable))]];
         }
     }
 
-    function solveMuCalculusInternal(dg : PartialDependencyGraph) : any {
-        var marking = liuSmolkaLocal2(0, dg);
+    function solveMuCalculusInternal(dg : PartialDependencyGraph, node : MuCalculusNode) : any {
+        var marking = liuSmolkaLocal2(node, dg);
         return marking;
     }
 
     export function solveMuCalculus(formulaSet, formula, strongSuccGen, weakSuccGen, processId) : boolean {
-        var dg = new MuCalculusMinModelCheckingDG(strongSuccGen, weakSuccGen, processId, formulaSet, formula),
-        marking = solveMuCalculusInternal(dg);
-        return marking.getMarking(0) === marking.ONE;
+        var process = strongSuccGen.getProcessById(processId),
+            node = new MuCalculusNode(process, formula, true), //Use minimal environment for the nil environment
+            dg = new MuCalculusDG(strongSuccGen, weakSuccGen, formulaSet),
+            marking = solveMuCalculusInternal(dg, node);
+        return marking.getMarking(node) === marking.ONE;
     }
     
     export interface Marking {
@@ -326,192 +211,107 @@ module DependencyGraph {
         getLevel(any) : number;
     }
 
-    export function liuSmolkaLocal2(m : DgNodeId, graph : PartialDependencyGraph) : LevelMarking {
-        var S_ZERO = 1, S_ONE = 2, S_BOTTOM = 3;
-
-        var Level = (function () {
-            var a = {};
-            var o = {
-                get: function(k) {
-                    return a[k] || Infinity;
-                },
-                set: function(k, level) {
-                    a[k] = level;
-                }
-            };
-            return o;
-        }());
+    export class MinFixedPointCalculator {
+        private Deps = Object.create(null);
+        private Level = Object.create(null);
+        private nodesToBeSolved = [];
         
-        // A[k]
-        var A = (function () {
-            var a = {};
-            var o = {
-                get: function(k) {
-                    return a[k] || S_BOTTOM;
-                },
-                set: function(k, status) {
-                    a[k] = status;
-                },
-                dump: function() {
-                    return a;
-                }
-            };
-            return o;
-        }());
+        BOTTOM = 1;
+        ZERO = 2;
+        ONE = 3;
 
-        // D[k]
-        var D = (function () {
-            var d = {};
-            var o = {
-                empty: function(k) {
-                    d[k] = [];
-                },
-                add: function(k, edgeL) {
-                    d[k] = d[k] || [];
-                    d[k].push(edgeL);
-                },
-                get: function(k) {
-                    return d[k] || [];
-                }
-            };
-            return o;
-        }());
-
-        function getSucc(k) {
-            return graph.getHyperEdges(k);
+        constructor(private nodeSuccGen) {
         }
 
-        function load(k) {
-            var l = getSucc(k);
-            while (l.length > 0) {
-                W.push([k, l.pop()]);
+        solve(solveNode?) : void {
+            var Level = this.Level;
+            var Deps = this.Deps;
+            var succGen = this.nodeSuccGen;
+            var W = [];
+
+            if (solveNode !== undefined) {
+                this.nodesToBeSolved.push(solveNode);
             }
-        }
 
-        A.set(m, S_ZERO);
-        D.empty(m);
-        var W = [];
-        load(m);
+            function load(node) {
+                var hyperedges = succGen(node);
+                for (var i=0; i < hyperedges.length; ++i) {
+                    W.push([node, hyperedges[i]]);
+                }
+            }
 
-        while (W.length > 0) {
-            var next = W.pop();
-            var k = next[0];
-            var l = next[1];
-            if (A.get(k) === S_ZERO) {
-                
-                var bestLevel : number = Level.get(k);
-                
-                if (l.length > 0) {
-                    var headL = l[l.length-1];
-                    while (l.length > 0 && A.get(headL) === S_ONE) {
-                        var v_prime = l.pop();
-                        headL = l[l.length-1];
-                        
-                        var level = Level.get(v_prime) + 1;
-                        if (level < bestLevel)
-                            bestLevel = level;
+            this.nodesToBeSolved.forEach(node => {
+                if (!Level[node]) { //Bottom
+                    Level[node] = Infinity; //Set ZERO
+                    Deps[node] = [];
+                }
+                load(node);
+            });
+
+            this.nodesToBeSolved = [];
+            
+            var BOTTOM = this.BOTTOM, ZERO = this.ZERO, ONE = this.ONE;
+            while (W.length > 0) {
+                var hEdge = W.pop();
+                var source = hEdge[0];
+                var tNodes = hEdge[1];
+                var numOnes = 0;
+                var maxTargetLevel = 0;
+                for (var i=0; i < tNodes.length; ++i) {
+                    var tNode = tNodes[i];
+                    var tNodeMarking = this.getMarking(tNode);
+                    if (tNodeMarking === ONE) {
+                        ++numOnes;
+                        maxTargetLevel = Math.max(maxTargetLevel, Level[tNode]);
+                    } else if (tNodeMarking === ZERO) {
+                        Deps[tNode].push(hEdge);
+                    } else {
+                        Level[tNode] = Infinity;
+                        Deps[tNode] = [hEdge];
+                        load(tNode);
                     }
                 }
-                if (l.length === 0) {
-                    A.set(k, S_ONE);
-                    W = W.concat(D.get(k));
-                    
-                    if (bestLevel === Infinity) bestLevel = 1;
-                    Level.set(k, bestLevel);
-                }
-                else if (A.get(headL) === S_ZERO) {
-                    D.add(headL, [k, l]);
-                }
-                else if (A.get(headL) === S_BOTTOM) {
-                    A.set(headL, S_ZERO);
-                    D.empty(headL);
-                    D.add(headL, [k, l]); //Missing in smolka paper
-                    load(headL);
+                //Check if improved levels. Also prevents cycle-induced infinity looping.
+                var sourceLevel = Level[source] || Infinity;
+                //No early exit since hyperedges of nodesToBeSolved-nodes may still be in W.
+                if (numOnes === tNodes.length && sourceLevel > (maxTargetLevel+1)) {
+                    Level[source] = maxTargetLevel+1;
+                    W = W.concat(Deps[source]);
                 }
             }
         }
-        return {
-            getMarking: function(dgNodeId : DgNodeId) {
-                return A.get(dgNodeId);
-            },
-            getLevel: function(dgNodeId : DgNodeId) {
-                return Level.get(dgNodeId);
-            },
-            ZERO: S_ZERO,
-            ONE: S_ONE,
-            UNKNOWN: S_BOTTOM
+
+        addNodeToBeSolved(node) {
+            this.nodesToBeSolved.push(node);
+        }
+
+        getMarking(node) : any {
+            var level = this.Level[node];
+            if (level == undefined) return this.BOTTOM;
+            return level === Infinity ? this.ZERO : this.ONE;
+        }
+
+        getLevel(node) : number {
+            var level = this.Level[node];
+            if (!level) throw "Level not found for node";
+            return level;
         }
     }
 
-    export function liuSmolkaGlobal(graph : DependencyGraph) : any {
-        var S_ZERO = 1, S_ONE = 2;
-        // A[k]
-        var A = (function () {
-            var a = {};
-            var o = {
-                get: function(k) {
-                    return a[k] || S_ZERO;
-                },
-                set: function(k, status) {
-                    a[k] = status;
-                }
-            };
-            return o;
-        }());
-
-        // D[k]
-        var D = (function () {
-            var d = {};
-            var o = {
-                empty: function(k) {
-                    d[k] = [];
-                },
-                add: function(k, edgeL) {
-                    d[k] = d[k] || [];
-                    d[k].push(edgeL);
-                },
-                get: function(k) {
-                    return d[k] || [];
-                }
-            };
-            return o;
-        }());
-
-        var W = [];
-        //Unpack hyperedges
-        graph.getAllHyperEdges().forEach(pair => {
-            var sourceNode = pair[0];
-            pair[1].forEach(hyperEdge => W.push([sourceNode, hyperEdge]));
-        });
-
-        while (W.length > 0) {
-            var next = W.pop();
-            var k = next[0];
-            var l = next[1];
-            if (A.get(k) === S_ZERO) {
-                if (l.length > 0) {
-                    var headL = l[l.length-1];
-                    while (l.length > 0 && A.get(headL) === S_ONE) {
-                        l.pop();
-                        headL = l[l.length-1];
-                    }
-                }
-                if (l.length === 0) {
-                    A.set(k, S_ONE);
-                    W = W.concat(D.get(k));
-                } else {
-                    D.add(headL, [k, l]);
-                }
-            }
-        }
+    /*
+        Backwards compatible
+    */
+    export function liuSmolkaLocal2(m : DgNodeId, graph : PartialDependencyGraph) : LevelMarking {
+        var calculator = new MinFixedPointCalculator(k => graph.getHyperEdges(k));
+        calculator.solve(m);
 
         return {
-            getMarking: function(dgNodeId : DgNodeId) {
-                return A.get(dgNodeId);
-            },
-            ZERO: S_ZERO,
-            ONE: S_ONE
-        }
+            getMarking: calculator.getMarking.bind(calculator),
+            getLevel: calculator.getLevel.bind(calculator),
+            ZERO: calculator.ZERO,
+            ONE: calculator.ONE,
+            UNKNOWN: calculator.BOTTOM
+        };
     }
 
     export function solveDgGlobalLevel(graph : DependencyGraph) : LevelMarking {

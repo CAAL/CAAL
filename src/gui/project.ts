@@ -119,6 +119,26 @@ class Project {
                 break;
             }
         }
+
+    }
+
+    public getFormulaSetsForProperties() {
+        var result = {};
+
+        this.properties.forEach((prop) => {
+            if (prop instanceof Property.HML){
+                result[prop.getId()] = this.createFormulaSetFromProperty(prop);
+            }
+        });
+
+        return result;
+    }
+
+    private createFormulaSetFromProperty(property : Property.HML) : HML.FormulaSet {
+        var formulaSet = new HML.FormulaSet;
+        HMLParser.parse(property.getDefinitions(), {ccs: CCS, hml: HML, formulaSet: formulaSet});
+        HMLParser.parse(property.getTopFormula(), {startRule: "TopFormula", ccs: CCS, hml: HML, formulaSet: formulaSet});
+        return formulaSet;
     }
 
     public isChanged() : boolean {

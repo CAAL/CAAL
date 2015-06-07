@@ -64,7 +64,12 @@
                         <li id="edit-btn" class="active"><a>Edit</a></li>
                         <li id="explore-btn"><a>Explore</a></li>
                         <li id="verify-btn"><a>Verify</a></li>
-                        <li id="game-btn"><a>Games</a></li>
+                        <li><a>Games</a>
+                            <ul class="dropdown-menu">
+                                <li id="game-btn"><a>Equivalence games</a></li>
+                                <li id="hml-game-btn"><a>HML game</a></li>
+                            </ul>
+                        </li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right no-highlight">
                         <li button onclick="$('#about-dialog').modal('show');"><a>About</a></li>
@@ -120,7 +125,7 @@
         </div>
 
         <!-- Explorer -->
-        <div id="explorer-container" class="container">
+        <div id="explorer-container" class="container" style="display: none;">
             <div id="explorer-fullscreen-container">
                 <div class="row">
                     <div class="col-md-12">
@@ -240,7 +245,7 @@
         </div>
 
         <!-- Verifier -->
-        <div id="verifier-container" class="container">
+        <div id="verifier-container" class="container" style="display: none;">
             <div class="row">
                 <div class="col-md-7">
                     <div class="table-responsive">
@@ -278,8 +283,8 @@
                             <li class="divider"></li>
                             <li class="dropdown-header" role="presentation">Model Checking</li>
                             <li id="hml" class="property-item"><a>HML</a></li>
-                            <li id="distinguishing-strong" class="property-item"><a>Strong distinguishing formula</a></li>
-                            <li id="distinguishing-weak" class="property-item"><a>Weak distinguishing formula</a></li>
+                     <!--   <li id="distinguishing-strong" class="property-item"><a>Strong distinguishing formula</a></li>
+                            <li id="distinguishing-weak" class="property-item"><a>Weak distinguishing formula</a></li> -->
                         </ul>
                     </div>
                     <div class="btn-group pull-right">
@@ -321,7 +326,7 @@
         </div>
 
         <!-- Game -->
-        <div id="game-container" class="container">
+        <div id="game-container" class="container" style="display: none;">
             <div id="game-options" class="row">
                 <div class="col-md-12">
                     <select id="game-type" class="form-control">
@@ -398,6 +403,32 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HML Game -->
+        <div id="hml-game-container" class="container" style="display: none;">
+            <div id="hml-game-options" class="row">
+                <div class="col-md-12">
+                    <div id="hml-game-inject-options" style="display: inline-block; vertical-align: middle;">
+                        <!-- Controls are dynamically added and removed here -->
+                    </div>
+                    <div class="btn-group">
+                        <button id="hml-game-restart" type="button" class="btn btn-default">Restart</button>
+                    </div>
+                    <div class="btn-group pull-right">
+                        <button id="hml-game-fullscreen" type="button" class="btn btn-default">Fullscreen</button>
+                    </div>
+                </div>
+            </div>
+            <div id="hml-game-main">
+            </div>
+            <div id="hml-game-status" class="row">
+                <div id="hml-game-status-left" class="col-md-4">
+                    <!-- Gamelog will be injected here -->
+                </div>
+                <div id="hml-game-status-right" class="col-md-8">
                 </div>
             </div>
         </div>
