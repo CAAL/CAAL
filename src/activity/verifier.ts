@@ -9,7 +9,8 @@ module Activity {
     export class Verifier extends Activity {
         private changed : boolean
         private editor: any;
-        private addPropertyList: JQuery;
+        private addCcsPropertyList: JQuery;
+        private addTccsPropertyList: JQuery;
         private propertyTableBody: JQuery;
         private verifyAllButton: JQuery;
         private verifyStopButton: JQuery;
@@ -27,12 +28,14 @@ module Activity {
             super(container, button);
 
             this.project = Project.getInstance();
-            this.addPropertyList = $("#add-property");
+            this.addCcsPropertyList = $("#add-property");
+            this.addTccsPropertyList = $("#add-time-property");
             this.propertyTableBody = $("#property-table").find("tbody");
             this.verifyAllButton = $("#verify-all");
             this.verifyStopButton = $("#verify-stop");
 
-            this.addPropertyList.find("li.property-item").on("click", (e) => this.addProperty(e));
+            this.addCcsPropertyList.find("li.property-item").on("click", (e) => this.addProperty(e));
+            this.addTccsPropertyList.find("li.property-item").on("click", (e) => this.addProperty(e));
             this.verifyAllButton.on("click", () => {
                 this.verifyAllButton.prop("disabled", true);
                 this.verifyAll() 
@@ -174,6 +177,14 @@ module Activity {
                     }
                 });
             }
+            
+            if (this.project.getInputMode() === InputMode.TCCS) {
+                $("#ccs-properties").hide();
+                $("#tccs-properties").show();
+            } else {
+                $("#tccs-properties").hide();
+                $("#ccs-properties").show();
+            }
 
             this.displayProperties(); // update the properties table
         }
@@ -307,24 +318,30 @@ module Activity {
         public addProperty(e): void {
             var type = e.currentTarget.id;
             var property = null;
-
+            var time = "";
+            
+            if (this.project.getInputMode() === InputMode.TCCS) {
+                time = type.substring(0, 5) === "timed" ? "timed" : "untimed";
+                type = type.substring(time.length, type.length);
+            }
+            
             switch(type) {
                 case "strong":
-                    property = new Property.StrongBisimulation({time: "", firstProcess: "", secondProcess: ""});
+                    property = new Property.StrongBisimulation({time: time, firstProcess: "", secondProcess: ""});
                     break;
                 case "weak":
-                    property = new Property.WeakBisimulation({time: "", firstProcess: "", secondProcess: ""});
+                    property = new Property.WeakBisimulation({time: time, firstProcess: "", secondProcess: ""});
                     break;
                 case "strongsim":
-                    property = new Property.StrongSimulation({time: "", firstProcess: "", secondProcess: ""});
+                    property = new Property.StrongSimulation({time: time, firstProcess: "", secondProcess: ""});
                     break;
                 case "weaksim":
-                    property = new Property.WeakSimulation({time: "", firstProcess: "", secondProcess: ""});
+                    property = new Property.WeakSimulation({time: time, firstProcess: "", secondProcess: ""});
                     break;
                 case "strongtraceinclusion":
                     property = new Property.StrongTraceInclusion(
                         {
-                            time: "",
+                            time: time,
                             firstHMLProperty: {process: "", topFormula: "", definitions: ""},
                             secondHMLProperty: {process: "", topFormula: "", definitions: ""}
                         });
@@ -332,16 +349,16 @@ module Activity {
                 case "weaktraceinclusion":
                     property = new Property.WeakTraceInclusion(
                         {
-                            time: "",
+                            time: time,
                             firstHMLProperty: {process: "", topFormula: "", definitions: ""}, 
                             secondHMLProperty: {process: "", topFormula: "", definitions: ""}
                         });
                     break;
                 case "strongtraceeq":
-                    property = new Property.StrongTraceEq({time: "", firstProcess: "", secondProcess: ""});
+                    property = new Property.StrongTraceEq({time: time, firstProcess: "", secondProcess: ""});
                     break;
                 case "weaktraceeq":
-                    property = new Property.WeakTraceEq({time: "", firstProcess: "", secondProcess: ""});
+                    property = new Property.WeakTraceEq({time: time, firstProcess: "", secondProcess: ""});
                     break;
                 case "hml":
                     property = new Property.HML({process: "", topFormula: "", definitions: ""});
@@ -349,7 +366,7 @@ module Activity {
                 case "distinguishing-strong":
                     property = new Property.DistinguishingBisimulationFormula(
                         {
-                            time: "",
+                            time: time,
                             firstHMLProperty: {process: "", topFormula: "", definitions: ""}, 
                             secondHMLProperty: {process: "", topFormula: "", definitions: ""},
                             succGenType: "strong"
@@ -358,7 +375,7 @@ module Activity {
                 case "distinguishing-weak":
                     property = new Property.DistinguishingBisimulationFormula(
                         {
-                            time: "",
+                            time: time,
                             firstHMLProperty: {process: "", topFormula: "", definitions: ""}, 
                             secondHMLProperty: {process: "", topFormula: "", definitions: ""},
                             succGenType: "weak"
