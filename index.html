@@ -66,15 +66,15 @@
                         <li id="verify-btn"><a>Verify</a></li>
                         <li><a>Games</a>
                             <ul class="dropdown-menu">
-                                <li id="game-btn"><a>Equivalence games</a></li>
-                                <li id="hml-game-btn"><a>HML game</a></li>
+                                <li id="game-btn"><a>Equivalence Games</a></li>
+                                <li id="hml-game-btn"><a>HML Game</a></li>
                             </ul>
                         </li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right no-highlight">
                         <li button onclick="$('#about-dialog').modal('show');"><a>About</a></li>
                         <li button onclick="$('#help-dialog').modal('show')"><a>Help</a></button li>
-                        <li><a id="bug-report" target="_top"><i class="fa fa-bug fa-lg"></i></a></li>
+                        <li><a id="contact" target="_top"><i class="fa fa-envelope-o fa-lg"></i></a></li>
                         <li><a href="https://github.com/CAAL/CAAL" target="_blank"><i class="fa fa-github fa-lg"></i></a></li>
                     </ul>
                 </div>
@@ -263,7 +263,7 @@
                                 </tbody>
                         </table>
                     </div>
-                    <div class="btn-group">
+                    <div id="ccs-properties" class="btn-group">
                         <button type="button" class="btn btn-default dropdown-toggle no-highlight" data-toggle="dropdown">
                             Add Property
                             <span class="caret"></span>
@@ -274,15 +274,63 @@
                             <li id="strongsim" class="property-item"><a>Strong Simulation</a></li>
                             <li id="strongtraceinclusion" class="property-item"><a>Strong Trace Inclusion</a></li>
                             <li id="strongtraceeq" class="property-item"><a>Strong Trace Equivalence</a></li>
+                            
                             <li class="divider"></li>
+                            
                             <li class="dropdown-header" role="presentation">Weak Equivalences and Preorders</li>
                             <li id="weak" class="property-item"><a>Weak Bisimulation</a></li>
                             <li id="weaksim" class="property-item"><a>Weak Simulation</a></li>
                             <li id="weaktraceinclusion" class="property-item"><a>Weak Trace Inclusion</a></li>
                             <li id="weaktraceeq" class="property-item"><a>Weak Trace Equivalence</a></li>
+                            
                             <li class="divider"></li>
+                            
                             <li class="dropdown-header" role="presentation">Model Checking</li>
                             <li id="hml" class="property-item"><a>HML</a></li>
+                     <!--   <li id="distinguishing-strong" class="property-item"><a>Strong distinguishing formula</a></li>
+                            <li id="distinguishing-weak" class="property-item"><a>Weak distinguishing formula</a></li> -->
+                        </ul>
+                    </div>
+                    <div id="tccs-properties" class="btn-group">
+                        <button type="button" class="btn btn-default dropdown-toggle no-highlight" data-toggle="dropdown">
+                            Add Property
+                            <span class="caret"></span>
+                        </button>
+                        <ul id="add-time-property" class="dropdown-menu no-highlight" role="menu">
+                            <li class="dropdown-header" role="presentation">Strong Timed Equivalences and Preorders</li>
+                            <li id="timedstrong" class="property-item"><a>Strong Timed Bisimulation</a></li>
+                            <li id="timedstrongsim" class="property-item"><a>Strong Timed Simulation</a></li>
+                            <li id="timedstrongtraceinclusion" class="property-item"><a>Strong Timed Trace Inclusion</a></li>
+                            <li id="timedstrongtraceeq" class="property-item"><a>Strong Timed Trace Equivalence</a></li>
+                            
+                            <li class="divider"></li>
+                            
+                            <li class="dropdown-header" role="presentation">Weak Timed Equivalences and Preorders</li>
+                            <li id="timedweak" class="property-item"><a>Weak Timed Bisimulation</a></li>
+                            <li id="timedweaksim" class="property-item"><a>Weak Timed Simulation</a></li>
+                            <li id="timedweaktraceinclusion" class="property-item"><a>Weak Timed Trace Inclusion</a></li>
+                            <li id="timedweaktraceeq" class="property-item"><a>Weak Timed Trace Equivalence</a></li>
+                            
+                            <li class="divider"></li>
+                            
+                            <li class="dropdown-header" role="presentation">Strong Untimed Equivalences and Preorders</li>
+                            <li id="untimedstrong" class="property-item"><a>Strong Untimed Bisimulation</a></li>
+                            <li id="untimedstrongsim" class="property-item"><a>Strong Untimed Simulation</a></li>
+                            <li id="untimedstrongtraceinclusion" class="property-item"><a>Strong Untimed Trace Inclusion</a></li>
+                            <li id="untimedstrongtraceeq" class="property-item"><a>Strong Untimed Trace Equivalence</a></li>
+                            
+                            <li class="divider"></li>
+                            
+                            <li class="dropdown-header" role="presentation">Weak Untimed Equivalences and Preorders</li>
+                            <li id="untimedweak" class="property-item"><a>Weak Untimed Bisimulation</a></li>
+                            <li id="untimedweaksim" class="property-item"><a>Weak Untimed Simulation</a></li>
+                            <li id="untimedweaktraceinclusion" class="property-item"><a>Weak Untimed Trace Inclusion</a></li>
+                            <li id="untimedweaktraceeq" class="property-item"><a>Weak Untimed Trace Equivalence</a></li>
+                            
+                            <li class="divider"></li>
+                            
+                            <li class="dropdown-header" role="presentation">Model Checking</li>
+                            <li id="timedhml" class="property-item"><a>Timed HML</a></li>
                      <!--   <li id="distinguishing-strong" class="property-item"><a>Strong distinguishing formula</a></li>
                             <li id="distinguishing-weak" class="property-item"><a>Weak distinguishing formula</a></li> -->
                         </ul>
@@ -330,10 +378,20 @@
             <div id="game-options" class="row">
                 <div class="col-md-12">
                     <select id="game-type" class="form-control">
-                        <option value="strong" selected>Strong Bisimulation</option>
-                        <option value="weak">Weak Bisimulation</option>
-                        <option value="strongsim">Strong Simulation</option>
-                        <option value="weaksim">Weak Simulation</option>
+                        <option class="ccs-game-type" value="strong">Strong Bisimulation</option>
+                        <option class="ccs-game-type" value="weak">Weak Bisimulation</option>
+                        <option class="ccs-game-type" value="strongsim">Strong Simulation</option>
+                        <option class="ccs-game-type" value="weaksim">Weak Simulation</option>
+                    
+                        <option class="tccs-game-type" value="timedstrong">Strong Timed Bisimulation</option>
+                        <option class="tccs-game-type" value="timedweak">Weak Timed Bisimulation</option>
+                        <option class="tccs-game-type" value="timedstrongsim">Strong Timed Simulation</option>
+                        <option class="tccs-game-type" value="timedweaksim">Weak Timed Simulation</option>
+                        
+                        <option class="tccs-game-type" value="untimedstrong">Strong Untimed Bisimulation</option>
+                        <option class="tccs-game-type" value="untimedweak">Weak Untimed Bisimulation</option>
+                        <option class="tccs-game-type" value="untimedstrongsim">Strong Untimed Simulation</option>
+                        <option class="tccs-game-type" value="untimedweaksim">Weak Untimed Simulation</option>
                     </select>
                     <select id="game-left-process" class="form-control"></select>
                     <select id="game-right-process" class="form-control"></select>

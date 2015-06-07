@@ -6,9 +6,13 @@
     }
 
     function expandDelay(min, max, subFormula, type) {
+        if (min > max) {
+            error("Expected " + max + " to be less than or equal to " + min + ".");
+        }
+        
         var matcher = new hml.SingleActionMatcher(new tccs.Delay(1));
         var subFormulas = [];
-
+        
         for (var i = min; i <= max; i++) {
             var next = subFormula;
 
