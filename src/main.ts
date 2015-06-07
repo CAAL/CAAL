@@ -39,7 +39,7 @@ module Main {
 
         $("#version").append(Version);
         // danger of spam mail; des10Xf15 mails are only temporary mails though.
-        $("#bug-report").attr("href", "mailto:caal@cs.aau.dk?Subject=CAAL%20Bug%20(" + Version + ")");
+        $("#contact").attr("href", "mailto:caal@cs.aau.dk?Subject=CAAL%20Contact%20(" + Version + ")");
 
         new New("#new-btn", activityHandler);
         var save = new Save(null, activityHandler);

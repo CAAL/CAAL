@@ -20,6 +20,8 @@ module Activity {
         private tooltip : ProcessTooltip;
         private timeout : any;
         private $gameType : JQuery;
+        private $ccsGameTypes : JQuery;
+        private $tccsGameTypes : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
         private $playerType : JQuery;
@@ -48,6 +50,8 @@ module Activity {
             new DataTooltip($("#game-log")); // no need to save instance
             
             this.$gameType = $("#game-type");
+            this.$ccsGameTypes = $(".ccs-game-type");
+            this.$tccsGameTypes = $(".tccs-game-type");
             this.$leftProcessList = $("#game-left-process");
             this.$rightProcessList = $("#game-right-process");
             this.$playerType = $("input[name=player-type]");
@@ -141,7 +145,21 @@ module Activity {
             
             this.fullscreen.onShow();
             
+            if (this.project.getInputMode() === InputMode.TCCS) {
+                this.$ccsGameTypes.hide();
+                this.$tccsGameTypes.show();
+            } else {
+                this.$tccsGameTypes.hide();
+                this.$ccsGameTypes.show();
+            }
+            
             if (this.changed || configuration) {
+                if (this.project.getInputMode() === InputMode.TCCS) {
+                    this.$gameType.val("timedstrong");
+                } else {
+                    this.$gameType.val("strong");
+                }
+                
                 this.changed = false;
                 this.graph = this.project.getGraph();
                 this.displayOptions();
@@ -267,6 +285,15 @@ module Activity {
                 options = this.getOptions();
             }
             
+            var time = "";
+            
+            if (this.project.getInputMode() === InputMode.TCCS) {
+                time = options.gameType.substring(0, 5) === "timed" ? "timed" : "untimed";
+                options.gameType = options.gameType.substring(time.length, options.gameType.length);
+            } else {
+                
+            }
+            
             if (options.gameType === "strong" || options.gameType === "weak")
                 var gameType : string = options.gameType;
             else if (options.gameType === "strongsim")
@@ -274,7 +301,7 @@ module Activity {
             else if (options.gameType === "weaksim")
                 var gameType = "weak";
                 
-            this.succGen = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], succGen: gameType, reduce: false});
+            this.succGen = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], time: time, succGen: gameType, reduce: false});
 
             if (drawLeft || !this.leftGraph.getNode(this.succGen.getProcessByName(options.leftProcess).id.toString())) {
                 this.clear(this.leftGraph);
@@ -290,15 +317,15 @@ module Activity {
                 this.toggleFreeze(this.rightGraph, false, this.$rightFreeze);
             }
             
-            var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], succGen: "strong", reduce: false});
+            var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], time: time, succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = this.succGen; //CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
 
             if (this.dgGame !== undefined) {this.dgGame.stopGame()};
             
             if (options.gameType === "strong" || options.gameType === "weak")
-                this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, gameType);
+                this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, time, gameType);
             else if (options.gameType === "strongsim" || options.gameType === "weaksim") {
-                this.dgGame = new SimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, gameType);
+                this.dgGame = new SimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, time, gameType);
             }
             
             var attacker : Player;
@@ -538,7 +565,7 @@ module Activity {
         private cycleCache : any;
         
         constructor(gameActivity : Game, gameLog : GameLog, graph : CCS.Graph,
-            currentLeft : any, currentRight : any) {
+            currentLeft : any, currentRight : any, time : string) {
             super();
             
             this.gameActivity = gameActivity;
@@ -711,8 +738,8 @@ module Activity {
     class DgComputerStrategy extends DgGame {
         
         constructor(gameActivity : Game, gameLog : GameLog, graph : CCS.Graph,
-            currentLeft : any, currentRight : any) {
-            super(gameActivity, gameLog, graph, currentLeft, currentRight);
+            currentLeft : any, currentRight : any, time : string) {
+            super(gameActivity, gameLog, graph, currentLeft, currentRight, time);
         }
         
         public getBestWinningAttack(choices : any) : any {
@@ -825,7 +852,7 @@ module Activity {
         private defenderSuccessorGen : CCS.SuccessorGenerator;
         
         constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator,
-                leftProcessName : string, rightProcessName : string, gameType : string) {
+                leftProcessName : string, rightProcessName : string, time : string, gameType : string) {
             
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
@@ -836,7 +863,7 @@ module Activity {
             var currentLeft  = graph.processByName(this.leftProcessName);
             var currentRight = graph.processByName(this.rightProcessName);
             
-            super(gameActivity, new BisimulationGameLog(gameActivity), graph, currentLeft, currentRight); // creates dependency graph and marking
+            super(gameActivity, new BisimulationGameLog(time, gameActivity), graph, currentLeft, currentRight, time); // creates dependency graph and marking
         }
         
         public getGameType() : string {
@@ -913,7 +940,7 @@ module Activity {
         private defenderSuccessorGen : CCS.SuccessorGenerator;
         
         constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator,
-                leftProcessName : string, rightProcessName : string, gameType : string) {
+                leftProcessName : string, rightProcessName : string, time : string, gameType : string) {
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
             this.gameType = gameType;
@@ -923,7 +950,7 @@ module Activity {
             var currentLeft  = graph.processByName(this.leftProcessName);
             var currentRight = graph.processByName(this.rightProcessName);
             
-            super(gameActivity, new SimulationGameLog(gameActivity), graph, currentLeft, currentRight); // creates dependency graph and marking
+            super(gameActivity, new SimulationGameLog(time, gameActivity), graph, currentLeft, currentRight, time); // creates dependency graph and marking
         }
         
         public getGameType() : string {
@@ -1214,7 +1241,7 @@ module Activity {
     class GameLog extends Abstract {
         private $log : JQuery;
 
-        constructor(private gameActivity? : Game) {
+        constructor(protected time : string, private gameActivity? : Game) {
             super();
             this.$log = $("#game-log");
             this.$log.empty();
@@ -1345,16 +1372,17 @@ module Activity {
     }
     
     class BisimulationGameLog extends GameLog {
-        constructor(gameActivity? : Game) {
-            super(gameActivity);
+        constructor(time : string, gameActivity? : Game) {
+            super(time, gameActivity);
         }
         
         public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
-            var template = "You are playing {1} in {2} bisimulation game.";
+            var template = "You are playing {1} in {2} {3} bisimulation game.";
 
             var context = {
                 1: {text: (attacker instanceof Computer ? "defender" : "attacker")},
                 2: {text: gameType},
+                3: {text: this.time}
             }
 
             this.println(this.render(template, context), "<p class='intro'>");
@@ -1368,16 +1396,17 @@ module Activity {
     }
     
     class SimulationGameLog extends GameLog {
-        constructor(gameActivity? : Game) {
-            super(gameActivity);
+        constructor(time : string, gameActivity? : Game) {
+            super(time, gameActivity);
         }
         
         public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
-            var template = "You are playing {1} in {2} simulation game.";
+            var template = "You are playing {1} in {2} {3} simulation game.";
 
             var context = {
                 1: {text: (attacker instanceof Computer ? "defender" : "attacker")},
                 2: {text: gameType},
+                3: {text: this.time}
             }
 
             this.println(this.render(template, context), "<p class='intro'>");

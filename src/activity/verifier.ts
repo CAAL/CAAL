@@ -181,9 +181,13 @@ module Activity {
             if (this.project.getInputMode() === InputMode.TCCS) {
                 $("#ccs-properties").hide();
                 $("#tccs-properties").show();
+                this.editor.getSession().setMode("ace/mode/thml");
+                this.formulaEditor.getSession().setMode("ace/mode/thml");
             } else {
                 $("#tccs-properties").hide();
                 $("#ccs-properties").show();
+                this.editor.getSession().setMode("ace/mode/hml");
+                this.formulaEditor.getSession().setMode("ace/mode/hml");
             }
 
             this.displayProperties(); // update the properties table
@@ -408,6 +412,10 @@ module Activity {
                         gameType = "strongsim";
                     else
                         gameType = "weaksim";
+                    
+                    if (this.project.getInputMode() === InputMode.TCCS) {
+                        gameType = (<Property.Equivalence>property).getTime() + gameType;
+                    }
                     
                     var EquivConfiguration = {
                             gameType: gameType,
