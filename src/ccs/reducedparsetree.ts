@@ -95,11 +95,6 @@ module Traverse {
             if (!resultProcess) {
                 var subProcess = process.subProcess.dispatchOn(this);
                 if (subProcess instanceof ccs.NullProcess) return subProcess; // 0 [f] => 0
-                if (subProcess instanceof ccs.RelabellingProcess) { // (P [F]) [F] where [F] = [F] => P [F]
-                    if (subProcess.relabellings.equals(process.relabellings)) {
-                        return subProcess;
-                    }
-                }
                 resultProcess = this.cache[process.id] = this.graph.newRelabelingProcess(subProcess, process.relabellings);
             }
             return resultProcess;
