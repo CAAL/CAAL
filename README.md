@@ -5,11 +5,11 @@ CAAL (Concurrency Workbench, Aalborg Edition) is a web-based tool for modelling,
 
 The tool allows to edit CCS processes, explore the generated labelled transition systems and verify their correctness via the equivalence checking approach (e.g. strong and weak bisimulation, and strong and weak trace equivalence checking) and model checking approach (determining whether a given process satisfies a HML formulae with recursion, including a generation of distinguishing formulae). Both equivalence and model checking approaches support a visualization of counter examples via equivalence/model checking games.
 
-### Try it!
+#### Try it!
 
 A live demo of CAAL is available at [caal.cs.aau.dk](http://caal.cs.aau.dk/)
 
-### Offline version
+#### Offline version
 
 - Download and install [Node.js](http://nodejs.org/).
 - Download and unzip the latest [release](https://github.com/CAAL/CAAL/releases).
@@ -18,7 +18,7 @@ A live demo of CAAL is available at [caal.cs.aau.dk](http://caal.cs.aau.dk/)
 
 ## For developers
 
-###Setup
+####Setup
 
 All you need is [Node.js](http://nodejs.org/) and npm installed.
 Clone this repository and run the following commands in the root directory of the repository:
@@ -30,14 +30,14 @@ cd modules/ace
 npm install
 ```
 
-### Building
+#### Building
 
 ```bash
 npm run build
 ```
 This will run the ``` build.sh ``` script, which will compile all of the Typescript files, and compile any potential changes in the Ace submodule.
 
-### Troubleshooting
+#### Troubleshooting
 
 If you experience errors with the Ace editor upon running the tool, such as
 ```
