@@ -224,14 +224,18 @@ module DependencyGraph {
         }
 
         solve(solveNode?) : void {
+            if (solveNode != undefined) { //Nodes may be anything, even 0.
+                this.nodesToBeSolved.push(solveNode);
+            }
+            this.nodesToBeSolved.forEach(node => this.solveSingle(node));
+            this.nodesToBeSolved = [];
+        }
+
+        solveSingle(solveNode) : void {
             var Level = this.Level;
             var Deps = this.Deps;
             var succGen = this.nodeSuccGen;
             var W = [];
-
-            if (solveNode !== undefined) {
-                this.nodesToBeSolved.push(solveNode);
-            }
 
             function load(node) {
                 var hyperedges = succGen(node);
@@ -240,16 +244,17 @@ module DependencyGraph {
                 }
             }
 
-            this.nodesToBeSolved.forEach(node => {
-                if (!Level[node]) { //Bottom
-                    Level[node] = Infinity; //Set ZERO
-                    Deps[node] = [];
-                }
-                load(node);
-            });
+            var solveNodeMarking = this.getMarking(solveNode);
+            if (solveNodeMarking === this.BOTTOM) {
+                Level[solveNode] = Infinity;
+                Deps[solveNode] = [];
+            } else if (solveNodeMarking === this.ONE) {
+                return;
+            }
 
-            this.nodesToBeSolved = [];
-            
+            load(solveNode);
+            var solveNodeStr = "" + solveNode;
+
             var BOTTOM = this.BOTTOM, ZERO = this.ZERO, ONE = this.ONE;
             while (W.length > 0) {
                 var hEdge = W.pop();
@@ -257,6 +262,9 @@ module DependencyGraph {
                 var tNodes = hEdge[1];
                 var numOnes = 0;
                 var maxTargetLevel = 0;
+
+                if ((Level[source] || Infinity) < Infinity) continue; //is ONE
+
                 for (var i=0; i < tNodes.length; ++i) {
                     var tNode = tNodes[i];
                     var tNodeMarking = this.getMarking(tNode);
@@ -273,10 +281,12 @@ module DependencyGraph {
                 }
                 //Check if improved levels. Also prevents cycle-induced infinity looping.
                 var sourceLevel = Level[source] || Infinity;
-                //No early exit since hyperedges of nodesToBeSolved-nodes may still be in W.
                 if (numOnes === tNodes.length && sourceLevel > (maxTargetLevel+1)) {
                     Level[source] = maxTargetLevel+1;
                     W = W.concat(Deps[source]);
+                    if (("" + source) === solveNodeStr) {
+                        return;
+                    }
                 }
             }
         }
