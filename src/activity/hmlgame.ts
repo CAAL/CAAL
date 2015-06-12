@@ -380,34 +380,36 @@ module Activity {
             switch (winReason)
             {
                 case WinReason.minGameCycle: {
-                   gameLogObject.setTemplate("A cycle in the context of {0} fixed point was detected. {1} wins!");
+                   gameLogObject.setTemplate("A cycle in the context of {0} fixed point was detected. You ({1}) {2}!");
                     gameLogObject.addLabel({text: "minimum"});
-                    gameLogObject.addLabel({text: (winner === Player.attacker) ? "attacker" : "defender"});
+                    gameLogObject.addLabel({text: (this.human === Player.defender) ? "defender" : "attacker"});
+                    gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
                     break;
                 }
                 case WinReason.maxGameCycle: {
-                    gameLogObject.setTemplate("A cycle in the context of {0} fixed point was detected. {1} wins!");
+                    gameLogObject.setTemplate("A cycle in the context of {0} fixed point was detected. You ({1}) {2}!");
                     gameLogObject.addLabel({text: "maximum"});
-                    gameLogObject.addLabel({text: (winner === Player.attacker) ? "attacker" : "defender"});
+                    gameLogObject.addLabel({text: (this.human === Player.defender) ? "defender" : "attacker"});
+                    gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
                     break;
                 }
                 case WinReason.trueFormula: {
-                    gameLogObject.setTemplate("The formula true has been reached, {0} wins!");
-                    gameLogObject.addLabel({text: (winner === Player.attacker) ? "attacker" : "defender"});
+                    gameLogObject.setTemplate("The formula true has been reached, you ({0}) {1}!");
+                    gameLogObject.addLabel({text: (this.human=== Player.defender) ? "defender" : "attacker"});
+                    gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
                     break;
                 }
                 case WinReason.falseFormula: {
-                    gameLogObject.setTemplate("The formula false has been reached, {0} wins!");
-                    gameLogObject.addLabel({text: (winner === Player.attacker) ? "attacker" : "defender"});
+                    gameLogObject.setTemplate("The formula false has been reached, you ({0}) {1}!");
+                    gameLogObject.addLabel({text: (this.human=== Player.defender) ? "defender" : "attacker"});
+                    gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
                     break;
                 }
 
                 case WinReason.stuck: {
-                    gameLogObject.setTemplate("{0}({1}) {2} no available transitions. You {3}!");
-                    gameLogObject.addLabel({text: (this.computer === winner) ? "You" : "The AI"});
-                    gameLogObject.addLabel({text: (winner === Player.attacker) ? "defender" : "attacker"});
-                    gameLogObject.addLabel({text: (this.computer === winner) ? "have" : "has"});
-                    gameLogObject.addLabel({text: (this.computer === winner) ? "lose" : "win"});
+                    gameLogObject.setTemplate("No available transitions. You ({0}) {1}!");
+                    gameLogObject.addLabel({text: (this.human === Player.defender) ? "defender" : "attacker"});
+                    gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
                     break;
                 }
                 default: {
@@ -651,10 +653,10 @@ module Activity {
             if (this.isWeak()) {
                 var actionTransition = "=" + transition.action.toString() + "=>";
                 gameLogPlay.addLabel({text: actionTransition, tag: "<span>",attr: [{name: "class", value: "ccs-tooltip-data"},
-                {name: "data-tooltip", value: Tooltip.strongSequence(<Traverse.WeakSuccessorGenerator>this.weakSuccGen, this.state.process, transition.action, transition.targetProcess)}]});
+                {name: "data-tooltip", value: Tooltip.strongSequence(<Traverse.WeakSuccessorGenerator>this.weakSuccGen, this.state.process, transition.action, transition.targetProcess, this.graph)}]});
             } 
             else {
-                gameLogPlay.addLabel({text: "-" + transition.action + "->", tag: "<span>", attr: [{name: "class", value: "monospace"}]});
+                gameLogPlay.addLabel({text: "-" + transition.action.toString() + "->", tag: "<span>", attr: [{name: "class", value: "monospace"}]});
             }
             gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(transition.targetProcess), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
             this.writeToGamelog(gameLogPlay);

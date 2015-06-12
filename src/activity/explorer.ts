@@ -277,7 +277,7 @@ module Activity {
                 if (this.succGenerator instanceof Traverse.AbstractingSuccessorGenerator && !(this.succGenerator instanceof Traverse.WeakUntimedSuccessorGenerator)) {
                     var abstractingSuccGen = <Traverse.AbstractingSuccessorGenerator>this.succGenerator;
                     var $action = Tooltip.wrap(t.action.toString());
-                    Tooltip.setTooltip($action, Tooltip.strongSequence(abstractingSuccGen, this.selectedProcess, t.action, t.targetProcess));
+                    Tooltip.setTooltip($action, Tooltip.strongSequence(abstractingSuccGen, this.selectedProcess, t.action, t.targetProcess, this.graph));
                     $actionTd.append($action);
                 } else {
                     $actionTd.append(t.action.toString());

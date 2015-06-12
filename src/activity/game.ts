@@ -110,6 +110,10 @@ module Activity {
         public getSuccessorGenerator() : CCS.SuccessorGenerator {
             return this.succGen;
         }
+
+        public getGraph() : CCS.Graph {
+            return this.graph;
+        }
         
         private setDepth(process : CCS.Process, graph : GUI.ProcessGraphUI, depth : number, move : Move) : void {
             this.clear(graph);
@@ -1100,7 +1104,7 @@ module Activity {
                     
                     if (isWeakGame) {
                         var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.gameActivity.getSuccessorGenerator();
-                        var $action = Tooltip.setTooltip(Tooltip.wrap(actionTransition), Tooltip.strongSequence(weakSuccGen, sourceProcess, game.getLastAction(), choice.targetProcess));
+                        var $action = Tooltip.setTooltip(Tooltip.wrap(actionTransition), Tooltip.strongSequence(weakSuccGen, sourceProcess, game.getLastAction(), choice.targetProcess, this.gameActivity.getGraph()));
                         var $actionTd = $("<td id='action'></td>").append($action);
                     } else {
                         var $actionTd = $("<td id='action'></td>").append(actionTransition);
@@ -1317,7 +1321,7 @@ module Activity {
             } else {
                 actionTransition = "=" + action.toString() + "=>";
                 actionContext = {text: actionTransition, tag: "<span>",attr: [{name: "class", value: "ccs-tooltip-data"},
-                    {name: "data-tooltip", value: Tooltip.strongSequence(<Traverse.WeakSuccessorGenerator>this.gameActivity.getSuccessorGenerator(), source, action, destination)}]};
+                    {name: "data-tooltip", value: Tooltip.strongSequence(<Traverse.WeakSuccessorGenerator>this.gameActivity.getSuccessorGenerator(), source, action, destination, this.gameActivity.getGraph())}]};
             }
             
             var context = {

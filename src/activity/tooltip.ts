@@ -49,8 +49,8 @@ module Activity {
             return $element;
         }
         
-        static strongSequence(abstractingSuccGen : Traverse.AbstractingSuccessorGenerator, source : CCS.Process, action : CCS.Action, target : CCS.Process) : string {
-            var graph = Project.getInstance().getGraph();
+        static strongSequence(abstractingSuccGen : Traverse.AbstractingSuccessorGenerator, source : CCS.Process, action : CCS.Action, target : CCS.Process, graph = null) : string {
+            var graph = graph || Project.getInstance().getGraph();
             var labelFor = graph.getLabel.bind(graph);
             var strictPath = abstractingSuccGen.getStrictPath(source.id, action, target.id);
             var strongActions = labelFor(source);
@@ -61,6 +61,7 @@ module Activity {
             
             return strongActions;
         }
+
     }
     
     export class ProcessTooltip extends Tooltip {
