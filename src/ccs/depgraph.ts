@@ -302,9 +302,7 @@ module DependencyGraph {
         }
 
         getLevel(node) : number {
-            var level = this.Level[node];
-            if (!level) throw "Level not found for node";
-            return level;
+            return this.Level[node] || Infinity;
         }
     }
 
