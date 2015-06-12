@@ -38,8 +38,26 @@ module Main {
         activityHandler.selectActivity("editor");
 
         $("#version").append(Version);
-        // danger of spam mail; des10Xf15 mails are only temporary mails though.
-        $("#contact").attr("href", "mailto:caal@cs.aau.dk?Subject=CAAL%20Contact%20(" + Version + ")");
+
+        $('#contact').click(() => {
+            $("#contact-modal").modal("show");
+        });
+
+        $("#contact-send").on("click", () => {
+            var url = "/mailer.php";
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: $("#contact-form").serialize(), // serializes the form's elements.
+                success: function(data)
+                {
+                    alert(data); // show response from the php script.
+                }
+            });
+
+            return false; // avoid to execute the actual submit of the form.
+        });
 
         new New("#new-btn", activityHandler);
         var save = new Save(null, activityHandler);
