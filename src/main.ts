@@ -52,7 +52,12 @@ module Main {
                 data: $("#contact-form").serialize(), // serializes the form's elements.
                 success: function(data)
                 {
-                    alert(data); // show response from the php script.
+                    if(data) {
+                        $("#contact-modal").modal("hide");
+                    } else {
+                        alert("The mail could not be send, sorry!");
+                        $("#contact-modal").modal("hide");
+                    }
                 }
             });
 

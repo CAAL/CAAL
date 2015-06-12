@@ -4,8 +4,5 @@ require("mailconfig.php");
 
 global $mailconfig;
 
-//mail($to, $subject, $message);
-
-var_dump($mailconfig);
-
+return mail($mailconfig->to, $_POST["contact-cat-subject"], $_POST["contact-cat-text"], $mailconfig->headers);
 ?>
