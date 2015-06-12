@@ -44,7 +44,7 @@ module Main {
         });
 
         $("#contact-send").on("click", () => {
-            var url = "/mailer.php";
+            var url = "mailer.php";
 
             $.ajax({
                 type: "POST",
