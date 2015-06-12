@@ -1,4 +1,5 @@
 /// <reference path="../../lib/util.d.ts" />
+/// <reference path="../../lib/data.d.ts" />
 /// <reference path="ccs.ts" />
 /// <reference path="hml.ts" />
 /// <reference path="util.ts" />
@@ -211,6 +212,28 @@ module DependencyGraph {
         getLevel(any) : number;
     }
 
+    function compareTargetNodes(nodesA, nodesB) : number {
+        //Fragile: Assume vertices in hyperedges are string-like.
+        //Performance: on different calls may sort same data again.
+        var lengthDiff = nodesA.length - nodesB.length;
+        if (lengthDiff !== 0) return lengthDiff;
+        var copyA = nodesA.splice();
+        var copyB = nodesB.splice();
+        copyA.sort();
+        copyB.sort();
+        for (var i=0; i < copyA.length; ++i) {
+            var elemA = copyA[i];
+            var elemB = copyB[i];
+            if (elemA !== elemB) return elemA < elemB ? -1 : 1;
+        }
+        return 0;
+    }
+    
+    function compareHyperedgesMFPCalculator(edgeA, edgeB) : number {
+        if (edgeA[0] !== edgeB[0]) return edgeA[0] < edgeB[0] ? -1 : 1;
+        return compareTargetNodes(edgeA[1], edgeB[1]);
+    }
+
     export class MinFixedPointCalculator {
         private Deps = Object.create(null);
         private Level = Object.create(null);
@@ -236,6 +259,7 @@ module DependencyGraph {
             var Deps = this.Deps;
             var succGen = this.nodeSuccGen;
             var W = [];
+            var edgeComparer = compareHyperedgesMFPCalculator;
 
             function load(node) {
                 var hyperedges = succGen(node);
@@ -247,7 +271,7 @@ module DependencyGraph {
             var solveNodeMarking = this.getMarking(solveNode);
             if (solveNodeMarking === this.BOTTOM) {
                 Level[solveNode] = Infinity;
-                Deps[solveNode] = [];
+                Deps[solveNode] = new SetUtil.OrderedSet(edgeComparer);
             } else if (solveNodeMarking === this.ONE) {
                 return;
             }
@@ -272,10 +296,11 @@ module DependencyGraph {
                         ++numOnes;
                         maxTargetLevel = Math.max(maxTargetLevel, Level[tNode]);
                     } else if (tNodeMarking === ZERO) {
-                        Deps[tNode].push(hEdge);
+                        Deps[tNode].add(hEdge);
                     } else {
                         Level[tNode] = Infinity;
-                        Deps[tNode] = [hEdge];
+                        Deps[tNode] = new SetUtil.OrderedSet(edgeComparer);
+                        Deps[tNode].add(hEdge);
                         load(tNode);
                     }
                 }
@@ -283,7 +308,8 @@ module DependencyGraph {
                 var sourceLevel = Level[source] || Infinity;
                 if (numOnes === tNodes.length && sourceLevel > (maxTargetLevel+1)) {
                     Level[source] = maxTargetLevel+1;
-                    W = W.concat(Deps[source]);
+                    Deps[source].forEach(edge => W.push(edge));
+                    // W = W.concat(Deps[source]);
                     if (("" + source) === solveNodeStr) {
                         return;
                     }
