@@ -41,6 +41,7 @@ module Main {
         // danger of spam mail; des10Xf15 mails are only temporary mails though.
         $("#contact").attr("href", "mailto:caal@cs.aau.dk?Subject=CAAL%20Contact%20(" + Version + ")");
 
+        $('[data-toggle="tooltip"]').tooltip(); 
         new New("#new-btn", activityHandler);
         var save = new Save(null, activityHandler);
         new Load(null, activityHandler);
