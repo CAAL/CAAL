@@ -52,12 +52,19 @@ module Main {
                 data: $("#contact-form").serialize(), // serializes the form's elements.
                 success: function(data)
                 {
+
+                    alert(data);
+                    
                     if(data) {
                         $("#contact-modal").modal("hide");
                     } else {
                         alert("The mail could not be send, sorry!");
                         $("#contact-modal").modal("hide");
                     }
+                },
+                error: function(data)
+                {
+                    alert("An error occured");
                 }
             });
 
