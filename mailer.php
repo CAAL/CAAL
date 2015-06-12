@@ -1,9 +1,11 @@
 <?php
 
-//require("mailconfig.php");
+require("mailconfig.php");
+
+global $mailconfig;
 
 //mail($to, $subject, $message);
 
-var_dump($_POST);
+var_dump($mailconfig);
 
 ?>
