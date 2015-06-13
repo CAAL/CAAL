@@ -30,6 +30,8 @@
                     case "WFA":
                         next = formulas.newWeakForAll(matcher, next);
                         break;
+                    default:
+                        throw "Unrecognized modality";
                 }
             }
 
@@ -49,9 +51,9 @@
 }
 
 start
-    = Ps:Statements _ { return formulas; }
-    / F:SimpleFormula _ ";" _ { return formulas; }
-    / _ { return formulas; }
+    = Ps:Statements _ { console.log(formulas); return formulas; }
+    / F:SimpleFormula _ ";" _ { console.log(formulas); return formulas; }
+    / _ { console.log(formulas); return formulas; }
 
 Statements
     = P:FixedPoint _ ";" Qs:Statements { return [P].concat(Qs); }
@@ -81,8 +83,8 @@ Modal
     / _ "[" _ "[" _ min:Delay _ "," _ max:Delay _ "]" _ "]" _ F:Modal { return expandDelay(min, max, F, "WFA"); }
 
     / _ "<" _ "<" _ AM:ActionList _ ">" _ ">" _ F:Modal { return formulas.newWeakExists(AM, F); }
-    / _ "<" _ "<" _ delay:Delay _ ">" _ ">" _ F:Modal { return expandDelay(delay, delay, F, "NWE"); }
-    / _ "<" _ "<" _ min:Delay _ "," _ max:Delay _ ">" _ ">" _ F:Modal { return expandDelay(min, max, F, "NWE"); }
+    / _ "<" _ "<" _ delay:Delay _ ">" _ ">" _ F:Modal { return expandDelay(delay, delay, F, "WE"); }
+    / _ "<" _ "<" _ min:Delay _ "," _ max:Delay _ ">" _ ">" _ F:Modal { return expandDelay(min, max, F, "WE"); }
 
     / _ "[" _ AM:ActionList _ "]" _ F:Modal { return formulas.newStrongForAll(AM, F); }
     / _ "[" _ delay:Delay _ "]" _ F:Modal { return expandDelay(delay, delay, F, "SFA"); }
