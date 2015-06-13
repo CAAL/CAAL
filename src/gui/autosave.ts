@@ -12,12 +12,12 @@ class AutoSave {
         this.storage = new WebStorage(localStorage);
 
         window.onbeforeunload = () => {
-            if ( this.checkAutosave() ) {
-                //this will alert user
+            if (this.checkAutosave()) {
+                // Alert user.
                 return 'You have unsaved data!';
             }
             else {
-                //this wont
+                // Reset alert.
                 window.onbeforeunload = undefined;
             }
         };
@@ -26,18 +26,18 @@ class AutoSave {
             this.setAutosave(null);
         };
     }
-    
+
     public autoSaveToStorage() : void {
         var id = this.project.getId();
-                
+
         this.storage.setObj("autosave", this.project.toJSON());
 
         $(document).trigger("save");
     }
 
-    public resetTimer() {
+    public resetTimer() : void {
         clearTimeout(this.timer);
-        this.timer = setTimeout( () => this.autoSaveToStorage(), this.DELAY );
+        this.timer = setTimeout(() => this.autoSaveToStorage(), this.DELAY);
     }
 
     public checkAutosave() : boolean {
@@ -48,13 +48,11 @@ class AutoSave {
         }
     }
 
-    public getAutosave() {
-        return (this.storage.getObj("autosave"));
+    public getAutosave() : any {
+        return this.storage.getObj("autosave");
     }
 
-    public setAutosave(value) : void {
+    public setAutosave(value : any) : void {
         this.storage.setObj("autosave", value);
     }
-
-    
 }
