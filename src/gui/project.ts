@@ -15,7 +15,6 @@ class Project {
     private properties : Property.Property[];
     private changed : boolean = false;
     private inputMode : InputMode = InputMode.CCS;
-    // private editor : any;
 
     public constructor() {
         if (Project.instance) {
@@ -23,9 +22,7 @@ class Project {
         } else {
             Project.instance = this;
         }
-        
-        // this.editor = ace.edit($("#editor")[0]);
-        
+
         this.reset();
         this.$projectTitle.keypress(function(e) {return e.which != 13}); // Disable line breaks. Can still be copy/pasted.
         this.$projectTitle.focusout(() => this.onTitleChanged());
@@ -40,15 +37,15 @@ class Project {
     }
 
     public reset() : void {
-        this.update(null, this.defaultTitle, this.defaultCCS, null, InputMode.CCS);
+        this.update(null, this.defaultTitle, this.defaultCCS, null, "CCS");
     }
 
-    public update(id : number, title : string, ccs : string, properties : any[], inputMode : InputMode) : void {
+    public update(id : number, title : string, ccs : string, properties : any[], inputMode : string) : void {
         this.setId(id);
         this.setTitle(title);
         this.setCCS(ccs);
         this.setProperties(properties);
-        this.setInputMode(inputMode);
+        this.setInputMode(InputMode[inputMode]);
         this.updateInputModeToggle();
     }
 
@@ -177,6 +174,10 @@ class Project {
             TCCSParser.parse(this.ccs, {ccs: CCS, tccs: TCCS, graph: graph});
             return graph;
         }
+    }
+
+    public isSaved() : boolean {
+        return this.ccs === "";
     }
 
     public toJSON() : any {

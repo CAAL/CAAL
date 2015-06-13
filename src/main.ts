@@ -44,7 +44,7 @@ module Main {
         new New("#new-btn", activityHandler);
         var save = new Save(null, activityHandler);
         new Load(null, activityHandler);
-        new Delete(null, activityHandler);
+        new Delete("#delete-btn", activityHandler);
         new Export("#export-pdf-btn", activityHandler);
 
         new HotkeyHandler().setGlobalHotkeys(activityHandler, save);
