@@ -32,6 +32,7 @@
                         break;
                     default:
                         throw "Unrecognized modality";
+                        break;
                 }
             }
 
@@ -51,9 +52,9 @@
 }
 
 start
-    = Ps:Statements _ { console.log(formulas); return formulas; }
-    / F:SimpleFormula _ ";" _ { console.log(formulas); return formulas; }
-    / _ { console.log(formulas); return formulas; }
+    = Ps:Statements _ { return formulas; }
+    / F:SimpleFormula _ ";" _ { return formulas; }
+    / _ { return formulas; }
 
 Statements
     = P:FixedPoint _ ";" Qs:Statements { return [P].concat(Qs); }
