@@ -21,6 +21,7 @@ class Save extends MenuItem {
         var blob = new Blob([JSON.stringify(json)], {type: "text/plain"});
         this.$saveFileButton.attr("href", URL.createObjectURL(blob));
         this.$saveFileButton.attr("download", this.project.getTitle() + ".caal");
+        Main.showNotification("Project saved!", 2000);
     }
 
     /*
@@ -51,7 +52,7 @@ class Save extends MenuItem {
             }
         }
 
-        Main.showInfoBox("Project \"" + this.project.getTitle() + "\" saved!", 1750);
+        Main.showNotification("Project saved!", 2000);
         $(document).trigger("save");
     }
 

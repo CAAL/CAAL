@@ -27,6 +27,7 @@ class Delete extends MenuItem {
                     }
                     this.project.setId(null);
                     $(document).trigger("delete");
+                    Main.showNotification("Project deleted!", 2000);
                     break;
                 }
             }

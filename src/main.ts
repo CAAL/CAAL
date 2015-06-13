@@ -53,12 +53,17 @@ module Main {
         Activity.addTooltips();
     });
 
-    export function showInfoBox(text : string, time : number) : void {
-        $('#info-box').html(text);
-        $('#info-box').stop().animate({ top: '10%' }, 400);
+    var timer;
+
+    export function showNotification(text : string, time : number) : void {
+        window.clearTimeout(timer);
+
+        var $box = $("#notification-box");
+        $box.html(text);
+        $box.fadeIn(500);
         
-        var timer = setTimeout(() => {
-            $('#info-box').stop().animate({ top: -100 }, 400);
+        timer = setTimeout(() => {
+            $box.fadeOut(500);
             window.clearTimeout(timer);
         }, time);
     }

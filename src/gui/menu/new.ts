@@ -9,6 +9,7 @@ class New extends MenuItem {
             this.storage.setObj("autosave", null); // Reset the auto save.
             this.project.reset();
             this.activityHandler.selectActivity("editor");
+            Main.showNotification("New project created!", 2000);
         }
 
         var saveAndReset = () => {
