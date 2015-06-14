@@ -72,9 +72,17 @@ textarea {
     border-color: #adadad;
 }
 
+nav.navbar {
+    margin-bottom: 15px;
+}
+
 .navbar-header .navbar-brand {
 	font-variant: small-caps;
     cursor: auto;
+}
+
+.navbar-header .navbar-brand:hover {
+    color: #777;
 }
  
 /* Align rightmost menu element with body */
@@ -116,15 +124,16 @@ textarea {
 
 #notification-box {
     position: absolute;
-    bottom: 25px;
-    right: 25px;
+    bottom: 20px;
+    right: 20px;
     padding: 15px;
     border-radius: 4px;
     font-size: 16px;
-    background-color: #666;
+    background: rgba(50, 50, 50, 0.6);
     color: #fff;
     text-align: center;
     display: none;
+    z-index: 9999;
 }
 
 
@@ -133,22 +142,16 @@ textarea {
  */
 
 #editor-container, #explorer-container, #verifier-container, #game-container, #hml-game-container {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
-#game-container:-webkit-full-screen {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-#game-container:-moz-full-screen    {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-#game-container:-ms-fullscreen      {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-#game-container:-o-full-screen      {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-#game-container:full-screen         {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
-#game-container:fullscreen          {width: 100%; height: 100%; background-color: #fff; padding: 10px; margin-bottom: 0}
 
 /*
  * Editor activity styles
  */
 
 #editor-container .row {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 #editor-container div.row:last-child, #editor-container .alert {
@@ -187,7 +190,7 @@ textarea {
     min-height: 0;
     background-color: #fff;
     border: none;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 #explorer-process-list {
@@ -198,7 +201,7 @@ textarea {
 
 #explorer-main input[type=range] {
     position: absolute;
-    top: 16px;
+    top: 10px;
     left: 10px;
     width: 100px;
     cursor: pointer;
@@ -256,12 +259,12 @@ textarea {
     }
 }
 
-#explorer-fullscreen-container:-webkit-full-screen {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
-#explorer-fullscreen-container:-moz-full-screen    {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
-#explorer-fullscreen-container:-ms-fullscreen      {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
-#explorer-fullscreen-container:-o-full-screen      {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
-#explorer-fullscreen-container:full-screen         {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
-#explorer-fullscreen-container:fullscreen          {width: 100%; height: 100%; padding: 10px; background-color: #fff;}
+#explorer-fullscreen-container:-webkit-full-screen {width: 100%; height: 100%; padding: 15px; background-color: #fff;}
+#explorer-fullscreen-container:-moz-full-screen    {width: 100%; height: 100%; padding: 15px; background-color: #fff;}
+#explorer-fullscreen-container:-ms-fullscreen      {width: 100%; height: 100%; padding: 15px; background-color: #fff;}
+#explorer-fullscreen-container:-o-full-screen      {width: 100%; height: 100%; padding: 15px; background-color: #fff;}
+#explorer-fullscreen-container:full-screen         {width: 100%; height: 100%; padding: 15px; background-color: #fff;}
+#explorer-fullscreen-container:fullscreen          {width: 100%; height: 100%; padding: 15px; background-color: #fff;}
 
 
 /*
@@ -298,7 +301,7 @@ textarea {
  */
 
 #game-options {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 #game-options div, #game-options select {
@@ -357,7 +360,7 @@ textarea {
 
 #game-main input[type=range] {
     position: absolute;
-    top: 16px;
+    top: 10px;
     left: 10px;
     width: 100px;
     cursor: pointer;
@@ -444,6 +447,13 @@ textarea {
         padding-left: 15px;
     }
 }
+
+#game-container:-webkit-full-screen {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#game-container:-moz-full-screen    {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#game-container:-ms-fullscreen      {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#game-container:-o-full-screen      {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#game-container:full-screen         {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#game-container:fullscreen          {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
 
 
 /*

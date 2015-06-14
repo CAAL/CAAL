@@ -17,6 +17,7 @@ module Activity {
         private graph : CCS.Graph;
         private succGenerator : CCS.SuccessorGenerator;
         private selectedProcess : CCS.Process;
+        private lastSelectedProcess: CCS.Process;
         private fullscreen : Fullscreen;
         private $canvasContainer : JQuery;
         private $statusContainer : JQuery;
@@ -137,7 +138,12 @@ module Activity {
             var list = $("#explorer-process-list").empty();
 
             for (var i = 0; i < processes.length; i++) {
-                list.append($("<option></option>").append(processes[i]));
+                var $option = $("<option></option>").append(processes[i]);
+                list.append($option);
+
+                if (this.lastSelectedProcess && this.lastSelectedProcess.toString() === processes[i]) {
+                    $option.prop("selected", true);
+                }
             }
 
             if (this.project.getInputMode() === InputMode.CCS) {
@@ -173,7 +179,8 @@ module Activity {
             this.resize(1);
 
             var options = this.getOptions();
-            this.succGenerator = CCS.getSuccGenerator(this.graph, {inputMode: options.inputMode, succGen: options.successor, reduce: options.simplify});
+            this.succGenerator = CCS.getSuccGenerator(this.graph,
+                {inputMode: options.inputMode, succGen: options.successor, reduce: options.simplify});
             var process = this.succGenerator.getProcessByName(options.process);
 
             if (this.project.getInputMode() === InputMode.CCS) {
@@ -189,9 +196,11 @@ module Activity {
                     process = collapseSuccGen.getCollapseForProcess(process.id);
                 }
             } else {
-                this.succGenerator = CCS.getSuccGenerator(this.graph, {inputMode: options.inputMode, time: options.time, succGen: options.successor, reduce: options.simplify});
+                this.succGenerator = CCS.getSuccGenerator(this.graph,
+                    {inputMode: options.inputMode, time: options.time, succGen: options.successor, reduce: options.simplify});
             }
 
+            this.lastSelectedProcess = process;
             this.expand(process);
         }
 
@@ -201,7 +210,7 @@ module Activity {
         }
 
         private setDepth(depth : number) : void {
-            if (!/^[0-9]+$/.test(depth.toString())) {
+            if (!/^[1-9][0-9]*$/.test(depth.toString())) {
                 this.$depth.val(this.$depth.data("previous-depth"));
             } else {
                 this.$depth.data("previous-depth", depth);
@@ -225,11 +234,7 @@ module Activity {
 
         private showProcess(process : CCS.Process) : void {
             if (!process || this.uiGraph.getProcessDataObject(process.id)) return;
-            this.uiGraph.showProcess(process.id, {label: this.labelFor(process), status: "unexpanded"});
-        }
-
-        private labelFor(process : CCS.Process) : string {
-            return this.graph.getLabel(process);
+            this.uiGraph.showProcess(process.id, {label: this.graph.getLabel(process), status: "unexpanded"});
         }
 
         private expand(process : CCS.Process) : void {
@@ -285,7 +290,7 @@ module Activity {
 
                 row.append($("<td>").append(this.sourceText(this.selectedProcess)));
                 row.append($actionTd);
-                row.append($("<td>").append(Tooltip.wrapProcess(this.labelFor(t.targetProcess))));
+                row.append($("<td>").append(Tooltip.wrapProcess(this.graph.getLabel(t.targetProcess))));
 
                 row.attr("data-target-id", t.targetProcess.id);
 
@@ -293,20 +298,20 @@ module Activity {
             });
         }
 
-        private sourceText(process : ccs.Process) : any {
-            // Collapsed process presents us with another indirection meaning
-            // under normal cirsumstances it would not be possible to hover
-            // over the constituent processes and get their description.
-            if (process instanceof ccs.CollapsedProcess) {
-                var wrappedSubProcs = process.subProcesses.map(p => Tooltip.wrapProcess(this.labelFor(p)));
+        private sourceText(process : CCS.Process) : any {
+            /* Collapsed processes present us with another indirection meaning
+               that under normal cirsumstances it would not be possible to hover
+               over the constituent processes and get their description. */
+            if (process instanceof CCS.CollapsedProcess) {
+                var wrappedSubProcs = process.subProcesses.map(p => Tooltip.wrapProcess(this.graph.getLabel(p)));
                 return [].concat(
-                    [Tooltip.wrapProcess(this.labelFor(process))],
+                    [Tooltip.wrapProcess(this.graph.getLabel(process))],
                     [" = {"],
                     ArrayUtil.intersperse<any>(wrappedSubProcs, ", "), 
                     ["}"]
                 );
             } else {
-                return Tooltip.wrapProcess(this.labelFor(process));
+                return Tooltip.wrapProcess(this.graph.getLabel(process));
             }
         }
 
@@ -342,7 +347,7 @@ module Activity {
 
         private resize(zoom : number) : void {
             var offsetTop = this.$canvasContainer.offset().top;
-            var offsetBottom = this.$statusContainer.height() + 43; // Margin bot + border.
+            var offsetBottom = this.$statusContainer.height() + 38; // Margin bot + border.
 
             var availableHeight = window.innerHeight - offsetTop - offsetBottom;
 

@@ -491,11 +491,7 @@ module Activity {
             var offsetTop = $("#game-main").offset().top;
             var offsetBottom = $("#game-status").height();
 
-            var availableHeight = window.innerHeight - offsetTop - offsetBottom - 22; // Margin bot + border = 22px.
-            
-            // Only 10px margin bot in fullscreen.
-            if (this.fullscreen.isFullscreen())
-                availableHeight += 10;
+            var availableHeight = window.innerHeight - offsetTop - offsetBottom - 17; // Margin bot + border = 22px.
 
             // Minimum height 265px.
             var height = Math.max(265, availableHeight);
