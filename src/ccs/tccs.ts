@@ -52,14 +52,6 @@ module TCCS {
             super(delay, targetProcess);
         }
 
-        // public equals(other : CCS.Transition) {
-        //     if (!(other instanceof DelayTransition)) {
-        //         return false;
-        //     }
-        //     console.log(other, this, (this.delay.equals((<DelayTransition>other).delay) && this.targetProcess.id === other.targetProcess.id));
-        //     return (this.delay.equals((<DelayTransition>other).delay) && this.targetProcess.id === other.targetProcess.id);
-        // }
-
         public toString() {
             if (this.targetProcess instanceof CCS.NamedProcess) {
                 return this.delay.toString() + "->" + (<CCS.NamedProcess>this.targetProcess).name;
@@ -155,43 +147,15 @@ module TCCS {
         }
         
         public dispatchRestrictionProcess(process : CCS.RestrictionProcess) {
-            var transitionSet = this.cache[process.id],
-                subTransitionSet;
-            if (!transitionSet) {
-                transitionSet = this.cache[process.id] = new CCS.TransitionSet();
-                subTransitionSet = process.subProcess.dispatchOn(this).clone();
-                subTransitionSet.applyRestrictionSet(process.restrictedLabels);
-                subTransitionSet.forEach(transition => {
-                    var newRestriction = this.graph.newRestrictedProcess(transition.targetProcess, process.restrictedLabels);
-                    if (transition instanceof DelayTransition) {
-                        transitionSet.add(new DelayTransition(transition.delay.clone(), newRestriction));
-                    } else if (transition instanceof CCS.Transition) {
-                        transitionSet.add(new CCS.Transition(transition.action.clone(), newRestriction));
-                    }
-                });
-                this.tauFoundCache[process.id] = this.tauFoundCache[process.subProcess.id];
-            }
-            return transitionSet;
+            var result = super.dispatchRestrictionProcess(process);
+            this.checkTransitionsForTau(process, result);
+            return result;
         }
-
+        
         public dispatchRelabellingProcess(process : CCS.RelabellingProcess) {
-            var transitionSet = this.cache[process.id],
-                subTransitionSet;
-            if (!transitionSet) {
-                transitionSet = this.cache[process.id] = new CCS.TransitionSet();
-                subTransitionSet = process.subProcess.dispatchOn(this).clone();
-                subTransitionSet.applyRelabelSet(process.relabellings);
-                subTransitionSet.forEach(transition => {
-                    var newRelabelling = this.graph.newRelabelingProcess(transition.targetProcess, process.relabellings);
-                    if (transition instanceof DelayTransition) {
-                        transitionSet.add(new DelayTransition(transition.delay.clone(), newRelabelling));
-                    } else if (transition instanceof CCS.Transition) {
-                        transitionSet.add(new CCS.Transition(transition.action.clone(), newRelabelling));
-                    }
-                });
-                this.tauFoundCache[process.id] = this.tauFoundCache[process.subProcess.id];
-            }
-            return transitionSet;
+            var result = super.dispatchRelabellingProcess(process);
+            this.checkTransitionsForTau(process, result);
+            return result;
         }
         
         public dispatchDelayPrefixProcess(process : TCCS.DelayPrefixProcess) : CCS.TransitionSet {
@@ -252,7 +216,17 @@ module TCCS {
                 var newSubProcesses = [];
                 var delayFound = false;
                 process.subProcesses.forEach(subProcess => {
-                    newSubProcesses.push(subProcess.dispatchOn(this));
+                    var newSubProcess = subProcess.dispatchOn(this);
+                    // if delaying by 1 brings us to a summation nested in a summation, e.g. the process  "P = 1.P + 2.P",
+                    // then promote the nested summation's sub-processes to this summation
+                    if (newSubProcess instanceof CCS.SummationProcess) {
+                        (<CCS.SummationProcess>newSubProcess).subProcesses.forEach(subSubProcess => {
+                            newSubProcesses.push(subSubProcess);
+                        });
+                    } else {
+                        newSubProcesses.push(newSubProcess);
+                    }
+                    
                     if (!delayFound && this.delayFoundCache[subProcess.id])
                         delayFound = true;
                 });
