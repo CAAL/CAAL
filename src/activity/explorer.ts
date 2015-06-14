@@ -316,10 +316,10 @@ module Activity {
         }
 
         private onTransitionTableRowHover(entering : boolean, event) : void {
+            this.uiGraph.clearHover();
+
             if (entering) {
                 this.uiGraph.setHover($(event.currentTarget).data("targetId"));
-            } else {
-                this.uiGraph.clearHover();
             }
         }
 
