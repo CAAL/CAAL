@@ -62,4 +62,8 @@ module Main {
             window.clearTimeout(timer);
         }, time);
     }
+
+    export function getVersion() : string {
+        return Version;
+    }
 }
