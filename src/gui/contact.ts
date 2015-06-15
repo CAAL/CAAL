@@ -1,5 +1,13 @@
+/// <reference path="gui/project.ts" />
+
 module ContactForm {
     export function init() {
+        // Get project
+        var project = Project.getInstance();
+        
+        // Set version in contact form
+        $("#contact-version").attr("placeholder", Main.getVersion());
+        
         $('#contact').click(() => {
             $("#contact-modal").modal("show");
         });
@@ -13,7 +21,9 @@ module ContactForm {
                 data: {subject: $("#contact-subject").val(),
                        email: $("#contact-email").val(),
                        text: $("#contact-text").val(),
-                       version: Main.getVersion()}, 
+                       name: $("#contact-name").val(),
+                       project: ($('#contact-isAttached').is(':checked')) ? project.toJSON() : "",
+                       version: Main.getVersion()},
                 success: function(data)
                 {
                     if(data == "true") {
