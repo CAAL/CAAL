@@ -10,7 +10,9 @@ module ContactForm {
             $.ajax({
                 type: "POST",
                 url: url,
-                data: {form: $("#contact-form").serialize(),
+                data: {subject: $("#contact-subject").val(),
+                       email: $("#contact-email").val(),
+                       text: $("#contact-text").val(),
                        version: Main.getVersion()}, 
                 success: function(data)
                 {
