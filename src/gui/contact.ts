@@ -1,4 +1,4 @@
-/// <reference path="gui/project.ts" />
+/// <reference path="project.ts" />
 
 module ContactForm {
     export function init() {
