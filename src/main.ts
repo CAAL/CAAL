@@ -11,6 +11,7 @@
 /// <reference path="gui/menu/export.ts" />
 /// <reference path="gui/hotkey.ts" />
 /// <reference path="gui/autosave.ts" />
+/// <reference path="gui/contact.ts" />
 /// <reference path="activity/activityhandler.ts" />
 /// <reference path="activity/activity.ts" />
 /// <reference path="activity/editor.ts" />
@@ -39,37 +40,7 @@ module Main {
 
         $("#version").append(Version);
 
-        $('#contact').click(() => {
-            $("#contact-modal").modal("show");
-        });
-
-        $("#contact-send").on("click", () => {
-            var url = "mailer.php";
-
-            $.ajax({
-                type: "POST",
-                url: url,
-                data: $("#contact-form").serialize(), // serializes the form's elements.
-                success: function(data)
-                {
-
-                    alert(data);
-                    
-                    if(data) {
-                        $("#contact-modal").modal("hide");
-                    } else {
-                        alert("The mail could not be send, sorry!");
-                        $("#contact-modal").modal("hide");
-                    }
-                },
-                error: function(data)
-                {
-                    alert("An error occured");
-                }
-            });
-
-            return false; // avoid to execute the actual submit of the form.
-        });
+        ContactForm.init();
 
         new New("#new-btn", activityHandler);
         var save = new Save(null, activityHandler);
