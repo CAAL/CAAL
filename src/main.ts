@@ -40,8 +40,6 @@ module Main {
 
         $("#version").append(Version);
 
-        ContactForm.init();
-
         new New("#new-btn", activityHandler);
         var save = new Save(null, activityHandler);
         new Load(null, activityHandler);
@@ -51,6 +49,8 @@ module Main {
         new HotkeyHandler().setGlobalHotkeys(activityHandler, save);
 
         Activity.addTooltips();
+
+        ContactForm.init();
     });
 
     export function showInfoBox(text : string, time : number) : void {

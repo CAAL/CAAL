@@ -443,13 +443,6 @@ textarea {
     }
 }
 
-/*
- * Contact Form
- */
-#contact-modal .modal-body {
-    min-height: 329px;
-}
-
 
 /*
  * About/Help styles

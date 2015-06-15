@@ -14,8 +14,7 @@ module ContactForm {
                 success: function(data)
                 {
                     if(data == "true") {
-                        
-                        //$("#contact-modal").modal("hide");
+                        showSuccess();
                     } else {
                         showError();
                     }
@@ -23,7 +22,6 @@ module ContactForm {
                 error: function(data)
                 {
                     showError();
-                    alert("An error occured");
                 }
             });
 
@@ -32,11 +30,13 @@ module ContactForm {
     }
 
     function showSuccess() {
-        $("#contact-modal").find(".form-group").hide();
+        $("#contact-modal").modal("hide");
+        Main.showInfoBox("Thank you!", 2500);
     }
-
+    
     function showError() {
-        $("#contact-modal").find(".form-group").hide();
+        $("#contact-modal").modal("hide");
+        Main.showInfoBox("An error occurred, please try again", 2500);
     }
 }
 
