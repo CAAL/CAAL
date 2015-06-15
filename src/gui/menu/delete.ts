@@ -55,8 +55,14 @@ class Delete extends MenuItem {
 
             projects.sort(function(a, b) {return b.title.localeCompare(a.title)});
 
+
             for (var i = 0; i < projects.length; i++) {
                 var html = $("<li class=\"delete\"><a>" + projects[i].title + "</a></li>");
+
+                if (!projects[i].inputMode) {
+                    // for backwards compatibility, if input is not defined, then default to CCS.
+                    projects[i].inputMode = "CCS";
+                }
 
                 if (projects[i].inputMode.toLowerCase() === "ccs") {
                     ccsFound = true;

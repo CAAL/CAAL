@@ -144,6 +144,11 @@ class Load extends MenuItem {
 
             for (var i = 0; i < projects.length; i++) {
                 var html = $("<li class=\"project\"><a>" + projects[i].title + "</a></li>");
+                
+                if (!projects[i].inputMode) {
+                    // for backwards compatibility, if input is not defined, then default to CCS.
+                    projects[i].inputMode = "CCS";
+                }
 
                 if (projects[i].inputMode.toLowerCase() === "ccs") {
                     ccsFound = true;
