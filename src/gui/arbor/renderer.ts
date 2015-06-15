@@ -36,7 +36,7 @@ class Renderer {
 
     public resize(width, height) {
         this.particleSystem.screenSize(width, height);
-        this.particleSystem.screenPadding(40);
+        this.particleSystem.screenPadding(45, 25, 15, 25);
         this.redraw();
     }
 
