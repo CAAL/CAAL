@@ -120,6 +120,8 @@ module Activity {
                 clearTimeout(this.timeout);
                 $("#explorer-canvas-tooltip").tooltip("destroy");
             });
+
+            this.toggleFreeze(this.isFreezeSet());
         }
 
         public onHide() : void {
@@ -131,6 +133,7 @@ module Activity {
             this.uiGraph.clearOnSelectListener();
             this.uiGraph.clearHoverOnListener();
             this.uiGraph.clearHoverOutListener();
+            this.uiGraph.freeze();
         }
 
         private displayOptions() : void {
@@ -216,6 +219,10 @@ module Activity {
                 this.$depth.data("previous-depth", depth);
                 this.draw();
             }
+        }
+
+        private isFreezeSet() : boolean {
+            return !!(this.$freeze.data("frozen"));
         }
 
         private toggleFreeze(freeze : boolean) : void {
