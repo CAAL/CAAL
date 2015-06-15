@@ -11,6 +11,7 @@
 /// <reference path="gui/menu/export.ts" />
 /// <reference path="gui/hotkey.ts" />
 /// <reference path="gui/autosave.ts" />
+/// <reference path="gui/contact.ts" />
 /// <reference path="activity/activityhandler.ts" />
 /// <reference path="activity/activity.ts" />
 /// <reference path="activity/editor.ts" />
@@ -38,8 +39,6 @@ module Main {
         activityHandler.selectActivity("editor");
 
         $("#version").append(Version);
-        // danger of spam mail; des10Xf15 mails are only temporary mails though.
-        $("#contact").attr("href", "mailto:caal@cs.aau.dk?Subject=CAAL%20Contact%20(" + Version + ")");
 
         $('[data-toggle="tooltip"]').tooltip(); 
         new New("#new-btn", activityHandler);
@@ -51,6 +50,8 @@ module Main {
         new HotkeyHandler().setGlobalHotkeys(activityHandler, save);
 
         Activity.addTooltips();
+
+        ContactForm.init();
     });
 
     var timer;
@@ -66,5 +67,9 @@ module Main {
             $box.fadeOut(500);
             window.clearTimeout(timer);
         }, time);
+    }
+
+    export function getVersion() : string {
+        return Version;
     }
 }
