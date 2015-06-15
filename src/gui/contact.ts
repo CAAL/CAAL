@@ -44,12 +44,12 @@ module ContactForm {
 
     function showSuccess() {
         $("#contact-modal").modal("hide");
-        Main.showInfoBox("Thank you!", 2500);
+        Main.showNotification("Thank you!", 2000);
     }
     
     function showError() {
         $("#contact-modal").modal("hide");
-        Main.showInfoBox("An error occurred, please try again", 2500);
+        Main.showNotification("An error occurred, please try again", 2000);
     }
 }
 
