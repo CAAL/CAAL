@@ -96,23 +96,23 @@ module Activity {
 
             this.toolMenuOptions = {
                 "edit": {
-                    id:"#property-edit",
-                    label: "Edit",
+                    id: "#property-edit",
+                    label: "Edit Property",
                     click: (e) => this.editProperty(e)
                 }, 
                 "delete": {
                     id: "#property-delete",
-                    label: "Delete",
+                    label: "Delete Property",
                     click: (e) => this.deleteProperty(e)
                 },
                 "play": {
                     id: "#property-playgame",
-                    label: "Play",
+                    label: "Play Game",
                     click: (e) => this.playGame(e)
                 },
                 "distinguishing" : {
                     id: "#property-distinguishing",
-                    label: "Distinguishing formula",
+                    label: "Generate Distinguishing Formula",
                     click: (e) => this.generateDistinguishingFormula(e)
                 }
             };
