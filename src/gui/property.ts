@@ -5,6 +5,45 @@
 enum PropertyStatus {satisfied, unsatisfied, invalid, unknown};
 
 module Property {
+
+    export function createProperty(propertyType: string, options:{type?:string; firstProcess?:string; secondProcess?:string; time?:string; status?:PropertyStatus; process?:string; topFormula?: string; definitions?: string}) : Property {
+        var resultProperty : Property = null;
+
+        var status = (options.status) ? options.status : PropertyStatus.unknown;
+        switch (propertyType)
+        {
+            case "bisimulation": {
+                // needs: time, firstProcess, secondProcess
+                resultProperty = options.type === "strong" ? new StrongBisimulation(options, status) : new WeakBisimulation(options, status);
+                break;
+            }
+            case "simulation": {
+                // TODO: Implement case content
+                break;
+            }
+            case "traceinclusion": {
+                // TODO: Implement case content
+                break;
+            }
+            case "traceequivalence": {
+                // TODO: Implement case content
+                break;
+            }
+            case "hml": {
+                // needs: process, topFormula, definitions
+                resultProperty = new HML(options, status) // HML Property
+                break;
+            }
+            default: {
+                // TODO: Implemente default case
+                console.log("Unknown property");
+            }
+        }
+
+        return resultProperty;
+    }
+
+
     export class Property {
         protected project : Project;
         private static counter : number = 0;
