@@ -7,13 +7,13 @@ module GUI.Widget {
     export type GameLogObjectRow = {text : string; htmlWrapper? : htmlWrapper;};
     export class GameLog {
         private log = document.createElement("div");
-        private round = 0;        
-        /* 
+        private round = 0;
+        /*
             Things to consider
                 Print intro
                     You are playing $player$ in $weak/strong$ HML game.
                     You have a winning strategy/You will lose.
-                Print a "Play" 
+                Print a "Play"
                     Round X
                         Current configuration: (Process, Formula).
                         (Attk)Attacker played Spec -walk-> Spec.
@@ -57,7 +57,7 @@ module GUI.Widget {
             }
 
             $log.append(logStr);
-            $log.scrollTop($log[0].scrollHeight);
+            // $log.scrollTop($log[0].scrollHeight);
         }
 
         private render(gameLogObject : GameLogObject) : string {
@@ -80,7 +80,7 @@ module GUI.Widget {
                 }
             });
 
-            var wrapper = gameLogObject.getWrapper(); 
+            var wrapper = gameLogObject.getWrapper();
             if (wrapper) {
                 var $temp = $(wrapper.tag);
 
@@ -97,14 +97,14 @@ module GUI.Widget {
         }
     }
 
-    
+
     const enum GameLogType {intro, play};
     export class GameLogObject {
         private template : string;
         private context : GameLogObjectRow[];
         private wrapper : htmlWrapper;
         private isNewRound : boolean;
-        
+
         constructor(private graph : CCS.Graph) {
             this.template = "";
             this.context = [];
@@ -153,8 +153,8 @@ module GUI.Widget {
         }
 
         public labelForFormula(formula : HML.Formula) : string {
-            var hmlNotationVisitor = new Traverse.HMLNotationVisitor();
-            return Traverse.safeHtml(hmlNotationVisitor.visit(formula)).slice(0,-1); //slice is used to remove ";"
+            var hmlNotationVisitor = new Traverse.HMLNotationVisitor(false);
+            return Traverse.safeHtml(hmlNotationVisitor.visit(formula)); //slice is used to remove ";"
         }
     }
 }
