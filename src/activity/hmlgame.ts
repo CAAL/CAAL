@@ -412,9 +412,11 @@ module Activity {
                 }
 
                 case WinReason.stuck: {
-                    gameLogObject.setTemplate("No available transitions. You ({0}) {1}!");
-                    gameLogObject.addLabel({text: (this.human === Player.defender) ? "defender" : "attacker"});
-                    gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
+                    gameLogObject.setTemplate("{0} {1} no available transitions. You lose!");
+                    gameLogObject.addLabel({text: (this.human === winner) ? (this.computer === Player.defender ? "Defender" : "Attacker") : 
+                                            "You " +"("+ (this.human === Player.defender ? "defender" : "attacker") + ")"});
+                    gameLogObject.addLabel({text: (this.human === winner) ? "has" : "have"});
+                    gameLogObject.addLabel({text: (this.human === winner) ? "You" : (this.computer === Player.defender ? "defender" : "attacker")});
                     break;
                 }
                 default: {
