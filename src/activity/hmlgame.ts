@@ -332,8 +332,10 @@ module Activity {
             this.gamelog.reset();
             // print the intro
             var gameIntro = new GUI.Widget.GameLogObject(this.graph)
-            gameIntro.setTemplate("You are playing {0} in HML game, and you will lose.")
+
+            gameIntro.setTemplate("You are playing {0} in HML game.</br> {1} has a winning strategy. You are going to lose.")
             gameIntro.addLabel({text: (this.human === Player.defender ? "defender" : "attacker")});
+            gameIntro.addLabel({text: (this.hmlGameLogic.getUniversalWinner() === Player.defender ? "Defender" : "Attacker")});
             this.gamelog.printToGameLog(gameIntro);
 
             this.refresh();
@@ -571,8 +573,6 @@ module Activity {
             this.weakSuccGen = weakSuccGen;
             this.graph = graph;
 
-            // this.round = 0;
-            this.currentDgNodeId = 0;
             this.root = new dg.MuCalculusNode(this.state.process, this.state.formula, this.state.isMinGame)
             this.dgNode = this.root,
             this.dGraph = new dg.MuCalculusDG(strongSuccGen, weakSuccGen, formulaSet)
@@ -584,7 +584,6 @@ module Activity {
         }
 
         public getUniversalWinner() : Player {
-
             return (this.marking.getMarking(this.root) === this.marking.ONE) ? Player.defender : Player.attacker;
         }
 
