@@ -46,7 +46,7 @@ module Activity {
             this.setOptionsDom(this.currentSubActivity);
             this.currentSubActivity.onShow(configuration);
         }
-        
+
         private setOptionsDom(subActivity : SubActivity) {
             var injecter = $("#hml-game-inject-options")[0];
             while (injecter.firstChild) {
@@ -76,7 +76,7 @@ module Activity {
 
             var hmlFormulaSets = project.getFormulaSetsForProperties();
             if (Object.keys(hmlFormulaSets).length === 0) {
-                this.showMessageBox("No hml formula defined", "There must be at least one HML formula defined in the verifier.");                
+                this.showMessageBox("No hml formula defined", "There must be at least one HML formula defined in the verifier.");
                 return false;
             }
 
@@ -134,7 +134,7 @@ module Activity {
         */
 
         constructor(container : string) {
-            this.$container = $(container); 
+            this.$container = $(container);
 
             this.project = Project.getInstance();
             this.constructOptionsDom();
@@ -152,13 +152,13 @@ module Activity {
             $("#hml-game-main").append(this.processExplorer.getRootElement());
             /*Gamelog*/
             $("#hml-game-status-left").append(this.gamelog.getRootElement());
-            
+
             /* Assign the restart button */
             this.$restartBtn = $("#hml-game-restart");
             this.$restartBtn.on("click", () => this.configure(this.configuration));
 
             this.fullscreen = new Fullscreen($("#hml-game-container")[0], $("#hml-game-fullscreen"), () => this.resize());
-            
+
             this.transitionTable.onSelectListener = ((transition) => {
                 this.hmlGameLogic.selectedTransition(transition, (process) => {this.processExplorer.exploreProcess(process); this.processExplorer.focusOnProcess(process);}); // return the new state
                 this.refresh();
@@ -176,7 +176,7 @@ module Activity {
             new DataTooltip($("#hml-game-log")); // no need to save instance
         }
 
-        onShow(configuration) { 
+        onShow(configuration) {
             $(window).on("resize", () => this.resize());
             this.fullscreen.onShow();
             this.resize();
@@ -184,7 +184,7 @@ module Activity {
             // this.tooltip.setGraph(configuration.succGen.graph);
 
             if (this.CCSChanged || configuration.type != "default" || this.configuration === null) {
-                // if either the CCS has changed, the configuration given is not the default one, 
+                // if either the CCS has changed, the configuration given is not the default one,
                 // or this.configuration has not yet been initialized, then re-configure everything.
                 this.CCSChanged = false;
                 // this.tooltip.setGraph(Main.getGraph().graph);
@@ -262,10 +262,10 @@ module Activity {
 
         private setFormulas(hmlFormulaSets : any, selectedPropertyId : number) : void {
             this.$formulaList.empty();
-            
+
             for (var propId in hmlFormulaSets){
-                var hmlvisitor = new Traverse.HMLNotationVisitor();
-                var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlFormulaSets[propId].getTopFormula())).slice(0, -1); //slice is used to remove the ";"
+                var hmlvisitor = new Traverse.HMLNotationVisitor(false);
+                var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlFormulaSets[propId].getTopFormula())); //slice is used to remove the ";"
                 var optionsNode = $("<option></option>").attr("value", propId).append(formulaStr);
                 if(parseInt(propId) == selectedPropertyId) {
                     optionsNode.prop("selected", true);
@@ -302,10 +302,10 @@ module Activity {
             this.graph = this.project.getGraph();
             this.strongSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
             this.weakSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "weak", reduce: false});
-            /*Fill the dropdown list with infomation*/            
+            /*Fill the dropdown list with infomation*/
             this.setProcesses(this.getNamedProcessList(), configuration.processName);
             this.setFormulas(this.formulaSets, configuration.propertyId);
-            
+
             /*Set the currentFormula/Process */
             var currentProcess = this.strongSuccGen.getProcessByName(configuration.processName);
             var currentFormulaSet : HML.FormulaSet = this.formulaSets[configuration.propertyId];
@@ -320,11 +320,11 @@ module Activity {
             this.processExplorer.succGen = this.strongSuccGen;
 
             this.processExplorer.exploreProcess(currentProcess); // explore the current selected process
-            
-            this.hmlGameLogic = new HmlGameLogic(currentProcess, currentFormula, 
+
+            this.hmlGameLogic = new HmlGameLogic(currentProcess, currentFormula,
                                                  currentFormulaSet, this.strongSuccGen, this.weakSuccGen, this.graph);
             this.hmlGameLogic.setGamelogWriter((gameLogObject) => this.gamelog.printToGameLog(gameLogObject));
-            
+
             this.computer = this.hmlGameLogic.getUniversalWinner();
             this.human = (this.computer === Player.attacker) ? Player.defender : Player.attacker;
 
@@ -361,7 +361,7 @@ module Activity {
                 if(currentPlayer === this.computer) {
                     this.hmlGameLogic.AutoPlay(this.computer, (process) => {this.processExplorer.exploreProcess(process); this.processExplorer.focusOnProcess(process);});
                     this.refresh();
-                } 
+                }
                 else if(currentPlayer === this.human) {
                     this.prepareGuiForUserAction();
                 }
@@ -370,13 +370,13 @@ module Activity {
                     formula = this.hmlGameLogic.JudgeUnfold(formula, formulaSet);
                     this.refresh();
                 }
-            } 
+            }
         }
 
         private printGameOver(winner : Player, winReason : WinReason) : void {
             /* Gamelog */
             var gameLogObject = new GUI.Widget.GameLogObject(this.graph);
-            
+
             switch (winReason)
             {
                 case WinReason.minGameCycle: {
@@ -426,10 +426,10 @@ module Activity {
         private printCurrentConfig(process : CCS.Process, formula : HML.Formula, isNewRound = true) : void{
             /* Gamelog */
             var gameLogObject = new GUI.Widget.GameLogObject(this.graph);
-            
+
             if(isNewRound)
                 gameLogObject.setNewRound(true);
-            
+
             gameLogObject.setTemplate("Current configuration: ({0}, {1}).");
             gameLogObject.addLabel({text: gameLogObject.labelForProcess(process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]})
             gameLogObject.addLabel({text: gameLogObject.labelForFormula(formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
@@ -446,7 +446,7 @@ module Activity {
 
                 this.setActionWidget(this.transitionTable) // set widget to be transition table
                 this.transitionTable.setTransitions(this.hmlGameLogic.state.process, this.hmlGameLogic.getAvailableTransitions());
-            } 
+            }
             else if (this.hmlGameLogic.getNextActionType() === ActionType.formula) {
                 gameLogObject.setTemplate("Select a subformula")
                 gameLogObject.addWrapper({tag: "<p>", attr: [{name: "id", value: "temprow"}]});
@@ -472,13 +472,13 @@ module Activity {
             var $processExplorerCanvasContainer = $(this.processExplorer.getCanvasContainer()),
                 explorerOffsetTop = $processExplorerCanvasContainer.offset().top,
                 explorerOffsetBottom = $("#hml-game-status").height();
-            
+
             var availableHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 22;
 
             // Only 10px margin bot in fullscreen.
             if (this.fullscreen.isFullscreen())
                 availableHeight += 10;
-                        
+
             this.processExplorer.resize(this.$container.width(), availableHeight);
         }
 
@@ -499,9 +499,9 @@ module Activity {
     }
 
     class HmlGameState {
-        constructor(public process : CCS.Process, 
+        constructor(public process : CCS.Process,
                 public formula : HML.Formula,
-                public formulaSet : HML.FormulaSet, 
+                public formulaSet : HML.FormulaSet,
                 public isMinGame : boolean) {}
 
         withProcess(process : CCS.Process) : HmlGameState {
@@ -513,13 +513,13 @@ module Activity {
         withFormula(formula : HML.Formula) : HmlGameState {
             var result = this.clone();
             result.formula = formula;
-            return result;   
+            return result;
         }
 
         withMinMax(isMinGame : boolean) : HmlGameState {
             var result = this.clone();
             result.isMinGame = isMinGame;
-            return result;      
+            return result;
         }
 
         private clone() : HmlGameState {
@@ -533,7 +533,7 @@ module Activity {
         }
 
         toString() {
-            var hmlNotationVisitor = new Traverse.HMLNotationVisitor();
+            var hmlNotationVisitor = new Traverse.HMLNotationVisitor(false);
             var processStr = (this.process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess>this.process).name : this.process.id.toString();
             var formulaStr = hmlNotationVisitor.visit(this.formula);
             var isMinGameStr = this.isMinGame.toString();
@@ -561,7 +561,6 @@ module Activity {
         private currentDgNodeId : dg.DgNodeId;
         private choiceDgNodeId : dg.DgNodeId;
         private cycleCache;
-        private satisfied : boolean = false;
 
 
         constructor(process : CCS.Process, formula : HML.Formula, formulaSet : HML.FormulaSet, strongSuccGen : CCS.SuccessorGenerator, weakSuccGen : CCS.SuccessorGenerator, graph : CCS.Graph) {
@@ -571,7 +570,7 @@ module Activity {
             this.strongSuccGen = strongSuccGen;
             this.weakSuccGen = weakSuccGen;
             this.graph = graph;
-            
+
             // this.round = 0;
             this.currentDgNodeId = 0;
             this.root = new dg.MuCalculusNode(this.state.process, this.state.formula, this.state.isMinGame)
@@ -583,7 +582,7 @@ module Activity {
         private solveMuCalculus() : dg.LevelMarking{
             return dg.liuSmolkaLocal2(this.dgNode, this.dGraph);
         }
-        
+
         public getUniversalWinner() : Player {
 
             return (this.marking.getMarking(this.root) === this.marking.ONE) ? Player.defender : Player.attacker;
@@ -606,7 +605,7 @@ module Activity {
             if (player === Player.judge) throw "Judge may not auto play";
             var minimizeLevel = player === Player.defender; //TODO does this makes sense?
             var choice = this.getBestAIChoice(minimizeLevel);
-            
+
             var actionType = this.getNextActionType();
             if (actionType === ActionType.transition) {
                 //Find matching transition
@@ -642,7 +641,7 @@ module Activity {
         }
 
         public selectedTransition(transition : CCS.Transition, exploreProcess : Function) : void {
-            if (this.gameIsOver) throw "Game has ended";          
+            if (this.gameIsOver) throw "Game has ended";
 
 
             var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
@@ -654,7 +653,7 @@ module Activity {
                 var actionTransition = "=" + transition.action.toString() + "=>";
                 gameLogPlay.addLabel({text: actionTransition, tag: "<span>",attr: [{name: "class", value: "ccs-tooltip-data"},
                 {name: "data-tooltip", value: Tooltip.strongSequence(<Traverse.WeakSuccessorGenerator>this.weakSuccGen, this.state.process, transition.action, transition.targetProcess, this.graph)}]});
-            } 
+            }
             else {
                 gameLogPlay.addLabel({text: "-" + transition.action.toString() + "->", tag: "<span>", attr: [{name: "class", value: "monospace"}]});
             }
@@ -666,7 +665,7 @@ module Activity {
             var hmlSubF = this.popModalityFormula(<Modality> this.state.formula);
             this.previousStates.push(this.state);
             this.dgNode = this.dgNode.newWithFormula(hmlSubF).newWithProcess(transition.targetProcess);
-            this.state = this.state.withFormula(hmlSubF).withProcess(transition.targetProcess);            
+            this.state = this.state.withFormula(hmlSubF).withProcess(transition.targetProcess);
 
             exploreProcess(this.state.process); // explore the process.
         }
@@ -689,7 +688,7 @@ module Activity {
             if (this.state.formula instanceof HML.FalseFormula) {
                 this.gameIsOver = true;
                 return new Pair(Player.attacker, WinReason.falseFormula); // attacker win
-            } 
+            }
             else if (this.state.formula instanceof HML.TrueFormula) {
                 this.gameIsOver = true;
                 return new Pair(Player.defender, WinReason.trueFormula); // defender win
@@ -710,7 +709,7 @@ module Activity {
                     // minGame
                     this.gameIsOver = true;
                     return new Pair(Player.attacker, WinReason.minGameCycle); //winner
-                } 
+                }
                 else if (!this.state.isMinGame) {
                     // maxGame
                     this.gameIsOver = true;
@@ -737,28 +736,18 @@ module Activity {
 
         public JudgeUnfold(hml : HML.Formula, hmlFSet : HML.FormulaSet) : HML.Formula {
             if (hml instanceof HML.MinFixedPointFormula) {
-                // var describedEdges = this.getChoices(this.dgNode);
-                // this.updateCurrentDgNode(hml.id, describedEdges);
-                
                 this.previousStates.push(this.state);
                 this.state = this.state.withFormula(hml.subFormula).withMinMax(true);
                 this.dgNode = this.dgNode.newWithFormula(hml.subFormula).newWithMinMax(true);
                 return hml.subFormula;
             }
             else if (hml instanceof HML.MaxFixedPointFormula) {
-                // var describedEdges = this.getChoices(this.dgNode);
-                // this.updateCurrentDgNode(hml.id, describedEdges);
-                
                 this.previousStates.push(this.state);
                 this.state = this.state.withFormula(hml.subFormula).withMinMax(false);
                 this.dgNode = this.dgNode.newWithFormula(hml.subFormula).newWithMinMax(false);
                 return hml.subFormula;
-            } 
+            }
             else if (hml instanceof HML.VariableFormula) {
-                // var describedEdges = this.getChoices(this.dgNode);
-                // this.dgNode = this.dgNode.
-                // this.updateCurrentDgNode(hml.id, describedEdges);
-
                 var namedFormula = hmlFSet.formulaByName(hml.variable);
                 if (namedFormula) {
                     if (namedFormula instanceof HML.MinFixedPointFormula || namedFormula instanceof HML.MaxFixedPointFormula) {
@@ -784,7 +773,7 @@ module Activity {
             throw "Unhandled formula type in JudgeUnfold";
         }
 
-        private updateCurrentDgNode(id : string, describedEdges): void {
+        /*private updateCurrentDgNode(id : string, describedEdges): void {
             // update the currentDgNode after each play/unfolding.
             for (var descEdge in describedEdges){
                 var hyberedge = describedEdges[descEdge];
@@ -804,7 +793,7 @@ module Activity {
                     }
                 }
             }
-        }
+        }*/
 
         public getCurrentPlayer() : Player {
             var attackerMoves = [HML.ConjFormula, HML.StrongForAllFormula, HML.WeakForAllFormula, HML.FalseFormula];
@@ -821,15 +810,15 @@ module Activity {
         public getAvailableTransitions() : CCS.Transition[] {
             if (this.getNextActionType() === ActionType.transition) {
                 var hml = <Modality>this.state.formula;
-                
+
                 var allTransitions = null;
                 if(this.isWeak()){
                     allTransitions = this.weakSuccGen.getSuccessors(this.state.process.id).toArray();
-                } 
+                }
                 else {
                     allTransitions = this.strongSuccGen.getSuccessors(this.state.process.id).toArray();
                 }
-                
+
                 var availableTransitions = allTransitions.filter((transition) => hml.actionMatcher.matches(transition.action));
                 return availableTransitions;
             }
@@ -837,7 +826,7 @@ module Activity {
             throw "Unhandled formula type in getAvailableTransitions";
         }
 
-        public isWeak() : boolean { 
+        public isWeak() : boolean {
             var weakMoves = [HML.WeakForAllFormula, HML.WeakExistsFormula];
             var strongMoves = [HML.StrongForAllFormula, HML.StrongExistsFormula];
             var isPrototypeOfCurrentFormula = (obj) => this.state.formula instanceof obj;
@@ -849,7 +838,7 @@ module Activity {
         }
 
         public getAvailableFormulas(hmlFSet : HML.FormulaSet) : HML.Formula[] {
-            if (this.getNextActionType() === ActionType.formula) {            
+            if (this.getNextActionType() === ActionType.formula) {
                 var hmlSuccGen = new Traverse.HMLSuccGenVisitor(hmlFSet);
                 var formulaSuccessors = hmlSuccGen.visit(this.state.formula);
 
@@ -868,14 +857,14 @@ module Activity {
                 hyperEdge.forEach(targetNode => {
                     targetNode.level = this.marking.getLevel(targetNode);
                 });
-                    
+
                 var edgeDescription : any = {level: Infinity, nodeDescriptions: hyperEdge};
                 // var max2 = (a, b) => Math.max(a,b);
                 //Set max level for each hyperedge description
                 edgeDescription.level = hyperEdge.reduce((maxDesc, otherDesc) => {
                     return otherDesc.level > maxDesc.level ? otherDesc : maxDesc;
                 }).level;
-                
+
                 return edgeDescription;
             });
 
@@ -885,7 +874,7 @@ module Activity {
 
         private getBestAIChoice(minimizeLevel : boolean) : any {
             var describedEdges = this.getChoices(this.dgNode);
-            
+
             var isBetterFn = minimizeLevel ? ((x, y) => x.level < y.level) : ((x, y) => x.level > y.level);
             //Pick desired hyperedge
             var selectedHyperDescription = ArrayUtil.selectBest(describedEdges, isBetterFn);

@@ -34,7 +34,7 @@ module Traverse {
                 this.stringPieces.push("[NamedProcess");
                 this.stringPieces.push(process.name + " =");
                 process.subProcess.dispatchOn(this);
-                this.stringPieces.push("]");  
+                this.stringPieces.push("]");
             } else {
                 this.stringPieces.push("[ConstantProcess " + process.name + "]");
             }
@@ -252,7 +252,7 @@ module Traverse {
     export class HMLNotationVisitor implements hml.FormulaVisitor<string>, hml.FormulaDispatchHandler<string> {
         private cache;
 
-        constructor() {
+        constructor(private showSemicolon = true) {
             this.clearCache();
         }
 
@@ -261,7 +261,11 @@ module Traverse {
         }
 
         visit(formula : hml.Formula) {
-            return formula.dispatchOn(this) + ";";
+            if (this.showSemicolon) {
+                return formula.dispatchOn(this) + ";";
+            } else {
+                return formula.dispatchOn(this);
+            }
         }
 
         dispatchDisjFormula(formula : hml.DisjFormula) {
@@ -288,7 +292,7 @@ module Traverse {
         dispatchTrueFormula(formula : hml.TrueFormula) {
             var result = this.cache[formula.id];
             if (!result) {
-                result = this.cache[formula.id] = "T";
+                result = this.cache[formula.id] = "tt";
             }
             return result;
         }
@@ -296,7 +300,7 @@ module Traverse {
         dispatchFalseFormula(formula : hml.FalseFormula) {
             var result = this.cache[formula.id];
             if (!result) {
-                result = this.cache[formula.id] = "F";
+                result = this.cache[formula.id] = "ff";
             }
             return result;
         }
@@ -305,7 +309,7 @@ module Traverse {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "<" + 
+                result = this.cache[formula.id] = "<" +
                     formula.actionMatcher.toString() + ">" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
@@ -316,7 +320,7 @@ module Traverse {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "[" + 
+                result = this.cache[formula.id] = "[" +
                     formula.actionMatcher.toString() + "]" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
@@ -327,7 +331,7 @@ module Traverse {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "<<" + 
+                result = this.cache[formula.id] = "<<" +
                     formula.actionMatcher.toString() + ">>" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
@@ -338,7 +342,7 @@ module Traverse {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "[[" + 
+                result = this.cache[formula.id] = "[[" +
                     formula.actionMatcher.toString() + "]]" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
@@ -372,7 +376,7 @@ module Traverse {
         }
     }
 
-    export class HMLSuccGenVisitor implements HML.FormulaVisitor<Array<HML.Formula>>, HML.FormulaDispatchHandler<Array<HML.Formula>> { 
+    export class HMLSuccGenVisitor implements HML.FormulaVisitor<Array<HML.Formula>>, HML.FormulaDispatchHandler<Array<HML.Formula>> {
         private isFirst = true;
 
         constructor(private hmlFormulaSet : HML.FormulaSet) {
@@ -417,7 +421,7 @@ module Traverse {
 
         dispatchStrongExistsFormula(formula : HML.StrongExistsFormula) {
             var result = [];
-            
+
             result.push(formula.subFormula);
 
             return result;
@@ -425,7 +429,7 @@ module Traverse {
 
         dispatchStrongForAllFormula(formula : HML.StrongForAllFormula) {
             var result = [];
-                
+
             result.push(formula.subFormula);
 
             return result;
@@ -433,7 +437,7 @@ module Traverse {
 
         dispatchWeakExistsFormula(formula : HML.WeakExistsFormula) {
             var result = []
-            
+
             result.push(formula.subFormula);
 
             return result;
@@ -449,7 +453,7 @@ module Traverse {
 
         dispatchMinFixedPointFormula(formula : HML.MinFixedPointFormula) {
             var result = [];
-           
+
             result.push(formula.subFormula);
 
             return result;
@@ -457,9 +461,9 @@ module Traverse {
 
         dispatchMaxFixedPointFormula(formula : HML.MaxFixedPointFormula) {
             var result = [];
-            
+
             result.push(formula.subFormula);
-        
+
             return result;
         }
 
@@ -469,11 +473,11 @@ module Traverse {
 
             if (namedFormulaDef) {
                 result.push(namedFormulaDef.subFormula);
-            } 
+            }
             else {
                 throw "HML variable " + formula.variable + " has no definition";
             }
-        
+
             return result;
         }
     }

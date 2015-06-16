@@ -14,10 +14,10 @@ module GUI.Widget {
 
         public onSelectListener : HMLSelectListener = null;
 
-        constructor() {        
+        constructor() {
             var $table = $(this.table);
             var $body = $(this.body);
-        
+
             $table.attr("id", "hml-selector-body");
             $table.addClass("widget-transition-table table table-responsive table-striped table-condensed table-hover no-highlight");
             $table.append('<thead><tr><th class="narrow">Subformula</th></tr></thead>');
@@ -45,14 +45,14 @@ module GUI.Widget {
 
                 this.currentSubFormulas.forEach((subFormula, index) => {
                     var $row = $("<tr></tr>"),
-                        hmlNotationVisitor = new Traverse.HMLNotationVisitor(),
+                        hmlNotationVisitor = new Traverse.HMLNotationVisitor(false),
                         $subFormulaTd = $("<td></td>").append(Traverse.safeHtml(hmlNotationVisitor.visit(subFormula)));
 
 
                     $row.append($subFormulaTd);
                     $row.data("data-transition-idx", index);
                     $body.append($row);
-                });                
+                });
             }
         }
 
@@ -71,10 +71,10 @@ module GUI.Widget {
         }
     }
 
-   
 
 
-    /*class HMLSubFormulaExtractor implements HML.FormulaDispatchHandler<HML.Formula> { 
+
+    /*class HMLSubFormulaExtractor implements HML.FormulaDispatchHandler<HML.Formula> {
         private getForId : number;
 
         constructor(private hmlFormulaSet : HML.FormulaSet) {
@@ -133,7 +133,7 @@ module GUI.Widget {
                 }
             }
 
-            return null; 
+            return null;
         }
     }*/
 }
