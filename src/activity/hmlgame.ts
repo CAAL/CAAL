@@ -190,10 +190,13 @@ module Activity {
                 // this.tooltip.setGraph(Main.getGraph().graph);
                 this.configure(configuration);
             }
+
+            this.processExplorer.clearFreeze(); // (un)freeze the graph depending on the lock
         }
 
         onHide() {
             $(window).off("resize");
+            this.processExplorer.getGraphUI().freeze();
         }
 
         private constructOptionsDom() {

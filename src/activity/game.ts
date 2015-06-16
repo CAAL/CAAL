@@ -40,7 +40,7 @@ module Activity {
         private rightRenderer : Renderer;
         private leftGraph: GUI.ProcessGraphUI;
         private rightGraph: GUI.ProcessGraphUI;
-        
+
         constructor(container : string, button : string) {
             super(container, button);
 
@@ -48,7 +48,7 @@ module Activity {
             this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(null, null));
             this.tooltip = new ProcessTooltip($("#game-status"));
             new DataTooltip($("#game-log")); // no need to save instance
-            
+
             this.$gameType = $("#game-type");
             this.$ccsGameTypes = $(".ccs-game-type");
             this.$tccsGameTypes = $(".tccs-game-type");
@@ -114,7 +114,7 @@ module Activity {
         public getGraph() : CCS.Graph {
             return this.graph;
         }
-        
+
         private setDepth(process : CCS.Process, graph : GUI.ProcessGraphUI, depth : number, move : Move) : void {
             this.clear(graph);
             this.draw(process, graph, depth);
@@ -143,12 +143,12 @@ module Activity {
 
             button.data("frozen", freeze);
         }
-        
+
         public onShow(configuration? : any) : void {
             $(window).on("resize", () => this.resize(this.$leftZoom.val(), this.$rightZoom.val()));
-            
+
             this.fullscreen.onShow();
-            
+
             if (this.project.getInputMode() === InputMode.TCCS) {
                 this.$ccsGameTypes.hide();
                 this.$tccsGameTypes.show();
@@ -156,20 +156,20 @@ module Activity {
                 this.$tccsGameTypes.hide();
                 this.$ccsGameTypes.show();
             }
-            
+
             if (this.changed || configuration) {
                 if (this.project.getInputMode() === InputMode.TCCS) {
                     this.$gameType.val("timedstrong");
                 } else {
                     this.$gameType.val("strong");
                 }
-                
+
                 this.changed = false;
                 this.graph = this.project.getGraph();
                 this.displayOptions();
                 this.newGame(true, true, configuration);
             }
-            
+
             this.tooltip.setGraph(this.graph);
 
             this.leftGraph.setOnSelectListener((processId) => {
@@ -220,11 +220,14 @@ module Activity {
 
             this.leftGraph.bindCanvasEvents();
             this.rightGraph.bindCanvasEvents();
+
+            this.toggleFreeze(this.leftGraph, this.$leftFreeze.data("frozen"), this.$leftFreeze); // (un)freeze, depending on the lock icon
+            this.toggleFreeze(this.rightGraph, this.$rightFreeze.data("frozen"), this.$rightFreeze); // (un)freeze, depending on the lock icon
         }
 
         public onHide() : void {
             $(window).off("resize");
-            
+
             this.fullscreen.onHide();
 
             this.leftGraph.clearOnSelectListener();
@@ -236,11 +239,14 @@ module Activity {
 
             this.leftGraph.unbindCanvasEvents();
             this.rightGraph.unbindCanvasEvents();
+
+            this.leftGraph.freeze(); // force freeze for graph
+            this.rightGraph.freeze(); // force freeze for graph
         }
 
         private displayOptions() : void {
             var processes = this.graph.getNamedProcesses().reverse();
-            
+
             this.$leftProcessList.empty();
             this.$rightProcessList.empty();
 
@@ -288,23 +294,23 @@ module Activity {
             } else {
                 options = this.getOptions();
             }
-            
+
             var time = "";
-            
+
             if (this.project.getInputMode() === InputMode.TCCS) {
                 time = options.gameType.substring(0, 5) === "timed" ? "timed" : "untimed";
                 options.gameType = options.gameType.substring(time.length, options.gameType.length);
             } else {
-                
+
             }
-            
+
             if (options.gameType === "strong" || options.gameType === "weak")
                 var gameType : string = options.gameType;
             else if (options.gameType === "strongsim")
                 var gameType = "strong";
             else if (options.gameType === "weaksim")
                 var gameType = "weak";
-                
+
             this.succGen = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], time: time, succGen: gameType, reduce: false});
 
             if (drawLeft || !this.leftGraph.getNode(this.succGen.getProcessByName(options.leftProcess).id.toString())) {
@@ -320,21 +326,21 @@ module Activity {
                 this.resize(null, 1);
                 this.toggleFreeze(this.rightGraph, false, this.$rightFreeze);
             }
-            
+
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], time: time, succGen: "strong", reduce: false});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = this.succGen; //CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: false});
 
             if (this.dgGame !== undefined) {this.dgGame.stopGame()};
-            
+
             if (options.gameType === "strong" || options.gameType === "weak")
                 this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, time, gameType);
             else if (options.gameType === "strongsim" || options.gameType === "weaksim") {
                 this.dgGame = new SimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, time, gameType);
             }
-            
+
             var attacker : Player;
             var defender : Player;
-            
+
             if (options.playerType === "defender") {
                 attacker = new Computer(PlayType.Attacker);
                 defender = new Human(PlayType.Defender, this);
@@ -342,7 +348,7 @@ module Activity {
                 attacker = new Human(PlayType.Attacker, this);
                 defender = new Computer(PlayType.Defender);
             }
-            
+
             this.dgGame.setPlayers(attacker, defender);
             this.dgGame.startGame();
         }
@@ -453,7 +459,7 @@ module Activity {
 
         public highlightChoices(isLeft : boolean, targetId : string) : void {
             if (isLeft) {
-                this.leftGraph.setHover(targetId); 
+                this.leftGraph.setHover(targetId);
             } else {
                 this.rightGraph.setHover(targetId);
             }
@@ -531,112 +537,112 @@ module Activity {
             }
         }
     }
-    
+
     export enum PlayType { Attacker, Defender }
     export enum Move { Right, Left }
-    
+
     class Abstract {
         protected abstract() : any {
             throw new Error("Abstract method not implemented.");
         }
     }
-    
+
     class DgGame extends Abstract {
-        
+
         protected dependencyGraph : dg.PlayableDependencyGraph;
         protected marking : dg.LevelMarking;
         protected graph : CCS.Graph;
-        
+
         protected gameActivity : Game;
         protected gameLog : GameLog;
-        
+
         protected currentLeft : any;
         protected currentRight : any;
-        
+
         protected attacker : Player;
         protected defender : Player;
         protected currentWinner : Player;
-        
+
         protected round : number = 1;
         protected lastMove : Move;
         protected lastAction : CCS.Action;
         protected currentNodeId : dg.DgNodeId = 0; // the DG node id
-        
+
         private cycleCache : any;
-        
+
         constructor(gameActivity : Game, gameLog : GameLog, graph : CCS.Graph,
             currentLeft : any, currentRight : any, time : string) {
             super();
-            
+
             this.gameActivity = gameActivity;
             this.gameLog = gameLog;
             this.graph = graph;
             this.currentLeft = currentLeft;
             this.currentRight = currentRight;
-            
+
             // create the dependency graph
             this.dependencyGraph = this.createDependencyGraph(this.graph, currentLeft, currentRight);
-            
+
             // create markings
             this.marking = this.createMarking();
         }
-        
+
         public getGameLog() : GameLog {
             return this.gameLog;
         }
-        
+
         protected createMarking() : dg.LevelMarking {
             return dg.liuSmolkaLocal2(this.currentNodeId, this.dependencyGraph);
         }
-        
+
         public getRound() : number {
             return this.round;
         }
-        
+
         public isUniversalWinner(player : Player) : boolean {
             // returns true if the player has a universal winning strategy
             return this.getUniversalWinner() === player;
         }
-        
+
         public isCurrentWinner(player : Player) : boolean {
             return this.getCurrentWinner() === player;
         }
-        
+
         public getLastMove() : Move {
             return this.lastMove;
         }
-        
+
         public getLastAction() : CCS.Action {
             return this.lastAction;
         }
-        
+
         public getCurrentConfiguration() : any {
             return { left: this.currentLeft, right: this.currentRight };
         }
-        
+
         public startGame() : void {
             if (this.attacker == undefined || this.defender == undefined)
                 throw "No players in game.";
             this.stopGame();
             this.currentNodeId = 0;
-            
+
             this.cycleCache = {};
             this.cycleCache[this.getConfigurationStr(this.getCurrentConfiguration())] = this.currentNodeId;
 
             this.gameActivity.highlightNodes();
             this.gameActivity.centerNode(this.currentLeft, Move.Left);
             this.gameActivity.centerNode(this.currentRight, Move.Right);
-            
+
             this.gameLog.printRound(this.round, this.getCurrentConfiguration());
             this.preparePlayer(this.attacker);
         }
-        
+
         public stopGame() : void {
             // tell players to abort their prepared play
             this.attacker.abortPlay();
             this.defender.abortPlay();
         }
-        
+
         public setPlayers(attacker : Player, defender : Player) : void {
             if (attacker.getPlayType() == defender.getPlayType()) {
                 throw "Cannot make game with two " + attacker.playTypeStr() + "s";
@@ -645,12 +651,12 @@ module Activity {
                 defender.getPlayType() != PlayType.Defender) {
                 throw "setPlayer(...) : First argument must be attacker and second defender";
             }
-            
+
             this.attacker = attacker;
             this.defender = defender;
             this.currentWinner = this.getUniversalWinner();
         }
-        
+
         protected saveCurrentProcess(process : any, move : Move) : void {
             switch (move)
             {
@@ -658,45 +664,45 @@ module Activity {
                 case Move.Right: this.currentRight = process; break;
             }
         }
-        
+
         public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : CCS.Action = this.lastAction, move? : Move) : void {
             this.abstract();
         }
-        
+
         protected preparePlayer(player : Player) {
             var choices : any = this.getCurrentChoices(player.getPlayType());
-            
+
             // determine if game is over
             if (choices.length === 0) {
                 // the player to be prepared cannot make a move
                 // the player to prepare has lost, announce it
                 this.gameLog.printWinner((player === this.attacker) ? this.defender : this.attacker);
-                
+
                 // stop game
                 this.stopGame();
             } else {
                 // save the old winner, and then update who wins
                 var oldWinner = this.currentWinner
                 this.currentWinner = this.getCurrentWinner();
-                
+
                 // if winner changed, let the user know
                 if (oldWinner !== this.currentWinner)
                     this.gameLog.printWinnerChanged(this.currentWinner);
-                
+
                 // tell the player to prepare for his turn
                 player.prepareTurn(choices, this);
             }
         }
-        
+
         protected cycleExists() : boolean {
             var configuration = this.getCurrentConfiguration();
             var cacheStr = this.getConfigurationStr(configuration);
-            
+
             if (this.cycleCache[cacheStr] != undefined) {
                 // cycle detected
                 this.gameLog.printCycleWinner(this.defender);
                 this.stopGame();
-                
+
                 // clear the cache
                 this.cycleCache = {};
                 this.cycleCache[cacheStr] = this.currentNodeId;
@@ -706,10 +712,10 @@ module Activity {
                 return false;
             }
         }
-        
+
         public getConfigurationStr(configuration : any) : string {
             var result = "(";
-            
+
             result += this.graph.getLabel(configuration.left);
             result += ", ";
             result += this.graph.getLabel(configuration.right);
@@ -717,14 +723,14 @@ module Activity {
 
             return result;
         }
-        
+
         public getCurrentChoices(playType : PlayType) : any {
             if (playType == PlayType.Attacker)
                 return this.dependencyGraph.getAttackerOptions(this.currentNodeId);
             else
                 return this.dependencyGraph.getDefenderOptions(this.currentNodeId);
         }
-        
+
         /* Abstract methods */
         public getUniversalWinner() : Player { return this.abstract(); }
         public getCurrentWinner() : Player { return this.abstract(); }
@@ -734,51 +740,51 @@ module Activity {
         public getTryHardDefend(choices : any) : any { this.abstract(); }
         protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph { return this.abstract(); }
     }
-    
+
     class DgComputerStrategy extends DgGame {
-        
+
         constructor(gameActivity : Game, gameLog : GameLog, graph : CCS.Graph,
             currentLeft : any, currentRight : any, time : string) {
             super(gameActivity, gameLog, graph, currentLeft, currentRight, time);
         }
-        
+
         public getBestWinningAttack(choices : any) : any {
             if (choices.length == 0)
                 throw "No choices for attacker";
-            
+
             var bestCandidateIndex = 0;
             var bestCandidateLevel = Infinity;
             var ownLevel = this.marking.getLevel(this.currentNodeId);
-            
+
             choices.forEach((choice, i) => {
                 var targetNodeLevel = this.marking.getLevel(choice.nextNode);
-                
+
                 if (targetNodeLevel < ownLevel && targetNodeLevel < bestCandidateLevel) {
                     bestCandidateLevel = targetNodeLevel;
                     bestCandidateIndex = i;
                 }
             });
-            
+
             return choices[bestCandidateIndex];
         }
-        
+
         public getTryHardAttack(choices : any) : any {
             // strategy: Play the choice which yields the highest ratio of one-markings on the defenders next choice
             var bestCandidateIndices = [];
             var bestRatio = 0;
-            
+
             choices.forEach((choice, i) => {
                 var oneMarkings = 0;
                 var defenderChoices : any = this.dependencyGraph.getDefenderOptions(choice.nextNode);
-                
+
                 if (defenderChoices.length > 0) {
                     defenderChoices.forEach( (defendChoice) => {
                         if (this.marking.getMarking(defendChoice.nextNode) === this.marking.ONE)
                             oneMarkings++;
                     });
-                    
+
                     var ratio = oneMarkings / defenderChoices.length;
-                    
+
                     if (ratio > bestRatio) {
                         bestRatio = ratio;
                         bestCandidateIndices = [i];
@@ -789,7 +795,7 @@ module Activity {
                     bestCandidateIndices = [i];
                 }
             });
-            
+
             if (bestRatio == 0) {
                 // no-one markings were found, retun random choice
                 return choices[this.random(choices.length-1)];
@@ -799,25 +805,25 @@ module Activity {
                 return choices[bestCandidateIndices[this.random(bestCandidateIndices.length - 1)]];
             }
         }
-        
+
         public getWinningDefend(choices : any) : any {
             for (var i = 0; i < choices.length; i++) {
                 if (this.marking.getMarking(choices[i].nextNode) === this.marking.ZERO) {
                     return choices[i];
                 }
             }
-            
+
             throw "No defender moves";
         }
-        
+
         public getTryHardDefend(choices : any) : any {
             // strategy: Play the choice with the highest level
             var bestCandidateIndices = [];
             var bestLevel = 0;
-            
+
             for (var i = 0; i < choices.length; i++) {
                 var level = this.marking.getLevel(choices[i].nextNode);
-                
+
                 if (level > bestLevel) {
                     bestLevel = level;
                     bestCandidateIndices = [i];
@@ -825,7 +831,7 @@ module Activity {
                     bestCandidateIndices.push(i);
                 }
             }
-            
+
             if (bestLevel == 0) {
                 // if no good levels were found return a random play
                 return choices[this.random(choices.length-1)];
@@ -834,15 +840,15 @@ module Activity {
                 return choices[bestCandidateIndices[this.random(bestCandidateIndices.length - 1)]];
             }
         }
-        
+
         private random(max) : number {
             // random integer between 0 and max
             return Math.floor((Math.random() * (max+1)));
         }
     }
-    
+
     class BisimulationGame extends DgComputerStrategy {
-        
+
         private leftProcessName : string;
         private rightProcessName : string;
         private bisimulationDg : Equivalence.BisimulationDG;
@@ -850,58 +856,58 @@ module Activity {
         private gameType : string;
         private attackerSuccessorGen : CCS.SuccessorGenerator;
         private defenderSuccessorGen : CCS.SuccessorGenerator;
-        
+
         constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator,
                 leftProcessName : string, rightProcessName : string, time : string, gameType : string) {
-            
+
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
             this.gameType = gameType;
             this.attackerSuccessorGen = attackerSuccessorGen;
             this.defenderSuccessorGen = defenderSuccessorGen;
-            
+
             var currentLeft  = graph.processByName(this.leftProcessName);
             var currentRight = graph.processByName(this.rightProcessName);
-            
+
             super(gameActivity, new BisimulationGameLog(time, gameActivity), graph, currentLeft, currentRight, time); // creates dependency graph and marking
         }
-        
+
         public getGameType() : string {
             return this.gameType;
         }
-        
+
         public startGame() : void {
             this.gameLog.printIntro(this.gameType, this.getCurrentConfiguration(), this.getUniversalWinner(), this.attacker);
             super.startGame();
         }
-        
+
         public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : CCS.Action = this.lastAction, move? : Move) : void {
             var previousConfig = this.getCurrentConfiguration();
-            
+
             // change the current node id to the next
             this.currentNodeId = nextNode;
-            
+
             if (player.getPlayType() == PlayType.Attacker) {
                 var sourceProcess = move === Move.Left ? previousConfig.left : previousConfig.right;
                 this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, move, true);
 
                 this.lastAction = action;
                 this.lastMove = move;
-                
+
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
                 this.preparePlayer(this.defender);
             } else {
                 // the play is a defense, flip the saved last move
                 this.lastMove = this.lastMove === Move.Right ? Move.Left : Move.Right;
-                
+
                 var sourceProcess = this.lastMove === Move.Left ? previousConfig.left : previousConfig.right;
                 this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove, this.gameType === "strong");
-                
+
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
 
                 this.round++;
                 this.gameLog.printRound(this.round, this.getCurrentConfiguration());
-                
+
                 if (!this.cycleExists())
                     this.preparePlayer(this.attacker);
             }
@@ -909,28 +915,28 @@ module Activity {
             this.gameActivity.highlightNodes();
             this.gameActivity.centerNode(destinationProcess, this.lastMove);
         }
-        
+
         protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
             return this.bisimulationDg = new Equivalence.BisimulationDG(this.attackerSuccessorGen, this.defenderSuccessorGen, this.currentLeft.id, this.currentRight.id);
         }
-        
+
         public getUniversalWinner() : Player {
             return this.bisimilar ? this.defender : this.attacker;
         }
-        
+
         public getCurrentWinner() : Player {
             return this.marking.getMarking(this.currentNodeId) === this.marking.ONE ? this.attacker : this.defender;
         }
-        
+
         protected createMarking() : dg.LevelMarking {
             var marking = dg.solveDgGlobalLevel(this.bisimulationDg);
             this.bisimilar = marking.getMarking(0) === marking.ZERO;
             return marking;
         }
     }
-    
+
     class SimulationGame extends DgComputerStrategy {
-        
+
         private leftProcessName : string;
         private rightProcessName : string;
         private simulationDG : Equivalence.SimulationDG;
@@ -938,7 +944,7 @@ module Activity {
         private gameType : string;
         private attackerSuccessorGen : CCS.SuccessorGenerator;
         private defenderSuccessorGen : CCS.SuccessorGenerator;
-        
+
         constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator,
                 leftProcessName : string, rightProcessName : string, time : string, gameType : string) {
             this.leftProcessName = leftProcessName;
@@ -946,48 +952,48 @@ module Activity {
             this.gameType = gameType;
             this.attackerSuccessorGen = attackerSuccessorGen;
             this.defenderSuccessorGen = defenderSuccessorGen;
-            
+
             var currentLeft  = graph.processByName(this.leftProcessName);
             var currentRight = graph.processByName(this.rightProcessName);
-            
+
             super(gameActivity, new SimulationGameLog(time, gameActivity), graph, currentLeft, currentRight, time); // creates dependency graph and marking
         }
-        
+
         public getGameType() : string {
             return this.gameType;
         }
-        
+
         public startGame() : void {
             this.gameLog.printIntro(this.gameType, this.getCurrentConfiguration(), this.getUniversalWinner(), this.attacker);
             super.startGame();
         }
-        
+
         public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : CCS.Action = this.lastAction, move? : Move) : void {
             var previousConfig = this.getCurrentConfiguration();
-            
+
             // change the current node id to the next
             this.currentNodeId = nextNode;
-            
+
             if (player.getPlayType() == PlayType.Attacker) {
                 var sourceProcess = previousConfig.left;
                 this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, move, true);
 
                 this.lastAction = action;
                 this.lastMove = move;
-                
+
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
                 this.preparePlayer(this.defender);
             } else {
                 this.lastMove = Move.Right;
                 var sourceProcess = previousConfig.right;
-                
+
                 this.gameLog.printPlay(player, action, sourceProcess, destinationProcess, this.lastMove, this.gameType === "strong");
-                
+
                 this.saveCurrentProcess(destinationProcess, this.lastMove);
 
                 this.round++;
                 this.gameLog.printRound(this.round, this.getCurrentConfiguration());
-                
+
                 if (!this.cycleExists())
                     this.preparePlayer(this.attacker);
             }
@@ -995,19 +1001,19 @@ module Activity {
             this.gameActivity.highlightNodes();
             this.gameActivity.centerNode(destinationProcess, this.lastMove);
         }
-        
+
         protected createDependencyGraph(graph : CCS.Graph, currentLeft : any, currentRight : any) : dg.PlayableDependencyGraph {
             return this.simulationDG = new Equivalence.SimulationDG(this.attackerSuccessorGen, this.defenderSuccessorGen, this.currentLeft.id, this.currentRight.id);
         }
-        
+
         public getUniversalWinner() : Player {
             return this.isSimilar ? this.defender : this.attacker;
         }
-        
+
         public getCurrentWinner() : Player {
             return this.marking.getMarking(this.currentNodeId) === this.marking.ONE ? this.attacker : this.defender;
         }
-        
+
         protected createMarking() : dg.LevelMarking {
             var marking = dg.solveDgGlobalLevel(this.simulationDG);
             this.isSimilar = marking.getMarking(0) === marking.ZERO;
@@ -1016,11 +1022,11 @@ module Activity {
     }
 
     class Player extends Abstract {
-        
+
         constructor(private playType : PlayType) {
             super();
         }
-        
+
         public prepareTurn(choices : any, game : DgGame) : void {
             switch (this.playType)
             {
@@ -1034,11 +1040,11 @@ module Activity {
                 }
             }
         }
-        
+
         public getPlayType() : PlayType {
             return this.playType;
         }
-        
+
         public abortPlay() : void {
             // virtual, override
         }
@@ -1051,39 +1057,39 @@ module Activity {
         protected prepareAttack(choices : any, game : DgGame) : void { this.abstract(); }
         protected prepareDefend(choices : any, game : DgGame) : void { this.abstract(); }
     }
-    
+
     class Human extends Player {
-        
+
         private $table;
-        
+
         constructor(playType : PlayType, private gameActivity : Game) {
             super(playType);
-            
+
             this.$table = $("#game-transitions-table").find("tbody");
         }
-        
+
         protected prepareAttack(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, true);
             game.getGameLog().printPrepareAttack();
         }
-        
+
         protected prepareDefend(choices : any, game : DgGame) : void {
             this.fillTable(choices, game, false);
             game.getGameLog().printPrepareDefend(game.getLastMove());
         }
-        
+
         private fillTable(choices : any, game : DgGame, isAttack : boolean) : void {
             var currentConfiguration = game.getCurrentConfiguration();
             var actionTransition : string;
             var isWeakGame = (game instanceof BisimulationGame && (<BisimulationGame>game).getGameType() === "weak") ||
                     (game instanceof SimulationGame && (<SimulationGame>game).getGameType() === "weak");
-            
+
             if (!isAttack && isWeakGame) {
                 actionTransition = "=" + game.getLastAction().toString() + "=>";
             } else if(!isAttack) {
                 actionTransition = "-" + game.getLastAction().toString() + "->";
             }
-            
+
             this.$table.empty();
             choices.forEach( (choice) => {
                 var row = $("<tr></tr>");
@@ -1097,7 +1103,7 @@ module Activity {
                 } else {
                     var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
                     var $source = this.labelWithTooltip(sourceProcess);
-                    
+
                     if (isWeakGame) {
                         var weakSuccGen = <Traverse.WeakSuccessorGenerator>this.gameActivity.getSuccessorGenerator();
                         var $action = Tooltip.setTooltip(Tooltip.wrap(actionTransition), Tooltip.strongSequence(weakSuccGen, sourceProcess, game.getLastAction(), choice.targetProcess, this.gameActivity.getGraph()));
@@ -1106,17 +1112,17 @@ module Activity {
                         var $actionTd = $("<td id='action'></td>").append(actionTransition);
                     }
                 }
-                
+
                 var $sourceTd = $("<td id='source'></td>").append($source);
                 var $targetTd = $("<td id='target'></td>").append(this.labelWithTooltip(choice.targetProcess));
-                
+
                 // onClick
                 $(row).on("click", (event) => {
                     this.clickChoice(choice, game, isAttack);
                 });
 
                 // highlight the edge
-                $(row).on("mouseenter", (event) => { 
+                $(row).on("mouseenter", (event) => {
                     this.highlightChoices(choice, game, isAttack, true, event);
                 });
 
@@ -1124,27 +1130,27 @@ module Activity {
                 $(row).on("mouseleave", (event) => {
                     this.highlightChoices(choice, game, isAttack, false, event);
                 });
-                
+
                 row.append($sourceTd, $actionTd, $targetTd);
                 this.$table.append(row);
             });
         }
-        
+
         private labelWithTooltip(process : CCS.Process) : JQuery {
             return Tooltip.wrapProcess(this.labelFor(process));
         }
-        
+
         private labelFor(process : CCS.Process) : string {
             return this.gameActivity.labelFor(process);
         }
 
         private highlightChoices(choice : any, game : DgGame, isAttack : boolean, entering : boolean, event) {
             var move : Move;
-            
+
             if (isAttack) {
                 move = choice.move === 1 ? Move.Left : Move.Right; // 1: left, 2: right
             } else {
-                move = game.getLastMove() === Move.Left ? Move.Right : Move.Left // this is flipped because of defender role 
+                move = game.getLastMove() === Move.Left ? Move.Right : Move.Left // this is flipped because of defender role
             }
 
             if (entering) {
@@ -1177,27 +1183,27 @@ module Activity {
             this.gameActivity.removeHighlightChoices(true); // remove highlight from both graphs
             this.gameActivity.removeHighlightChoices(false); // remove highlight from both graphs
         }
-        
+
         public abortPlay() : void {
             this.$table.empty();
         }
     }
-    
+
     // such ai
     class Computer extends Player {
-        
+
         static Delay : number = 1500;
-        
+
         private delayedPlay;
-        
+
         constructor(playType : PlayType) {
             super(playType);
         }
-        
+
         public abortPlay() : void {
             clearTimeout(this.delayedPlay);
         }
-        
+
         protected prepareAttack(choices : any, game : DgGame) : void {
             // select strategy
             if (game.isCurrentWinner(this))
@@ -1205,7 +1211,7 @@ module Activity {
             else
                 this.delayedPlay = setTimeout( () => this.losingAttack(choices, game), Computer.Delay);
         }
-        
+
         protected prepareDefend(choices : any, game : DgGame) : void {
             // select strategy
             if (game.isCurrentWinner(this))
@@ -1213,31 +1219,31 @@ module Activity {
             else
                 this.delayedPlay = setTimeout( () => this.losingDefend(choices, game), Computer.Delay);
         }
-        
+
         private losingAttack(choices : any, game : DgGame) : void {
             var tryHardChoice = game.getTryHardAttack(choices);
             var move : Move = tryHardChoice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
             game.play(this, tryHardChoice.targetProcess, tryHardChoice.nextNode, tryHardChoice.action, move);
         }
-        
+
         private winningAttack(choices : any, game : DgGame) : void {
             var choice : any = game.getBestWinningAttack(choices);
             var move : Move = choice.move == 1 ? Move.Left : Move.Right; // 1: left, 2: right
-            
+
             game.play(this, choice.targetProcess, choice.nextNode, choice.action, move);
         }
-        
+
         private losingDefend(choices : any, game : DgGame) : void {
             var tryHardChoice = game.getTryHardDefend(choices);
             game.play(this, tryHardChoice.targetProcess, tryHardChoice.nextNode);
         }
-        
+
         private winningDefend(choices : any, game : DgGame) : void {
             var choice = game.getWinningDefend(choices);
             game.play(this, choice.targetProcess, choice.nextNode);
         }
     }
-    
+
     class GameLog extends Abstract {
         private $log : JQuery;
 
@@ -1276,11 +1282,11 @@ module Activity {
 
             return template;
         }
-        
+
         public removeLastPrompt() : void {
             this.$log.find(".game-prompt").last().remove();
         }
-        
+
         public printRound(round : number, configuration : any) : void {
             this.println("Round " + round, "<h4>");
             this.printConfiguration(configuration);
@@ -1289,7 +1295,7 @@ module Activity {
         public printPrepareAttack() {
             this.println("Pick a transition on the left or the right.", "<p class='game-prompt'>");
         }
-        
+
         public printPrepareDefend(lastMove : Move) {
             this.println("Pick a transition on the " + ((lastMove === Move.Left) ? "right." : "left."), "<p class='game-prompt'>");
         }
@@ -1307,10 +1313,10 @@ module Activity {
 
         public printPlay(player : Player, action : CCS.Action, source : CCS.Process, destination : CCS.Process, move : Move, isStrongMove : boolean) : void {
             var template = "{1} played {2} {3} {4} on the {5}.";
-            
+
             var actionTransition : string;
             var actionContext : any;
-            
+
             if (isStrongMove) {
                 actionTransition = "-" + action.toString() + "->";
                 actionContext = {text: actionTransition, tag: "<span>", attr: [{name: "class", value: "monospace"}]};
@@ -1319,7 +1325,7 @@ module Activity {
                 actionContext = {text: actionTransition, tag: "<span>",attr: [{name: "class", value: "ccs-tooltip-data"},
                     {name: "data-tooltip", value: Tooltip.strongSequence(<Traverse.WeakSuccessorGenerator>this.gameActivity.getSuccessorGenerator(), source, action, destination, this.gameActivity.getGraph())}]};
             }
-            
+
             var context = {
                 1: {text: (player instanceof Computer) ? player.playTypeStr() : "You"},
                 2: {text: this.labelFor(source), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]},
@@ -1355,7 +1361,7 @@ module Activity {
 
             this.println(this.render(template, context), "<p class='outro'>");
         }
-        
+
         public printWinnerChanged(winner : Player) : void {
             this.println("You made a bad move. " + winner.playTypeStr() + " now has a winning strategy.", "<p>");
         }
@@ -1367,15 +1373,15 @@ module Activity {
         protected labelFor(process : CCS.Process) : string {
             return this.gameActivity.labelFor(process);
         }
-        
+
         public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void { this.abstract(); }
     }
-    
+
     class BisimulationGameLog extends GameLog {
         constructor(time : string, gameActivity? : Game) {
             super(time, gameActivity);
         }
-        
+
         public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
             var template = "You are playing {1} in {2} {3} bisimulation game.";
 
@@ -1394,12 +1400,12 @@ module Activity {
             }
         }
     }
-    
+
     class SimulationGameLog extends GameLog {
         constructor(time : string, gameActivity? : Game) {
             super(time, gameActivity);
         }
-        
+
         public printIntro(gameType : string, configuration : any, winner : Player, attacker : Player) : void {
             var template = "You are playing {1} in {2} {3} simulation game.";
 
@@ -1417,11 +1423,11 @@ module Activity {
                 this.println(winner.playTypeStr() + " has a winning strategy. You are going to lose.", "<p class='intro'>");
             }
         }
-        
+
         public printPrepareAttack() {
             this.println("Pick a transition on the left.", "<p class='game-prompt'>");
         }
-        
+
         public printPrepareDefend(lastMove : Move) {
             this.println("Pick a transition on the right.", "<p class='game-prompt'>");
         }

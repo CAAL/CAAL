@@ -48,6 +48,10 @@ module GUI.Widget {
             this.graphUI.bindCanvasEvents();
         }
 
+        getGraphUI(){
+            return this.graphUI;
+        }
+
         getRootElement() : HTMLElement {
             return this.root;
         }
@@ -86,28 +90,34 @@ module GUI.Widget {
             }
         }
 
-        toggleFreeze() {
-            this.isFrozen = !this.isFrozen;
-            if (this.isFrozen) {
+        /* (un)freeze the graph depending on the lock, called from its parent */
+        public clearFreeze(){
+            this.toggleFreeze(this.$freezeBtn.data("frozen"));
+        }
+
+        private toggleFreeze(freeze : boolean) {
+            if (freeze) {
                 this.graphUI.freeze();
                 this.$freezeBtn.find("i").removeClass("fa-unlock-alt").addClass("fa-lock");
             } else {
                 this.graphUI.unfreeze();
                 this.$freezeBtn.find("i").removeClass("fa-lock").addClass("fa-unlock-alt");
             }
+
             //TODO Handle other affected things.
+            this.$freezeBtn.data("frozen", freeze);
         }
 
         resize(width, height) : void {
             var $root = $(this.root);
             var $canvasContainer = $(this.canvasContainer);
             height = Math.max(265, height);
-            
+
             //$root.width(width); // they must be the same size?
             $root.height(height);
             //$canvasContainer.width(width); // they must be the same size?
             $canvasContainer.height(height);
-            
+
             //Fix zoom
             this.setZoom(this.currentZoom);
         }
@@ -187,7 +197,7 @@ module GUI.Widget {
             $button.data("frozen", false);
             $button.append($lock);
             this.$freezeBtn = $button;
-            this.$freezeBtn.on("click", () => this.toggleFreeze());
+            this.$freezeBtn.on("click", () => this.toggleFreeze(!this.$freezeBtn.data("frozen")));
         }
     }
 }
