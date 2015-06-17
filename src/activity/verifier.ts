@@ -25,9 +25,10 @@ module Activity {
             this.formulaEditor.setOptions({
                 enableBasicAutocompletion: true,
                 showPrintMargin: false,
+                highlightActiveLine: false,
                 fontSize: 14,
                 fontFamily: "Inconsolata",
-                showLineNumbers: false,
+                showLineNumbers: false
             });
 
             this.definitionsEditor = ace.edit("hml-definitions-editor");
@@ -37,6 +38,7 @@ module Activity {
             this.definitionsEditor.setOptions({
                 enableBasicAutocompletion: true,
                 showPrintMargin: false,
+                highlightActiveLine: false,
                 fontSize: 14,
                 fontFamily: "Inconsolata",
                 showLineNumbers: false,
@@ -48,8 +50,6 @@ module Activity {
             if (this.changed) {
                 this.changed = false;
                 this.graph = this.project.getGraph();
-                this.displayProperties();
-                this.setPropertyModalOptions();
 
                 if (this.project.getInputMode() === InputMode.CCS) {
                     this.formulaEditor.getSession().setMode("ace/mode/hml");
@@ -58,12 +58,20 @@ module Activity {
                     this.formulaEditor.getSession().setMode("ace/mode/thml");
                     this.definitionsEditor.getSession().setMode("ace/mode/thml");
                 }
+
+                var properties = this.project.getProperties();
+                for (var i = 0; i < properties.length; i++) {
+                    properties[i].setUnknownStatus();
+                    properties[i].isReadyForVerification();
+                }
+
+                this.displayProperties();
+                this.setPropertyModalOptions();
             }
         }
 
-        private displayProperty(property : Property.Property, replace? : JQuery) : void {
+        private displayProperty(property : Property.Property) : void {
             var $row = $("<tr>");
-            property.setRow($row);
 
             $row.append($("<td>").append(property.getStatusIcon()));
 
@@ -71,36 +79,65 @@ module Activity {
             property.setTimeCell($time);
             $row.append($time);
 
-            $row.append($("<td>").append(property.getDescription()));
+            var $description = $("<td>").append(property.getDescription());
+            $description.on("dblclick", {property: property}, (e) => this.showPropertyModal(e));
+            $row.append($description);
 
             var $verify = $("<i>").addClass("fa fa-play-circle fa-lg verify-property");
             $verify.on("click", {property: property}, (e) => this.verify(e));
             $row.append($("<td>").append($verify));
 
             var $edit = $("<i>").addClass("fa fa-pencil fa-lg");
-            $edit.on("click", {property: property, row: $row}, (e) => this.showPropertyModal(e));
+            $edit.on("click", {property: property}, (e) => this.showPropertyModal(e));
             $row.append($("<td>").append($edit));
 
             var $delete = $("<i>").addClass("fa fa-trash fa-lg");
-            $delete.on("click", {property: property, row: $row}, (e) => this.deleteProperty(e));
+            $delete.on("click", {property: property}, (e) => this.deleteProperty(e));
             $row.append($("<td>").append($delete));
 
-            $row.append($("<td>").append($("<i>").addClass("fa fa-bars fa-lg")));
+            var $options = $("<i>").addClass("fa fa-bars fa-lg").attr("data-toggle", "dropdown");
+            var $container = $("<div>").addClass("relative").append($options);
+            this.generateContextMenu(property, $container);
+            $row.append($("<td>").append($container));
 
-            if (replace) {
-                replace.replaceWith($row);
+            if (property.getRow()) {
+                property.getRow().replaceWith($row);
             } else {
                 $("#property-table tbody").append($row);
             }
+
+            property.setRow($row);
         }
 
         private displayProperties() : void {
-            var $table = $("#property-table tbody").empty();
             var properties = this.project.getProperties();
 
             for (var i = 0; i < properties.length; i++) {
                 this.displayProperty(properties[i]);
             }
+        }
+
+        private generateContextMenu(property : Property.Property, $container : JQuery) : void {
+            var $ul = $("<ul>").addClass("dropdown-menu pull-right");
+
+            if (property instanceof Property.DistinguishingFormula) {
+                var callback = (properties) => {
+                    this.project.addProperty(properties.firstProperty);
+                    this.project.addProperty(properties.secondProperty);
+                    this.displayProperty(properties.firstProperty);
+                    this.displayProperty(properties.secondProperty);
+                }
+
+                var $li = $("<li>").append($("<a>").append("Distinguishing Formula"));
+                $li.on("click", () => property.generateDistinguishingFormula(callback))
+                $ul.append($li);
+            }
+
+            /*if (property.hasGame()) {
+                $ul.append($("<li>").append($("<a>").append("Play Game")));
+            }*/
+
+            $container.append($ul);
         }
 
         private setPropertyModalOptions() : void {
@@ -147,6 +184,7 @@ module Activity {
                 $("#save-property").on("click", () => this.saveProperty());
             }
 
+            this.formulaEditor.focus()
             $("#property-modal").modal("show");
         }
 
@@ -162,7 +200,7 @@ module Activity {
             if (this.getSelectedPropertyType() === "relation") {
                 $("#add-hml-formula").fadeOut(200, () => $("#add-relation").fadeIn(200));
             } else {
-                $("#add-relation").fadeOut(200, () => $("#add-hml-formula").fadeIn(200));
+                $("#add-relation").fadeOut(200, () => $("#add-hml-formula").fadeIn(200, () => this.formulaEditor.focus()));
             }
         }
 
@@ -198,16 +236,16 @@ module Activity {
 
             if (e) {
                 this.project.deleteProperty(e.data.property);
-                this.displayProperty(property, e.data.row);
-            } else {
-                this.displayProperty(property);
+                property.setRow(e.data.property.getRow());
             }
+
+            this.displayProperty(property);
         }
 
         private deleteProperty(e) : void {
             var callback = () => {
                 this.project.deleteProperty(e.data.property);
-                e.data.row.fadeOut(200, function() { $(this).remove() });
+                e.data.property.getRow().fadeOut(200, function() {$(this).remove()});
             }
 
             Main.showConfirmModal("Delete Property",
@@ -242,7 +280,7 @@ module Activity {
         private verificationEnded(property : Property.Property) {
             this.verificationInProgress = false;
             this.enableVerification();
-            this.displayProperty(property, property.getRow());
+            this.displayProperty(property);
             this.verifyNext();
         }
 

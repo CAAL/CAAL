@@ -15,10 +15,6 @@ html, body {
     user-select: none;
 }
 
-.table-responsive{
-    overflow-x: visible; 
-}
-
 a {
     cursor: pointer;
 }
@@ -85,21 +81,6 @@ nav.navbar {
     .navbar-collapse .nav > .divider-vertical {
         display: none;
     }
-}
-
-.dropdown-menu {
-    min-width: 0px;
-}
-
-#toolmenu.dropdown-menu {
-    right: 0;
-    left: inherit;
-}
-
-.property-btn {
-    border: none;
-    width: 100%;
-    height: 100%;
 }
 
 .table-hover > tbody {
@@ -304,7 +285,7 @@ nav.navbar {
     float: left;
 }
 
-#property-modal .transition-relation {
+#property-modal .transition-type {
     width: 20%;
     float: left;
     margin: 0 0 0 15px;
@@ -600,4 +581,3 @@ p.small {
 .popover-content p:last-child {
     margin-bottom: 0;
 }
-

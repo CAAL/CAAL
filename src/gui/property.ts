@@ -1,29 +1,23 @@
 /// <reference path="../main.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
 
-// satisfied = check-mark, unsatisfied = cross, invalid = yellow triangle, unknown = question mark
-enum PropertyStatus {satisfied, unsatisfied, invalid, unknown};
-
-interface DistinguishingFormula {
-    generateDistinguishingFormula(generationEnded : Function);
-}
-
 module Property {
+
+    export enum PropertyStatus {satisfied, unsatisfied, invalid, unknown};
 
     export class Property {
         private static counter : number = 0;
-        
-        protected project : Project;
         private id : number;
-        protected status : PropertyStatus;
-        protected worker;
         private error : string = "";
         private timer : number;
         private elapsedTime : string;
         private $timeCell : JQuery;
         private $row : JQuery;
+        protected project : Project;
+        protected worker;
         protected comment : string;
-        
+        protected status : PropertyStatus;
+
         public icons = {
             "checkmark": $("<i class=\"fa fa-check-circle fa-lg text-success\"></i>"),
             "cross": $("<i class=\"fa fa-times-circle fa-lg text-danger\"></i>"),
@@ -99,7 +93,7 @@ module Property {
             this.status = PropertyStatus.invalid;
         }
 
-        protected setUnknownStatus() : void {
+        public setUnknownStatus() : void {
             this.status = PropertyStatus.unknown;
         }
 
@@ -170,7 +164,7 @@ module Property {
         protected getWorkerMessage() : any { throw "Not implemented by subclass"; }
         public getDescription() : string { throw "Not implemented by subclass"; }
         public toJSON() : any { throw "Not implemented by subclass"; }
-        protected isReadyForVerification() : boolean { throw "Not implemented by subclass"; }
+        public isReadyForVerification() : boolean { throw "Not implemented by subclass"; }
     }
     
     export class HML extends Property {
@@ -229,7 +223,7 @@ module Property {
          * Checks whehter the process is defined, and the property is not invalid, and the HML syntactically correct.
          * @return {boolean} if true everything is defined correctly.
          */
-        protected isReadyForVerification() : boolean {
+        public isReadyForVerification() : boolean {
             var isReady = true;
             var error = "";
             if (!this.getProcess()) {
@@ -280,7 +274,6 @@ module Property {
 
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(status);
-
             this.firstProcess = options.firstProcess;
             this.secondProcess = options.secondProcess;
             this.type = options.type;
@@ -303,7 +296,7 @@ module Property {
         public getTime() : string {
             return this.time;
         }
-        
+
         protected getTimeSubscript() : string {
             if (this.project.getInputMode() === InputMode.CCS) {
                 return "";
@@ -311,7 +304,7 @@ module Property {
                 return "<sub>" + (this.time === "untimed" ? "u" : "t") + "</sub>";
             }
         }
-        
+
         public toJSON() : any {
             return {
                 className: this.getClassName(),
@@ -340,7 +333,7 @@ module Property {
          * And property status must not be invalid.
          * @return {boolean} if true, everything is defined.
          */
-        protected isReadyForVerification() : boolean {
+        public isReadyForVerification() : boolean {
             var isReady = true;
             var error = "";
 
@@ -367,7 +360,15 @@ module Property {
         protected getWorkerHandler() : string { throw "Not implemented by subclass"; }
     }
 
-    export class Bisimulation extends Relation implements DistinguishingFormula {
+    export class DistinguishingFormula extends Relation {
+        public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+
+        public generateDistinguishingFormula(generationEnded : Function) : void { throw "Not implemented by subclass"; }
+    }
+
+    export class Bisimulation extends DistinguishingFormula {
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
@@ -471,7 +472,7 @@ module Property {
         }
     }
 
-    export class TraceInclusion extends Relation implements DistinguishingFormula {
+    export class TraceInclusion extends DistinguishingFormula {
         private formula : string;
         
         constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
