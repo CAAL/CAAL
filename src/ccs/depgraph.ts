@@ -62,6 +62,7 @@ module DependencyGraph {
         private variableEdges = {};
         private maxFixPoints = {};
         private currentNode : MuCalculusNode;
+        public calculator : any = null;
 
         constructor(private strongSuccGen : ccs.SuccessorGenerator,
                     private weakSuccGen : ccs.SuccessorGenerator,
@@ -168,7 +169,7 @@ module DependencyGraph {
             } else {
                 var minNode = new MuCalculusNode(this.currentNode.process, formula.subFormula, true);
                 var minDg = new MuCalculusDG(this.strongSuccGen, this.weakSuccGen, this.formulaSet);
-                var marking = solveMuCalculusInternal(minDg, minNode);
+                var marking = solveMuCalculusIncremental(minDg, minNode, this.calculator);
                 return marking.getMarking(minNode) === marking.ZERO ? [[]] : [];
             }
         }
@@ -179,7 +180,7 @@ module DependencyGraph {
             } else {
                 var maxNode = new MuCalculusNode(this.currentNode.process, formula.subFormula, false);
                 var maxDg = new MuCalculusDG(this.strongSuccGen, this.weakSuccGen, this.formulaSet);
-                var marking = solveMuCalculusInternal(maxDg, maxNode);
+                var marking = solveMuCalculusIncremental(maxDg, maxNode, this.calculator);
                 return marking.getMarking(maxNode) === marking.ONE ? [] : [[]];
             }
         }
@@ -189,8 +190,25 @@ module DependencyGraph {
         }
     }
 
-    function solveMuCalculusInternal(dg : PartialDependencyGraph, node : MuCalculusNode) : any {
-        var marking = liuSmolkaLocal2(node, dg);
+    /*
+        Reuses the state inside the calculator (markings and levels) to gather all results.
+    */
+    function solveMuCalculusIncremental(dg : MuCalculusDG, node : MuCalculusNode, calculator : MinFixedPointCalculator) {
+        calculator.solve(node);
+        return {
+            getMarking: calculator.getMarking.bind(calculator),
+            getLevel: calculator.getLevel.bind(calculator),
+            ZERO: calculator.ZERO,
+            ONE: calculator.ONE,
+            UNKNOWN: calculator.BOTTOM
+        };
+    }
+
+    export function solveMuCalculusForNode(dg : MuCalculusDG, node : MuCalculusNode) : any {
+        var calculator = new MinFixedPointCalculator(k => dg.getHyperEdges(k));
+        dg.calculator = calculator;
+        var marking = solveMuCalculusIncremental(dg, node, calculator);
+        dg.calculator = null;
         return marking;
     }
 
@@ -198,7 +216,7 @@ module DependencyGraph {
         var process = strongSuccGen.getProcessById(processId),
             node = new MuCalculusNode(process, formula, true), //Use minimal environment for the nil environment
             dg = new MuCalculusDG(strongSuccGen, weakSuccGen, formulaSet),
-            marking = solveMuCalculusInternal(dg, node);
+            marking = solveMuCalculusForNode(dg, node);
         return marking.getMarking(node) === marking.ONE;
     }
     

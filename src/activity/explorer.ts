@@ -186,15 +186,26 @@ module Activity {
 
             if (this.project.getInputMode() === InputMode.CCS) {
                 if (options.collapse !== "none") {
-                    //Always attack with strong succ generator (improves performance)
-                    var attackSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
-                    var defendSuccGen = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
-                    var collapse = Equivalence.getBisimulationCollapse(attackSuccGen, defendSuccGen, process.id, process.id);
-                    var collapseSuccGen = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
-                    //Wrap the transition relation used in the collapse.
-                    this.succGenerator = collapseSuccGen;
-                    //Process have been replaced by collapse.
-                    process = collapseSuccGen.getCollapseForProcess(process.id);
+                    try {
+                        //Always attack with strong succ generator (improves performance)
+                        var attackSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
+                        var defendSuccGen = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
+                        var collapse = Equivalence.getBisimulationCollapse(attackSuccGen, defendSuccGen, process.id, process.id);
+                        var collapseSuccGen = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
+                        //Wrap the transition relation used in the collapse.
+                        this.succGenerator = collapseSuccGen;
+                        //Process have been replaced by collapse.
+                        process = collapseSuccGen.getCollapseForProcess(process.id);
+                    } catch (err) {
+                        if (err.name === "CollapseTooLarge") {
+                            //Possible, this restriction should be removed eventually and the calculation run in a worker.
+                            this.showMessageBox("Unable to Collapse", "There are too many processes to collapse.");
+                            //This is safe (no looping), because this code is not run when 'none' collapse is set.
+                            $("input[name=option-collapse][value='none']").prop("checked", true);
+                        } else {
+                            throw err;
+                        }
+                    }
                 }
             } else {
                 this.succGenerator = CCS.getSuccGenerator(this.graph,

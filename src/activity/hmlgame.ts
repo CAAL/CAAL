@@ -560,7 +560,7 @@ module Activity {
         private weakSuccGen : CCS.SuccessorGenerator;
 
         //private dGraph : dg.PlayableDependencyGraph; //TODO: fix this
-        private dGraph : dg.PartialDependencyGraph;
+        private dGraph : dg.MuCalculusDG;
         private dgNode : dg.MuCalculusNode;
         private root : dg.MuCalculusNode;
         private graph : CCS.Graph;
@@ -568,6 +568,8 @@ module Activity {
         private currentDgNodeId : dg.DgNodeId;
         private choiceDgNodeId : dg.DgNodeId;
         private cycleCache;
+        private human : Player;
+        private computer : Player;
 
 
         constructor(process : CCS.Process, formula : HML.Formula, formulaSet : HML.FormulaSet, strongSuccGen : CCS.SuccessorGenerator, weakSuccGen : CCS.SuccessorGenerator, graph : CCS.Graph) {
@@ -585,11 +587,14 @@ module Activity {
         }
 
         private solveMuCalculus() : dg.LevelMarking{
-            return dg.liuSmolkaLocal2(this.dgNode, this.dGraph);
+            return dg.solveMuCalculusForNode(this.dGraph, this.dgNode);
         }
 
         public getUniversalWinner() : Player {
-            return (this.marking.getMarking(this.root) === this.marking.ONE) ? Player.defender : Player.attacker;
+            this.computer = (this.marking.getMarking(this.root) === this.marking.ONE) ? Player.defender : Player.attacker;
+            this.human = (this.computer === Player.defender) ? Player.attacker : Player.defender;
+
+            return this.computer;
         }
 
         private popModalityFormula(hmlF : Modality) : HML.Formula {
@@ -607,8 +612,7 @@ module Activity {
 
         public AutoPlay(player : Player, exploreProcess? : Function) {
             if (player === Player.judge) throw "Judge may not auto play";
-            var minimizeLevel = player === Player.defender; //TODO does this makes sense?
-            var choice = this.getBestAIChoice(minimizeLevel);
+            var choice = this.getBestAIChoice();
 
             var actionType = this.getNextActionType();
             if (actionType === ActionType.transition) {
@@ -632,7 +636,10 @@ module Activity {
             var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
             gameLogPlay.setTemplate("{0} selected subformula {1}.")
             gameLogPlay.addWrapper({tag: "<p>"});
-            gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
+
+            gameLogPlay.addLabel({text: (this.getCurrentPlayer() === this.human ? 
+                "You " + ((this.human === Player.defender) ? "(defender)" : "(attacker)") 
+                : this.computer === Player.defender ? "Defender" : "Attacker")});
             gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
             this.writeToGamelog(gameLogPlay);
 
@@ -651,7 +658,10 @@ module Activity {
             var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
             gameLogPlay.setTemplate("{0} played {1} {2} {3}.");
             gameLogPlay.addWrapper({tag: "<p>"});
-            gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
+            gameLogPlay.addLabel({text: (this.getCurrentPlayer() === this.human ? 
+                "You " + ((this.human === Player.defender) ? "(defender)" : "(attacker)") 
+                : this.computer === Player.defender ? "Defender" : "Attacker")});
+            // gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
             gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(this.state.process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
             if (this.isWeak()) {
                 var actionTransition = "=" + transition.action.toString() + "=>";
@@ -876,9 +886,12 @@ module Activity {
             return describedEdges;
         }
 
-        private getBestAIChoice(minimizeLevel : boolean) : any {
+        private getBestAIChoice() : any {
             var describedEdges = this.getChoices(this.dgNode);
 
+            var isMin = this.state.isMinGame;
+            var isAttacker = this.computer === Player.attacker;
+            var minimizeLevel = isMin ? (isAttacker ? false : true) : (isAttacker ? true : false);
             var isBetterFn = minimizeLevel ? ((x, y) => x.level < y.level) : ((x, y) => x.level > y.level);
             //Pick desired hyperedge
             var selectedHyperDescription = ArrayUtil.selectBest(describedEdges, isBetterFn);

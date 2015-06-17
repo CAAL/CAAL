@@ -211,7 +211,11 @@ module Equivalence {
 
             var iterator = ccs.reachableProcessIterator(fromProcess, this.attackSuccGen);
             while (iterator.hasNext()) {
-                if (count++ > maxCount) throw "Too many process pairs";
+                if (count++ > maxCount) {
+                    var error = new Error("Too many process pairs");
+                    error.name = "CollapseTooLarge";
+                    throw "Too many process pairs";
+                }
                 reachableProcessIds.push(iterator.next());
             }
             for (var leftIndex = 0; leftIndex < reachableProcessIds.length; ++leftIndex) {
