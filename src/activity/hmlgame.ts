@@ -558,7 +558,7 @@ module Activity {
         private weakSuccGen : CCS.SuccessorGenerator;
 
         //private dGraph : dg.PlayableDependencyGraph; //TODO: fix this
-        private dGraph : dg.PartialDependencyGraph;
+        private dGraph : dg.MuCalculusDG;
         private dgNode : dg.MuCalculusNode;
         private root : dg.MuCalculusNode;
         private graph : CCS.Graph;
@@ -583,7 +583,7 @@ module Activity {
         }
 
         private solveMuCalculus() : dg.LevelMarking{
-            return dg.liuSmolkaLocal2(this.dgNode, this.dGraph);
+            return dg.solveMuCalculusForNode(this.dGraph, this.dgNode);
         }
 
         public getUniversalWinner() : Player {
