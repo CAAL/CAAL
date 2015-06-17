@@ -31,6 +31,8 @@ var examples : any[] = [
                 type: "WeakTraceEq",
                 status: 3,
                 options: {
+                    propertyType: "traceequivalence",
+                    type: "weak",
                     firstProcess: "Peterson",
                     secondProcess: "Spec"
                 }
@@ -39,6 +41,8 @@ var examples : any[] = [
                 type: "WeakBisimulation",
                 status: 3,
                 options: {
+                    propertyType: "bisimulation",
+                    type: "weak",
                     firstProcess: "Peterson",
                     secondProcess:"Spec"
                 }
@@ -60,6 +64,8 @@ var examples : any[] = [
                 type: "StrongBisimulation",
                 status: 3,
                 options: {
+                    propertyType: "bisimulation",
+                    type: "strong",
                     firstProcess:"Orchard",
                     secondProcess:"Spec"
                 }
@@ -68,13 +74,15 @@ var examples : any[] = [
                 type: "WeakBisimulation",
                 status: 3,
                 options: {
+                    propertyType: "bisimulation",
+                    type: "weak",
                     firstProcess:"Orchard",
                     secondProcess:"Spec"
                 }
             }
         ],
         inputMode: "CCS"
-    },
+    }/*,
     {
         title: "Exercise 3.1",
         ccs: "S = a.S1 + a.S2;\n" +
@@ -129,7 +137,7 @@ var examples : any[] = [
              "S4 = a.S;",   
         properties:[],
         inputMode: "CCS"
-    },  
+    }*/,  
     {
         title: "Lecture Example",
         ccs: "Send = acc.Sending;\n" +

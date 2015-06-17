@@ -12,7 +12,6 @@ module Activity {
     import dg = DependencyGraph;
 
     export class Game extends Activity {
-        private changed : boolean;
         private graph : CCS.Graph;
         private succGen : CCS.SuccessorGenerator;
         private dgGame : DgGame;
@@ -103,8 +102,6 @@ module Activity {
                 this.$leftZoom.on("input", () => this.resize(this.$leftZoom.val(), null));
                 this.$rightZoom.on("input", () => this.resize(null, this.$rightZoom.val()));
             }
-
-            $(document).on("ccs-changed", () => this.changed = true);
         }
 
         public getSuccessorGenerator() : CCS.SuccessorGenerator {

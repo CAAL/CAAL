@@ -1,13 +1,17 @@
 module Activity {
 
     export class Activity {
-        protected project: Project;
+        protected project : Project;
+        protected changed : boolean;
         protected $container : JQuery;
         protected $button : JQuery;
 
         public constructor(container : string, button : string) {
+            this.project = Project.getInstance();
             this.$container = $(container);
             this.$button = $(button);
+
+            $(document).on("ccs-changed", () => this.changed = true);
         }
 
         public getContainer() : JQuery {

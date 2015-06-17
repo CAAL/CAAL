@@ -72,4 +72,19 @@ module Main {
     export function getVersion() : string {
         return Version;
     }
+
+    export function showConfirmModal(title : string, message : string, noText : string, yesText : string, 
+        noCallback : () => void, yesCallback : () => void) : void {
+        var $modal = $("#confirm-modal");
+        var $no = $("#confirm-modal-no");
+        var $yes = $("#confirm-modal-yes");
+
+        $modal.find(".modal-title").text(title)
+        $modal.find(".modal-body p").text(message);
+
+        $no.text(noText).off("click").on("click", noCallback);
+        $yes.text(yesText).off("click").on("click", yesCallback);
+
+        $modal.modal("show");
+    }
 }
