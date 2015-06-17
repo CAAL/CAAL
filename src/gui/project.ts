@@ -47,6 +47,8 @@ class Project {
         this.setProperties(properties);
         this.setInputMode(InputMode[inputMode]);
         this.updateInputModeToggle();
+        this.changed = true;
+        $(document).trigger("ccs-changed");
     }
 
     public getId() : number {

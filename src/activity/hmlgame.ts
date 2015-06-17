@@ -76,7 +76,7 @@ module Activity {
 
             var hmlFormulaSets = project.getFormulaSetsForProperties();
             if (Object.keys(hmlFormulaSets).length === 0) {
-                this.showMessageBox("No hml formula defined", "There must be at least one HML formula defined in the verifier.");
+                this.showMessageBox("No HML Formula Defined", "There must be at least one HML formula defined.");
                 return false;
             }
 

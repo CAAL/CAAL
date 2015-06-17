@@ -110,6 +110,7 @@ module Activity {
         }
 
         private displayProperties() : void {
+            $("#property-table tbody").empty();
             var properties = this.project.getProperties();
 
             for (var i = 0; i < properties.length; i++) {
@@ -122,10 +123,14 @@ module Activity {
 
             if (property instanceof Property.DistinguishingFormula) {
                 var callback = (properties) => {
-                    this.project.addProperty(properties.firstProperty);
-                    this.project.addProperty(properties.secondProperty);
-                    this.displayProperty(properties.firstProperty);
-                    this.displayProperty(properties.secondProperty);
+                    this.displayProperty(property);
+
+                    if (properties) {
+                        this.project.addProperty(properties.firstProperty);
+                        this.project.addProperty(properties.secondProperty);
+                        this.displayProperty(properties.firstProperty);
+                        this.displayProperty(properties.secondProperty);
+                    }
                 }
 
                 var $li = $("<li>").append($("<a>").append("Distinguishing Formula"));
@@ -272,6 +277,7 @@ module Activity {
         }
 
         private verifyAll() : void {;
+            this.verificationQueue = [];
             var properties = this.project.getProperties();
             properties.forEach((property) => this.verificationQueue.push(property));
             this.verifyNext();
