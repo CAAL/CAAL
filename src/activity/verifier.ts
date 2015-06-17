@@ -21,14 +21,14 @@ module Activity {
             this.formulaEditor = ace.edit("hml-formula-editor");
             this.formulaEditor.setTheme("ace/theme/crisp");
             this.formulaEditor.getSession().setMode("ace/mode/hml");
-            this.formulaEditor.getSession().setUseWrapMode(true);
             this.formulaEditor.setOptions({
                 enableBasicAutocompletion: true,
                 showPrintMargin: false,
                 highlightActiveLine: false,
                 fontSize: 14,
                 fontFamily: "Inconsolata",
-                showLineNumbers: false
+                showLineNumbers: false,
+                maxLines: 1
             });
 
             this.definitionsEditor = ace.edit("hml-definitions-editor");
@@ -42,7 +42,7 @@ module Activity {
                 fontSize: 14,
                 fontFamily: "Inconsolata",
                 showLineNumbers: false,
-                maxLines: Infinity,
+                maxLines: Infinity
             });
         }
 
