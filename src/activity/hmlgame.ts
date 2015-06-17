@@ -412,9 +412,11 @@ module Activity {
                 }
 
                 case WinReason.stuck: {
-                    gameLogObject.setTemplate("No available transitions. You ({0}) {1}!");
-                    gameLogObject.addLabel({text: (this.human === Player.defender) ? "defender" : "attacker"});
-                    gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
+                    gameLogObject.setTemplate("{0} {1} no available transitions. {2} lose!");
+                    gameLogObject.addLabel({text: (this.human === winner) ? (this.computer === Player.defender ? "Defender" : "Attacker") : 
+                                            "You " +"("+ (this.human === Player.defender ? "defender" : "attacker") + ")"});
+                    gameLogObject.addLabel({text: (this.human === winner) ? "has" : "have"});
+                    gameLogObject.addLabel({text: (this.human === winner) ? (this.computer === Player.defender ? "Defender" : "Attacker") : "You"});
                     break;
                 }
                 default: {
@@ -566,6 +568,8 @@ module Activity {
         private currentDgNodeId : dg.DgNodeId;
         private choiceDgNodeId : dg.DgNodeId;
         private cycleCache;
+        private human : Player;
+        private computer : Player;
 
 
         constructor(process : CCS.Process, formula : HML.Formula, formulaSet : HML.FormulaSet, strongSuccGen : CCS.SuccessorGenerator, weakSuccGen : CCS.SuccessorGenerator, graph : CCS.Graph) {
@@ -587,7 +591,10 @@ module Activity {
         }
 
         public getUniversalWinner() : Player {
-            return (this.marking.getMarking(this.root) === this.marking.ONE) ? Player.defender : Player.attacker;
+            this.computer = (this.marking.getMarking(this.root) === this.marking.ONE) ? Player.defender : Player.attacker;
+            this.human = (this.computer === Player.defender) ? Player.attacker : Player.defender;
+
+            return this.computer;
         }
 
         private popModalityFormula(hmlF : Modality) : HML.Formula {
@@ -629,7 +636,10 @@ module Activity {
             var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
             gameLogPlay.setTemplate("{0} selected subformula {1}.")
             gameLogPlay.addWrapper({tag: "<p>"});
-            gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
+
+            gameLogPlay.addLabel({text: (this.getCurrentPlayer() === this.human ? 
+                "You " + ((this.human === Player.defender) ? "(defender)" : "(attacker)") 
+                : this.computer === Player.defender ? "Defender" : "Attacker")});
             gameLogPlay.addLabel({text: gameLogPlay.labelForFormula(formula), tag: "<span>", attr: [{name: "class", value: "monospace"}]});
             this.writeToGamelog(gameLogPlay);
 
@@ -648,7 +658,10 @@ module Activity {
             var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
             gameLogPlay.setTemplate("{0} played {1} {2} {3}.");
             gameLogPlay.addWrapper({tag: "<p>"});
-            gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
+            gameLogPlay.addLabel({text: (this.getCurrentPlayer() === this.human ? 
+                "You " + ((this.human === Player.defender) ? "(defender)" : "(attacker)") 
+                : this.computer === Player.defender ? "Defender" : "Attacker")});
+            // gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
             gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(this.state.process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
             if (this.isWeak()) {
                 var actionTransition = "=" + transition.action.toString() + "=>";

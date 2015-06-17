@@ -116,7 +116,6 @@ class Project {
                 break;
             }
         }
-
     }
 
     public getFormulaSetsForProperties() {

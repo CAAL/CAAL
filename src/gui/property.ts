@@ -5,29 +5,47 @@
 enum PropertyStatus {satisfied, unsatisfied, invalid, unknown};
 
 module Property {
+
+    export function createProperty(propertyType : string, options : any) : Property {
+        var status = options.status ? options.status : PropertyStatus.unknown;
+        options["propertyType"] = propertyType;
+
+        switch (propertyType)
+        {
+            case "bisimulation":
+                return options.type === "strong" ? new StrongBisimulation(options, status) : new WeakBisimulation(options, status);
+            case "simulation":
+                return options.type === "strong" ? new StrongSimulation(options, status) : new WeakSimulation(options, status);
+            case "simulationequivalence":
+                return null;
+            case "traceinclusion":
+                return options.type === "strong" ? new StrongTraceInclusion(options, status) : new WeakTraceInclusion(options, status);
+            case "traceequivalence":
+                return options.type === "strong" ? new StrongTraceEq(options, status) : new WeakTraceEq(options, status);
+            case "hml":
+                return new HML(options, status);
+            default:
+                throw "Unknown property type";
+        }
+    }
+
     export class Property {
         protected project : Project;
         private static counter : number = 0;
         private id : number;
         protected status : PropertyStatus;
         protected worker;
-        private statistics = {elapsedTime: null};
-        protected tdStatus;
-        private clockInterval;
-        private startTime;
         private error : string = "";
-        protected toolMenuOptions = {};
-        protected rowClickHandlers = {};
+        private timer : number;
+        private elapsedTime : string;
+        private $timeCell : JQuery;
+        private $row : JQuery;
 
         public icons = {
-            "play" : $("<i class=\"fa fa-play\"></i>"),
-            "trash" : $("<i class=\"fa fa-trash\"></i>"),
-            "checkmark": $("<i class=\"fa fa-check\"></i>"),
-            "cross": $("<i class=\"fa fa-times\"></i>"),
-            "triangle": $("<i class=\"fa fa-exclamation-triangle\"></i>"),
-            "questionmark" : $("<i class=\"fa fa-question\"></i>"),
-            "plus" : $("<i class=\"fa fa-plus-square\"></i>"),
-            "minus" : $("<i class='fa fa-minus-square'></i>")
+            "checkmark": $("<i class=\"fa fa-check-circle text-success\"></i>"),
+            "cross": $("<i class=\"fa fa-times-circle text-danger\"></i>"),
+            "triangle": $("<i class=\"fa fa-exclamation-triangle text-danger\"></i>"),
+            "questionmark" : $("<i class=\"fa fa-question-circle\"></i>")
         }
 
         public constructor(status : PropertyStatus = PropertyStatus.unknown) {
@@ -45,78 +63,47 @@ module Property {
             return this.status;
         }
 
-        protected getToolMenu() {
-            var toolmenu = $("<div class=\"btn-group\"></div>");
-            var btn = $("<button id=\"toolmenu-btn\" type=\"button\" data-toggle=\"dropdown\" class=\"property-btn btn btn-default btn-xs dropdown-toggle\"></button>");
-            var dots = $("<i class=\"fa fa-ellipsis-v\"></i>")
-            var list = $("<ul id=\"toolmenu\" class=\"dropdown-menu\"></ul>")
-
-            for (var key in this.toolMenuOptions) {
-                if(this.toolMenuOptions[key].click != null){
-                    var identifier = this.toolMenuOptions[key].id.replace("#", "") // replace the # with nothing, otherwise jquery will not find it later.
-                    list.append("<li><a id=\""+identifier+"\">"+this.toolMenuOptions[key].label+"</a></li>")
-                }
-            }
-
-            // if no element in the lists, just disable it.
-            if(list[0].childElementCount === 0) {
-                btn.addClass("disabled");
-            }
-
-            btn.append(dots);
-            toolmenu.append(btn);
-            toolmenu.append(list);
-            return toolmenu;
+        public getRow() : JQuery {
+            return this.$row;
         }
 
-        public setToolMenuOptions(menuOptions : Object) {
-            for (var key in menuOptions) {
-                this.toolMenuOptions[key] = menuOptions[key];
-            }
+        public setRow($row : JQuery) : void {
+            this.$row = $row;
         }
 
-        public setRowClickHandlers(rowHandlers : Object) {
-            for (var key in rowHandlers){
-                this.rowClickHandlers[key] = rowHandlers[key];
-            }
+        public setTimeCell($timeCell : JQuery) : void {
+            this.$timeCell = $timeCell;
+        }
+
+        public getElapsedTime() : string {
+            return this.elapsedTime;
         }
 
         public startTimer() { 
-            this.startTime = new Date().getTime();
+            var startTime = new Date().getTime();
+
             var updateTimer = () => {
-                var elapsedTime = new Date().getTime() - this.startTime;
-                this.tdStatus.text(elapsedTime + "ms");
+                this.elapsedTime = new Date().getTime() - startTime + "ms";
+                this.$timeCell.text(this.elapsedTime);
             }
 
-            this.clockInterval = setInterval(updateTimer, 100);
+            this.timer = setInterval(updateTimer, 25);
         }
 
         public stopTimer() {
-            this.statistics.elapsedTime = (this.startTime) ? new Date().getTime() - this.startTime : 0;
-            clearInterval(this.clockInterval);
-        }
-
-        public onStatusHover(property) {
-            if (this.status === PropertyStatus.satisfied || this.status === PropertyStatus.unsatisfied){
-                return property.statistics.elapsedTime + " ms";
-            } 
-            else if(this.status === PropertyStatus.invalid) {
-                return this.error;
-            }
+            clearInterval(this.timer);
         }
 
         public getStatusIcon() : JQuery {
-            if (this.status === PropertyStatus.unknown) {
-                return this.icons.questionmark;
-            }
-            else if (this.status === PropertyStatus.satisfied) {
-                return this.icons.checkmark;
-            }
-            else if (this.status === PropertyStatus.unsatisfied) {
-                return this.icons.cross;
-            }
-            else if (this.status === PropertyStatus.invalid) {
-                return this.icons.triangle;
+            switch (this.status) {
+                case PropertyStatus.unknown:
+                    return this.icons.questionmark;
+                case PropertyStatus.satisfied:
+                    return this.icons.checkmark;
+                case PropertyStatus.unsatisfied:
+                    return this.icons.cross;
+                case PropertyStatus.invalid:
+                    return this.icons.triangle;
             }
         }
 
@@ -132,52 +119,14 @@ module Property {
         public abortVerification() : void {
             this.worker.terminate();
             this.worker = null;
-            this.stopTimer(); // if aborted stop the time
+            this.stopTimer();
             this.setUnknownStatus();
-        }
-
-        public toTableRow() : any[] {
-            var row = $("<tr id='"+this.getId()+"'></tr>");
-            var toolmenu = this.getToolMenu()
-            var collapseBtn = $("<button id=\"property-collapse-btn\" type=\"button\" class=\"property-btn btn btn-default btn-xs\"></button>")
-            var collapse = $("<td id=\"tdCollapse\" class=\"text-center\"></td>").append(collapseBtn.hide());
-            //var statusBtn = $("<button id=\"property-status-btn\" type=\"button\" class=\"property-btn btn btn-default btn-xs\"></button>").append(this.getStatusIcon());
-            this.tdStatus = $("<td id=\"property-status-btn\" class=\"text-center\"></td>").append(this.getStatusIcon());
-            var tdDescription = $("<td id=\"property-description-btn\"></td>").append(this.getDescription());
-            var btnVerify = $("<button id=\"property-verify-btn\" type=\"button\" class=\"property-btn btn btn-default btn-xs\"></button>").append(this.icons.play);
-            var tdVerify = $("<td id=\"tdVerify\" class=\"text-center\"></td>").append(btnVerify);
-            var tdToolMenu = $("<td id=\"tdToolmenu\" class=\"text-center\"></td>").append(toolmenu);
-            row.append(collapse, this.tdStatus, tdDescription, tdVerify, tdToolMenu);
-
-            this.tdStatus.tooltip({
-                title: this.onStatusHover(this),
-                selector: '.fa-check, .fa-times, .fa-exclamation-triangle'
-            });
-
-            
-            /*Row click handlers*/
-            for (var rowHandler in this.rowClickHandlers){
-                var rowElement = row.find(this.rowClickHandlers[rowHandler].id);
-                if(this.rowClickHandlers[rowHandler]) {
-                    rowElement.on("click", {property:this}, this.rowClickHandlers[rowHandler].click);
-                }
-            }
-
-            /*Tool menu options*/
-            for (var tooloption in this.toolMenuOptions){
-                var toolMenuOption = toolmenu.find(this.toolMenuOptions[tooloption].id);
-                if(this.toolMenuOptions[tooloption]) {
-                    toolMenuOption.on("click", {property:this}, this.toolMenuOptions[tooloption].click);
-                }
-            }
-
-            return [row];
         }
         
         public verify(callback : Function) : void {
             if (!this.isReadyForVerification()) {
                 console.log("something is wrong, please check the property");
-                callback();
+                callback(this);
                 return;
             }
             
@@ -200,7 +149,7 @@ module Property {
                 this.worker = null;
                 this.setInvalidateStatus(error.message);
                 this.stopTimer();
-                callback();
+                callback(this);
             }, false);
             
             this.worker.addEventListener("message", event => {
@@ -215,7 +164,7 @@ module Property {
             this.onWorkerFinished(event);
             
             this.stopTimer();
-            callback(); /* verification ended */
+            callback(this); /* verification ended */
         }
         
         protected onWorkerFinished(event : any) : void {
@@ -255,7 +204,7 @@ module Property {
 
         public setProcess(process : string) : void {
             this.process = process;
-            this.setUnknownStatus(); /*When setting a new process, we don't know the result yet*/
+            this.setUnknownStatus();
         }
 
         public getTopFormula() : string {
@@ -264,7 +213,7 @@ module Property {
 
         public setTopFormula(formula : string) : void {
             this.topFormula = formula;
-            this.setUnknownStatus(); /*When setting a new formula, we don't know the result yet*/
+            this.setUnknownStatus();
         }
 
         public getDefinitions() : string {
@@ -338,17 +287,51 @@ module Property {
         }
     }
     
-    export class Equivalence extends Property { // equivalence is a bad name, it also covers preorders
+    export class Relation extends Property {
+        public propertyType;
         public firstProcess : string;
         public secondProcess : string;
+        public type : string;
         public time : string;
 
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(status);
-            
-            this.time = options.time;
+
+            this.propertyType = options.propertyType;
             this.firstProcess = options.firstProcess;
             this.secondProcess = options.secondProcess;
+            this.type = options.type;
+            this.time = options.time;
+        }
+
+        public getPropertyType() : string {
+            return this.propertyType;
+        }
+
+        public getFirstProcess() : string {
+            return this.firstProcess;
+        }
+
+        public setFirstProcess(firstProcess : string) : void {
+            this.firstProcess = firstProcess;
+            this.setUnknownStatus();
+        }
+
+        public getSecondProcess() : string {
+            return this.secondProcess;
+        }
+
+        public setSecondProcess(secondProcess : string) : void {
+            this.secondProcess = secondProcess;
+            this.setUnknownStatus();
+        }
+
+        public getType() : string {
+            return this.type;
+        }
+
+        public setType(type : string) : void {
+            this.type = type;
         }
         
         public getTime() : string {
@@ -360,33 +343,16 @@ module Property {
         }
         
         protected getTimeSubscript() : string {
-            if (this.project.getInputMode() === InputMode.CCS)
+            if (this.project.getInputMode() === InputMode.CCS) {
                 return "";
-            else
+            } else {
                 return "<sub>" + (this.time === "untimed" ? "u" : "t") + "</sub>";
-        }
-        
-        public getFirstProcess() : string {
-            return this.firstProcess;
-        }
-
-        public setFirstProcess(firstProcess: string) : void {
-            this.firstProcess = firstProcess;
-            this.setUnknownStatus();
-        }
-
-        public getSecondProcess() : string {
-            return this.secondProcess;
-        }
-
-        public setSecondProcess(secondProcess: string) : void {
-            this.secondProcess = secondProcess;
-            this.setUnknownStatus();
+            }
         }
         
         public toJSON() : any {
             return {
-                type: this.getType(),
+                type: this.getClassName(),
                 status: this.status,
                 time: this.time,
                 options : {
@@ -432,12 +398,12 @@ module Property {
 
             return isReady
         }
-        
-        public getType() : string { throw "Not implemented by subclass"; }
+
+        protected getClassName() : string { throw "Not implemented by class"; }
         protected getWorkerHandler() : string { throw "Not implemented by subclass"; }
     }
 
-    export class StrongBisimulation extends Equivalence {
+    export class StrongBisimulation extends Relation {
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
@@ -493,7 +459,7 @@ module Property {
             return this.firstProcess + " &#8764;" + super.getTimeSubscript() + " " + this.secondProcess;
         }
 
-        public getType() : string {
+        public getClassName() : string {
             return "StrongBisimulation";
         }
 
@@ -502,7 +468,7 @@ module Property {
         }
     }
 
-    export class WeakBisimulation extends Equivalence {
+    export class WeakBisimulation extends Relation {
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
@@ -558,7 +524,7 @@ module Property {
             return this.firstProcess + " &#8776;" + super.getTimeSubscript() + " " + this.secondProcess;
         }
         
-        public getType() : string {
+        public getClassName() : string {
             return "WeakBisimulation";
         }
 
@@ -567,7 +533,7 @@ module Property {
         }
     }
     
-    export class StrongSimulation extends Equivalence {
+    export class StrongSimulation extends Relation {
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
@@ -576,7 +542,7 @@ module Property {
             return this.firstProcess + " sim<sub>&#8594;" + super.getTimeSubscript() +"</sub> " + this.secondProcess;
         }
         
-        public getType() : string {
+        public getClassName() : string {
             return "StrongSimulation";
         }
 
@@ -585,7 +551,7 @@ module Property {
         }
     }
     
-    export class WeakSimulation extends Equivalence {
+    export class WeakSimulation extends Relation {
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
@@ -594,7 +560,7 @@ module Property {
             return this.firstProcess + " sim<sub>&#8658;" + super.getTimeSubscript() + "</sub> " + this.secondProcess;
         }
         
-        public getType() : string {
+        public getClassName() : string {
             return "WeakSimulation";
         }
 
@@ -603,7 +569,7 @@ module Property {
         }
     }
     
-    export class StrongTraceEq extends Equivalence {
+    export class StrongTraceEq extends Relation {
         constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
@@ -612,7 +578,7 @@ module Property {
             return "Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.firstProcess + ") = Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.secondProcess + ")";
         }
         
-        public getType() : string {
+        public getClassName() : string {
             return "StrongTraceEq";
         }
 
@@ -621,7 +587,7 @@ module Property {
         }
     }
 
-    export class WeakTraceEq extends Equivalence {
+    export class WeakTraceEq extends Relation {
         constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
@@ -630,7 +596,7 @@ module Property {
             return "Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.firstProcess + ") = Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.secondProcess + ")";
         }
         
-        public getType() : string {
+        public getClassName() : string {
             return "WeakTraceEq";
         }
 
@@ -708,42 +674,6 @@ module Property {
             return this.secondHMLProperty;
         }
 
-        private getCollapseState() : JQuery {
-            if (this.isExpanded()) {
-                return this.icons.minus;
-            }
-            else {
-                return this.icons.plus;
-            }
-        }
-
-        public toTableRow() : any {
-            var result = super.toTableRow();
-
-            /* Add the collapse button */
-
-            var collapseBtn = result[0].find(this.rowClickHandlers["collapse"].id);
-            collapseBtn.show();
-            collapseBtn.append(this.getCollapseState())
-            
-            if(this.isExpanded() /*&& this.firstHMLProperty.getFormula() !== "" && this.secondHMLProperty.getFormula() !== ""*/) {
-                var rowHandlers = {} 
-                rowHandlers["verify"] = this.rowClickHandlers["verify"];
-
-                this.firstHMLProperty.setRowClickHandlers(rowHandlers);
-                //this.firstHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
-                var firstRow = this.firstHMLProperty.toTableRow();
-                result.push(firstRow);
-                
-                this.secondHMLProperty.setRowClickHandlers(rowHandlers);
-                //this.secondHMLProperty.toolMenuOptions["Play"].click = this.onPlayGame;
-                var secondRow = this.secondHMLProperty.toTableRow();
-                result.push(secondRow);
-            }
-
-            return result;
-        }
-
         protected verifyHml(formula : string) : void {
             this.firstHMLProperty.setTopFormula(formula);
             this.secondHMLProperty.setTopFormula(formula);
@@ -770,7 +700,131 @@ module Property {
             }
         }
     }
+
+    export class TraceInclusion extends DistinguishingFormula {
+        public time : string;
+        
+        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+            
+            this.time = options.time;
+        }
+        
+        public getTime() : string {
+            return this.time;
+        }
+        
+        public setTime(time : string) : void {
+            this.time = time;
+        }
+        
+        protected getTimeSubscript() : string {
+            if (this.project.getInputMode() === InputMode.CCS)
+                return "";
+            else
+                return "<sub>" + (this.time === "untimed" ? "u" : "t") + "</sub>";
+        }
+        
+        public toJSON() : any {
+            return {
+                type: this.getClassName(),
+                status: this.status,
+                time: this.time,
+                options: {
+                    firstHMLProperty: this.firstHMLProperty.toJSON().options,
+                    secondHMLProperty: this.secondHMLProperty.toJSON().options
+                }
+            };
+        }
+        
+        protected isReadyForVerification() : boolean {
+            var isReady = true;
+            var error = "";
+            if(!this.getFirstProcess() && !this.getSecondProcess()) {
+                isReady = false;
+                error = "Two processes must be selected"
+            } else {
+                // if they are defined check whether they are defined in the CCS-program
+                var processList = this.project.getGraph().getNamedProcesses()
+                if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
+                    error = "One of the processes selected is not defined in the CCS program."
+                    isReady = false;
+                }
+            }
+
+            // if is not ready invalidate the property
+            if (!isReady) {
+                this.setInvalidateStatus(error);
+            }
+            return isReady;
+        }
+        
+        protected getWorkerMessage() : any {
+            return {
+                time: this.time,
+                type: this.getWorkerHandler(),
+                leftProcess: this.firstHMLProperty.getProcess(),
+                rightProcess: this.secondHMLProperty.getProcess()
+            };
+        }
+        
+        protected workerFinished(event : any, callback : Function) : void {
+            this.worker.terminate();
+            this.worker = null; 
+            
+            var goodResult = event.data.result.isTraceIncluded;
+            
+            if (goodResult === false) {
+                this.status = PropertyStatus.unsatisfied;
+                this.verificationEndedCallback = callback;
+                this.verifyHml(event.data.result.formula);
+            } else if(goodResult === true) {
+                this.status = PropertyStatus.satisfied;
+                this.stopTimer()
+                callback();
+            }
+        }
+        
+        public getClassName() : string { throw "Not implemented by subclass"; }
+        protected getWorkerHandler() : string { throw "Not implemented by subclass"; }
+    }
     
+    export class StrongTraceInclusion extends TraceInclusion {
+        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+        
+        public getDescription() : string {
+            return "Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.getSecondProcess() + ")";
+        }
+        
+        public getClassName() : string {
+            return "StrongTraceInclusion";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isStronglyTraceIncluded";
+        }
+    }
+
+    export class WeakTraceInclusion extends TraceInclusion {
+        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+        
+        public getDescription() : string {
+            return "Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.getSecondProcess() + ")";
+        }
+        
+        public getClassName() : string {
+            return "WeakTraceInclusion";
+        }
+
+        protected getWorkerHandler() : string {
+            return "isWeaklyTraceIncluded";
+        }
+    }
+
     export class DistinguishingBisimulationFormula extends DistinguishingFormula {
         
         private succGenType : string;
@@ -857,129 +911,4 @@ module Property {
             }
         }
     }
-    
-    export class TraceInclusion extends DistinguishingFormula {
-        public time : string;
-        
-        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-            
-            this.time = options.time;
-        }
-        
-        public getTime() : string {
-            return this.time;
-        }
-        
-        public setTime(time : string) : void {
-            this.time = time;
-        }
-        
-        protected getTimeSubscript() : string {
-            if (this.project.getInputMode() === InputMode.CCS)
-                return "";
-            else
-                return "<sub>" + (this.time === "untimed" ? "u" : "t") + "</sub>";
-        }
-        
-        public toJSON() : any {
-            return {
-                type: this.getType(),
-                status: this.status,
-                time: this.time,
-                options: {
-                    firstHMLProperty: this.firstHMLProperty.toJSON().options,
-                    secondHMLProperty: this.secondHMLProperty.toJSON().options
-                }
-            };
-        }
-        
-        protected isReadyForVerification() : boolean {
-            var isReady = true;
-            var error = "";
-            if(!this.getFirstProcess() && !this.getSecondProcess()) {
-                isReady = false;
-                error = "Two processes must be selected"
-            } else {
-                // if they are defined check whether they are defined in the CCS-program
-                var processList = this.project.getGraph().getNamedProcesses()
-                if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
-                    error = "One of the processes selected is not defined in the CCS program."
-                    isReady = false;
-                }
-            }
-
-            // if is not ready invalidate the property
-            if (!isReady) {
-                this.setInvalidateStatus(error);
-            }
-            return isReady;
-        }
-        
-        protected getWorkerMessage() : any {
-            return {
-                time: this.time,
-                type: this.getWorkerHandler(),
-                leftProcess: this.firstHMLProperty.getProcess(),
-                rightProcess: this.secondHMLProperty.getProcess()
-            };
-        }
-        
-        protected workerFinished(event : any, callback : Function) : void {
-            this.worker.terminate();
-            this.worker = null; 
-            
-            var goodResult = event.data.result.isTraceIncluded;
-            
-            if (goodResult === false) {
-                this.status = PropertyStatus.unsatisfied;
-                this.verificationEndedCallback = callback;
-                this.verifyHml(event.data.result.formula);
-            } else if(goodResult === true) {
-                this.status = PropertyStatus.satisfied;
-                this.stopTimer()
-                callback();
-            }
-        }
-        
-        public getType() : string { throw "Not implemented by subclass"; }
-        protected getWorkerHandler() : string { throw "Not implemented by subclass"; }
-    }
-    
-    export class StrongTraceInclusion extends TraceInclusion {
-        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-        }
-        
-        public getDescription() : string {
-            return "Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.getSecondProcess() + ")";
-        }
-        
-        public getType() : string {
-            return "StrongTraceInclusion";
-        }
-
-        protected getWorkerHandler() : string {
-            return "isStronglyTraceIncluded";
-        }
-    }
-
-    export class WeakTraceInclusion extends TraceInclusion {
-        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-        }
-        
-        public getDescription() : string {
-            return "Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.getSecondProcess() + ")";
-        }
-        
-        public getType() : string {
-            return "WeakTraceInclusion";
-        }
-
-        protected getWorkerHandler() : string {
-            return "isWeaklyTraceIncluded";
-        }
-    }
 }
-  
