@@ -605,8 +605,7 @@ module Activity {
 
         public AutoPlay(player : Player, exploreProcess? : Function) {
             if (player === Player.judge) throw "Judge may not auto play";
-            var minimizeLevel = player === Player.defender; //TODO does this makes sense?
-            var choice = this.getBestAIChoice(minimizeLevel);
+            var choice = this.getBestAIChoice();
 
             var actionType = this.getNextActionType();
             if (actionType === ActionType.transition) {
@@ -874,9 +873,12 @@ module Activity {
             return describedEdges;
         }
 
-        private getBestAIChoice(minimizeLevel : boolean) : any {
+        private getBestAIChoice() : any {
             var describedEdges = this.getChoices(this.dgNode);
 
+            var isMin = this.state.isMinGame;
+            var isAttacker = this.computer === Player.defender;
+            var minimizeLevel = isMin ? (isAttacker ? false : true) : (isAttacker ? true : false);
             var isBetterFn = minimizeLevel ? ((x, y) => x.level < y.level) : ((x, y) => x.level > y.level);
             //Pick desired hyperedge
             var selectedHyperDescription = ArrayUtil.selectBest(describedEdges, isBetterFn);
