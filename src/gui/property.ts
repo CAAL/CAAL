@@ -42,10 +42,10 @@ module Property {
         private $row : JQuery;
 
         public icons = {
-            "checkmark": $("<i class=\"fa fa-check-circle text-success\"></i>"),
-            "cross": $("<i class=\"fa fa-times-circle text-danger\"></i>"),
-            "triangle": $("<i class=\"fa fa-exclamation-triangle text-danger\"></i>"),
-            "questionmark" : $("<i class=\"fa fa-question-circle\"></i>")
+            "checkmark": $("<i class=\"fa fa-check-circle fa-lg text-success\"></i>"),
+            "cross": $("<i class=\"fa fa-times-circle fa-lg text-danger\"></i>"),
+            "triangle": $("<i class=\"fa fa-exclamation-triangle fa-lg text-danger\"></i>"),
+            "questionmark" : $("<i class=\"fa fa-question-circle fa-lg \"></i>")
         }
 
         public constructor(status : PropertyStatus = PropertyStatus.unknown) {
@@ -226,8 +226,13 @@ module Property {
         }
 
         public getDescription() : string {
-            var escaped = this.topFormula.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            return this.process + " &#8872; " + escaped;
+            var formula = this.topFormula.replace(";", "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            var definitions = this.definitions.split(";").map(function(d) {
+                return d.replace(/</g, "&lt;").replace(/>/g, "&gt;").trim();
+            });
+
+            return this.process + " &#8872; " + formula + "<br />" + definitions.join("<br />");
         }
 
         public toJSON() : any {

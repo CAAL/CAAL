@@ -3,12 +3,16 @@ module Activity {
     export class Verifier extends Activity {
         private graph : CCS.Graph;
         private timer : number;
-        private verificationQueue: Property.Property[];
+        private verificationQueue : Property.Property[];
+        private verificationInProgress : boolean;
         private formulaEditor : any;
         private definitionsEditor : any;
 
         constructor(container: string, button: string) {
             super(container, button);
+
+            this.verificationQueue = [];
+            this.verificationInProgress = false;
 
             $("#add-property").on("click", () => this.showPropertyModal());
             $("#verify-all").on("click", () => this.verifyAll());
@@ -69,19 +73,19 @@ module Activity {
 
             $row.append($("<td>").append(property.getDescription()));
 
-            var $verify = $("<td>").append($("<i>").attr("class", "fa fa-play-circle"));
-            $verify.on("click", {property: property, row: $row, time: $time}, (e) => this.verify(e));
-            $row.append($verify);
+            var $verify = $("<i>").addClass("fa fa-play-circle fa-lg verify-property");
+            $verify.on("click", {property: property}, (e) => this.verify(e));
+            $row.append($("<td>").append($verify));
 
-            var $edit = $("<td>").append($("<i>").attr("class", "fa fa-pencil"));
+            var $edit = $("<i>").addClass("fa fa-pencil fa-lg");
             $edit.on("click", {property: property, row: $row}, (e) => this.showPropertyModal(e));
-            $row.append($edit);
+            $row.append($("<td>").append($edit));
 
-            var $delete = $("<td>").append($("<i>").attr("class", "fa fa-trash"));
+            var $delete = $("<i>").addClass("fa fa-trash fa-lg");
             $delete.on("click", {property: property, row: $row}, (e) => this.deleteProperty(e));
-            $row.append($delete);
+            $row.append($("<td>").append($delete));
 
-            $row.append($("<td>").append($("<i>").attr("class", "fa fa-bars")));
+            $row.append($("<td>").append($("<i>").addClass("fa fa-bars fa-lg")));
 
             if (replace) {
                 replace.replaceWith($row);
@@ -215,9 +219,11 @@ module Activity {
         }
 
         private verify(e) : void {
-            $("#verify-all").prop("disabled", true);
-            $("#verify-stop").prop("disabled", false);
-            e.data.property.verify((property) => this.verificationEnded(property));
+            if (!this.verificationInProgress) {
+                this.verificationInProgress = true;
+                this.disableVerification();
+                e.data.property.verify((property) => this.verificationEnded(property));
+            }
         }
 
         private verifyNext() : void {
@@ -227,18 +233,29 @@ module Activity {
             }
         }
 
-        private verifyAll() : void {
-            this.verificationQueue = [];
+        private verifyAll() : void {;
             var properties = this.project.getProperties();
             properties.forEach((property) => this.verificationQueue.push(property));
             this.verifyNext();
         }
 
         private verificationEnded(property : Property.Property) {
-            $("#verify-all").prop("disabled", false);
-            $("#verify-stop").prop("disabled", true);
+            this.verificationInProgress = false;
+            this.enableVerification();
             this.displayProperty(property, property.getRow());
             this.verifyNext();
+        }
+
+        private enableVerification() : void {
+            $(".verify-property").removeClass("text-muted");
+            $("#verify-all").prop("disabled", false);
+            $("#verify-stop").prop("disabled", true);
+        }
+
+        private disableVerification() : void {
+            $(".verify-property").addClass("text-muted");
+            $("#verify-all").prop("disabled", true);
+            $("#verify-stop").prop("disabled", false);
         }
     }
 }
