@@ -890,7 +890,7 @@ module Activity {
             var describedEdges = this.getChoices(this.dgNode);
 
             var isMin = this.state.isMinGame;
-            var isAttacker = this.computer === Player.defender;
+            var isAttacker = this.computer === Player.attacker;
             var minimizeLevel = isMin ? (isAttacker ? false : true) : (isAttacker ? true : false);
             var isBetterFn = minimizeLevel ? ((x, y) => x.level < y.level) : ((x, y) => x.level > y.level);
             //Pick desired hyperedge
