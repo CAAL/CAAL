@@ -131,7 +131,7 @@ module Activity {
                     this.definitionsEditor.setValue(property.getDefinitions());
                 } else {
                     this.setSelectedPropertyType("relation");
-                    $("#relationType").val(property.getPropertyType());
+                    $("#relationType").val(property.getClassName());
                     $("#firstProcess").val(property.getFirstProcess());
                     $("#secondProcess").val(property.getSecondProcess());
 
@@ -185,7 +185,7 @@ module Activity {
                     options["time"] = $("#tccsTransition option:selected").data("time");
                 }
             } else {
-                propertyName = "hml";
+                propertyName = "HML";
                 options = {
                     process: $("#hmlProcess option:selected").val(),
                     topFormula: this.formulaEditor.getValue(),
@@ -193,7 +193,7 @@ module Activity {
                 };
             }
 
-            var property = Property.createProperty(propertyName, options);
+            var property = new window["Property"][propertyName](options);
             this.project.addProperty(property);
 
             if (e) {

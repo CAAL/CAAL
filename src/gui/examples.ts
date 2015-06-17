@@ -28,20 +28,18 @@ var examples : any[] = [
 
         properties: [
             {
-                type: "WeakTraceEq",
+                className: "TraceEquivalence",
                 status: 3,
                 options: {
-                    propertyType: "traceequivalence",
                     type: "weak",
                     firstProcess: "Peterson",
                     secondProcess: "Spec"
                 }
             },
             {
-                type: "WeakBisimulation",
+                className: "Bisimulation",
                 status: 3,
                 options: {
-                    propertyType: "bisimulation",
                     type: "weak",
                     firstProcess: "Peterson",
                     secondProcess:"Spec"
@@ -61,20 +59,18 @@ var examples : any[] = [
              "Spec = walk.Spec;",   
         properties:[
             {
-                type: "StrongBisimulation",
+                className: "Bisimulation",
                 status: 3,
                 options: {
-                    propertyType: "bisimulation",
                     type: "strong",
                     firstProcess:"Orchard",
                     secondProcess:"Spec"
                 }
             },
             {   
-                type: "WeakBisimulation",
+                className: "Bisimulation",
                 status: 3,
                 options: {
-                    propertyType: "bisimulation",
                     type: "weak",
                     firstProcess:"Orchard",
                     secondProcess:"Spec"
@@ -82,62 +78,7 @@ var examples : any[] = [
             }
         ],
         inputMode: "CCS"
-    }/*,
-    {
-        title: "Exercise 3.1",
-        ccs: "S = a.S1 + a.S2;\n" +
-             "S1 = a.S3 + b.S4;\n" + 
-             "S2 = a.S4;\n" +
-             "S3 = a.S;\n" +
-             "S4 = a.S;\n" +
-             "\n" +
-             "T = a.T1 + a.T3;\n" +
-             "T1 = a.T2 + b.T2;\n" +
-             "T2 = a.T;\n" +
-             "T3 = a.T4;\n" +
-             "T4 = a.T;",   
-        properties:[],
-        inputMode: "CCS"
-    },
-        
-    {
-        title: "Exercise 3.2",
-        ccs: "P = a.P1;\n" +
-             "P1 = b.P + c.P;\n" + 
-             "\n" +
-             "Q = a.Q1;\n" +
-             "Q1 = b.Q2 + c.Q;\n" +
-             "Q2 = a.Q3;\n" +
-             "Q3 = b.Q + c.Q2;",    
-        properties:[],
-        inputMode: "CCS"
-    },
-    {
-        title: "Exercise 4.1",
-        ccs: "S = tau.S1 + a.S3;\n" +
-             "S1 = tau.S2 + b.S4 + tau.S;\n" + 
-             "S2 = tau.S1 + tau.S5;\n" +
-             "S3 = 0;\n" +
-             "S4 = 0;\n" +
-             "S5 = 0;\n" +
-             "\n" +
-             "T = tau.T1 + a.T2 + b.T3;\n" +
-             "T1 = tau.T1;\n" +
-             "T2 = 0;\n" +
-             "T3 = 0;",
-        properties:[],
-        inputMode: "CCS"
-    },
-    {
-        title: "Exercise 5.1",
-        ccs: "S = a.S1 + a.S2;\n" +
-             "S1 = a.S3 + a.S4;\n" + 
-             "S2 = a.S4;\n" +
-             "S3 = a.S;\n" +
-             "S4 = a.S;",   
-        properties:[],
-        inputMode: "CCS"
-    }*/,  
+    },  
     {
         title: "Lecture Example",
         ccs: "Send = acc.Sending;\n" +
