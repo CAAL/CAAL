@@ -13,7 +13,6 @@
 module Activity {
 
     export class Explorer extends Activity {
-        private changed: boolean;
         private graph : CCS.Graph;
         private succGenerator : CCS.SuccessorGenerator;
         private selectedProcess : CCS.Process;
@@ -79,8 +78,6 @@ module Activity {
                 this.$freeze.blur();
             });
 
-            $(document).on("ccs-changed", () => this.changed = true);
-
             $("#explorer-process-list, #option-simplify").on("change", () => this.draw());
             this.$ccsOptions.find("input").on("change", () => this.draw());
             this.$tccsOptions.find("input").on("change", () => this.draw());
@@ -88,6 +85,7 @@ module Activity {
 
         public onShow(configuration? : any) : void {
             $(window).on("resize", () => this.resize(this.$zoom.val()));
+            this.resize(this.$zoom.val());
 
             this.fullscreen.onShow();
 

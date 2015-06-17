@@ -4,7 +4,6 @@
 
 class New extends MenuItem {
     protected onClick(e) : void {
-        console.log(this.activityHandler);
         var reset = () => {
             this.storage.setObj("autosave", null); // Reset the auto save.
             this.project.reset();

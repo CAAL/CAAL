@@ -7,8 +7,10 @@
         <title>CAAL</title>
         <link href='css/fonts.css' rel='stylesheet' type='text/css'>
         <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+        <link href="lib/bootstrap/css/bootstrap-theme.min.css" rel="stylesheet">
         <link href="lib/fontawesome/css/font-awesome.min.css" rel="stylesheet">
         <link href="lib/smartmenus/jquery.smartmenus.bootstrap.css" rel="stylesheet">
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
         <link href="css/yamm.css" rel="stylesheet">
         <link href="css/style.css" rel="stylesheet">
     </head>
@@ -26,7 +28,7 @@
                     <a class="navbar-brand">Caal</a>
                 </div>
                 <div class="collapse navbar-collapse" id="navbar-collapse">
-                    <ul class="nav navbar-nav no-highlight">
+                    <ul class="nav navbar-nav">
                         <li class="divider-vertical"></li>
                         <li><a>Project</a>
                             <ul class="dropdown-menu">
@@ -76,7 +78,7 @@
                             </ul>
                         </li>
                     </ul>
-                    <ul class="nav navbar-nav navbar-right no-highlight">
+                    <ul class="nav navbar-nav navbar-right">
                         <li button onclick="$('#about-dialog').modal('show');"><a>About</a></li>
                         <li button onclick="$('#help-dialog').modal('show')"><a>Help</a></button li>
                         <li><a id="contact" target="_top" data-toggle="contact-tooltip" title="Contact us!"><i class="fa fa-envelope-o fa-lg"></i></a></li>
@@ -232,7 +234,7 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div id="explorer-transitions">
-                            <table class="table table-responsive table-striped table-condensed table-hover no-highlight">
+                            <table class="table table-responsive table-striped table-condensed table-hover">
                                 <thead>
                                     <tr>
                                         <th>Source</th>
@@ -252,127 +254,125 @@
         <!-- Verifier -->
         <div id="verifier-container" class="container" style="display: none;">
             <div class="row">
-                <div class="col-md-7">
-                    <div class="table-responsive">
-                        <table id="property-table" class="table table-bordered table-hover no-highlight">
-                            <thead>
-                                <tr>
-                                    <th id="collapse-column" class="col-md-1"></th>
-                                    <th class="col-md-1 text-center">Status</th>
-                                    <th class="col-md-9">Property</th>
-                                    <th class="col-md-1 text-center">Verify</th>
-                                    <th class="col-md-1 text-center"></th>
-                                </tr>
-                            </thead>
-                                <tbody>
-                                </tbody>
-                        </table>
-                    </div>
-                    <div id="ccs-properties" class="btn-group">
-                        <button type="button" class="btn btn-default dropdown-toggle no-highlight" data-toggle="dropdown">
-                            Add Property
-                            <span class="caret"></span>
-                        </button>
-                        <ul id="add-property" class="dropdown-menu no-highlight" role="menu">
-                            <li class="dropdown-header" role="presentation">Strong Equivalences and Preorders</li>
-                            <li id="strong" class="property-item"><a>Strong Bisimulation</a></li>
-                            <li id="strongsim" class="property-item"><a>Strong Simulation</a></li>
-                            <li id="strongtraceinclusion" class="property-item"><a>Strong Trace Inclusion</a></li>
-                            <li id="strongtraceeq" class="property-item"><a>Strong Trace Equivalence</a></li>
-                            
-                            <li class="divider"></li>
-                            
-                            <li class="dropdown-header" role="presentation">Weak Equivalences and Preorders</li>
-                            <li id="weak" class="property-item"><a>Weak Bisimulation</a></li>
-                            <li id="weaksim" class="property-item"><a>Weak Simulation</a></li>
-                            <li id="weaktraceinclusion" class="property-item"><a>Weak Trace Inclusion</a></li>
-                            <li id="weaktraceeq" class="property-item"><a>Weak Trace Equivalence</a></li>
-                            
-                            <li class="divider"></li>
-                            
-                            <li class="dropdown-header" role="presentation">Model Checking</li>
-                            <li id="hml" class="property-item"><a>HML</a></li>
-                     <!--   <li id="distinguishing-strong" class="property-item"><a>Strong distinguishing formula</a></li>
-                            <li id="distinguishing-weak" class="property-item"><a>Weak distinguishing formula</a></li> -->
-                        </ul>
-                    </div>
-                    <div id="tccs-properties" class="btn-group">
-                        <button type="button" class="btn btn-default dropdown-toggle no-highlight" data-toggle="dropdown">
-                            Add Property
-                            <span class="caret"></span>
-                        </button>
-                        <ul id="add-time-property" class="dropdown-menu no-highlight" role="menu">
-                            <li class="dropdown-header" role="presentation">Strong Timed Equivalences and Preorders</li>
-                            <li id="timedstrong" class="property-item"><a>Strong Timed Bisimulation</a></li>
-                            <li id="timedstrongsim" class="property-item"><a>Strong Timed Simulation</a></li>
-                            <li id="timedstrongtraceinclusion" class="property-item"><a>Strong Timed Trace Inclusion</a></li>
-                            <li id="timedstrongtraceeq" class="property-item"><a>Strong Timed Trace Equivalence</a></li>
-                            
-                            <li class="divider"></li>
-                            
-                            <li class="dropdown-header" role="presentation">Weak Timed Equivalences and Preorders</li>
-                            <li id="timedweak" class="property-item"><a>Weak Timed Bisimulation</a></li>
-                            <li id="timedweaksim" class="property-item"><a>Weak Timed Simulation</a></li>
-                            <li id="timedweaktraceinclusion" class="property-item"><a>Weak Timed Trace Inclusion</a></li>
-                            <li id="timedweaktraceeq" class="property-item"><a>Weak Timed Trace Equivalence</a></li>
-                            
-                            <li class="divider"></li>
-                            
-                            <li class="dropdown-header" role="presentation">Strong Untimed Equivalences and Preorders</li>
-                            <li id="untimedstrong" class="property-item"><a>Strong Untimed Bisimulation</a></li>
-                            <li id="untimedstrongsim" class="property-item"><a>Strong Untimed Simulation</a></li>
-                            <li id="untimedstrongtraceinclusion" class="property-item"><a>Strong Untimed Trace Inclusion</a></li>
-                            <li id="untimedstrongtraceeq" class="property-item"><a>Strong Untimed Trace Equivalence</a></li>
-                            
-                            <li class="divider"></li>
-                            
-                            <li class="dropdown-header" role="presentation">Weak Untimed Equivalences and Preorders</li>
-                            <li id="untimedweak" class="property-item"><a>Weak Untimed Bisimulation</a></li>
-                            <li id="untimedweaksim" class="property-item"><a>Weak Untimed Simulation</a></li>
-                            <li id="untimedweaktraceinclusion" class="property-item"><a>Weak Untimed Trace Inclusion</a></li>
-                            <li id="untimedweaktraceeq" class="property-item"><a>Weak Untimed Trace Equivalence</a></li>
-                            
-                            <li class="divider"></li>
-                            
-                            <li class="dropdown-header" role="presentation">Model Checking</li>
-                            <li id="timedhml" class="property-item"><a>Timed HML</a></li>
-                     <!--   <li id="distinguishing-strong" class="property-item"><a>Strong distinguishing formula</a></li>
-                            <li id="distinguishing-weak" class="property-item"><a>Weak distinguishing formula</a></li> -->
-                        </ul>
+                <div class="col-md-12">
+                    <div class="btn-group">
+                        <button id="add-property" type="button" class="btn btn-default">Add Property</button>
                     </div>
                     <div class="btn-group pull-right">
                         <button id="verify-stop" type="button" class="btn btn-default" disabled>Stop</button>
                         <button id="verify-all" type="button" class="btn btn-default">Verify All</button>
                     </div>
                 </div>
-                <div class="col-md-5">
-                    <div class="row">
-                        <div class="col-md-12 no-highlight">
-                            <div id="two-processlist-form">
-                                <div class="form-group">
-                                    <label for="first-processlist" class="control-label">First Process</label>
-                                    <select id="first-processlist" class="form-control"></select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="second-processlist" class="control-label">Second Process</label>
-                                    <select id="second-processlist" class="form-control"></select>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <table id="property-table" class="table table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th class="narrow">Status</th>
+                                <th class="narrow">Time</th>
+                                <th>Property</th>
+                                <th class="narrow">Verify</th>
+                                <th class="narrow">Edit</th>
+                                <th class="narrow">Delete</th>
+                                <th class="narrow">Options</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="property-modal" class="modal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                        </button>
+                        <h4 class="modal-title">Add/Edit Property</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h4>Property Type</h4>
+                                    <div class="radio">
+                                        <label><input type="radio" name="property-type" value="relation" checked>Equivalence/Preorder Checking</label>
+                                    </div>
+                                    <div class="radio">
+                                        <label><input type="radio" name="property-type" value="hml-formula">Model Checking</label>
+                                    </div>
+                                    <div class="divider"></div>
                                 </div>
                             </div>
-                            <div id="hml-form">
-                                <div class="form-group">
-                                    <label for="hml-process" class="control-label">Process</label>
-                                    <select id="hml-process" class="form-control"></select><br>
-                                    <label for="hml-formula" class="control-label">Formula</label>
-                                    <div class="editor-border">
-                                        <div id="hml-formula"></div>
+                            <div id="add-relation">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="relation-process">
+                                            <label for="firstProcess">Left Process</label>
+                                            <select id="firstProcess" class="form-control"></select>
+                                        </div>
+                                        <div class="transition-relation">
+                                            <label>Transition Relation</label>
+                                            <select id="ccsTransition" class="form-control">
+                                                <option value="strong">Strong</option>
+                                                <option value="weak">Weak</option>
+                                            </select>
+                                            <select id="tccsTransition" class="form-control">
+                                                <option value="strong" data-time="timed">Strong Timed</option>
+                                                <option value="strong" data-time="untimed">Strong Untimed</option>
+                                                <option value="weak" data-time="timed">Weak Timed</option>
+                                                <option value="weak" data-time="untimed">Weak Untimed</option>
+                                            </select>
+                                        </div>
+                                        <div class="relation-type">
+                                            <label for="relationType">Relation</label>
+                                            <select id="relationType" class="form-control">
+                                                <option value="simulation">Simulation</option>
+                                                <option value="bisimulation" selected>Bisimulation</option>
+                                                <option value="traceinclusion">Trace Inclusion</option>
+                                                <option value="traceequivalence">Trace Equivalence</option>
+                                            </select>
+                                        </div>
+                                        <div class="relation-process">
+                                            <label for="secondProcess">Right Process</label>
+                                            <select id="secondProcess" class="form-control"></select>
+                                        </div>
                                     </div>
-                                    <label for="hml-editor" class="control-label">Recursive HML Definitions</label> 
-                                    <div class="editor-border">
-                                        <div id="hml-editor"></div>
+                                </div>
+                            </div>
+                            <div id="add-hml-formula">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="hml-process">
+                                            <label for="hmlProcess">Process</label>
+                                            <select id="hmlProcess" class="form-control"></select>
+                                        </div>
+                                        <div class="turnstile"><span>&#8872;</span></div>
+                                        <div class="hml-formula">
+                                            <label>Formula</label>
+                                            <div class="editor-border">
+                                                <div id="hml-formula-editor"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <label>Variable Definition(s)</label>
+                                        <div class="editor-border">
+                                            <div id="hml-definitions-editor"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button id="save-property" type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
                     </div>
                 </div>
             </div>
@@ -454,7 +454,7 @@
                 </div>
                 <div class="col-md-7">
                     <div id="game-transitions">
-                        <table id="game-transitions-table" class="table table-responsive table-striped table-condensed table-hover no-highlight">
+                        <table id="game-transitions-table" class="table table-responsive table-striped table-condensed table-hover">
                             <thead>
                                 <tr>
                                     <th class="col-md-4">Source</th>

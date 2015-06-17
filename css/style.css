@@ -7,6 +7,12 @@ html, body {
     margin: 0;
     padding: 0;
     font: normal 14px "Open Sans", "Arial";
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .table-responsive{
@@ -41,39 +47,17 @@ textarea {
     position: relative;
 }
 
-.no-highlight {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-
 
 /*
  * Custom Bootstrap styles
  */
 
-/* Preserve newlines used for explain dialog. Like multiple errors on separate lines. */
-#explain-dialog-body-par {
-    white-space: pre-wrap;
-}
-
-/* Remove focus from buttons */
-.btn:focus {
-    background-color: #fff;
-    border-color: #ccc;
-}
-
-/* Restore hover effect on focused buttons */
-.btn:focus:hover {
-    background-color: #e6e6e6;
-    border-color: #adadad;
-}
-
 nav.navbar {
     margin-bottom: 15px;
+    border-top: none;
+    border-right: none;
+    border-left: none;
+    border-radius: 0;
 }
 
 .navbar-header .navbar-brand {
@@ -154,7 +138,7 @@ nav.navbar {
     margin-bottom: 15px;
 }
 
-#editor-container div.row:last-child, #editor-container .alert {
+#editor-container div.row:last-child {
     margin-bottom: 0;
 }
 
@@ -171,20 +155,27 @@ nav.navbar {
 }
 
 .editor-border {
-    padding: 5px;
-    border: 1px solid #e7e7e7;
+    padding: 6px;
+    border: 1px solid #ccc;
     border-radius: 5px;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, .075);
 }
 
 #editor {
     min-height: 300px;
+    line-height: 20px;
 }
 
 
 /*
  * Explorer activity styles
  */
+
+#explorer-container nav {
+    background: none;
+    border: none;
+    box-shadow: none;
+}
 
 .yamm {
     min-height: 0;
@@ -271,28 +262,100 @@ nav.navbar {
  * Verifier activity styles
  */
 
-#property-table td {
-    vertical-align: middle;
+#verifier-container .row, #property-modal .row {
+    margin-bottom: 15px;
 }
 
-#hml-form, #two-processlist-form {
+#verifier-container div.row:last-child, #property-modal div.row:last-child {
+    margin-bottom: 0;
+}
+
+#property-table td, #property-table th {
+    vertical-align: middle;
+    text-align: center;
+}
+
+#property-table td:nth-child(2), #property-table th:nth-child(2), #property-table td:nth-child(3), #property-table th:nth-child(3) {
+    text-align: left;
+}
+
+#property-table td:nth-child(3) {
+    font: normal 15px "Inconsolata";
+}
+
+#property-table th.narrow {
+    width: 10%;
+}
+
+#property-modal select {
+    margin-bottom: 10px;
+}
+
+#property-modal label {
+    font-weight: normal;
+}
+
+#property-modal .divider {
+    border-bottom: 1px solid #e5e5e5;
+}
+
+#property-modal .relation-process {
+    width: 25%;
+    float: left;
+}
+
+#property-modal .transition-relation {
+    width: 20%;
+    float: left;
+    margin: 0 0 0 15px;
+}
+
+#property-modal .relation-type {
+    width: calc(30% - 45px);
+    float: left;
+    margin: 0 15px 0 15px;
+}
+
+#property-modal .hml-process {
+    width: 25%;
+    float: left;
+}
+
+#property-modal .turnstile {
+    width: 5%;
+    float: left;
+    margin: 0 15px 0 15px;
+    text-align: center;
+    font: normal 24px "Inconsolata";
+    line-height: 68px;
+}
+
+#property-modal .turnstile span {
+    position: relative;
+    top: 6px;
+}
+
+#property-modal .hml-formula {
+    width: calc(70% - 30px);
+    float: left;
+}
+
+#property-modal .editor-border {
+    margin-bottom: 10px;
+}
+
+#add-hml-formula {
     display: none;
 }
 
-#hml-editor {
-    min-height: 75px;
+#hml-formula-editor {
+    min-height: 20px;
+    line-height: 20px;
 }
 
-#property-table .fa-check {
-    color: #0c0;
-}
-
-#property-table .fa-times {
-    color: #c00;
-}
-
-#property-table .fa-exclamation-triangle {
-    color: #c00;
+#hml-definitions-editor {
+    min-height: 80px;
+    line-height: 20px;
 }
 
 
