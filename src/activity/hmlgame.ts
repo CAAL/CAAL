@@ -183,7 +183,16 @@ module Activity {
             this.formulaSets = this.project.getFormulaSetsForProperties();
             // this.tooltip.setGraph(configuration.succGen.graph);
 
-            if (this.CCSChanged || configuration.type != "default" || this.configuration === null) {
+            var configIsSame : Function = (leftConfig, rightConfig) => {
+                for (var prop in leftConfig) {
+                    if (leftConfig[prop] != rightConfig[prop]){
+                        return false
+                    } 
+                    return true;
+                }
+            }
+
+            if (this.CCSChanged || configuration.type != "default" || configIsSame(this.configuration, configuration) || this.configuration === null) {
                 // if either the CCS has changed, the configuration given is not the default one,
                 // or this.configuration has not yet been initialized, then re-configure everything.
                 this.CCSChanged = false;
@@ -303,8 +312,8 @@ module Activity {
             this.configuration = configuration;
 
             this.graph = this.project.getGraph();
-            this.strongSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: false});
-            this.weakSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "weak", reduce: false});
+            this.strongSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: true});
+            this.weakSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "weak", reduce: true});
             /*Fill the dropdown list with infomation*/
             this.setProcesses(this.getNamedProcessList(), configuration.processName);
             this.setFormulas(this.formulaSets, configuration.propertyId);
