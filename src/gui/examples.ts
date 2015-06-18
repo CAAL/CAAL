@@ -101,6 +101,42 @@ var examples : any[] = [
         inputMode: "CCS"
     },
     {
+        title: "Erroneous Simple Communication Protocol",
+        ccs: [
+            "Send = acc.Sending;",
+            "Sending = 'send.Wait;",
+            "Wait = ack.Send + error.Sending + 'send.Wait;",
+            "",
+            "Rec = trans.Del;",
+            "Del = 'del.Ack;",
+            "Ack = 'ack.Rec;",
+            "",
+            "Med = send.Med';",
+            "Med' = 'trans.Med + tau.Err + tau.Med;",
+            "Err = 'error.Med;",
+            "",
+            "set L = {send, trans, ack, error};",
+            "Impl = (Send | Med | Rec) \\ L;",
+            "",
+            "* This implementation is not weakly bisimilar with Spec",
+            "* Fix the protocol such it is",
+            "",
+            "Spec = acc.'del.Spec;"
+        ].join("\n"),
+        properties: [
+            {
+                className: "Bisimulation",
+                status: 3,
+                options: {
+                    type: "weak",
+                    firstProcess: "Spec",
+                    secondProcess: "Impl"
+                }
+            }
+        ],
+        inputMode: "CCS"
+    },
+    {
         title: "Lightswitch",
         ccs: "Off = press.Light;\n" +
              "Bright = press.Off;\n" +
