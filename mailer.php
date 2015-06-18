@@ -7,7 +7,6 @@ if($_POST["project"] == "") {
         echo "false";
     }
 } else {
-
     if( mail_attachment($_POST["project"], "caal@cs.aau.dk", $_POST["email"], $_POST["name"], $_POST["subject"]." (".$_POST["version"].")", $_POST["text"]) ) {
         echo "true";
     } else {
@@ -18,7 +17,7 @@ if($_POST["project"] == "") {
 function mail_attachment($filecontent, $mailto, $from_mail, $from_name, $subject, $message) {
 
 $filename = "project.caal";
-$content_attachment = chunk_split(base64_encode($filecontent));
+$content_attachment = chunk_split(base64_encode(json_encode($filecontent)));
 $uid = md5(uniqid(time()));
 $type = "text/plain";
 
@@ -39,7 +38,7 @@ $content .= "Content-Disposition: attachment; filename=\"".$filename."\"\n\n";
 $content .= $content_attachment."\n";
 $content .= "\n--".$uid."--";
 
-mail($mailto, $subject, $content, $header);
+return mail($mailto, $subject, $content, $header);
 }
     
 ?>

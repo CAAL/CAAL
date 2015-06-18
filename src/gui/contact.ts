@@ -12,8 +12,19 @@ module ContactForm {
             $("#contact-modal").modal("show");
         });
 
+        // Set validation on focusout
+        $("#contact-form > .form-group").each( (i, item) => {
+            $(item).on( "focusout", () => {
+                verifyFormGroup($(item));
+            });
+        });
+
         $("#contact-send").on("click", () => {
             var url = "mailer.php";
+
+            if(!verifyForm()) {
+                return false;
+            }
 
             $.ajax({
                 type: "POST",
@@ -40,6 +51,43 @@ module ContactForm {
 
             return false; // avoid to execute the actual submit of the form.
         });
+    }
+
+    function verifyFormGroup(element) {
+        var control = element.find(".form-control");
+        var result = true;
+
+        var test = control.attr('id')
+
+        if(control.attr('id') == "contact-email") {
+            result = validateEmail(control.val());
+        } else {
+            result = (control.val() == "") ? false : true;
+        }
+
+        if(result) {
+            element.removeClass("has-error");
+        } else {
+            element.removeClass("has-error").addClass("has-error");
+        }
+
+        return result;
+    }
+
+    function verifyForm() {
+        var result = true;
+
+        $("#contact-form > .form-group").each( (i, item) => {
+            var test = $(item).attr('class');
+            result = (verifyFormGroup($(item))) ? result : false;
+        });
+
+        return result;
+    }
+
+    function validateEmail(email) {
+        var re = /\S+@\S+/;
+        return re.test(email);
     }
 
     function showSuccess() {
