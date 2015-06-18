@@ -266,7 +266,7 @@
             </div>
             <div class="row">
                 <div class="col-md-12">
-                    <table id="property-table" class="table table-hover table-striped">
+                    <table id="property-table" class="table table-hover table-striped table-responsive">
                         <thead>
                             <tr>
                                 <th class="narrow">Status</th>
@@ -314,8 +314,8 @@
                                             <label for="firstProcess">Left Process</label>
                                             <select id="firstProcess" class="form-control"></select>
                                         </div>
-                                        <div class="transition-relation">
-                                            <label>Transition Relation</label>
+                                        <div class="transition-type">
+                                            <label>Type</label>
                                             <select id="ccsTransition" class="form-control">
                                                 <option value="strong">Strong</option>
                                                 <option value="weak">Weak</option>
@@ -330,10 +330,10 @@
                                         <div class="relation-type">
                                             <label for="relationType">Relation</label>
                                             <select id="relationType" class="form-control">
-                                                <option value="simulation">Simulation</option>
-                                                <option value="bisimulation" selected>Bisimulation</option>
-                                                <option value="traceinclusion">Trace Inclusion</option>
-                                                <option value="traceequivalence">Trace Equivalence</option>
+                                                <option value="Simulation">Simulation</option>
+                                                <option value="Bisimulation" selected>Bisimulation</option>
+                                                <option value="TraceInclusion">Trace Inclusion</option>
+                                                <option value="TraceEquivalence">Trace Equivalence</option>
                                             </select>
                                         </div>
                                         <div class="relation-process">
@@ -382,23 +382,21 @@
         <div id="game-container" class="container-fluid" style="display: none;">
             <div id="game-options" class="row">
                 <div class="col-md-12">
-                    <select id="game-type" class="form-control">
-                        <option class="ccs-game-type" value="strong">Strong Bisimulation</option>
-                        <option class="ccs-game-type" value="weak">Weak Bisimulation</option>
-                        <option class="ccs-game-type" value="strongsim">Strong Simulation</option>
-                        <option class="ccs-game-type" value="weaksim">Weak Simulation</option>
-                    
-                        <option class="tccs-game-type" value="timedstrong">Strong Timed Bisimulation</option>
-                        <option class="tccs-game-type" value="timedweak">Weak Timed Bisimulation</option>
-                        <option class="tccs-game-type" value="timedstrongsim">Strong Timed Simulation</option>
-                        <option class="tccs-game-type" value="timedweaksim">Weak Timed Simulation</option>
-                        
-                        <option class="tccs-game-type" value="untimedstrong">Strong Untimed Bisimulation</option>
-                        <option class="tccs-game-type" value="untimedweak">Weak Untimed Bisimulation</option>
-                        <option class="tccs-game-type" value="untimedstrongsim">Strong Untimed Simulation</option>
-                        <option class="tccs-game-type" value="untimedweaksim">Weak Untimed Simulation</option>
-                    </select>
                     <select id="game-left-process" class="form-control"></select>
+                    <select id="game-ccs-type" class="form-control">
+                        <option value="strong">Strong</option>
+                        <option value="weak">Weak</option>
+                    </select>
+                    <select id="game-tccs-type" class="form-control">
+                        <option value="strong" data-time="timed">Strong Timed</option>
+                        <option value="strong" data-time="untimed">Strong Untimed</option>
+                        <option value="weak" data-time="timed">Weak Timed</option>
+                        <option value="weak" data-time="untimed">Weak Untimed</option>
+                    </select>
+                    <select id="game-relation" class="form-control">
+                        <option value="Simulation">Simulation</option>
+                        <option value="Bisimulation" selected>Bisimulation</option>
+                    </select>
                     <select id="game-right-process" class="form-control"></select>
                     <div class="btn-group" data-toggle="buttons">
                         <label class="btn btn-default">

@@ -306,7 +306,8 @@ module Activity {
 
                 row.append($("<td>").append(this.sourceText(this.selectedProcess)));
                 row.append($actionTd);
-                row.append($("<td>").append(Tooltip.wrapProcess(this.graph.getLabel(t.targetProcess))));
+                row.append($("<td>").append(this.sourceText(t.targetProcess)));
+                // row.append($("<td>").append(Tooltip.wrapProcess(this.graph.getLabel(t.targetProcess))));
 
                 row.attr("data-target-id", t.targetProcess.id);
 

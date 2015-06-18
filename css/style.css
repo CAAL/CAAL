@@ -15,10 +15,6 @@ html, body {
     user-select: none;
 }
 
-.table-responsive{
-    overflow-x: visible; 
-}
-
 a {
     cursor: pointer;
 }
@@ -85,21 +81,6 @@ nav.navbar {
     .navbar-collapse .nav > .divider-vertical {
         display: none;
     }
-}
-
-.dropdown-menu {
-    min-width: 0px;
-}
-
-#toolmenu.dropdown-menu {
-    right: 0;
-    left: inherit;
-}
-
-.property-btn {
-    border: none;
-    width: 100%;
-    height: 100%;
 }
 
 .table-hover > tbody {
@@ -304,7 +285,7 @@ nav.navbar {
     float: left;
 }
 
-#property-modal .transition-relation {
+#property-modal .transition-type {
     width: 20%;
     float: left;
     margin: 0 0 0 15px;
@@ -375,13 +356,23 @@ nav.navbar {
     margin-right: 0;
 }
 
-#game-type {
-    width: 190px;
+#game-left-process, #game-right-process {
+    width: 150px;
     float: left;
 }
 
-#game-left-process, #game-right-process {
-    width: 150px;
+#game-ccs-type {
+    width: 95px;
+    float: left;
+}
+
+#game-tccs-type {
+    width: 155px;
+    float: left;
+}
+
+#game-relation {
+    width: 135px;
     float: left;
 }
 
@@ -480,7 +471,7 @@ nav.navbar {
 }
 
 @media (max-width: 991px) {
-    #game-type, #game-left-process, #game-right-process {
+    #game-left-process, #game-right-process, #game-ccs-type, #game-tccs-type, #game-relation {
         width: 100%;
     }
 
@@ -499,7 +490,6 @@ nav.navbar {
 
     #game-transitions {
         border-left: 1px solid #e7e7e7;
-        margin-bottom: 20px;
     }
 
     #game-status .col-md-5 {
@@ -518,6 +508,12 @@ nav.navbar {
 #game-container:full-screen         {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
 #game-container:fullscreen          {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
 
+#hml-game-container:-webkit-full-screen {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#hml-game-container:-moz-full-screen    {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#hml-game-container:-ms-fullscreen      {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#hml-game-container:-o-full-screen      {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#hml-game-container:full-screen         {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#hml-game-container:fullscreen          {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
 
 /*
  * About/Help styles
@@ -600,4 +596,3 @@ p.small {
 .popover-content p:last-child {
     margin-bottom: 0;
 }
-

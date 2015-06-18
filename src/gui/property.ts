@@ -1,45 +1,22 @@
 /// <reference path="../main.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
 
-// satisfied = check-mark, unsatisfied = cross, invalid = yellow triangle, unknown = question mark
 enum PropertyStatus {satisfied, unsatisfied, invalid, unknown};
 
 module Property {
 
-    export function createProperty(propertyType : string, options : any) : Property {
-        var status = options.status ? options.status : PropertyStatus.unknown;
-        options["propertyType"] = propertyType;
-
-        switch (propertyType)
-        {
-            case "bisimulation":
-                return options.type === "strong" ? new StrongBisimulation(options, status) : new WeakBisimulation(options, status);
-            case "simulation":
-                return options.type === "strong" ? new StrongSimulation(options, status) : new WeakSimulation(options, status);
-            case "simulationequivalence":
-                return null;
-            case "traceinclusion":
-                return options.type === "strong" ? new StrongTraceInclusion(options, status) : new WeakTraceInclusion(options, status);
-            case "traceequivalence":
-                return options.type === "strong" ? new StrongTraceEq(options, status) : new WeakTraceEq(options, status);
-            case "hml":
-                return new HML(options, status);
-            default:
-                throw "Unknown property type";
-        }
-    }
-
     export class Property {
-        protected project : Project;
         private static counter : number = 0;
-        private id : number;
-        protected status : PropertyStatus;
-        protected worker;
+        protected id : number;
         private error : string = "";
         private timer : number;
         private elapsedTime : string;
         private $timeCell : JQuery;
         private $row : JQuery;
+        protected project : Project;
+        protected worker;
+        protected comment : string;
+        protected status : PropertyStatus;
 
         public icons = {
             "checkmark": $("<i class=\"fa fa-check-circle fa-lg text-success\"></i>"),
@@ -61,6 +38,10 @@ module Property {
 
         public getStatus() : PropertyStatus {
             return this.status;
+        }
+
+        public getComment() : string {
+            return this.comment;
         }
 
         public getRow() : JQuery {
@@ -107,7 +88,7 @@ module Property {
             }
         }
 
-        public setInvalidateStatus(error? : string) : void {
+        protected setInvalidateStatus(error? : string) : void {
             this.error = error;
             this.status = PropertyStatus.invalid;
         }
@@ -183,7 +164,8 @@ module Property {
         protected getWorkerMessage() : any { throw "Not implemented by subclass"; }
         public getDescription() : string { throw "Not implemented by subclass"; }
         public toJSON() : any { throw "Not implemented by subclass"; }
-        protected isReadyForVerification() : boolean { throw "Not implemented by subclass"; }
+        public isReadyForVerification() : boolean { throw "Not implemented by subclass"; }
+        public getGameConfiguration() : any { throw "Not implemented by subclass"; }
     }
     
     export class HML extends Property {
@@ -196,15 +178,11 @@ module Property {
             this.process = options.process;
             this.definitions = options.definitions;
             this.topFormula = options.topFormula;
+            this.comment = options.comment;
         }
 
         public getProcess() : string {
             return this.process;
-        }
-
-        public setProcess(process : string) : void {
-            this.process = process;
-            this.setUnknownStatus();
         }
 
         public getTopFormula() : string {
@@ -220,11 +198,6 @@ module Property {
             return this.definitions;
         }
 
-        public setDefinitions(formula : string) : void {
-            this.definitions = formula;
-            this.setUnknownStatus();
-        }
-
         public getDescription() : string {
             var formula = this.topFormula.replace(";", "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -235,14 +208,28 @@ module Property {
             return this.process + " &#8872; " + formula + "<br />" + definitions.join("<br />");
         }
 
+        public getGameConfiguration() : any {
+            var formulaSetForProperty = this.project.getFormulaSetsForProperties()[this.id];
+            var HmlConfiguration = Object.create(null),
+                graph : ccs.Graph = this.project.getGraph();
+
+            HmlConfiguration.succGen = CCS.getSuccGenerator(this.project.getGraph(), {succGen: "strong", reduce: false});
+            HmlConfiguration.processName = this.process;
+            HmlConfiguration.propertyId = this.id;
+            HmlConfiguration.formulaId = formulaSetForProperty.getTopFormula().id;
+
+            return HmlConfiguration;
+        }
+
         public toJSON() : any {
             return {
-                type: "HML",
+                className: "HML",
                 status: this.status,
                 options : {
                     process: this.process,
                     definitions: this.definitions,
-                    topFormula: this.topFormula
+                    topFormula: this.topFormula,
+                    comment: this.comment
                 }
             };
         }
@@ -250,7 +237,7 @@ module Property {
          * Checks whehter the process is defined, and the property is not invalid, and the HML syntactically correct.
          * @return {boolean} if true everything is defined correctly.
          */
-        protected isReadyForVerification() : boolean {
+        public isReadyForVerification() : boolean {
             var isReady = true;
             var error = "";
             if (!this.getProcess()) {
@@ -293,60 +280,37 @@ module Property {
     }
     
     export class Relation extends Property {
-        public propertyType;
-        public firstProcess : string;
-        public secondProcess : string;
-        public type : string;
-        public time : string;
+        protected propertyType;
+        protected firstProcess : string;
+        protected secondProcess : string;
+        protected type : string;
+        protected time : string;
 
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(status);
-
-            this.propertyType = options.propertyType;
             this.firstProcess = options.firstProcess;
             this.secondProcess = options.secondProcess;
             this.type = options.type;
             this.time = options.time;
-        }
-
-        public getPropertyType() : string {
-            return this.propertyType;
+            this.comment = options.comment;
         }
 
         public getFirstProcess() : string {
             return this.firstProcess;
         }
 
-        public setFirstProcess(firstProcess : string) : void {
-            this.firstProcess = firstProcess;
-            this.setUnknownStatus();
-        }
-
         public getSecondProcess() : string {
             return this.secondProcess;
-        }
-
-        public setSecondProcess(secondProcess : string) : void {
-            this.secondProcess = secondProcess;
-            this.setUnknownStatus();
         }
 
         public getType() : string {
             return this.type;
         }
 
-        public setType(type : string) : void {
-            this.type = type;
-        }
-        
         public getTime() : string {
             return this.time;
         }
-        
-        public setTime(time : string) : void {
-            this.time = time;
-        }
-        
+
         protected getTimeSubscript() : string {
             if (this.project.getInputMode() === InputMode.CCS) {
                 return "";
@@ -354,15 +318,28 @@ module Property {
                 return "<sub>" + (this.time === "untimed" ? "u" : "t") + "</sub>";
             }
         }
-        
+
+        public getGameConfiguration() : any {
+            return {
+                leftProcess: this.firstProcess,
+                rightProcess: this.secondProcess,
+                type: this.type,
+                time: this.time ? this.time : "",
+                relation: this.getClassName(),
+                playerType: this.status === PropertyStatus.satisfied ? "attacker" : "defender"
+            };
+        }
+
         public toJSON() : any {
             return {
-                type: this.getClassName(),
+                className: this.getClassName(),
                 status: this.status,
-                time: this.time,
                 options : {
+                    type: this.type,
+                    time: this.time,
                     firstProcess: this.firstProcess,
-                    secondProcess: this.secondProcess
+                    secondProcess: this.secondProcess,
+                    comment: this.comment
                 }
             };
         }
@@ -381,7 +358,7 @@ module Property {
          * And property status must not be invalid.
          * @return {boolean} if true, everything is defined.
          */
-        protected isReadyForVerification() : boolean {
+        public isReadyForVerification() : boolean {
             var isReady = true;
             var error = "";
 
@@ -408,7 +385,15 @@ module Property {
         protected getWorkerHandler() : string { throw "Not implemented by subclass"; }
     }
 
-    export class StrongBisimulation extends Relation {
+    export class DistinguishingFormula extends Relation {
+        public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+
+        public generateDistinguishingFormula(generationEnded : Function) : void { throw "Not implemented by subclass"; }
+    }
+
+    export class Bisimulation extends DistinguishingFormula {
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
@@ -428,7 +413,7 @@ module Property {
                 type: "findDistinguishingFormula",
                 leftProcess: this.getFirstProcess(),
                 rightProcess: this.getSecondProcess(),
-                succGenType: "strong"
+                succGenType: super.getType()
             });
             
             this.worker.addEventListener("error", (error) => {
@@ -461,459 +446,101 @@ module Property {
         }
 
         public getDescription() : string {
-            return this.firstProcess + " &#8764;" + super.getTimeSubscript() + " " + this.secondProcess;
+            var symbol = super.getType() === "strong" ? "&#8764;" : "&#8776;";
+            return this.firstProcess + " " + symbol + super.getTimeSubscript() + " " + this.secondProcess;
         }
 
         public getClassName() : string {
-            return "StrongBisimulation";
+            return "Bisimulation";
         }
 
         protected getWorkerHandler() : string {
-            return "isStronglyBisimilar";
-        }
-    }
-
-    export class WeakBisimulation extends Relation {
-        public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-        }
-
-        public generateDistinguishingFormula(generationEnded : Function) : void {
-            // start the worker, and make the worker generationEnded with the result.
-            var program = this.project.getCCS();
-            this.worker = new Worker("lib/workers/verifier.js");
-            
-            this.worker.postMessage({
-                type: "program",
-                program: program,
-                inputMode: InputMode[this.project.getInputMode()]
-            });
-            
-            this.worker.postMessage({
-                type: "findDistinguishingFormula",
-                leftProcess: this.getFirstProcess(),
-                rightProcess: this.getSecondProcess(),
-                succGenType: "weak"
-            });
-            
-            this.worker.addEventListener("error", (error) => {
-                this.worker.terminate();
-                this.worker = null;
-                this.setInvalidateStatus(error.message);
-                this.stopTimer();
-                generationEnded();
-            }, false);
-            
-            this.worker.addEventListener("message", event => {
-                this.worker.terminate();
-                this.worker = null; 
-                
-                if (!event.data.result.isBisimilar) { //this should be false, for there to be distinguishing formula
-                    this.status = PropertyStatus.satisfied;
-                    var properties = {
-                        firstProperty : new HML({process: this.firstProcess, topFormula: event.data.result.formula, definitions: ""}),
-                        secondProperty : new HML({process: this.secondProcess, topFormula: event.data.result.formula, definitions: ""})
-                    }
-
-                    generationEnded(properties);
-                    // this.verifyHml(event.data.result.formula);
-                } else {
-                    this.setInvalidateStatus("The two selected processes are bisimilar, and no distinguishing formula exists.");
-                    this.stopTimer()
-                    generationEnded();
-                }
-            });
-        }
-
-        public getDescription() : string {
-            return this.firstProcess + " &#8776;" + super.getTimeSubscript() + " " + this.secondProcess;
-        }
-        
-        public getClassName() : string {
-            return "WeakBisimulation";
-        }
-
-        protected getWorkerHandler() : string {
-            return "isWeaklyBisimilar";
+            return super.getType() === "strong" ? "isStronglyBisimilar" : "isWeaklyBisimilar";
         }
     }
     
-    export class StrongSimulation extends Relation {
+    export class Simulation extends Relation {
         public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
 
         public getDescription() : string {
-            return this.firstProcess + " sim<sub>&#8594;" + super.getTimeSubscript() +"</sub> " + this.secondProcess;
+            var symbol = super.getType() === "strong" ? "&#8594;" : "&#8658;";
+            return this.firstProcess + " sim<sub>" + symbol + super.getTimeSubscript() +"</sub> " + this.secondProcess;
         }
         
         public getClassName() : string {
-            return "StrongSimulation";
+            return "Simulation";
         }
 
         protected getWorkerHandler() : string {
-            return "isStronglySimilar";
+            return super.getType() === "strong" ? "isStronglySimilar" : "isWeaklySimilar";
         }
     }
     
-    export class WeakSimulation extends Relation {
-        public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-        }
-
-        public getDescription() : string {
-            return this.firstProcess + " sim<sub>&#8658;" + super.getTimeSubscript() + "</sub> " + this.secondProcess;
-        }
-        
-        public getClassName() : string {
-            return "WeakSimulation";
-        }
-
-        protected getWorkerHandler() : string {
-            return "isWeaklySimilar";
-        }
-    }
-    
-    export class StrongTraceEq extends Relation {
+    export class TraceEquivalence extends Relation {
         constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
         
         public getDescription() : string {
-            return "Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.firstProcess + ") = Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.secondProcess + ")";
+            var symbol = super.getType() === "strong" ? "&#8594;" : "&#8658;";
+            return "Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.firstProcess + ") = Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.secondProcess + ")";
+        }
+
+        public getGameConfiguration() : any {
+            return null;
         }
         
         public getClassName() : string {
-            return "StrongTraceEq";
+            return "TraceEquivalence";
         }
 
         protected getWorkerHandler() : string {
-            return "isStronglyTraceEq";
-        }
-    }
-
-    export class WeakTraceEq extends Relation {
-        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-        }
-        
-        public getDescription() : string {
-            return "Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.firstProcess + ") = Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.secondProcess + ")";
-        }
-        
-        public getClassName() : string {
-            return "WeakTraceEq";
-        }
-
-        protected getWorkerHandler() : string {
-            return "isWeaklyTraceEq";
-        }
-    }
-    
-    export class DistinguishingFormula extends Property {
-        protected time : string;
-        protected firstHMLProperty : Property.HML;
-        protected secondHMLProperty : Property.HML;
-        private isexpanded : boolean = true;
-        
-        private childPropertiesToVerify = [];
-        private currentVerifyingProperty = null;
-        protected verificationEndedCallback : Function = null;
-        
-        public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(status);
-            
-            this.time = options.time;
-            this.firstHMLProperty = new HML(options.firstHMLProperty);
-            this.secondHMLProperty = new HML(options.secondHMLProperty);
-        }
-
-        public getTime() : string {
-            return this.time;
-        }
-        
-        public setTime(time : string) : void {
-            this.time = time;
-        }
-
-        public isExpanded(){
-            return this.isexpanded;
-        }
-
-        public setExpanded(isExpanded : boolean){
-            this.isexpanded = isExpanded
-        }
-
-        public getFirstProcess() : string{
-            return this.firstHMLProperty.getProcess();
-        }
-
-        public setFirstProcess(firstProcess: string) : void {
-            this.firstHMLProperty.setProcess(firstProcess);
-            this.setUnknownStatus();
-            this.clearFormulas();
-        }
-
-        public getSecondProcess() : string {
-            return this.secondHMLProperty.getProcess();
-        }
-
-        public setSecondProcess(secondProcess: string) : void {
-            this.secondHMLProperty.setProcess(secondProcess);
-            this.setUnknownStatus();
-            this.clearFormulas();
-        }
-
-        private clearFormulas() {
-            this.firstHMLProperty.setTopFormula("");
-            this.firstHMLProperty.setDefinitions("");
-            this.secondHMLProperty.setTopFormula("");
-            this.secondHMLProperty.setDefinitions("");
-        }
-
-        public getFirstHML() : Property.HML {
-            return this.firstHMLProperty;
-        }
-
-        public getSecondHML() : Property.HML {
-            return this.secondHMLProperty;
-        }
-
-        protected verifyHml(formula : string) : void {
-            this.firstHMLProperty.setTopFormula(formula);
-            this.secondHMLProperty.setTopFormula(formula);
-            
-            this.childPropertiesToVerify.push(this.firstHMLProperty);
-            this.childPropertiesToVerify.push(this.secondHMLProperty);
-            
-            this.doNextVerification();
-        }
-
-        private doNextVerification() {
-            if (!this.currentVerifyingProperty && this.childPropertiesToVerify.length > 0) {
-                var property = this.childPropertiesToVerify.shift();
-                this.currentVerifyingProperty = property;
-                
-                // verify the property, and have the callback start the next.
-                property.verify(() => {
-                    this.currentVerifyingProperty = null;
-                    this.doNextVerification();
-                });
-            } else {
-                this.stopTimer();
-                this.verificationEndedCallback();
-            }
+            return super.getType() === "strong" ? "isStronglyTraceEq" : "isWeaklyTraceEq";
         }
     }
 
     export class TraceInclusion extends DistinguishingFormula {
-        public time : string;
+        private formula : string;
         
         constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
-            
-            this.time = options.time;
         }
         
-        public getTime() : string {
-            return this.time;
-        }
-        
-        public setTime(time : string) : void {
-            this.time = time;
-        }
-        
-        protected getTimeSubscript() : string {
-            if (this.project.getInputMode() === InputMode.CCS)
-                return "";
-            else
-                return "<sub>" + (this.time === "untimed" ? "u" : "t") + "</sub>";
-        }
-        
-        public toJSON() : any {
-            return {
-                type: this.getClassName(),
-                status: this.status,
-                time: this.time,
-                options: {
-                    firstHMLProperty: this.firstHMLProperty.toJSON().options,
-                    secondHMLProperty: this.secondHMLProperty.toJSON().options
+        public generateDistinguishingFormula(generationEnded : Function) : void {
+            if (this.formula !== undefined) {
+                var properties = {
+                    firstProperty : new HML({process: this.firstProcess, topFormula: this.formula, definitions: ""}),
+                    secondProperty : new HML({process: this.secondProcess, topFormula: this.formula, definitions: ""})
                 }
-            };
-        }
-        
-        protected isReadyForVerification() : boolean {
-            var isReady = true;
-            var error = "";
-            if(!this.getFirstProcess() && !this.getSecondProcess()) {
-                isReady = false;
-                error = "Two processes must be selected"
+                generationEnded(properties);
             } else {
-                // if they are defined check whether they are defined in the CCS-program
-                var processList = this.project.getGraph().getNamedProcesses()
-                if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
-                    error = "One of the processes selected is not defined in the CCS program."
-                    isReady = false;
-                }
+                generationEnded();
             }
-
-            // if is not ready invalidate the property
-            if (!isReady) {
-                this.setInvalidateStatus(error);
-            }
-            return isReady;
-        }
-        
-        protected getWorkerMessage() : any {
-            return {
-                time: this.time,
-                type: this.getWorkerHandler(),
-                leftProcess: this.firstHMLProperty.getProcess(),
-                rightProcess: this.secondHMLProperty.getProcess()
-            };
         }
         
         protected workerFinished(event : any, callback : Function) : void {
-            this.worker.terminate();
-            this.worker = null; 
-            
-            var goodResult = event.data.result.isTraceIncluded;
-            
-            if (goodResult === false) {
-                this.status = PropertyStatus.unsatisfied;
-                this.verificationEndedCallback = callback;
-                this.verifyHml(event.data.result.formula);
-            } else if(goodResult === true) {
-                this.status = PropertyStatus.satisfied;
-                this.stopTimer()
-                callback();
-            }
-        }
-        
-        public getClassName() : string { throw "Not implemented by subclass"; }
-        protected getWorkerHandler() : string { throw "Not implemented by subclass"; }
-    }
-    
-    export class StrongTraceInclusion extends TraceInclusion {
-        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
+            this.formula = event.data.result.formula;
+            event.data.result = event.data.result.isTraceIncluded;
+            super.workerFinished(event, callback)
         }
         
         public getDescription() : string {
-            return "Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8594;" + super.getTimeSubscript() + "</sub>(" + this.getSecondProcess() + ")";
+            var symbol = super.getType() === "strong" ? "&#8594;" : "&#8658;";
+            return "Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.getSecondProcess() + ")";
+        }
+
+        public getGameConfiguration() : any {
+            return null;
         }
         
         public getClassName() : string {
-            return "StrongTraceInclusion";
+            return "TraceInclusion";
         }
 
         protected getWorkerHandler() : string {
-            return "isStronglyTraceIncluded";
-        }
-    }
-
-    export class WeakTraceInclusion extends TraceInclusion {
-        constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-        }
-        
-        public getDescription() : string {
-            return "Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>&#8658;" + super.getTimeSubscript() + "</sub>(" + this.getSecondProcess() + ")";
-        }
-        
-        public getClassName() : string {
-            return "WeakTraceInclusion";
-        }
-
-        protected getWorkerHandler() : string {
-            return "isWeaklyTraceIncluded";
-        }
-    }
-
-    export class DistinguishingBisimulationFormula extends DistinguishingFormula {
-        
-        private succGenType : string;
-        
-        public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
-            super(options, status);
-            
-            this.succGenType = options.succGenType;
-        }
-        
-        public getDescription() : string {
-            var type = (this.succGenType === "strong") ? "Strong" : "Weak"; 
-            return type + " distinguishing formula for: " + this.firstHMLProperty.getProcess() + " and " + this.secondHMLProperty.getProcess();
-        }
-        
-        public toJSON() : any {
-            return {
-                type: "DistinguishingBisimulationFormula",
-                status: this.status,
-                time: this.time,
-                options : {
-                    firstHMLProperty: this.firstHMLProperty.toJSON().options,
-                    secondHMLProperty: this.secondHMLProperty.toJSON().options,
-                    succGenType: this.succGenType
-                }
-            };
-        }
-        
-        /**
-         * Check whether both process(first and second) is defined, and it exists in the CCS program.
-         * And property status must not be invalid.
-         * @return {boolean} if true, everything is defined.
-         */
-        protected isReadyForVerification() : boolean {
-            var isReady = true;
-            var error = "";
-            if(!this.getFirstProcess() && !this.getSecondProcess()) {
-                isReady = false;
-                error = "Two processes must be selected"
-            } else {
-                // if they are defined check whether they are defined in the CCS-program
-                var processList = this.project.getGraph().getNamedProcesses()
-                if (processList.indexOf(this.getFirstProcess()) === -1 || processList.indexOf(this.getSecondProcess()) === -1) {
-                    error = "One of the processes selected is not defined in the CCS program."
-                    isReady = false;
-                }
-            }
-
-            // if they are clearly bisimilar then do nothing..
-            if (this.getFirstProcess() === this.getSecondProcess()) {
-                error = "The two selected processes are bisimilar, and no distinguishing formula exists.";
-                isReady = false;
-            }
-
-            // if is not ready invalidate the property
-            if (!isReady) {
-                this.setInvalidateStatus(error);
-            }
-            return isReady;
-        }
-        
-        protected getWorkerMessage() : any {
-            return {
-                time: this.time,
-                type: "findDistinguishingFormula",
-                leftProcess: this.firstHMLProperty.getProcess(),
-                rightProcess: this.secondHMLProperty.getProcess(),
-                succGenType: this.succGenType
-            };
-        }
-        
-        protected workerFinished(event : any, callback : Function) : void {
-            this.worker.terminate();
-            this.worker = null; 
-            
-            if (!event.data.result.isBisimilar) { //this should be false, for there to be distinguishing formula
-                this.status = PropertyStatus.satisfied;
-                this.verificationEndedCallback = callback;
-                this.verifyHml(event.data.result.formula);
-            } else {
-                this.setInvalidateStatus("The two selected processes are bisimilar, and no distinguishing formula exists.");
-                this.stopTimer()
-                callback();
-            }
+            return super.getType() === "strong" ? "isStronglyTraceIncluded" : "isWeaklyTraceIncluded";
         }
     }
 }

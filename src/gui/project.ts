@@ -47,6 +47,8 @@ class Project {
         this.setProperties(properties);
         this.setInputMode(InputMode[inputMode]);
         this.updateInputModeToggle();
+        this.changed = true;
+        $(document).trigger("ccs-changed");
     }
 
     public getId() : number {
@@ -94,7 +96,7 @@ class Project {
             if (properties.length !== 0) {
                 for (var i = 0; i < properties.length; i++) {
                     try {
-                        this.addProperty(new window["Property"][properties[i].type](properties[i].options, properties[i].status));
+                        this.addProperty(new window["Property"][properties[i].className](properties[i].options, properties[i].status));
                     } catch (e) {
                         console.log("Unknown property type");
                     }
