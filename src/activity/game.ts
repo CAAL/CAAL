@@ -1046,8 +1046,12 @@ module Activity {
             // virtual, override
         }
 
-        public playTypeStr() : string {
-            return this.playType == PlayType.Attacker ? "Attacker" : "Defender";
+        public playTypeStr(allLower : boolean = false) : string {
+            if (allLower) {
+                return this.playType == PlayType.Attacker ? "attacker" : "defender";
+            } else {
+                return this.playType == PlayType.Attacker ? "Attacker" : "Defender";
+            }
         }
 
         /* Abstract methods */
@@ -1324,7 +1328,7 @@ module Activity {
             }
 
             var context = {
-                1: {text: (player instanceof Computer) ? player.playTypeStr() : "You"},
+                1: {text: (player instanceof Computer) ? player.playTypeStr() : "You (" + player.playTypeStr(true) + ")"},
                 2: {text: this.labelFor(source), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]},
                 3: actionContext,
                 4: {text: this.labelFor(destination), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]},
@@ -1342,25 +1346,28 @@ module Activity {
             var template = "{1} no available transitions. You {2}!";
 
             var context = {
-                1: {text: (winner instanceof Computer) ? "You have" : (winner.getPlayType() === PlayType.Attacker) ? "Defender has" : "Attacker has"},
-                2: {text: (winner instanceof Computer) ? "lose" : "win"}
+                1: {text: (winner instanceof Computer) ? "You ({3}) have" : (winner.getPlayType() === PlayType.Attacker) ? "Defender has" : "Attacker has"},
+                2: {text: (winner instanceof Computer) ? "lose" : "win"},
+                3: {text: (winner.getPlayType() === PlayType.Attacker) ? "defender" : "attacker"}
             };
 
             this.println(this.render(template, context), "<p class='outro'>");
         }
 
-        public printCycleWinner(defender : Player) : void {
+        public printCycleWinner(winner : Player) : void {
             var template = "A cycle has been detected. {1}!";
 
             var context = {
-                1: {text: (defender instanceof Human) ? "You win" : "You lose"}
+                1: {text: (winner instanceof Human) ? "You (" + winner.playTypeStr(true) + ") win" : "You ({2}) lose"},
+                2: {text: (winner.getPlayType() === PlayType.Attacker) ? "defender" : "attacker"}
             };
 
             this.println(this.render(template, context), "<p class='outro'>");
         }
 
         public printWinnerChanged(winner : Player) : void {
-            this.println("You made a bad move. " + winner.playTypeStr() + " now has a winning strategy.", "<p>");
+            var you = winner.getPlayType() === PlayType.Attacker ? "defender" : "attacker";
+            this.println("You (" + you + ") made a bad move. " + winner.playTypeStr() + " now has a winning strategy.", "<p>");
         }
 
         private capitalize(str : string) : string {
