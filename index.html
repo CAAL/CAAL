@@ -651,13 +651,13 @@
                                     <tr>
                                         <td>Action prefixing - input</td>
                                         <td class ="inconsolata">
-                                        a.tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>
+                                        a<span class="ace_keyword ace_operator">.</span>tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>Action prefixing - output</td>
                                         <td class ="inconsolata">
-                                        <span class="ace_variable ace_overline">'a</span>.tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>
+                                        <span class="ace_variable ace_overline">'a</span><span class="ace_keyword ace_operator">.</span>tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>
                                         </td>
                                     </tr>
                                     <tr>
@@ -701,7 +701,7 @@
                                         <td class ="inconsolata">
                                             <span class="ace_constant">A</span>
                                             <span class="ace_keyword ace_operator">=</span>
-                                            a.tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>;
+                                            a<span class="ace_keyword ace_operator">.</span>tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>;
                                         </td>
                                     </tr>
                                     <tr>
@@ -710,12 +710,21 @@
                                     </tr>
                                </tbody>
                             </table>
+                            <table style="width:100%;margin-top:3px" class="helpTable ace-crisp">
+                                <col style="width:50%" span="2"/>
+                                <tbody>
+                                    <tr>
+                                        <td>Delay prefixing</td>
+                                        <td class ="inconsolata">
+                                        <span class="ace_delay">3</span><span class="ace_keyword ace_operator">.</span>tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </p>
                         <p id="help-dialog-body-par1">
                             <br/>
-                            The property language supports multiple recursively defined HML formulae that
-
-                            are however not mutually recursive.
+                            The property language supports multiple recursively defined HML formulae that are however not mutually recursive.
 
                             <table style="width:100%" class="helpTable ace-crisp">
                                 <col style="width:50%" span="2"/>
@@ -794,6 +803,27 @@
                                     </tr>
                                 </tbody>
                             </table>
+                            <table style="width:100%;margin-top:3px" class="helpTable ace-crisp">
+                                <col style="width:50%" span="2"/>
+                                <tbody>
+                                    <tr>
+                                        <td>Strong existential timed modality</td>
+                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt</span><span class="ace_delay">4</span><span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span> or <span class="ace_keyword ace_operator">&lt</span><span class="ace_delay">2</span>,<span class="ace_delay">5</span><span class="ace_keyword ace_operator">&gt</span><span class="ace_constant">H</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Weak existential timed modality</td>
+                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">&lt&lt</span><span class="ace_delay">4</span><span class="ace_keyword ace_operator">&gt&gt</span><span class="ace_constant">H</span> or <span class="ace_keyword ace_operator">&lt&lt</span><span class="ace_delay">2</span>,<span class="ace_delay">5</span><span class="ace_keyword ace_operator">&gt&gt</span><span class="ace_constant">H</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Strong universal timed modality</td>
+                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">[</span><span class="ace_delay">4</span><span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span> or <span class="ace_keyword ace_operator">[</span><span class="ace_delay">2</span>,<span class="ace_delay">5</span><span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Weak universal timed modality</td>
+                                        <td class ="inconsolata"><span class="ace_keyword ace_operator">[[</span><span class="ace_delay">4</span><span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span> or <span class="ace_keyword ace_operator">[[</span><span class="ace_delay">2</span>,<span class="ace_delay">5</span><span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </p>
                     </div>
                     <div class="modal-footer">
@@ -816,6 +846,7 @@
         <script src="lib/ccs_grammar.js"></script>
         <script src="lib/tccs_grammar.js"></script>
         <script src="lib/hml_grammar.js"></script>
+        <script src="lib/thml_grammar.js"></script>
         <script src="lib/arbor.js"></script>
         <script src="lib/graphics.js"></script>
         <script src="lib/data.js"></script>

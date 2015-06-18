@@ -138,8 +138,13 @@ class Project {
 
     private createFormulaSetFromProperty(property : Property.HML) : HML.FormulaSet {
         var formulaSet = new HML.FormulaSet;
-        HMLParser.parse(property.getDefinitions(), {ccs: CCS, hml: HML, formulaSet: formulaSet});
-        HMLParser.parse(property.getTopFormula(), {startRule: "TopFormula", ccs: CCS, hml: HML, formulaSet: formulaSet});
+        if (this.inputMode === InputMode.CCS) {
+            HMLParser.parse(property.getDefinitions(), {ccs: CCS, hml: HML, formulaSet: formulaSet});
+            HMLParser.parse(property.getTopFormula(), {startRule: "TopFormula", ccs: CCS, hml: HML, formulaSet: formulaSet});
+        } else if (this.inputMode === InputMode.TCCS) {
+            THMLParser.parse(property.getDefinitions(), {ccs: CCS, tccs: TCCS, hml: HML, formulaSet: formulaSet});
+            THMLParser.parse(property.getTopFormula(), {startRule: "TopFormula", ccs: CCS, tccs: TCCS, hml: HML, formulaSet: formulaSet});
+        }
         return formulaSet;
     }
 

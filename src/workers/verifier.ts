@@ -111,7 +111,7 @@ messageHandlers.isStronglyTraceIncluded = data => {
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
     
-    data.result = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id, graph);
+    data.result = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
     self.postMessage(data);
 };
 
@@ -121,7 +121,7 @@ messageHandlers.isWeaklyTraceIncluded = data => {
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
     
-    data.result = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id, graph);
+    data.result = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
     self.postMessage(data);
 };
 
