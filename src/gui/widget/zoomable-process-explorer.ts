@@ -192,7 +192,7 @@ module GUI.Widget {
         }
 
         private setupFreezeBtn() {
-            var $button = $('<button class="btn btn-default btn-sm"></button>'),
+            var $button = $('<button class="btn btn-default"></button>'),
                 $lock = $('<i class="fa fa-lg fa-unlock-alt"></i>');
             $button.data("frozen", false);
             $button.append($lock);

@@ -4,7 +4,7 @@
  */
 
 #hml-game-options {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 #hml-game-options div, #hml-game-options select {
@@ -15,13 +15,26 @@
     margin-right: 0;
 }
 
+#hml-game-options .turnstile {
+    float: left;
+    height: 34px;
+    position: relative;
+    bottom: 3px;
+    font: normal 24px "Inconsolata";
+}
+
 #hml-game-type {
     width: 190px;
     float: left;
 }
 
-#hml-game-process, #hml-game-formula {
+#hml-game-process {
     width: 150px;
+    float: left;
+}
+
+#hml-game-formula {
+    width: 250px;
     float: left;
 }
 
@@ -35,7 +48,6 @@
     border: 1px solid #e7e7e7;
     overflow: auto;
 }
-
 
 #hml-game-status .col-md-4 {
     padding-right: 0;
@@ -105,3 +117,10 @@
         padding-left: 15px;
     }
 }
+
+#hml-game-container:-webkit-full-screen {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#hml-game-container:-moz-full-screen    {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#hml-game-container:-ms-fullscreen      {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#hml-game-container:-o-full-screen      {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#hml-game-container:full-screen         {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}
+#hml-game-container:fullscreen          {width: 100%; height: 100%; background-color: #fff; padding: 15px; margin-bottom: 0}

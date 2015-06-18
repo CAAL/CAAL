@@ -216,6 +216,7 @@ module Activity {
                 //     '<option value="weak">Weak Logic</option>' +
                 // '</select>' +
                 '<select id="hml-game-process" class="form-control"></select>' +
+                '<div class="turnstile">&#8872;</div>' +
                 '<select id="hml-game-formula" class="form-control"></select>';
                 // '<div class="btn-group" data-toggle="buttons">' +
                 //     '<label class="btn btn-default">' +
@@ -409,13 +410,13 @@ module Activity {
                     break;
                 }
                 case WinReason.trueFormula: {
-                    gameLogObject.setTemplate("The formula true has been reached, you ({0}) {1}!");
+                    gameLogObject.setTemplate("The formula true has been reached. You ({0}) {1}!");
                     gameLogObject.addLabel({text: (this.human=== Player.defender) ? "defender" : "attacker"});
                     gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
                     break;
                 }
                 case WinReason.falseFormula: {
-                    gameLogObject.setTemplate("The formula false has been reached, you ({0}) {1}!");
+                    gameLogObject.setTemplate("The formula false has been reached. You ({0}) {1}!");
                     gameLogObject.addLabel({text: (this.human=== Player.defender) ? "defender" : "attacker"});
                     gameLogObject.addLabel({text: (this.human === winner) ? "win" : "lose"});
                     break;
@@ -490,11 +491,7 @@ module Activity {
                 explorerOffsetTop = $processExplorerCanvasContainer.offset().top,
                 explorerOffsetBottom = $("#hml-game-status").height();
 
-            var availableHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 22;
-
-            // Only 10px margin bot in fullscreen.
-            if (this.fullscreen.isFullscreen())
-                availableHeight += 10;
+            var availableHeight = window.innerHeight - explorerOffsetTop - explorerOffsetBottom - 17;
 
             this.processExplorer.resize(this.$container.width(), availableHeight);
         }

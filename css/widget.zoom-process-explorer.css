@@ -6,7 +6,7 @@ div.widget-zoom-process-explorer {
 
 div.widget-zoom-process-explorer input[type=range] {
     position: absolute;
-    top: 15px;
+    top: 10px;
     left: 10px;
     width: 100px;
     cursor: pointer;
