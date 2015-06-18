@@ -142,17 +142,14 @@ module Activity {
 
                 if (status === PropertyStatus.unsatisfied && property instanceof Property.DistinguishingFormula) {
                     var generateFormula = (properties) => {
-                        this.displayProperty(property);
-
                         if (properties) {
-                            this.project.addProperty(properties.firstProperty);
-                            this.project.addProperty(properties.secondProperty);
-                            this.displayProperty(properties.firstProperty);
-                            this.displayProperty(properties.secondProperty);
+                            this.project.addPropertyAfter(property.getId(), properties.secondProperty);
+                            this.project.addPropertyAfter(property.getId(), properties.firstProperty);
+                            this.displayProperties();
                         }
                     }
 
-                    $ul.append($("<li>").append($("<a>").append("Distinguishing Formula"))
+                    $ul.append($("<li>").append($("<a>").append("Generate Distinguishing Formula"))
                         .on("click", () => property.generateDistinguishingFormula(generateFormula)));
                 }
             }

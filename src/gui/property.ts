@@ -64,7 +64,7 @@ module Property {
             var startTime = new Date().getTime();
 
             var updateTimer = () => {
-                this.elapsedTime = new Date().getTime() - startTime + "ms";
+                this.elapsedTime = new Date().getTime() - startTime + " ms";
                 this.$timeCell.text(this.elapsedTime);
             }
 
@@ -95,6 +95,7 @@ module Property {
 
         public setUnknownStatus() : void {
             this.status = PropertyStatus.unknown;
+            this.elapsedTime = "";
         }
 
         public abortVerification() : void {
@@ -202,10 +203,10 @@ module Property {
             var formula = this.topFormula.replace(";", "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
             var definitions = this.definitions.split(";").map(function(d) {
-                return d.replace(/</g, "&lt;").replace(/>/g, "&gt;").trim();
+                return "<span>" + d.replace(/</g, "&lt;").replace(/>/g, "&gt;").trim() + "</span>";
             });
 
-            return this.process + " &#8872; " + formula + "<br />" + definitions.join("<br />");
+            return this.process + " &#8872; " + formula + definitions.join("");
         }
 
         public getGameConfiguration() : any {

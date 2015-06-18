@@ -265,7 +265,13 @@ nav.navbar {
 }
 
 #property-table th.narrow {
-    width: 10%;
+    width: 8%;
+}
+
+#property-table span {
+    display: block;
+    padding-top: 5px;
+    margin-left: 25px;
 }
 
 #property-modal select {

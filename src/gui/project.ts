@@ -12,7 +12,7 @@ class Project {
     private id : number = null;
     private $projectTitle : JQuery = $("#project-title");
     private ccs : string;
-    private properties : Property.Property[];
+    private properties : Property.Property[] = Array();
     private changed : boolean = false;
     private inputMode : InputMode = InputMode.CCS;
 
@@ -37,7 +37,7 @@ class Project {
     }
 
     public reset() : void {
-        this.update(null, this.defaultTitle, this.defaultCCS, null, "CCS");
+        this.update(null, this.defaultTitle, this.defaultCCS, Array(), "CCS");
     }
 
     public update(id : number, title : string, ccs : string, properties : any[], inputMode : string) : void {
@@ -92,21 +92,25 @@ class Project {
     public setProperties(properties : any[]) : void {
         this.properties = Array();
 
-        if (properties) {
-            if (properties.length !== 0) {
-                for (var i = 0; i < properties.length; i++) {
-                    try {
-                        this.addProperty(new window["Property"][properties[i].className](properties[i].options, properties[i].status));
-                    } catch (e) {
-                        console.log("Unknown property type");
-                    }
-                }
+        for (var i = 0; i < properties.length; i++) {
+            try {
+                this.addProperty(new window["Property"][properties[i].className](properties[i].options, properties[i].status));
+            } catch (e) {
+                console.log("Unknown property type");
             }
         }
     }
 
     public addProperty(property : Property.Property) : void {
         this.properties.push(property);
+    }
+
+    public addPropertyAfter(id : number, property : Property.Property) : void {
+        for (var i = 0; i < this.properties.length; i++) {
+            if (this.properties[i].getId() === id) {
+                this.properties.splice(i + 1, 0, property);
+            }
+        }
     }
 
     public deleteProperty(property : Property.Property) : void {
@@ -166,15 +170,16 @@ class Project {
 
     public getGraph() : CCS.Graph {
         var graph;
+
         if (this.inputMode === InputMode.CCS) {
             graph = new CCS.Graph();
             CCSParser.parse(this.ccs, {ccs: CCS, graph: graph});
-            return graph;
-        } else if (this.inputMode === InputMode.TCCS) {
+        } else {
             graph = new TCCS.Graph();
             TCCSParser.parse(this.ccs, {ccs: CCS, tccs: TCCS, graph: graph});
-            return graph;
         }
+
+        return graph;
     }
 
     public isSaved() : boolean {
@@ -192,7 +197,7 @@ class Project {
             title: this.getTitle(),
             ccs: this.getCCS(),
             properties: properties,
-            inputMode: this.inputMode === InputMode.CCS ? "CCS" : "TCCS"
+            inputMode: InputMode[this.inputMode]
         };
     }
 }
