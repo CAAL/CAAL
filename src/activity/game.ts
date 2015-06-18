@@ -18,11 +18,11 @@ module Activity {
         private fullscreen : Fullscreen;
         private tooltip : ProcessTooltip;
         private timeout : any;
-        private $gameType : JQuery;
-        private $ccsGameTypes : JQuery;
-        private $tccsGameTypes : JQuery;
         private $leftProcessList : JQuery;
         private $rightProcessList : JQuery;
+        private $ccsGameTypes : JQuery;
+        private $tccsGameTypes : JQuery;
+        private $gameRelation : JQuery;
         private $playerType : JQuery;
         private $restart : JQuery;
         private $leftContainer : JQuery;
@@ -48,11 +48,11 @@ module Activity {
             this.tooltip = new ProcessTooltip($("#game-status"));
             new DataTooltip($("#game-log")); // no need to save instance
 
-            this.$gameType = $("#game-type");
-            this.$ccsGameTypes = $(".ccs-game-type");
-            this.$tccsGameTypes = $(".tccs-game-type");
             this.$leftProcessList = $("#game-left-process");
             this.$rightProcessList = $("#game-right-process");
+            this.$ccsGameTypes = $("#game-ccs-type");
+            this.$tccsGameTypes = $("#game-tccs-type");
+            this.$gameRelation = $("#game-relation");
             this.$playerType = $("input[name=player-type]");
             this.$restart = $("#game-restart");
             this.$leftContainer = $("#game-left-canvas");
@@ -71,9 +71,11 @@ module Activity {
             this.leftGraph = new GUI.ArborGraph(this.leftRenderer);
             this.rightGraph = new GUI.ArborGraph(this.rightRenderer);
 
-            this.$gameType.on("change", () => this.newGame(true, true));
             this.$leftProcessList.on("change", () => this.newGame(true, false));
             this.$rightProcessList.on("change", () => this.newGame(false, true));
+            this.$ccsGameTypes.on("change", () => this.newGame(true, true));
+            this.$tccsGameTypes.on("change", () => this.newGame(true, true));
+            this.$gameRelation.on("change", () => this.newGame(false, false));
             this.$playerType.on("change", () => this.newGame(false, false));
             this.$restart.on("click", () => this.newGame(false, false));
             this.$rightDepth.on("change", () => this.setDepth(this.dgGame.getCurrentConfiguration().right, this.rightGraph, this.$rightDepth.val(), Move.Right));
@@ -146,19 +148,13 @@ module Activity {
 
             this.fullscreen.onShow();
 
-            if (this.project.getInputMode() === InputMode.TCCS) {
-                this.$ccsGameTypes.hide();
-                this.$tccsGameTypes.show();
-            } else {
-                this.$tccsGameTypes.hide();
-                this.$ccsGameTypes.show();
-            }
-
             if (this.changed || configuration) {
-                if (this.project.getInputMode() === InputMode.TCCS) {
-                    this.$gameType.val("timedstrong");
+                if (this.project.getInputMode() === InputMode.CCS) {
+                    this.$ccsGameTypes.show();
+                    this.$tccsGameTypes.hide();
                 } else {
-                    this.$gameType.val("strong");
+                    this.$ccsGameTypes.hide();
+                    this.$tccsGameTypes.show();
                 }
 
                 this.changed = false;
@@ -257,16 +253,36 @@ module Activity {
         }
 
         private getOptions() : any {
-            return {
-                gameType: this.$gameType.val(),
+            var options = {
                 leftProcess: this.$leftProcessList.val(),
                 rightProcess: this.$rightProcessList.val(),
+                type: null,
+                time: "",
+                relation: this.$gameRelation.val(),
                 playerType: this.$playerType.filter(":checked").val()
             };
+
+            if (this.project.getInputMode() === InputMode.CCS) {
+                options.type = this.$ccsGameTypes.val();
+            } else {
+                options.type = this.$tccsGameTypes.find("option:selected").val();
+                options.time = this.$tccsGameTypes.find("option:selected").data("time");
+            }
+
+            return options;
         }
 
         private setOptions(options : any) : void {
-            this.$gameType.find("option[value=" + options.gameType + "]").prop("selected", true);
+            this.$leftProcessList.val(options.leftProcess);
+            this.$rightProcessList.val(options.rightProcess);
+
+            if (this.project.getInputMode() === InputMode.CCS) {
+                this.$ccsGameTypes.val(options.type);
+            } else {
+                this.$tccsGameTypes.find("#[value=" + options.type + "][data-time=" + options.time + "]").prop("selected", true);
+            }
+
+            this.$gameRelation.val(options.relation);
 
             // Bootstrap radio buttons only support changes via click events.
             // Manually handle .active class.
@@ -277,9 +293,6 @@ module Activity {
                     $(this).parent().removeClass("active");
                 }
             });
-
-            this.$leftProcessList.val(options.leftProcess);
-            this.$rightProcessList.val(options.rightProcess);
         }
 
         private newGame(drawLeft : boolean, drawRight : boolean, configuration? : any) : void {
@@ -291,24 +304,9 @@ module Activity {
             } else {
                 options = this.getOptions();
             }
-
-            var time = "";
-
-            if (this.project.getInputMode() === InputMode.TCCS) {
-                time = options.gameType.substring(0, 5) === "timed" ? "timed" : "untimed";
-                options.gameType = options.gameType.substring(time.length, options.gameType.length);
-            } else {
-
-            }
-
-            if (options.gameType === "strong" || options.gameType === "weak")
-                var gameType : string = options.gameType;
-            else if (options.gameType === "strongsim")
-                var gameType = "strong";
-            else if (options.gameType === "weaksim")
-                var gameType = "weak";
                 
-            this.succGen = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], time: time, succGen: gameType, reduce: true});
+            this.succGen = CCS.getSuccGenerator(this.graph,
+                {inputMode: InputMode[this.project.getInputMode()], time: options.time, succGen: options.type, reduce: true});
 
             if (drawLeft || !this.leftGraph.getNode(this.succGen.getProcessByName(options.leftProcess).id.toString())) {
                 this.clear(this.leftGraph);
@@ -324,15 +322,18 @@ module Activity {
                 this.toggleFreeze(this.rightGraph, false, this.$rightFreeze);
             }
             
-            var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], time: time, succGen: "strong", reduce: true});
-            var defenderSuccessorGenerator : CCS.SuccessorGenerator = this.succGen; //CCS.getSuccGenerator(this.graph, {succGen: options.gameType, reduce: true});
+            var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph,
+                {inputMode: InputMode[this.project.getInputMode()], time: options.time, succGen: "strong", reduce: true});
+            var defenderSuccessorGenerator : CCS.SuccessorGenerator = this.succGen;
 
             if (this.dgGame !== undefined) {this.dgGame.stopGame()};
 
-            if (options.gameType === "strong" || options.gameType === "weak")
-                this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, time, gameType);
-            else if (options.gameType === "strongsim" || options.gameType === "weaksim") {
-                this.dgGame = new SimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator, options.leftProcess, options.rightProcess, time, gameType);
+            if (options.relation === "simulation") {
+                this.dgGame = new SimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator,
+                    options.leftProcess, options.rightProcess, options.time, options.type);
+            } else if (options.relation === "bisimulation") {
+                this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator,
+                    options.leftProcess, options.rightProcess, options.time, options.type);
             }
 
             var attacker : Player;

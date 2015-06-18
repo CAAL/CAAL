@@ -356,13 +356,23 @@ nav.navbar {
     margin-right: 0;
 }
 
-#game-type {
-    width: 190px;
+#game-left-process, #game-right-process {
+    width: 150px;
     float: left;
 }
 
-#game-left-process, #game-right-process {
-    width: 150px;
+#game-ccs-type {
+    width: 95px;
+    float: left;
+}
+
+#game-tccs-type {
+    width: 155px;
+    float: left;
+}
+
+#game-relation {
+    width: 135px;
     float: left;
 }
 
