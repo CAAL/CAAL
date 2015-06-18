@@ -74,7 +74,7 @@ module Activity {
             var $row = $("<tr>");
 
             if (property.getStatus() === PropertyStatus.invalid) {
-                //
+                // Add some tooltip with the error to the status icon.
             }
             $row.append($("<td>").append(property.getStatusIcon()));
 
@@ -115,6 +115,7 @@ module Activity {
             var properties = this.project.getProperties();
 
             for (var i = 0; i < properties.length; i++) {
+                properties[i].setRow(null);
                 this.displayProperty(properties[i]);
             }
         }
