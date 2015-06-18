@@ -429,7 +429,6 @@ module Property {
                 this.worker = null; 
                 
                 if (!event.data.result.isBisimilar) { //this should be false, for there to be distinguishing formula
-                    this.status = PropertyStatus.satisfied;
                     var properties = {
                         firstProperty : new HML({process: this.firstProcess, topFormula: event.data.result.formula, definitions: ""}),
                         secondProperty : new HML({process: this.secondProcess, topFormula: event.data.result.formula, definitions: ""})
@@ -478,7 +477,57 @@ module Property {
         }
     }
     
-    export class TraceEquivalence extends Relation {
+    export class SimulationEquivalence extends Relation {
+        public constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
+            super(options, status);
+        }
+
+        public getDescription() : string {
+            var symbol = super.getType() === "strong" ? "&#8771;" : "&#8778;";
+            return this.firstProcess + " " + symbol + super.getTimeSubscript() + " " + this.secondProcess;
+        }
+
+        public getGameConfiguration() : any {
+            return null;
+        }
+        
+        public getClassName() : string {
+            return "SimulationEquivalence";
+        }
+
+        protected getWorkerHandler() : string {
+            return super.getType() === "strong" ? "isStronglySimulationEquivalent" : "isWeaklySimulationEquivalent";
+        }
+    }
+    
+    export class Traces extends DistinguishingFormula {
+        private formula : string = null;
+        
+        constructor(options : any, status : PropertyStatus) {
+            super(options, status);
+        }
+        
+        protected workerFinished(event : any, callback : Function) : void {
+            this.formula = event.data.result.formula;
+            event.data.result = event.data.result.isSatisfied;
+            super.workerFinished(event, callback)
+        }
+        
+        public generateDistinguishingFormula(generationEnded : Function) : void {
+            // formula should already be generated when the formula was verified
+            if (this.formula !== null) {
+                var properties = {
+                    firstProperty : new HML({process: this.firstProcess, topFormula: this.formula, definitions: ""}),
+                    secondProperty : new HML({process: this.secondProcess, topFormula: this.formula, definitions: ""})
+                }
+                generationEnded(properties);
+            } else {
+                generationEnded();
+            }
+        }
+    }
+    
+    export class TraceEquivalence extends Traces {
         constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
         }
@@ -486,10 +535,6 @@ module Property {
         public getDescription() : string {
             var symbol = super.getType() === "strong" ? "&#8594;" : "&#8658;";
             return "Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.firstProcess + ") = Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.secondProcess + ")";
-        }
-
-        public getGameConfiguration() : any {
-            return null;
         }
         
         public getClassName() : string {
@@ -501,29 +546,9 @@ module Property {
         }
     }
 
-    export class TraceInclusion extends DistinguishingFormula {
-        private formula : string;
-        
+    export class TraceInclusion extends Traces {
         constructor(options : any, status : PropertyStatus = PropertyStatus.unknown) {
             super(options, status);
-        }
-        
-        public generateDistinguishingFormula(generationEnded : Function) : void {
-            if (this.formula !== undefined) {
-                var properties = {
-                    firstProperty : new HML({process: this.firstProcess, topFormula: this.formula, definitions: ""}),
-                    secondProperty : new HML({process: this.secondProcess, topFormula: this.formula, definitions: ""})
-                }
-                generationEnded(properties);
-            } else {
-                generationEnded();
-            }
-        }
-        
-        protected workerFinished(event : any, callback : Function) : void {
-            this.formula = event.data.result.formula;
-            event.data.result = event.data.result.isTraceIncluded;
-            super.workerFinished(event, callback)
         }
         
         public getDescription() : string {

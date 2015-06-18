@@ -73,19 +73,45 @@ messageHandlers.isWeaklySimilar = data => {
     self.postMessage(data);
 };
 
+messageHandlers.isStronglySimulationEquivalent = data => {
+    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "strong", reduce: true}),
+        defendSuccGen = attackSuccGen,
+        leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
+        rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
+        isSimilarFromLeft = Equivalence.isSimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id),
+        isSimilarFromRight : boolean;
+        
+        if (!isSimilarFromLeft) {
+            isSimilarFromRight = Equivalence.isSimilar(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id);
+        }
+        
+    data.result = isSimilarFromLeft && isSimilarFromRight;
+    self.postMessage(data);
+};
+
+messageHandlers.isWeaklySimulationEquivalent = data => {
+    var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "strong", reduce: true}),
+        defendSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "weak", reduce: true}),
+        leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
+        rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
+        isSimilarFromLeft = Equivalence.isSimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id),
+        isSimilarFromRight : boolean;
+        
+        if (!isSimilarFromLeft) {
+            isSimilarFromRight = Equivalence.isSimilar(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id);
+        }
+        
+    data.result = isSimilarFromLeft && isSimilarFromRight;
+    self.postMessage(data);
+};
+
 messageHandlers.isStronglyTraceIncluded = data => {
     var attackSuccGen = CCS.getSuccGenerator(graph, {inputMode: inputMode, time: data.time, succGen: "strong", reduce: true});
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
-    // var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
-    var traceDg = new Equivalence.TraceDG(leftProcess.id, rightProcess.id, attackSuccGen);
-    var marking = DependencyGraph.liuSmolkaLocal2(0, traceDg);
     
-    data.result = {
-        isTraceIncluded: marking.getMarking(0) === marking.ZERO,
-        formula: traceDg.getDistinguishingFormula(marking)
-    };
+    data.result = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id, graph);
     self.postMessage(data);
 };
 
@@ -94,14 +120,8 @@ messageHandlers.isWeaklyTraceIncluded = data => {
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
-    // var isTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
-    var traceDg = new Equivalence.TraceDG(leftProcess.id, rightProcess.id, attackSuccGen);
-    var marking = DependencyGraph.liuSmolkaLocal2(0, traceDg);
     
-    data.result = {
-        isTraceIncluded: marking.getMarking(0) === marking.ZERO,
-        formula: traceDg.getDistinguishingFormula(marking)
-    };
+    data.result = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id, graph);
     self.postMessage(data);
 };
 
@@ -110,9 +130,22 @@ messageHandlers.isStronglyTraceEq = data => {
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
-    var isLeftTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
-    var isRightTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id, graph);
-    data.result = (isLeftTraceIncluded && isRightTraceIncluded);
+    var formula : string;
+    
+    var leftToRightTraceInclusion = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    var rightToLeftTraceInclusion : any;
+    
+    if (!leftToRightTraceInclusion.isSatisfied) {
+        formula = leftToRightTraceInclusion.formula;
+    } else {
+        rightToLeftTraceInclusion = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id, graph);
+        formula = rightToLeftTraceInclusion.formula;
+    }
+    
+    data.result = {
+        isSatisfied: (leftToRightTraceInclusion.isSatisfied && rightToLeftTraceInclusion.isSatisfied),
+        formula: formula
+    };
     self.postMessage(data);
 };
 
@@ -121,9 +154,22 @@ messageHandlers.isWeaklyTraceEq = data => {
     var defendSuccGen = attackSuccGen;
     var leftProcess = graph.processByName(data.leftProcess);
     var rightProcess = graph.processByName(data.rightProcess);
-    var isLeftTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
-    var isRightTraceIncluded = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id, graph);
-    data.result = (isLeftTraceIncluded && isRightTraceIncluded);
+    var formula;
+    
+    var leftToRightTraceInclusion = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id, graph);
+    var rightToLeftTraceInclusion : any;
+    
+    if (!leftToRightTraceInclusion.isSatisfied) {
+        formula = leftToRightTraceInclusion.formula;
+    } else {
+        rightToLeftTraceInclusion = Equivalence.isTraceIncluded(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id, graph);
+        formula = rightToLeftTraceInclusion.formula;
+    }
+    
+    data.result = {
+        isSatisfied: (leftToRightTraceInclusion.isSatisfied && rightToLeftTraceInclusion.isSatisfied),
+        formula: formula
+    };
     self.postMessage(data);
 };
 

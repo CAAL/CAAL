@@ -724,7 +724,7 @@ module Equivalence {
         
         public getDistinguishingFormula(marking : dg.LevelMarking) : string {
             if (marking.getMarking(0) === marking.ZERO)
-                return "";
+                return null;
             
             var hyperedges = this.getHyperEdges(0);
             var formulaStr = "";
@@ -761,16 +761,19 @@ module Equivalence {
                 }
             }
             
-            formulaStr += "T;";
+            formulaStr += "tt;";
             return formulaStr;
         }
     }
 
-    export function isTraceIncluded(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) : boolean {
+    export function isTraceIncluded(attackSuccGen : ccs.SuccessorGenerator, defendSuccGen : ccs.SuccessorGenerator, leftProcessId, rightProcessId, graph?) : {isSatisfied :boolean; formula : string} {
         var traceDG = new TraceDG(leftProcessId, rightProcessId, attackSuccGen);
         var marking = dg.liuSmolkaLocal2(0, traceDG);
-        traceDG.getDistinguishingFormula(marking);
-        return marking.getMarking(0) === marking.ZERO;    
+        
+        return {
+            isSatisfied: marking.getMarking(0) === marking.ZERO,
+            formula: traceDG.getDistinguishingFormula(marking)
+        };   
     }
 
     function prettyPrintTrace(graph, trace) {
