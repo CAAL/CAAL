@@ -101,7 +101,7 @@ var examples : any[] = [
         inputMode: "CCS"
     },
     {
-        title: "Erroneous Simple Communication Protocol",
+        title: "Simple Communications Protocol",
         ccs: [
             "Send = acc.Sending;",
             "Sending = 'send.Wait;",
@@ -129,8 +129,27 @@ var examples : any[] = [
                 status: 3,
                 options: {
                     type: "weak",
-                    firstProcess: "Spec",
-                    secondProcess: "Impl"
+                    firstProcess: "Impl",
+                    secondProcess: "Spec"
+                }
+            },
+            {
+                className: "TraceEquivalence",
+                status: 3,
+                options: {
+                    type: "weak",
+                    firstProcess: "Impl",
+                    secondProcess: "Spec"
+                }
+            },
+            {
+                className: "HML",
+                status: 3,
+                options: {
+                    process: "Impl",
+                    topFormula: "X;",
+                    definitions: "X min= [-]ff or <->X;",
+                    comment: ""
                 }
             }
         ],

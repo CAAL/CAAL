@@ -25,7 +25,7 @@ module Activity {
                 enableBasicAutocompletion: true,
                 showPrintMargin: false,
                 highlightActiveLine: false,
-                fontSize: 14,
+                fontSize: 16,
                 fontFamily: "Inconsolata",
                 showLineNumbers: false,
                 maxLines: 1
@@ -39,10 +39,10 @@ module Activity {
                 enableBasicAutocompletion: true,
                 showPrintMargin: false,
                 highlightActiveLine: false,
-                fontSize: 14,
+                fontSize: 16,
                 fontFamily: "Inconsolata",
                 showLineNumbers: false,
-                maxLines: Infinity
+                maxLines: 4
             });
         }
 
@@ -184,25 +184,31 @@ module Activity {
         private showPropertyModal(e? : any) : void {
             $("#save-property").off("click");
 
+            $("#propertyComment").val("");
+            this.formulaEditor.setValue("");
+            this.definitionsEditor.setValue("");
+
             if (e) {
                 var property = e.data.property;
 
-                if (property instanceof Property.HML) {
-                    this.setSelectedPropertyType("hml-formula");
-                    $("#hmlProcess").val(property.getProcess());
-                    this.formulaEditor.setValue(property.getTopFormula());
-                    this.definitionsEditor.setValue(property.getDefinitions());
-                } else {
-                    this.setSelectedPropertyType("relation");
-                    $("#relationType").val(property.getClassName());
-                    $("#firstProcess").val(property.getFirstProcess());
-                    $("#secondProcess").val(property.getSecondProcess());
+                $("#propertyComment").val(property.getComment());
 
+                if (property instanceof Property.HML) {
+                    $("#hmlProcess").val(property.getProcess());
+                    this.formulaEditor.setValue(property.getTopFormula(), 1);
+                    this.definitionsEditor.setValue(property.getDefinitions(), 1);
+                    this.setSelectedPropertyType("hml-formula");
+                } else {
                     if (this.project.getInputMode() === InputMode.CCS) {
                         $("#ccsTransition [value=" + property.getType() + "]").prop("selected", true);
                     } else {
                         $("#tccsTransition [value=" + property.getType() + "][data-time=" + property.getTime() + "]").prop("selected", true);
                     }
+
+                    $("#relationType").val(property.getClassName());
+                    $("#firstProcess").val(property.getFirstProcess());
+                    $("#secondProcess").val(property.getSecondProcess());
+                    this.setSelectedPropertyType("relation");
                 }
 
                 $("#save-property").on("click", e.data, (e) => this.saveProperty(e));
@@ -210,7 +216,7 @@ module Activity {
                 $("#save-property").on("click", () => this.saveProperty());
             }
 
-            this.formulaEditor.focus()
+            this.formulaEditor.focus();
             $("#property-modal").modal("show");
         }
 
@@ -257,6 +263,8 @@ module Activity {
                 };
             }
 
+            options["comment"] = $("#propertyComment").val();
+
             var property = new window["Property"][propertyName](options);
             this.project.addProperty(property);
 
@@ -269,17 +277,8 @@ module Activity {
         }
 
         private deleteProperty(e) : void {
-            var callback = () => {
-                this.project.deleteProperty(e.data.property);
-                e.data.property.getRow().fadeOut(200, function() {$(this).remove()});
-            }
-
-            Main.showConfirmModal("Delete Property",
-                "Are you sure you want to delete this property?",
-                "Cancel",
-                "Delete",
-                null,
-                callback);
+            this.project.deleteProperty(e.data.property);
+            e.data.property.getRow().fadeOut(200, function() {$(this).remove()});
         }
 
         private verify(e) : void {

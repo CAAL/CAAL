@@ -79,9 +79,9 @@ messageHandlers.isStronglySimulationEquivalent = data => {
         leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
         rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
         isSimilarFromLeft = Equivalence.isSimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id),
-        isSimilarFromRight : boolean;
+        isSimilarFromRight = false;
         
-        if (!isSimilarFromLeft) {
+        if (isSimilarFromLeft) {
             isSimilarFromRight = Equivalence.isSimilar(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id);
         }
         
@@ -95,9 +95,9 @@ messageHandlers.isWeaklySimulationEquivalent = data => {
         leftProcess = attackSuccGen.getProcessByName(data.leftProcess),
         rightProcess = defendSuccGen.getProcessByName(data.rightProcess),
         isSimilarFromLeft = Equivalence.isSimilar(attackSuccGen, defendSuccGen, leftProcess.id, rightProcess.id),
-        isSimilarFromRight : boolean;
+        isSimilarFromRight = false;
         
-        if (!isSimilarFromLeft) {
+        if (isSimilarFromLeft) {
             isSimilarFromRight = Equivalence.isSimilar(attackSuccGen, defendSuccGen, rightProcess.id, leftProcess.id);
         }
         

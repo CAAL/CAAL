@@ -506,6 +506,10 @@ module Property {
         constructor(options : any, status : PropertyStatus) {
             super(options, status);
         }
+
+        public getGameConfiguration() : any {
+            return null;
+        }
         
         protected workerFinished(event : any, callback : Function) : void {
             this.formula = event.data.result.formula;
@@ -554,10 +558,6 @@ module Property {
         public getDescription() : string {
             var symbol = super.getType() === "strong" ? "&#8594;" : "&#8658;";
             return "Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.getSecondProcess() + ")";
-        }
-
-        public getGameConfiguration() : any {
-            return null;
         }
         
         public getClassName() : string {
