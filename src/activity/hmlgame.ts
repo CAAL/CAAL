@@ -196,6 +196,7 @@ module Activity {
 
         onHide() {
             $(window).off("resize");
+            this.fullscreen.onHide();
             this.processExplorer.getGraphUI().freeze();
         }
 
