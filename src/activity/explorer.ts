@@ -295,7 +295,7 @@ module Activity {
                 var row = $("<tr>");
                 var $actionTd = $("<td>");
                 
-                if (this.succGenerator instanceof Traverse.AbstractingSuccessorGenerator && !(this.succGenerator instanceof Traverse.WeakUntimedSuccessorGenerator)) {
+                if (this.succGenerator instanceof Traverse.AbstractingSuccessorGenerator) {
                     var abstractingSuccGen = <Traverse.AbstractingSuccessorGenerator>this.succGenerator;
                     var $action = Tooltip.wrap(t.action.toString());
                     Tooltip.setTooltip($action, Tooltip.strongSequence(abstractingSuccGen, this.selectedProcess, t.action, t.targetProcess, this.graph));
