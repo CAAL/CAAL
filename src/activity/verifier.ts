@@ -73,6 +73,9 @@ module Activity {
         private displayProperty(property : Property.Property) : void {
             var $row = $("<tr>");
 
+            if (property.getStatus() === PropertyStatus.invalid) {
+                //
+            }
             $row.append($("<td>").append(property.getStatusIcon()));
 
             var $time = $("<td>").append(property.getElapsedTime());
@@ -95,10 +98,8 @@ module Activity {
             $delete.on("click", {property: property}, (e) => this.deleteProperty(e));
             $row.append($("<td>").append($delete));
 
-            var $options = $("<i>").addClass("fa fa-bars fa-lg").attr("data-toggle", "dropdown");
-            var $container = $("<div>").addClass("relative").append($options);
-            this.generateContextMenu(property, $container);
-            $row.append($("<td>").append($container));
+            var $options = $("<i>").addClass("fa fa-bars fa-lg");
+            $row.append($("<td>").append(this.generateContextMenu(property, $options)));
 
             if (property.getRow()) {
                 property.getRow().replaceWith($row);
@@ -118,31 +119,50 @@ module Activity {
             }
         }
 
-        private generateContextMenu(property : Property.Property, $container : JQuery) : void {
-            var $ul = $("<ul>").addClass("dropdown-menu pull-right");
+        private generateContextMenu(property : Property.Property, $element : JQuery) : JQuery {
+            var status = property.getStatus();
+            var $ul = $("<ul>");
 
-            if (property instanceof Property.DistinguishingFormula) {
-                var callback = (properties) => {
-                    this.displayProperty(property);
-
-                    if (properties) {
-                        this.project.addProperty(properties.firstProperty);
-                        this.project.addProperty(properties.secondProperty);
-                        this.displayProperty(properties.firstProperty);
-                        this.displayProperty(properties.secondProperty);
+            if (status === PropertyStatus.unknown || status === PropertyStatus.invalid) {
+            } else {
+                var gameConfiguration = property.getGameConfiguration();
+                if (gameConfiguration) {
+                    var startGame = () => {
+                        if (property instanceof Property.HML) {
+                            Main.activityHandler.selectActivity("hmlgame", gameConfiguration);
+                        } else {
+                            Main.activityHandler.selectActivity("game", gameConfiguration);
+                        }
                     }
+
+                    $ul.append($("<li>").append($("<a>").append("Play Game"))
+                        .on("click", () => startGame()));
                 }
 
-                var $li = $("<li>").append($("<a>").append("Distinguishing Formula"));
-                $li.on("click", () => property.generateDistinguishingFormula(callback))
-                $ul.append($li);
+                if (status === PropertyStatus.unsatisfied && property instanceof Property.DistinguishingFormula) {
+                    var generateFormula = (properties) => {
+                        this.displayProperty(property);
+
+                        if (properties) {
+                            this.project.addProperty(properties.firstProperty);
+                            this.project.addProperty(properties.secondProperty);
+                            this.displayProperty(properties.firstProperty);
+                            this.displayProperty(properties.secondProperty);
+                        }
+                    }
+
+                    $ul.append($("<li>").append($("<a>").append("Distinguishing Formula"))
+                        .on("click", () => property.generateDistinguishingFormula(generateFormula)));
+                }
             }
 
-            /*if (property.hasGame()) {
-                $ul.append($("<li>").append($("<a>").append("Play Game")));
-            }*/
-
-            $container.append($ul);
+            if ($ul.find("li").length > 0) {
+                $ul.addClass("dropdown-menu pull-right");
+                $element.attr("data-toggle", "dropdown");
+                return $("<div>").addClass("relative").append($element).append($ul);
+            } else {
+                return $element.addClass("text-muted");
+            }
         }
 
         private setPropertyModalOptions() : void {

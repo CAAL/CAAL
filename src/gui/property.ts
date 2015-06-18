@@ -1,13 +1,13 @@
 /// <reference path="../main.ts" />
 /// <reference path="../../lib/ccs.d.ts" />
 
-module Property {
+enum PropertyStatus {satisfied, unsatisfied, invalid, unknown};
 
-    export enum PropertyStatus {satisfied, unsatisfied, invalid, unknown};
+module Property {
 
     export class Property {
         private static counter : number = 0;
-        private id : number;
+        protected id : number;
         private error : string = "";
         private timer : number;
         private elapsedTime : string;
@@ -165,6 +165,7 @@ module Property {
         public getDescription() : string { throw "Not implemented by subclass"; }
         public toJSON() : any { throw "Not implemented by subclass"; }
         public isReadyForVerification() : boolean { throw "Not implemented by subclass"; }
+        public getGameConfiguration() : any { throw "Not implemented by subclass"; }
     }
     
     export class HML extends Property {
@@ -205,6 +206,19 @@ module Property {
             });
 
             return this.process + " &#8872; " + formula + "<br />" + definitions.join("<br />");
+        }
+
+        public getGameConfiguration() : any {
+            var formulaSetForProperty = this.project.getFormulaSetsForProperties()[this.id];
+            var HmlConfiguration = Object.create(null),
+                graph : ccs.Graph = this.project.getGraph();
+
+            HmlConfiguration.succGen = CCS.getSuccGenerator(this.project.getGraph(), {succGen: "strong", reduce: false});
+            HmlConfiguration.processName = this.process;
+            HmlConfiguration.propertyId = this.id;
+            HmlConfiguration.formulaId = formulaSetForProperty.getTopFormula().id;
+
+            return HmlConfiguration;
         }
 
         public toJSON() : any {
@@ -303,6 +317,17 @@ module Property {
             } else {
                 return "<sub>" + (this.time === "untimed" ? "u" : "t") + "</sub>";
             }
+        }
+
+        public getGameConfiguration() : any {
+            return {
+                leftProcess: this.firstProcess,
+                rightProcess: this.secondProcess,
+                type: this.type,
+                time: this.time ? this.time : "",
+                relation: this.getClassName(),
+                playerType: this.status === PropertyStatus.satisfied ? "attacker" : "defender"
+            };
         }
 
         public toJSON() : any {
@@ -462,6 +487,10 @@ module Property {
             var symbol = super.getType() === "strong" ? "&#8594;" : "&#8658;";
             return "Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.firstProcess + ") = Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.secondProcess + ")";
         }
+
+        public getGameConfiguration() : any {
+            return null;
+        }
         
         public getClassName() : string {
             return "TraceEquivalence";
@@ -500,6 +529,10 @@ module Property {
         public getDescription() : string {
             var symbol = super.getType() === "strong" ? "&#8594;" : "&#8658;";
             return "Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.getFirstProcess() + ") &sube; Traces<sub>" + symbol + super.getTimeSubscript() + "</sub>(" + this.getSecondProcess() + ")";
+        }
+
+        public getGameConfiguration() : any {
+            return null;
         }
         
         public getClassName() : string {

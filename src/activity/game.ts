@@ -279,7 +279,7 @@ module Activity {
             if (this.project.getInputMode() === InputMode.CCS) {
                 this.$ccsGameTypes.val(options.type);
             } else {
-                this.$tccsGameTypes.find("#[value=" + options.type + "][data-time=" + options.time + "]").prop("selected", true);
+                this.$tccsGameTypes.find("[value=" + options.type + "][data-time=" + options.time + "]").prop("selected", true);
             }
 
             this.$gameRelation.val(options.relation);
@@ -304,7 +304,7 @@ module Activity {
             } else {
                 options = this.getOptions();
             }
-                
+
             this.succGen = CCS.getSuccGenerator(this.graph,
                 {inputMode: InputMode[this.project.getInputMode()], time: options.time, succGen: options.type, reduce: true});
 
@@ -328,10 +328,10 @@ module Activity {
 
             if (this.dgGame !== undefined) {this.dgGame.stopGame()};
 
-            if (options.relation === "simulation") {
+            if (options.relation === "Simulation") {
                 this.dgGame = new SimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator,
                     options.leftProcess, options.rightProcess, options.time, options.type);
-            } else if (options.relation === "bisimulation") {
+            } else if (options.relation === "Bisimulation") {
                 this.dgGame = new BisimulationGame(this, this.graph, attackerSuccessorGenerator, defenderSuccessorGenerator,
                     options.leftProcess, options.rightProcess, options.time, options.type);
             }
