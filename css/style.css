@@ -471,7 +471,7 @@ nav.navbar {
 }
 
 @media (max-width: 991px) {
-    #game-type, #game-left-process, #game-right-process {
+    #game-left-process, #game-right-process, #game-ccs-type, #game-tccs-type, #game-relation {
         width: 100%;
     }
 
@@ -490,7 +490,6 @@ nav.navbar {
 
     #game-transitions {
         border-left: 1px solid #e7e7e7;
-        margin-bottom: 20px;
     }
 
     #game-status .col-md-5 {
