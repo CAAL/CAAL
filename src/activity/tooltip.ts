@@ -83,12 +83,17 @@ module Activity {
         
         public ccsNotationForProcessId(idOrName : string) : string {
             var process = this.graph.processByName(idOrName) || this.graph.processById(idOrName);
+            var text : string;
 
             if (process) {
                 if (process instanceof ccs.NamedProcess) {
-                    var text = this.visitor.visit((<ccs.NamedProcess>process).subProcess);
+                    text = this.visitor.visit((<ccs.NamedProcess>process).subProcess);
+                } else if (process instanceof ccs.CollapsedProcess) {
+                    var labelFor = this.graph.getLabel.bind(this.graph);
+                    var subLabels = process.subProcesses.map(subProc => labelFor(subProc));
+                    text = "{" + subLabels.join(", ") + "}";
                 } else {
-                    var text = this.visitor.visit(process);
+                    text = this.visitor.visit(process);
                 }
             }
 
