@@ -220,7 +220,7 @@ messageHandlers.findDistinguishingFormula = data => {
         };
     } else {
         formula = bisimilarDg.findDistinguishingFormula(marking, data.succGenType === "weak");
-        hmlNotation = new Traverse.HMLNotationVisitor();
+        hmlNotation = new Traverse.HMLNotationVisitor(true, false);
         data.result = {
             isBisimilar: false,
             formula: hmlNotation.visit(formula)
