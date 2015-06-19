@@ -43,6 +43,10 @@ textarea {
     position: relative;
 }
 
+.overline {
+    text-decoration: overline;
+}
+
 
 /*
  * Custom Bootstrap styles

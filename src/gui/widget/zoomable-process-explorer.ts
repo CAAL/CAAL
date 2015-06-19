@@ -152,7 +152,7 @@ module GUI.Widget {
 
                 Object.keys(groupedByTargetProcessId).forEach(strProcId => {
                     var group = groupedByTargetProcessId[strProcId],
-                        data = group.map(t => { return {label: t.action.toString()}; }),
+                        data = group.map(t => { return {label: t.action.toString(false)}; }),
                         numId = strProcId;
                     this.showProcess(this.succGen.getProcessById(numId));
                     this.graphUI.showTransitions(fromProcess.id, numId, data);

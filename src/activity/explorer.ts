@@ -109,7 +109,7 @@ module Activity {
                     tooltipAnchor.css("left", position.x - this.$canvasContainer.scrollLeft());
                     tooltipAnchor.css("top", position.y - this.$canvasContainer.scrollTop() - 10);
 
-                    tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId)});
+                    tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId), html: true});
                     tooltipAnchor.tooltip("show");
                 }, 1000)
             });
@@ -270,13 +270,7 @@ module Activity {
 
                     Object.keys(groupedByTargetProcessId).forEach(strProcId => {
                         var group = groupedByTargetProcessId[strProcId];
-                        var data = group.map(t => {
-                            if (t instanceof CCS.Transition) {
-                                return { label: t.action.toString() };
-                            } else if (t instanceof TCCS.DelayTransition) {
-                                return { label: t.delay.toString() };
-                            }
-                        });
+                        var data = group.map(t => {return {label: t.action.toString(false)}});
                         this.showProcess(this.graph.processById(strProcId));
                         this.uiGraph.showTransitions(fromProcess.id, strProcId, data);
                     });

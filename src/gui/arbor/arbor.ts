@@ -60,7 +60,8 @@ module GUI {
             var newSelectedNode = this.sys.getNode(name);
 
             if(this.renderer.selectedNode && newSelectedNode) {
-                this.renderer.selectedNode.data.status = this.originalStatus; // clear the previous selected
+                //this.renderer.selectedNode.data.status = this.originalStatus; // clear the previous selected
+                this.renderer.selectedNode.data.status = "expanded";
             }
 
             if(newSelectedNode) {

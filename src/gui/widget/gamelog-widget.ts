@@ -154,8 +154,8 @@ module GUI.Widget {
         }
 
         public labelForFormula(formula : HML.Formula) : string {
-            var hmlNotationVisitor = new Traverse.HMLNotationVisitor(false);
-            return Traverse.safeHtml(hmlNotationVisitor.visit(formula)); //slice is used to remove ";"
+            var hmlNotationVisitor = new Traverse.HMLNotationVisitor(false, true);
+            return hmlNotationVisitor.visit(formula); //slice is used to remove ";"
         }
     }
 }
