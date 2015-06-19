@@ -39,10 +39,15 @@
             subFormulas.push(next);
         }
 
-        if (type === "SE" || type === "WE")
-            return formulas.newDisj(subFormulas);
-        else
-            return formulas.newConj(subFormulas);
+        if (min !== max) {
+            if (type === "SE" || type === "WE")
+                return formulas.newDisj(subFormulas);
+            else
+                return formulas.newConj(subFormulas);
+
+        } else {
+            return subFormulas[0]; 
+        }
     }
 
     var ccs = options.ccs,
