@@ -73,14 +73,23 @@ class Renderer {
 
             this.ctx.save();
             if (edge.data.highlight){
-                this.ctx.strokeStyle = edge.data.color || this.highlightSettings.color; // Edge color
                 this.ctx.lineWidth = edge.data.lineWidth || this.highlightSettings.lineWidth; // Edge line width
-            }else{
+                if (isSelfloop) {
+                    this.ctx.strokeStyle = edge.data.color || this.highlightSettings.color; // Edge color*/
+                } else {
+                    var gradient = this.ctx.createLinearGradient(pt1.x, pt1.y, pt2.x, pt2.y);
+                    gradient.addColorStop(0, "maroon");
+                    gradient.addColorStop(0.4, "red");
+                    gradient.addColorStop(0.6, "red");
+                    gradient.addColorStop(1, "orange");
+                    this.ctx.strokeStyle = gradient;
+                }
+            } else{
                 this.ctx.strokeStyle = edge.data.color || "rgb(196, 196, 196)"; // Edge color
                 this.ctx.lineWidth = edge.data.lineWidth || 2.0; // Edge line width
             }
 
-            if(isSelfloop){
+            if (isSelfloop) {
                 this.drawSelfEdge(pt1, pt2, arrowLength, arrowWidth, chevronColor, label, this.nodeBoxes[edge.target.name]);
             }
             else if (oppo != undefined) {
