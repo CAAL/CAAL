@@ -459,7 +459,7 @@ module HML {
 
     export interface ActionMatcher {
         matches(action : ccs.Action) : boolean;
-        toString() : string; //Returns unique string representing matching actions
+        toString(formatComplement? : boolean) : string; //Returns unique string representing matching actions
     }
 
     export class SingleActionMatcher {
@@ -477,8 +477,8 @@ module HML {
             if (!(other instanceof SingleActionMatcher)) return false;
             return this.action.equals(other.action);
         }
-        toString() : string {
-            return this.action.toString();
+        toString(formatComplement : boolean = true) : string {
+            return this.action.toString(formatComplement);
         }
     }
 
@@ -529,8 +529,8 @@ module HML {
             }
             return true;
         }
-        toString() : string {
-            return this.actions.map(action => action.toString()).join(",");
+        toString(formatComplement : boolean = true) : string {
+            return this.actions.map(action => action.toString(formatComplement)).join(",");
         }
     }
 

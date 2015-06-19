@@ -252,7 +252,7 @@ module Traverse {
     export class HMLNotationVisitor implements hml.FormulaVisitor<string>, hml.FormulaDispatchHandler<string> {
         private cache;
 
-        constructor(private showSemicolon = true) {
+        constructor(private showSemicolon = true, private formatComplement = true) {
             this.clearCache();
         }
 
@@ -310,7 +310,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "<" +
-                    formula.actionMatcher.toString() + ">" +
+                    formula.actionMatcher.toString(this.formatComplement) + ">" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -321,7 +321,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "[" +
-                    formula.actionMatcher.toString() + "]" +
+                    formula.actionMatcher.toString(this.formatComplement) + "]" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -332,7 +332,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "<<" +
-                    formula.actionMatcher.toString() + ">>" +
+                    formula.actionMatcher.toString(this.formatComplement) + ">>" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -343,7 +343,7 @@ module Traverse {
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
                 result = this.cache[formula.id] = "[[" +
-                    formula.actionMatcher.toString() + "]]" +
+                    formula.actionMatcher.toString(this.formatComplement) + "]]" +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;

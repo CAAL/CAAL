@@ -19,7 +19,8 @@ module Activity {
             delay: {
                 "show": 500,
                 "hide": 100
-            }
+            },
+            html: true
         });
     }
     
@@ -31,7 +32,8 @@ module Activity {
             
             this.$container.tooltip({
                 title: titleFunction,
-                selector: "span." + selectorClass
+                selector: "span." + selectorClass,
+                html: true
             });
         }
         

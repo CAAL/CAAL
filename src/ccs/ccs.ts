@@ -205,9 +205,19 @@ module CCS {
             return this.label === other.label &&
                 this.complement === other.complement;
         }
-        toString() {
-            return (this.complement ? "'" : "") + this.label;
+
+        toString(formatComplement = true) {
+            if (this.complement) {
+                if (formatComplement) {
+                    return "<span class=\"overline\">'" + this.label + "</span>"
+                } else {
+                    return "'" + this.label;
+                }
+            } else {
+                return this.label;
+            }
         }
+
         clone() {
             return new Action(this.label, this.complement);
         }

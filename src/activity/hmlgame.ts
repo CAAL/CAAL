@@ -278,7 +278,7 @@ module Activity {
             this.$formulaList.empty();
 
             for (var propId in hmlFormulaSets){
-                var hmlvisitor = new Traverse.HMLNotationVisitor(false);
+                var hmlvisitor = new Traverse.HMLNotationVisitor(false, false);
                 var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlFormulaSets[propId].getTopFormula())); //slice is used to remove the ";"
                 var optionsNode = $("<option></option>").attr("value", propId).append(formulaStr);
                 if(parseInt(propId) == selectedPropertyId) {
