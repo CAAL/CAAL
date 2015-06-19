@@ -214,7 +214,7 @@ module Property {
             var HmlConfiguration = Object.create(null),
                 graph : ccs.Graph = this.project.getGraph();
 
-            HmlConfiguration.succGen = CCS.getSuccGenerator(this.project.getGraph(), {succGen: "strong", reduce: false});
+            HmlConfiguration.succGen = CCS.getSuccGenerator(this.project.getGraph(), {inputMode: InputMode[this.project.getInputMode()], succGen: "strong", reduce: false});
             HmlConfiguration.processName = this.process;
             HmlConfiguration.propertyId = this.id;
             HmlConfiguration.formulaId = formulaSetForProperty.getTopFormula().id;

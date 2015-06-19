@@ -314,8 +314,8 @@ module Activity {
             this.configuration = configuration;
 
             this.graph = this.project.getGraph();
-            this.strongSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: true});
-            this.weakSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "weak", reduce: true});
+            this.strongSuccGen = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], succGen: "strong", reduce: true});
+            this.weakSuccGen = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], succGen: "weak", reduce: true});
             /*Fill the dropdown list with infomation*/
             this.setProcesses(this.getNamedProcessList(), configuration.processName);
             this.setFormulas(this.formulaSets, configuration.propertyId);
@@ -660,7 +660,6 @@ module Activity {
 
         public selectedTransition(transition : CCS.Transition, exploreProcess : Function) : void {
             if (this.gameIsOver) throw "Game has ended";
-
 
             var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
             gameLogPlay.setTemplate("{0} played {1} {2} {3}.");
