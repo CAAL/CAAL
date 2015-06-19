@@ -39,6 +39,9 @@ module Main {
         activityHandler.addActivity("hmlgame" , new Activity.HmlGame("#hml-game-container", "#hml-game-btn"));
         activityHandler.selectActivity("editor");
 
+        $("#aboutModal").load("about.html");
+        $("#helpModal").load("help.html");
+
         $("#version").append(Version);
 
         $('[data-toggle="tooltip"]').tooltip(); 

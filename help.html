@@ -1,0 +1,207 @@
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            <h4 class="modal-title"><span class="small-caps">Caal</span> Specification Language</h4>
+        </div>
+        <div class="modal-body ace-crisp">
+            <p>We refer to <a href="https://github.com/CAAL/CAAL/raw/develop/docs/tutorial.pdf">our tutorial</a> for an informal introduction to <span class="small-caps">Caal</span>.</p>
+            <p>Process constants start with capital letters, channel names with small letters and dual channels begin with an apostrophe (e.g. 'out). The silent action is denoted as tau.</p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>CCS Expression</th>
+                        <th>Syntax</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Nil process</td>
+                        <td class="monospace">0</td>
+                    </tr>
+                    <tr>
+                        <td>Process definition</td>
+                        <td class="monospace">
+                            <span class="ace_constant">A</span>
+                            <span class="ace_keyword ace_operator">=</span>
+                            a<span class="ace_keyword ace_operator">.</span>tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>;
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Action prefixing - input</td>
+                        <td class="monospace">
+                            a<span class="ace_keyword ace_operator">.</span>tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Action prefixing - output</td>
+                        <td class="monospace">
+                            <span class="ace_variable ace_overline">'a</span><span class="ace_keyword ace_operator">.</span>tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Choice operator</td>
+                        <td class="monospace">
+                            <span class="ace_constant">P</span>
+                            <span class="ace_keyword ace_operator">+</span> 
+                            <span class="ace_constant">Q</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Parallel composition</td>
+                        <td class="monospace">
+                            <span class="ace_constant">P</span>
+                            <span class="ace_keyword ace_operator">|</span>
+                            <span class="ace_constant">Q</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Restriction</td>
+                        <td class="monospace">
+                            <span class="ace_constant">P</span> 
+                            <span class="ace_keyword ace_operator">\</span> {a,b}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Renaming of channels</td>
+                        <td class="monospace">
+                            <span class="ace_constant">P</span>[b/a, d/c]
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Set definition</td>
+                        <td class="monospace">
+                            set <span class="ace_constant">L</span> 
+                            <span class="ace_keyword ace_operator">=</span> {a,b,c}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Comment</td>
+                        <td class="monospace"><span class="ace_comment">* This is a comment</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>TCCS Expression</th>
+                        <th>Syntax</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <td>Delay prefixing</td>
+                        <td class="monospace"><span class="ace_delay">3</span><span class="ace_keyword ace_operator">.</span>tau<span class="ace_keyword ace_operator">.</span><span class="ace_constant">P</span></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <p>The property language supports multiple recursively defined HML formulae that are however not mutually recursive.</p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>HML Formula</th>
+                        <th>Syntax</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>True</td>
+                        <td class="monospace"><span class="ace_constant">tt</span> or <span class="ace_constant">T</span></td>
+                    </tr>
+                    <tr>
+                        <td>False</td>
+                        <td class="monospace"><span class="ace_constant">ff</span> or <span class="ace_constant">F</span></td>
+                    </tr>
+                    <tr>
+                        <td>Conjunction</td>
+                        <td class="monospace"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">and</span> <span class="ace_constant">G</span></td>
+                    </tr>
+                    <tr>
+                        <td>Disjunction</td>
+                        <td class="monospace"><span class="ace_constant">H</span> <span class="ace_keyword ace_operator">or</span> <span class="ace_constant">G</span></td>
+                    </tr>
+                    <tr>
+                        <td>Strong existential modality</td>
+                        <td class="monospace"><span class="ace_keyword ace_operator">&lt;</span>a,b<span class="ace_keyword ace_operator">&gt;</span><span class="ace_constant">H</span></td>
+                    </tr>
+                    <tr>
+                        <td>Weak existential modality</td>
+                        <td class="monospace"><span class="ace_keyword ace_operator">&lt;&lt;</span>a,b<span class="ace_keyword ace_operator">&gt;&gt;</span><span class="ace_constant">H</span></td>
+                    </tr>
+                    <tr>
+                        <td>Strong universal modality</td>
+                        <td class="monospace"><span class="ace_keyword ace_operator">[</span>a,b<span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span></td>
+                    </tr>
+                    <tr>
+                        <td>Weak universal modality</td>
+                        <td class="monospace"><span class="ace_keyword ace_operator">[[</span>a,b<span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span></td>
+                    </tr>
+                    <tr>
+                        <td>Wildcard character for all actions</td>
+                        <td class="monospace">-, e.g. <span class="ace_keyword ace_operator">&lt;</span>-<span class="ace_keyword ace_operator">&gt;</span><span class="ace_constant">H</span></td>
+                    </tr>
+                    <tr>
+                        <td>Minimum fixed-point definition</td>
+                        <td class="monospace">
+                            <span class="ace_constant">X</span>
+                            <span class="ace_keyword ace_operator">min= &lt;</span>a<span class="ace_keyword ace_operator">&gt;</span><span class="ace_constant">tt</span>
+                            <span class="ace_keyword ace_operator">or &lt;</span>-<span class="ace_keyword ace_operator">&gt;</span><span class="ace_constant">X</span>;
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Maximum fixed-point definition</td>
+                        <td class="monospace">
+                            <span class="ace_constant">X</span>
+                            <span class="ace_keyword ace_operator">max= &lt;</span>a<span class="ace_keyword ace_operator">&gt;</span><span class="ace_constant">tt</span>
+                            <span class="ace_keyword ace_operator">and [-]</span><span class="ace_constant">X</span>;
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Several recursively defined variables</td>
+                        <td class="monospace">
+                            <span class="ace_constant">X</span>
+                            <span class="ace_keyword ace_operator">max= &lt;</span>a<span class="ace_keyword ace_operator">&gt;</span><span class="ace_constant">tt</span>
+                            <span class="ace_keyword ace_operator">and</span> 
+                            <span class="ace_constant">Y</span>
+                            <span class="ace_keyword ace_operator">and [</span>-<span class="ace_keyword ace_operator">]</span><span class="ace_constant">X</span>;
+                            <br/>
+                            <span class="ace_constant">Y</span> 
+                            <span class="ace_keyword ace_operator">min= &lt;</span>b<span class="ace_keyword ace_operator">&gt;</span><span class="ace_constant">tt</span> 
+                            <span class="ace_keyword ace_operator">or &lt;-&gt;</span><span class="ace_constant">Y</span>;
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>THML Formula</th>
+                        <th>Syntax</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Strong existential timed modality</td>
+                        <td class="monospace"><span class="ace_keyword ace_operator">&lt;</span><span class="ace_delay">4</span><span class="ace_keyword ace_operator">&gt;</span><span class="ace_constant">H</span> or <span class="ace_keyword ace_operator">&lt;</span><span class="ace_delay">2</span>,<span class="ace_delay">5</span><span class="ace_keyword ace_operator">&gt;</span><span class="ace_constant">H</span></td>
+                    </tr>
+                    <tr>
+                        <td>Weak existential timed modality</td>
+                        <td class="monospace"><span class="ace_keyword ace_operator">&lt;&lt;</span><span class="ace_delay">4</span><span class="ace_keyword ace_operator">&gt;&gt;</span><span class="ace_constant">H</span> or <span class="ace_keyword ace_operator">&lt;&lt;</span><span class="ace_delay">2</span>,<span class="ace_delay">5</span><span class="ace_keyword ace_operator">&gt;&gt;</span><span class="ace_constant">H</span></td>
+                    </tr>
+                    <tr>
+                        <td>Strong universal timed modality</td>
+                        <td class="monospace"><span class="ace_keyword ace_operator">[</span><span class="ace_delay">4</span><span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span> or <span class="ace_keyword ace_operator">[</span><span class="ace_delay">2</span>,<span class="ace_delay">5</span><span class="ace_keyword ace_operator">]</span><span class="ace_constant">H</span></td>
+                    </tr>
+                    <tr>
+                        <td>Weak universal timed modality</td>
+                        <td class="monospace"><span class="ace_keyword ace_operator">[[</span><span class="ace_delay">4</span><span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span> or <span class="ace_keyword ace_operator">[[</span><span class="ace_delay">2</span>,<span class="ace_delay">5</span><span class="ace_keyword ace_operator">]]</span><span class="ace_constant">H</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Okay</button>
+        </div>
+    </div>
+</div>
