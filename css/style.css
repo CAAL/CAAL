@@ -447,6 +447,10 @@ nav.navbar {
     border-top: none;
 }
 
+#game-log h4.game-round {
+    font-weight: bold;
+}
+
 #game-log p {
     margin: 0 0 10px 20px;
 }

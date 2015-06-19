@@ -23,6 +23,10 @@
     font: normal 24px "Inconsolata";
 }
 
+#hml-game-log h4.hml-game-round {
+    font-weight: bold;
+}
+
 #hml-game-type {
     width: 190px;
     float: left;

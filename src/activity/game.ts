@@ -1290,7 +1290,7 @@ module Activity {
         }
 
         public printRound(round : number, configuration : any) : void {
-            this.println("Round " + round, "<h4>");
+            this.println("Round " + round, "<h4 class='game-round'>");
             this.printConfiguration(configuration);
         }
 

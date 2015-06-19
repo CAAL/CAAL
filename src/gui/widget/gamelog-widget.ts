@@ -43,7 +43,8 @@ module GUI.Widget {
 
         private newRound() {
             var $log = $(this.log);
-            var $round = $("<h4></h4>").append("Round " + (++this.round).toString());
+            var $round = $("<h4></h4>").append("Round " + (++this.round).toString()).addClass("hml-game-round");
+
 
             $log.append($round);
         }
