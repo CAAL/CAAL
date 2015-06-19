@@ -323,7 +323,7 @@ module Activity {
             }
             
             var attackerSuccessorGenerator : CCS.SuccessorGenerator = CCS.getSuccGenerator(this.graph,
-                {inputMode: InputMode[this.project.getInputMode()], time: options.time, succGen: "strong", reduce: true});
+                {inputMode: InputMode[this.project.getInputMode()], time: "timed", succGen: "strong", reduce: true});
             var defenderSuccessorGenerator : CCS.SuccessorGenerator = this.succGen;
 
             if (this.dgGame !== undefined) {this.dgGame.stopGame()};
@@ -353,7 +353,7 @@ module Activity {
 
         private draw(process : CCS.Process, graph : GUI.ProcessGraphUI, depth : number) : void {
             var allTransitions = CCS.getNSuccessors(
-                CCS.getSuccGenerator(this.graph, { inputMode: InputMode[this.project.getInputMode()], succGen: "strong", reduce: true }),
+                CCS.getSuccGenerator(this.graph, { inputMode: InputMode[this.project.getInputMode()], time: "timed", succGen: "strong", reduce: true }),
                 process,
                 depth
                 ); //this.expandBFS(process, depth);
