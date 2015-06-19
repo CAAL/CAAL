@@ -542,7 +542,7 @@ module Activity {
             if (!isAttack && this.gameType === "weak") {
                 return ("=" + action + "=>" + timedSubScript);
             } else {
-                return "-" + action + "->" + (isAttack ? "<sub>t</sub>" : timedSubScript);
+                return "-" + action + "->" + (this.time === "" ? "" : (isAttack ? "<sub>t</sub>" : timedSubScript));
             }
         }
 
