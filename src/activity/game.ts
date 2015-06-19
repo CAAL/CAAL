@@ -405,17 +405,17 @@ module Activity {
 
         public highlightChoices(isLeft : boolean, targetId : string) : void {
             if (isLeft) {
-                this.leftGraph.setHover(targetId);
+                this.leftGraph.highlightToNode(targetId);
             } else {
-                this.rightGraph.setHover(targetId);
+                this.rightGraph.highlightToNode(targetId);
             }
         }
 
         public removeHighlightChoices(isLeft : boolean) : void {
             if(isLeft) {
-                this.leftGraph.clearHover();
+                this.leftGraph.clearHighlights();
             } else {
-                this.rightGraph.clearHover();
+                this.rightGraph.clearHighlights();
             }
         }
 

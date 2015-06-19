@@ -8,8 +8,6 @@ class Renderer {
     public ctx : CanvasRenderingContext2D;
     public gfx : any; // Graphics lib
     public particleSystem : ParticleSystem = null;
-    public selectedNode : Node = null;
-    public hoverNode : Node  = null;
     
     private nodeStatusColors = {
         "unexpanded": "rgb(160,160,160)",

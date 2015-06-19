@@ -32,6 +32,7 @@ module Activity {
         private canvas : HTMLCanvasElement;
         private renderer: Renderer;
         private uiGraph: GUI.ProcessGraphUI;
+        private options : any;
 
         constructor(container: string, button: string) {
             super(container, button);
@@ -170,7 +171,7 @@ module Activity {
                 options["successor"] = $("input[name=option-tccs-successor]:checked").val();
                 options["time"] = $("input[name=option-tccs-successor]:checked").data("time");
             }
-
+            this.options = options;
             return options;
         }
 
@@ -303,7 +304,8 @@ module Activity {
                 row.append($("<td>").append(this.sourceText(t.targetProcess)));
                 // row.append($("<td>").append(Tooltip.wrapProcess(this.graph.getLabel(t.targetProcess))));
 
-                row.attr("data-target-id", t.targetProcess.id);
+                row.data("targetId", t.targetProcess.id);
+                row.data("action", t.action);
 
                 this.$statusTable.append(row);
             });
@@ -327,11 +329,27 @@ module Activity {
         }
 
         private onTransitionTableRowHover(entering : boolean, event) : void {
-            this.uiGraph.clearHover();
+            this.uiGraph.clearHighlights();
 
             if (entering) {
-                this.uiGraph.setHover($(event.currentTarget).data("targetId"));
+                var targetId = $(event.currentTarget).data("targetId");
+                if (this.options.successor === "weak") {
+                    var action = $(event.currentTarget).data("action");
+                    this.highlightStrictPath(action, targetId);
+                } else {
+                    this.uiGraph.highlightToNode(targetId);
+                }
             }
+        }
+
+        private highlightStrictPath(action, toTargetId) {
+            var strictPath = (<Traverse.AbstractingSuccessorGenerator>this.succGenerator).
+                    getStrictPath(this.selectedProcess.id, action, toTargetId);
+            var from = this.selectedProcess.id;
+            strictPath.forEach(t => {
+                this.uiGraph.highlightEdge(from, t.targetProcess.id);
+                from = t.targetProcess.id;
+            });    
         }
 
         private onTransitionTableRowClick(e : Event) : void {
@@ -339,7 +357,7 @@ module Activity {
 
             if (targetId !== "undefined") {
                 this.expand(this.graph.processById(targetId));
-                this.uiGraph.clearHover();
+                this.uiGraph.clearHighlights();
             }
         }
 

@@ -12,6 +12,7 @@ module GUI {
         private renderer : Renderer;
         private handler : Handler;
         private highlightedEdges : Edge[] = [];
+        private selectedNode : Node;
 
         constructor(renderer, options = {repulsion: 400, stiffness: 800, friction: 0.5, integrator: "verlet"}) {
             this.sys = arbor.ParticleSystem(options);
@@ -54,64 +55,55 @@ module GUI {
             }
         }
 
-        private originalStatus = null;
         public setSelected(name: string) {
             if(!name) return;
             var newSelectedNode = this.sys.getNode(name);
 
-            if(this.renderer.selectedNode && newSelectedNode) {
-                //this.renderer.selectedNode.data.status = this.originalStatus; // clear the previous selected
-                this.renderer.selectedNode.data.status = "expanded";
+            if(this.selectedNode && newSelectedNode) {
+                this.selectedNode.data.status = "expanded";
             }
 
             if(newSelectedNode) {
-                this.originalStatus = newSelectedNode.data.status;
-                this.renderer.selectedNode = newSelectedNode; // get the node
-                this.renderer.selectedNode.data.status = 'selected'; // set it as selected, and let the renderer handle the rest.
+                this.selectedNode = newSelectedNode;
+                this.selectedNode.data.status = 'selected';
             }
-            this.renderer.redraw(); // redraw the image to change the color of the selected node.
+            this.renderer.redraw();
         }
 
         public getSelected() : string {
-            return this.renderer.selectedNode.name;
+            return this.selectedNode.name;
         }
 
-        public setHover(name : string) : void {
-            this.renderer.hoverNode = this.sys.getNode(name);
-            this.highlightEdges();
-        }
-
-        public clearHover() : void {
-            this.renderer.hoverNode = null;
-            this.removeHighlightEdges();
-        }
-
-        private highlightEdges(){
-            var edges = [];
-            
-            edges = this.sys.getEdges(this.renderer.selectedNode, this.renderer.hoverNode);
-
-            if(edges.length > 0){
-                for (var i = 0; i < edges.length; i++){
-                    edges[i].data.highlight = true;
-                    this.highlightedEdges.push(edges[i]);
-                }
-                this.renderer.redraw();
+        public highlightToNode(name : string) : void {
+            var node = this.sys.getNode(name);
+            if (this.selectedNode && node) {
+                this.highlightEdgeNodes(this.selectedNode, node);
             }
         }
 
-        private removeHighlightEdges() : void { 
-            if(this.highlightedEdges.length > 0){
-                while(this.highlightedEdges.length> 0){
-                    var edge = this.highlightedEdges.pop();
-                    edge.data.highlight = false;
-                }
-                this.renderer.redraw();
+        public clearHighlights() : void {
+            while(this.highlightedEdges.length > 0) {
+                var edge = this.highlightedEdges.pop();
+                edge.data.highlight = false;
+            }
+            this.renderer.redraw();
+        }
+
+        public highlightEdge(from : string, to : string) {
+            var fromNode = this.sys.getNode(from);
+            var toNode = this.sys.getNode(to);
+            if (fromNode && toNode) {
+                this.highlightEdgeNodes(fromNode, toNode);
             }
         }
 
-        public hightlightPath() : void {
-            // when given a trace(path) all edges should be highlighted
+        private highlightEdgeNodes(from : Node, to : Node) {
+            var edges = this.sys.getEdges(from, to);
+            for (var i = 0; i < edges.length; i++){
+                edges[i].data.highlight = true;
+                this.highlightedEdges.push(edges[i]);
+            }
+            this.renderer.redraw();
         }
 
         public getTransitionDataObjects(fromId : string, toId : string) : Object[] {

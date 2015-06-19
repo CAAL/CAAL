@@ -24,8 +24,10 @@ module GUI {
 
         setSelected(name : string) : void;
         getSelected() : string;
-        setHover(name: string) : void;
-        clearHover() : void;
+        highlightToNode(name: string) : void;
+        clearHighlights() : void;
+        highlightEdge(from : string, to : string);
+
 
         freeze() : void;
         unfreeze() : void;
