@@ -346,10 +346,7 @@ module Activity {
             var strictPath = (<Traverse.AbstractingSuccessorGenerator>this.succGenerator).
                     getStrictPath(this.selectedProcess.id, action, toTargetId);
             var from = this.selectedProcess.id;
-            strictPath.forEach(t => {
-                this.uiGraph.highlightEdge(from, t.targetProcess.id);
-                from = t.targetProcess.id;
-            });    
+            GUI.highlightTransitions(this.uiGraph, this.selectedProcess.id, strictPath);
         }
 
         private onTransitionTableRowClick(e : Event) : void {
