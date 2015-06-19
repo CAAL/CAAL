@@ -37,6 +37,18 @@ npm run build
 ```
 This will run the ``` build.sh ``` script, which will compile all of the Typescript files, and compile any potential changes in the Ace submodule.
 
+
+To compile the project, run all unit tests, and zip all necessary files to run CAAL:
+```bash
+npm run release
+```
+The release will be zipped to ```release.tar.gz```. ([caal.cs.aau.dk](http://caal.cs.aau.dk/) is running the latest release.)
+
+Another option (not recommeded) is to compile the release without running tests:
+```bash
+npm run release-notest
+```
+
 #### Troubleshooting
 
 If you experience errors with the Ace editor upon running the tool, such as
