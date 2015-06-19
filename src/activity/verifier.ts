@@ -140,7 +140,7 @@ module Activity {
                         .on("click", () => startGame()));
                 }
 
-                if (status === PropertyStatus.unsatisfied && property instanceof Property.DistinguishingFormula) {
+                if (status === PropertyStatus.unsatisfied && property instanceof Property.DistinguishingFormula && property.getTime() !== "untimed") {
                     var generateFormula = (properties) => {
                         if (properties) {
                             this.project.addPropertyAfter(property.getId(), properties.secondProperty);
