@@ -183,7 +183,7 @@ module Activity {
                     tooltipAnchor.css("left", position.x - this.$leftContainer.scrollLeft());
                     tooltipAnchor.css("top", position.y - this.$leftContainer.scrollTop() - 10);
 
-                    tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId)});
+                    tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId), html: true});
                     tooltipAnchor.tooltip("show");
                 }, 1000)
             });
@@ -201,7 +201,7 @@ module Activity {
                     tooltipAnchor.css("left", position.x - this.$rightContainer.scrollLeft());
                     tooltipAnchor.css("top", position.y - this.$rightContainer.scrollTop() - 10);
 
-                    tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId)});
+                    tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId), html: true});
                     tooltipAnchor.tooltip("show");
                 }, 1000)
             });
@@ -352,7 +352,11 @@ module Activity {
         }
 
         private draw(process : CCS.Process, graph : GUI.ProcessGraphUI, depth : number) : void {
-            var allTransitions = this.expandBFS(process, depth);
+            var allTransitions = CCS.getNSuccessors(
+                CCS.getSuccGenerator(this.graph, { inputMode: InputMode[this.project.getInputMode()], succGen: "strong", reduce: true }),
+                process,
+                depth
+                ); //this.expandBFS(process, depth);
 
             for (var fromId in allTransitions) {
                 var fromProcess = this.graph.processById(fromId);
@@ -362,70 +366,13 @@ module Activity {
 
                 Object.keys(groupedByTargetProcessId).forEach(strProcId => {
                     var group = groupedByTargetProcessId[strProcId],
-                        data = group.map(t => {return {label: t.action.toString()}});
+                        data = group.map(t => {return {label: t.action.toString(false)}});
                     this.showProcess(this.graph.processById(strProcId), graph);
                     graph.showTransitions(fromProcess.id, strProcId, data);
                 });
             }
 
             this.highlightNodes();
-        }
-
-        private expandBFS(process : CCS.Process, maxDepth : number) : any {
-            var result = Object.create(null),
-                queue = [[1, process]],
-                processed = [],
-                strongSuccGen = CCS.getSuccGenerator(this.graph, {inputMode: InputMode[this.project.getInputMode()], succGen: "strong", reduce: true}),
-                currentDepth, sourceProcess, hasTau;
-
-            for (var i = 0; i < queue.length; i++) {
-                currentDepth = queue[i][0];
-                sourceProcess = queue[i][1];
-                processed.push(sourceProcess.id);
-
-                result[sourceProcess.id] = new CCS.TransitionSet();
-
-                if (this.succGen instanceof Traverse.WeakSuccessorGenerator) {
-                    hasTau = false;
-
-                    strongSuccGen.getSuccessors(sourceProcess.id).forEach(t => {
-                        if (t.action.toString() === "tau" && sourceProcess === t.targetProcess) {
-                            hasTau = true; // Process has tau-loop.
-                        }
-                    });
-                }
-
-                this.succGen.getSuccessors(sourceProcess.id).forEach(t => {
-                    if (this.succGen instanceof Traverse.WeakSuccessorGenerator) {
-                        if (hasTau || (t.action.toString() !== "tau" || sourceProcess !== t.targetProcess)) {
-                            var path = (<Traverse.WeakSuccessorGenerator> this.succGen).getStrictPath(sourceProcess.id, t.action, t.targetProcess.id);
-                            var current = sourceProcess;
-
-                            for(var j = 0; j < path.length; j++) {
-                                if (result[current.id]) {
-                                    result[current.id].add(path[j]);
-                                } else {
-                                    result[current.id] = new CCS.TransitionSet([path[j]]);
-                                }
-
-                                current = path[j].targetProcess;
-                            }
-                        }
-                    } else {
-                        if (result[sourceProcess.id]) {
-                            result[sourceProcess.id].add(t);
-                        } else {
-                            result[sourceProcess.id] = new CCS.TransitionSet([t]);
-                        }
-                    }
-
-                    if (processed.indexOf(t.targetProcess.id) === -1 && currentDepth < maxDepth) {
-                        queue.push([currentDepth + 1, t.targetProcess]);
-                    }
-                });
-            }
-
-            return result;
         }
 
         private showProcess(process : CCS.Process, graph : GUI.ProcessGraphUI) : void {
@@ -437,22 +384,23 @@ module Activity {
             graph.getProcessDataObject(process.id).status = "expanded";
         }
 
+        public onPlay(strictPath : CCS.Transition[], move : Move) : void {
+            if (!strictPath)
+                return;
+
+            var graph = (move === Move.Left) ? this.leftGraph : this.rightGraph;
+            for (var i = 0; i < strictPath.length; i++) {
+                this.draw(strictPath[i].targetProcess, graph, 1);
+            }
+        }
+
         public highlightNodes() : void {
             if (!this.dgGame)
                 return;
 
             var configuration = this.dgGame.getCurrentConfiguration();
-            var leftData = this.leftGraph.getProcessDataObject(configuration.left.id.toString());
-            var rightData = this.rightGraph.getProcessDataObject(configuration.right.id.toString());
-
-            if (leftData && leftData.status === "unexpanded") {
-                this.draw(configuration.left, this.leftGraph, this.$leftDepth.val());
-            } else if (rightData && rightData.status === "unexpanded") {
-                this.draw(configuration.right, this.rightGraph, this.$rightDepth.val());
-            }
-
-            this.leftGraph.setSelected(configuration.left.id.toString());
-            this.rightGraph.setSelected(configuration.right.id.toString());
+            this.leftGraph.setSelected(configuration.left.id);
+            this.rightGraph.setSelected(configuration.right.id);
         }
 
         public highlightChoices(isLeft : boolean, targetId : string) : void {
@@ -881,6 +829,7 @@ module Activity {
 
         public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : CCS.Action = this.lastAction, move? : Move) : void {
             var previousConfig = this.getCurrentConfiguration();
+            var strictPath = [new CCS.Transition(action, destinationProcess)];
 
             // change the current node id to the next
             this.currentNodeId = nextNode;
@@ -908,9 +857,13 @@ module Activity {
 
                 if (!this.cycleExists())
                     this.preparePlayer(this.attacker);
+
+                if (this.defenderSuccessorGen instanceof Traverse.AbstractingSuccessorGenerator) {
+                    strictPath = (<Traverse.AbstractingSuccessorGenerator>this.defenderSuccessorGen).getStrictPath(sourceProcess.id, action, destinationProcess.id);
+                }
             }
 
-            this.gameActivity.highlightNodes();
+            this.gameActivity.onPlay(strictPath, this.lastMove);
             this.gameActivity.centerNode(destinationProcess, this.lastMove);
         }
 
@@ -994,9 +947,13 @@ module Activity {
 
                 if (!this.cycleExists())
                     this.preparePlayer(this.attacker);
+
+                if (this.defenderSuccessorGen instanceof Traverse.AbstractingSuccessorGenerator) {
+                    var strictPath = (<Traverse.AbstractingSuccessorGenerator>this.defenderSuccessorGen).getStrictPath(sourceProcess.id, action, destinationProcess.id);
+                }
             }
 
-            this.gameActivity.highlightNodes();
+            this.gameActivity.onPlay(strictPath, this.lastMove);
             this.gameActivity.centerNode(destinationProcess, this.lastMove);
         }
 
@@ -1125,12 +1082,12 @@ module Activity {
 
                 // highlight the edge
                 $(row).on("mouseenter", (event) => {
-                    this.highlightChoices(choice, game, isAttack, true, event);
+                    //this.highlightChoices(choice, game, isAttack, true, event);
                 });
 
                 // remove the highlight
                 $(row).on("mouseleave", (event) => {
-                    this.highlightChoices(choice, game, isAttack, false, event);
+                    //this.highlightChoices(choice, game, isAttack, false, event);
                 });
 
                 row.append($sourceTd, $actionTd, $targetTd);

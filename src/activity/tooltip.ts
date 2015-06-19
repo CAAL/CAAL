@@ -76,10 +76,10 @@ module Activity {
 
             var thisTooltip = this;
             var titleFunction = function() {
-                    var process = thisTooltip.graph.processByLabel($(this).text());
-                    return getCCSNotation(process);
-                };
-                
+                var process = thisTooltip.graph.processByLabel($(this).text());
+                return getCCSNotation(process);
+            };
+
             super($container, titleFunction, "ccs-tooltip-process");
         }
         
@@ -111,9 +111,9 @@ module Activity {
     export class DataTooltip extends Tooltip {
         constructor($container : JQuery) {
             var titleFunction = function() {
-                    return $(this).data("tooltip");
-                };
-                
+                return $(this).data("tooltip");
+            };
+
             super($container, titleFunction, "ccs-tooltip-data");
         }
     }
