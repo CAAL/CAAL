@@ -32,7 +32,7 @@ textarea {
 }
 
 .monospace {
-    font: normal 14px "Inconsolata";
+    font: normal 15px "Inconsolata";
 }
 
 .small-caps {
@@ -204,7 +204,7 @@ nav.navbar {
 }
 
 #explorer-canvas .tooltip, #explorer-transitions .tooltip, #explorer-transitions table tbody {
-    font: normal 14px "Inconsolata";
+    font: normal 15px "Inconsolata";
 }
 
 #explorer-transitions {
@@ -411,7 +411,7 @@ nav.navbar {
 }
 
 #game-left-canvas .tooltip, #game-right-canvas .tooltip {
-    font: normal 14px "Inconsolata";
+    font: normal 15px "Inconsolata";
 }
 
 #game-right-canvas {
@@ -439,7 +439,7 @@ nav.navbar {
 }
 
 #game-status .tooltip, #game-transitions-table tbody {
-    font: normal 14px "Inconsolata";
+    font: normal 15px "Inconsolata";
     color: #333;
 }
 
@@ -527,34 +527,10 @@ nav.navbar {
  * About/Help styles
  */
 
-#about-dialog .modal-footer {
-    padding: 15px;
-    border-top: 1px solid #e5e5e5;
-    text-align: initial;
+#helpModal th {
+    width: 50%;
 }
 
-#aboutok {
-    float: right;
-}
-
-#version {
-    float: left;
-    font-family: normal 14px "Inconsolata";
-}
-
-table.helpTable td {
-  border: 1px solid #999;
-  padding: 0.5rem;
-  text-align: left;
-}
-
-td.inconsolata{
-  font: normal 14px "Inconsolata";   
-}
-
-p.small {
-  font-variant: small-caps;
-}
 
 /*
  *  Tooltip and popover styles
@@ -565,7 +541,7 @@ p.small {
     border-radius: 5px;
     padding: 0px 2px 0px 2px;
     cursor: pointer;
-    font: normal 14px "Inconsolata";
+    font: normal 15px "Inconsolata";
 }
 
 .tooltip {

@@ -194,7 +194,7 @@ module Traverse {
             if (!result) {
                 subStr = process.nextProcess.dispatchOn(this);
                 subStr = wrapIfInstanceOf(subStr, process.nextProcess, [ccs.SummationProcess, ccs.CompositionProcess]);
-                result = this.cache[process.id] = process.action.toString() + "." + subStr;
+                result = this.cache[process.id] = process.action.toString(true) + "." + subStr;
             }
             return result;
         }
