@@ -56,7 +56,13 @@ module Activity {
             var strongActions = labelFor(source);
             
             for (var i = 0; i < strictPath.length; i++) {
-                strongActions += " -" + strictPath[i].action.toString() + "-> " + labelFor(strictPath[i].targetProcess);
+                var actionStr : string;
+                if (abstractingSuccGen.getAbstractions().some(abstraction => abstraction.getLabel() === strictPath[i].action.getLabel())) {
+                    actionStr = abstractingSuccGen.getAbstractions().map(abstraction => abstraction.toString()).join("/");
+                } else {
+                    actionStr = strictPath[i].action.toString();
+                }
+                strongActions += " -" + actionStr + "-> " + labelFor(strictPath[i].targetProcess);
             }
             
             return strongActions;

@@ -141,6 +141,10 @@ module Traverse {
             this.cache = cache || {};
         }
 
+        public getAbstractions() : ccs.Action[] {
+            return this.abstractions;
+        }
+
         getGraph() {
             return this.strictSuccGenerator.getGraph();
         }
