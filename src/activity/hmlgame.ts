@@ -181,8 +181,7 @@ module Activity {
             this.fullscreen.onShow();
             this.resize();
             this.formulaSets = this.project.getFormulaSetsForProperties();
-            // this.tooltip.setGraph(configuration.succGen.graph);
-
+            
             var configIsSame : Function = (leftConfig, rightConfig) => {
                 for (var prop in leftConfig) {
                     if (leftConfig[prop] != rightConfig[prop]){
@@ -278,8 +277,8 @@ module Activity {
             this.$formulaList.empty();
 
             for (var propId in hmlFormulaSets){
-                var hmlvisitor = new Traverse.HMLNotationVisitor(false, false);
-                var formulaStr = Traverse.safeHtml(hmlvisitor.visit(hmlFormulaSets[propId].getTopFormula())); //slice is used to remove the ";"
+                var hmlvisitor = new Traverse.HMLNotationVisitor(false, false, true);
+                var formulaStr = hmlvisitor.visit(hmlFormulaSets[propId].getTopFormula()); //slice is used to remove the ";"
                 var optionsNode = $("<option></option>").attr("value", propId).append(formulaStr);
                 if(parseInt(propId) == selectedPropertyId) {
                     optionsNode.prop("selected", true);
@@ -547,7 +546,7 @@ module Activity {
         }
 
         toString() {
-            var hmlNotationVisitor = new Traverse.HMLNotationVisitor(false);
+            var hmlNotationVisitor = new Traverse.HMLNotationVisitor(false, false, false);
             var processStr = (this.process instanceof CCS.NamedProcess) ? (<CCS.NamedProcess>this.process).name : this.process.id.toString();
             var formulaStr = hmlNotationVisitor.visit(this.formula);
             var isMinGameStr = this.isMinGame.toString();

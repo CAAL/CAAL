@@ -428,7 +428,7 @@ module Property {
             this.worker.addEventListener("message", event => {
                 this.worker.terminate();
                 this.worker = null; 
-                
+
                 if (!event.data.result.isBisimilar) { //this should be false, for there to be distinguishing formula
                     var properties = {
                         firstProperty : new HML({process: this.firstProcess, topFormula: event.data.result.formula, definitions: ""}),

@@ -749,7 +749,7 @@ module Equivalence {
                     }
                 });
                 
-                formulaStr += (isWeak ? "<<" : "<") + this.constructData[bestTarget][1].toString() + (isWeak ? ">>" : ">");
+                formulaStr += (isWeak ? "<<" : "<") + this.constructData[bestTarget][1].toString(false) + (isWeak ? ">>" : ">");
 
                 hyperedges = this.getHyperEdges(bestTarget);
 

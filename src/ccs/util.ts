@@ -252,7 +252,7 @@ module Traverse {
     export class HMLNotationVisitor implements hml.FormulaVisitor<string>, hml.FormulaDispatchHandler<string> {
         private cache;
 
-        constructor(private showSemicolon = true, private formatComplement = true) {
+        constructor(private showSemicolon = true, private formatComplement = true, private safeHtml = true) {
             this.clearCache();
         }
 
@@ -309,8 +309,16 @@ module Traverse {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "<" +
-                    formula.actionMatcher.toString(this.formatComplement) + ">" +
+                var starting = "<";
+                var closing = ">";
+                
+                if (this.safeHtml) {
+                    starting = safeHtml(starting);
+                    closing = safeHtml(closing);
+                }
+
+                result = this.cache[formula.id] = starting +
+                    formula.actionMatcher.toString(this.formatComplement) + closing +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -320,8 +328,16 @@ module Traverse {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "[" +
-                    formula.actionMatcher.toString(this.formatComplement) + "]" +
+                var starting = "[";
+                var closing = "]";
+                
+                if (this.safeHtml) {
+                    starting = safeHtml(starting);
+                    closing = safeHtml(closing);
+                }
+
+                result = this.cache[formula.id] = starting +
+                    formula.actionMatcher.toString(this.formatComplement) + closing +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -331,8 +347,16 @@ module Traverse {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "<<" +
-                    formula.actionMatcher.toString(this.formatComplement) + ">>" +
+                var starting = "<<";
+                var closing = ">>";
+                
+                if (this.safeHtml) {
+                    starting = safeHtml(starting);
+                    closing = safeHtml(closing);
+                }
+
+                result = this.cache[formula.id] = starting +
+                    formula.actionMatcher.toString(this.formatComplement) + closing +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
@@ -342,8 +366,16 @@ module Traverse {
             var result = this.cache[formula.id];
             if (!result) {
                 var subStr = formula.subFormula.dispatchOn(this);
-                result = this.cache[formula.id] = "[[" +
-                    formula.actionMatcher.toString(this.formatComplement) + "]]" +
+                var starting = "[[";
+                var closing = "]]";
+                
+                if (this.safeHtml) {
+                    starting = safeHtml(starting);
+                    closing = safeHtml(closing);
+                }
+
+                result = this.cache[formula.id] = starting +
+                    formula.actionMatcher.toString(this.formatComplement) + closing +
                     wrapIfInstanceOf(subStr, formula.subFormula, [hml.DisjFormula, hml.ConjFormula]);
             }
             return result;
