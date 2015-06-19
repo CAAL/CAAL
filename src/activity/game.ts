@@ -934,6 +934,7 @@ module Activity {
 
         public play(player : Player, destinationProcess : any, nextNode : dg.DgNodeId, action : CCS.Action = this.lastAction, move? : Move) : void {
             var previousConfig = this.getCurrentConfiguration();
+            var strictPath = [new CCS.Transition(action, destinationProcess)];
 
             // change the current node id to the next
             this.currentNodeId = nextNode;
