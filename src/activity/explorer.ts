@@ -270,7 +270,7 @@ module Activity {
 
                     Object.keys(groupedByTargetProcessId).forEach(strProcId => {
                         var group = groupedByTargetProcessId[strProcId];
-                        var data = group.map(t => {return {label: t.action.toString(false)}});
+                        var data = group.map(t => {return {label: t.action.toString()}});
                         this.showProcess(this.graph.processById(strProcId));
                         this.uiGraph.showTransitions(fromProcess.id, strProcId, data);
                     });
@@ -291,11 +291,11 @@ module Activity {
                 
                 if (this.succGenerator instanceof Traverse.AbstractingSuccessorGenerator) {
                     var abstractingSuccGen = <Traverse.AbstractingSuccessorGenerator>this.succGenerator;
-                    var $action = Tooltip.wrap(t.action.toString());
+                    var $action = Tooltip.wrap(t.action.toString(true));
                     Tooltip.setTooltip($action, Tooltip.strongSequence(abstractingSuccGen, this.selectedProcess, t.action, t.targetProcess, this.graph));
                     $actionTd.append($action);
                 } else {
-                    $actionTd.append(t.action.toString());
+                    $actionTd.append(t.action.toString(true));
                 }
 
                 row.append($("<td>").append(this.sourceText(this.selectedProcess)));

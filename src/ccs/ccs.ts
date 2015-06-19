@@ -206,7 +206,7 @@ module CCS {
                 this.complement === other.complement;
         }
 
-        toString(formatComplement = true) {
+        toString(formatComplement = false) {
             if (this.complement) {
                 if (formatComplement) {
                     return "<span class=\"overline\">'" + this.label + "</span>"
