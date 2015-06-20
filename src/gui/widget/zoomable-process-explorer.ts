@@ -203,7 +203,7 @@ module GUI.Widget {
             var allTransitions = CCS.expandBFS(process, this.succGen, expandDepth);
             for (var fromId in allTransitions) {
                 var fromProcess = this.succGen.getProcessById(fromId);
-                this.showProcess(fromProcess);
+                this.showProcessAsExplored(fromProcess);
                 var groupedByTargetProcessId = ArrayUtil.groupBy(allTransitions[fromId].toArray(), t => t.targetProcess.id);
 
                 Object.keys(groupedByTargetProcessId).forEach(strProcId => {
@@ -222,10 +222,14 @@ module GUI.Widget {
             this.drawProcessInternal(process, 1);
         }
 
-        public showProcess(process : CCS.Process) : void {
-            //Check if necessary for check
-            if (!process || this.graphUI.getProcessDataObject(process.id)) return;
+        private showProcessAsExplored(process : CCS.Process) : void {
             this.graphUI.showProcess(process.id, {label: this.labelFor(process), status: "expanded"});
+        }
+
+        public showProcess(process : CCS.Process) : void {
+            //Check already expanded to prevent resetting expand status
+            if (!process || this.graphUI.getProcessDataObject(process.id)) return;
+            this.graphUI.showProcess(process.id, {label: this.labelFor(process), status: "unexpanded"});
         }
 
         private labelFor(process : CCS.Process) : string {
