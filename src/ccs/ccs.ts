@@ -404,8 +404,6 @@ module CCS {
                 this.froms.push(relabel.from);
                 this.tos.push(relabel.to);
             });
-            this.froms.sort();
-            this.tos.sort();
         }
 
         forEach(f : (from : string, to : string) => void, thisObject?) {
