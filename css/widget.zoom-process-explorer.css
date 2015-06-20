@@ -16,3 +16,14 @@ div.widget-zoom-process-explorer div.button-row {
 	top: 10px;
     position: absolute;
 }
+
+div.widget-zoom-process-explorer .depth-control {
+    text-align: center;
+}
+
+div.widget-zoom-process-explorer .input-group.toolbar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 88px;
+}
