@@ -19,6 +19,7 @@ module GUI.Widget {
 
         private $zoomRange : JQuery;
         private $freezeBtn : JQuery;
+        private $depthInput : JQuery;
         private isFrozen = false;
         private root = document.createElement("div");
         private canvasContainer = document.createElement("div");
@@ -34,19 +35,21 @@ module GUI.Widget {
         public succGen : CCS.SuccessorGenerator = null;
         public graph : CCS.Graph = null;
         private currentZoom = 1;
-        private expandDepth = 10;
-
+        private expandDepth = 5;
 
         constructor() {
             $(this.root).addClass("widget-zoom-process-explorer");
             $(this.canvasContainer).addClass("canvas-container").attr("id", "hml-canvas-container");
             this.setupRange();
             this.setupFreezeBtn();
+            this.setupDepthInput();
 
-            var $pullRight = $('<div class="btn-group pull-right button-row"></div>').append(this.$freezeBtn);
-            var $buttonDiv = $('<div class="widget-zoom-proces-explorer-toolbar"></div>').append(this.$zoomRange, $pullRight)
             $(this.canvasContainer).append(this.canvas);
-            $(this.root).append($buttonDiv, this.canvasContainer);
+
+            var $buttons = $('<span class="input-group-btn"></span>').append(this.$freezeBtn);
+            var $rightInputs = $('<div class="input-group toolbar"></div>').append(this.$depthInput, $buttons);
+            var $toolBarDiv = $('<div class="relative"></div>').append(this.$zoomRange, $rightInputs, this.canvasContainer)
+            $(this.root).append($toolBarDiv);
 
             this.renderer = new Renderer(this.canvas);
             this.graphUI = new ArborGraph(this.renderer);
@@ -89,8 +92,22 @@ module GUI.Widget {
             return this.canvasContainer;
         }
 
-        setExpandDepth(depth) {
-            this.expandDepth = depth;
+        setExpandDepth(depth : any) {
+            if (typeof depth === 'string') {
+                depth = parseInt(depth, 10);
+            }
+            if (depth) {
+                depth = Math.round(depth);
+            }
+            if (!depth || depth < 1 || depth > 20) {
+                depth = 5;
+            }
+            if (depth !== this.expandDepth) {
+                this.expandDepth = depth;
+                this.clear();
+                this.exploreProcess(this.getSelectedProcess());
+            }
+            this.$depthInput.val(depth);
         }
 
         setZoom(zoomFactor : number) : void {
@@ -108,13 +125,10 @@ module GUI.Widget {
             this.canvas.height = canvasHeight;
             this.renderer.resize(canvasWidth, canvasHeight);
 
-            //Not sure why this
             if (zoomFactor > 1) {
-                this.$freezeBtn.parent().css("right", 30);
                 $canvasContainer.css("overflow", "auto");
                 this.focusOnProcess(this.succGen.getProcessById(this.graphUI.getSelected()));
             } else {
-                this.$freezeBtn.parent().css("right", 10);
                 $canvasContainer.css("overflow", "hidden");
             }
         }
@@ -135,6 +149,10 @@ module GUI.Widget {
 
             //TODO Handle other affected things.
             this.$freezeBtn.data("frozen", freeze);
+        }
+
+        private getSelectedProcess() : CCS.Process {
+            return this.succGen.getProcessById(this.graphUI.getSelected());
         }
 
         resize(width, height) : void {
@@ -236,6 +254,12 @@ module GUI.Widget {
             $button.append($lock);
             this.$freezeBtn = $button;
             this.$freezeBtn.on("click", () => this.toggleFreeze(!this.$freezeBtn.data("frozen")));
+        }
+
+        private setupDepthInput() {
+            var $input = $('<input class="form-control depth-control" value="5" type="text" data-tooltip="depth" />');
+            $input.on("change", () => this.setExpandDepth($input.val()));
+            this.$depthInput = $input;
         }
     }
 }
