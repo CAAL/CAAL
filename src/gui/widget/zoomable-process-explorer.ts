@@ -35,7 +35,7 @@ module GUI.Widget {
         public succGen : CCS.SuccessorGenerator = null;
         public graph : CCS.Graph = null;
         private currentZoom = 1;
-        private expandDepth = 5;
+        private expandDepth = 10;
 
         constructor() {
             $(this.root).addClass("widget-zoom-process-explorer");
@@ -100,7 +100,7 @@ module GUI.Widget {
                 depth = Math.round(depth);
             }
             if (!depth || depth < 1 || depth > 20) {
-                depth = 5;
+                depth = 10;
             }
             if (depth !== this.expandDepth) {
                 this.expandDepth = depth;
