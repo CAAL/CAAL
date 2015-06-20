@@ -49,13 +49,11 @@ module Main {
 
         $('[data-toggle="tooltip"]').tooltip(); 
         Activity.addTooltips();
-
-        ContactForm.init();
     });
 
     $("#aboutModal").load("about.html", () => $("#version").append(getVersion()));
     $("#helpModal").load("help.html");
-    $("#contactModal").load("contact.html");
+    $("#contactModal").load("contact.html", () => ContactForm.init());
 
     export function showNotification(text : string, time : number) : void {
         window.clearTimeout(timer);
