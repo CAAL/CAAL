@@ -268,8 +268,10 @@ module DependencyGraph {
             if (solveNode != undefined) { //Nodes may be anything, even 0.
                 this.nodesToBeSolved.push(solveNode);
             }
-            this.nodesToBeSolved.forEach(node => this.solveSingle(node));
-            this.nodesToBeSolved = [];
+            //Must solve backwards
+            while (this.nodesToBeSolved.length > 0) {
+                this.solveSingle(this.nodesToBeSolved.pop());
+            }
         }
 
         solveSingle(solveNode) : void {
