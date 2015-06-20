@@ -23,12 +23,12 @@ module Activity {
                 if (this.currentActivity) {
                     this.currentActivity.onHide();
                     this.currentActivity.getContainer().hide();
-                    this.currentActivity.getButton().removeClass("active");
+                    this.currentActivity.getActiveToggle().removeClass("active");
                 }
 
                 this.currentActivity = activity;
                 this.currentActivity.getContainer().show();
-                this.currentActivity.getButton().addClass("active");
+                this.currentActivity.getActiveToggle().addClass("active");
                 activity.onShow(configuration);
             }
         }

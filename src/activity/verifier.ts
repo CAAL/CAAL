@@ -8,7 +8,7 @@ module Activity {
         private formulaEditor : any;
         private definitionsEditor : any;
 
-        constructor(container: string, button: string) {
+        constructor(container : string, button : string) {
             super(container, button);
 
             this.verificationQueue = [];

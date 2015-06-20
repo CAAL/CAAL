@@ -5,11 +5,13 @@ module Activity {
         protected changed : boolean;
         protected $container : JQuery;
         protected $button : JQuery;
+        protected $activeToggle : JQuery;
 
-        public constructor(container : string, button : string) {
+        public constructor(container : string, button : string, activeToggle : string = button) {
             this.project = Project.getInstance();
             this.$container = $(container);
             this.$button = $(button);
+            this.$activeToggle = $(activeToggle);
 
             $(document).on("ccs-changed", () => this.changed = true);
         }
@@ -20,6 +22,10 @@ module Activity {
 
         public getButton() : JQuery {
             return this.$button;
+        }
+
+        public getActiveToggle() : JQuery {
+            return this.$activeToggle;
         }
 
         protected showMessageBox(title : string, message : string) : void {

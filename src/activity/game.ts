@@ -40,8 +40,8 @@ module Activity {
         private leftGraph: GUI.ProcessGraphUI;
         private rightGraph: GUI.ProcessGraphUI;
 
-        constructor(container : string, button : string) {
-            super(container, button);
+        constructor(container : string, button : string, activeToggle : string) {
+            super(container, button, activeToggle);
 
             this.project = Project.getInstance();
             this.fullscreen = new Fullscreen($("#game-container")[0], $("#game-fullscreen"), () => this.resize(null, null));

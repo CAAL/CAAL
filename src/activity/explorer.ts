@@ -34,7 +34,7 @@ module Activity {
         private uiGraph: GUI.ProcessGraphUI;
         private options : any;
 
-        constructor(container: string, button: string) {
+        constructor(container : string, button : string) {
             super(container, button);
 
             this.project = Project.getInstance();

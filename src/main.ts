@@ -35,8 +35,8 @@ module Main {
         activityHandler.addActivity("editor", new Activity.Editor("#editor-container", "#edit-btn"));
         activityHandler.addActivity("explorer", new Activity.Explorer("#explorer-container", "#explore-btn"));
         activityHandler.addActivity("verifier" , new Activity.Verifier("#verifier-container", "#verify-btn"));
-        activityHandler.addActivity("game" , new Activity.Game("#game-container", "#game-btn"));
-        activityHandler.addActivity("hmlgame" , new Activity.HmlGame("#hml-game-container", "#hml-game-btn"));
+        activityHandler.addActivity("game" , new Activity.Game("#game-container", "#game-btn", "#select-game"));
+        activityHandler.addActivity("hmlgame" , new Activity.HmlGame("#hml-game-container", "#hml-game-btn", "#select-game"));
         activityHandler.selectActivity("editor");
 
         $("#aboutModal").load("about.html");

@@ -26,8 +26,8 @@ module Activity {
         private currentSubActivity : SubActivity = null;
         private hmlGameActivity : SubActivity = new HmlGameActivity("#hml-game-main");
 
-        constructor(container : string, button : string) {
-            super(container, button);
+        constructor(container : string, button : string, activeToggle : string) {
+            super(container, button, activeToggle);
         }
 
         onShow(configuration?) {
