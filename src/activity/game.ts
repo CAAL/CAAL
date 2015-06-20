@@ -1056,7 +1056,7 @@ module Activity {
             var actionTransition : string;
 
             if (!isAttack) {
-                actionTransition = game.getTransitionStr(isAttack, game.getLastAction().toString());
+                actionTransition = game.getTransitionStr(isAttack, game.getLastAction().toString(true));
             }
             
             this.$table.empty();
@@ -1067,7 +1067,7 @@ module Activity {
                 if (isAttack) {
                     var sourceProcess = choice.move == 1 ? currentConfiguration.left : currentConfiguration.right;
                     var $source = this.labelWithTooltip(sourceProcess);
-                    actionTransition = game.getTransitionStr(isAttack, choice.action.toString());
+                    actionTransition = game.getTransitionStr(isAttack, choice.action.toString(true));
                     var $actionTd = $("<td id='action'></td>").append(actionTransition);
                 } else {
                     var sourceProcess = game.getLastMove() == Move.Right ? currentConfiguration.left : currentConfiguration.right;
@@ -1287,10 +1287,10 @@ module Activity {
             var actionContext : any;
             
             if (player.getPlayType() === PlayType.Attacker || !game.hasAbstractions()) {
-                actionTransition = game.getTransitionStr(true, action.toString());
+                actionTransition = game.getTransitionStr(true, action.toString(true));
                 actionContext = {text: actionTransition, tag: "<span>", attr: [{name: "class", value: "monospace"}]};
             } else {
-                actionTransition = game.getTransitionStr(false, action.toString());
+                actionTransition = game.getTransitionStr(false, action.toString(true));
                 actionContext = {text: actionTransition, tag: "<span>",attr: [{name: "class", value: "ccs-tooltip-data"},
                     {name: "data-tooltip", value: Tooltip.strongSequence(<Traverse.AbstractingSuccessorGenerator>this.gameActivity.getSuccessorGenerator(), source, action, destination, this.gameActivity.getGraph())}]};
             }
