@@ -333,12 +333,13 @@ module Activity {
 
             if (entering) {
                 var targetId = $(event.currentTarget).data("targetId");
-                if (this.options.successor === "weak") {
+                // Disabled for now - Can cause confusion.
+                /*if (this.options.successor === "weak") {
                     var action = $(event.currentTarget).data("action");
                     this.highlightStrictPath(action, targetId);
-                } else {
+                } else {*/
                     this.uiGraph.highlightToNode(targetId);
-                }
+                //}
             }
         }
 
