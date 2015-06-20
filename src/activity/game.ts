@@ -125,9 +125,11 @@ module Activity {
                 this.toggleFreeze(graph, false, this.$rightFreeze);
         }
 
-        private validateDepth(input : JQuery) : void {
-            if (!/^[0-9]+$/.test(input.val())) {
-                input.val("5");
+        private validateDepth($input : JQuery) : void {
+            if (!/^[1-9][0-9]*$/.test($input.val())) {
+                $input.val($input.data("previous-depth"));
+            } else {
+                $input.data("previous-depth", $input.val());
             }
         }
 
