@@ -394,6 +394,8 @@ module Activity {
             for (var i = 0; i < strictPath.length; i++) {
                 this.draw(strictPath[i].targetProcess, graph, 1);
             }
+            var expandDepth =  (move === Move.Left) ? this.$leftDepth.val() : this.$rightDepth.val();
+            this.draw(strictPath[strictPath.length-1].targetProcess, graph, expandDepth);
         }
 
         public highlightNodes() : void {

@@ -166,6 +166,7 @@ module Activity {
             this.transitionTable.onSelectListener = ((transition) => {
                 this.hmlGameLogic.selectedTransition(transition, (updateTransitions) => {
                     updateTransitions.forEach(t => this.processExplorer.drawProcess(t.targetProcess));
+                    this.processExplorer.exploreProcess(updateTransitions[updateTransitions.length - 1].targetProcess);
                     this.processExplorer.focusOnProcess(updateTransitions[updateTransitions.length - 1].targetProcess);
                 });
                 this.refresh();
@@ -397,6 +398,7 @@ module Activity {
                 if(currentPlayer === this.computer) {
                     this.hmlGameLogic.AutoPlay(this.computer, (updateTransitions) => {
                         updateTransitions.forEach(t => this.processExplorer.drawProcess(t.targetProcess));
+                        this.processExplorer.exploreProcess(updateTransitions[updateTransitions.length - 1].targetProcess);
                         this.processExplorer.focusOnProcess(updateTransitions[updateTransitions.length - 1].targetProcess);
                     });
                     this.refresh();
