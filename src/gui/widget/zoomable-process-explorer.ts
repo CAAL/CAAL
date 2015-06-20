@@ -35,7 +35,7 @@ module GUI.Widget {
         public succGen : CCS.SuccessorGenerator = null;
         public graph : CCS.Graph = null;
         private currentZoom = 1;
-        private expandDepth = 10;
+        private expandDepth = 5;
 
         constructor() {
             $(this.root).addClass("widget-zoom-process-explorer");
@@ -171,7 +171,7 @@ module GUI.Widget {
 
         exploreProcess(process : CCS.Process) : void {
             if (!this.succGen) throw "Invalid operation: succGen must be set first";
-            this.drawProcess(process);
+            this.drawProcessInternal(process, this.expandDepth);
         }
 
         focusOnProcess(process : CCS.Process) : void {
@@ -197,10 +197,10 @@ module GUI.Widget {
             this.hoverLeaveListener = callback;
         }
 
-        private drawProcess(process : CCS.Process) {
+        private drawProcessInternal(process : CCS.Process, expandDepth) {
             this.showProcess(process);
 
-            var allTransitions = CCS.expandBFS(process, this.succGen, this.expandDepth);
+            var allTransitions = CCS.expandBFS(process, this.succGen, expandDepth);
             for (var fromId in allTransitions) {
                 var fromProcess = this.succGen.getProcessById(fromId);
                 this.showProcess(fromProcess);
@@ -218,8 +218,11 @@ module GUI.Widget {
             this.graphUI.setSelected(process.id.toString());
         }
 
+        public drawProcess(process : CCS.Process) {
+            this.drawProcessInternal(process, 1);
+        }
 
-        private showProcess(process : CCS.Process) : void {
+        public showProcess(process : CCS.Process) : void {
             //Check if necessary for check
             if (!process || this.graphUI.getProcessDataObject(process.id)) return;
             this.graphUI.showProcess(process.id, {label: this.labelFor(process), status: "expanded"});

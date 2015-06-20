@@ -164,7 +164,10 @@ module Activity {
             this.fullscreen = new Fullscreen($("#hml-game-container")[0], $("#hml-game-fullscreen"), () => this.resize());
 
             this.transitionTable.onSelectListener = ((transition) => {
-                this.hmlGameLogic.selectedTransition(transition, (process) => {this.processExplorer.exploreProcess(process); this.processExplorer.focusOnProcess(process);}); // return the new state
+                this.hmlGameLogic.selectedTransition(transition, (updateTransitions) => {
+                    updateTransitions.forEach(t => this.processExplorer.drawProcess(t.targetProcess));
+                    this.processExplorer.focusOnProcess(updateTransitions[updateTransitions.length - 1].targetProcess);
+                });
                 this.refresh();
             });
 
@@ -392,7 +395,10 @@ module Activity {
             else {
                 var currentPlayer = this.hmlGameLogic.getCurrentPlayer();
                 if(currentPlayer === this.computer) {
-                    this.hmlGameLogic.AutoPlay(this.computer, (process) => {this.processExplorer.exploreProcess(process); this.processExplorer.focusOnProcess(process);});
+                    this.hmlGameLogic.AutoPlay(this.computer, (updateTransitions) => {
+                        updateTransitions.forEach(t => this.processExplorer.drawProcess(t.targetProcess));
+                        this.processExplorer.focusOnProcess(updateTransitions[updateTransitions.length - 1].targetProcess);
+                    });
                     this.refresh();
                 }
                 else if(currentPlayer === this.human) {
@@ -634,7 +640,7 @@ module Activity {
             this.writeToGamelog = gamelogger;
         }
 
-        public AutoPlay(player : Player, exploreProcess? : Function) {
+        public AutoPlay(player : Player, usedTransitions? : Function) {
             if (player === Player.judge) throw "Judge may not auto play";
             var choice = this.getBestAIChoice();
 
@@ -648,7 +654,7 @@ module Activity {
                     }
                 });
                 if (!transition) throw "Missing Transition";
-                this.selectedTransition(transition, exploreProcess);
+                this.selectedTransition(transition, usedTransitions);
             } else {
                 this.selectedFormula(choice.formula);
             }
@@ -675,8 +681,12 @@ module Activity {
             this.state = this.state.withFormula(formula);
         }
 
-        public selectedTransition(transition : CCS.Transition, exploreProcess : Function) : void {
+        public selectedTransition(transition : CCS.Transition, usedTransitions : Function) : void {
             if (this.gameIsOver) throw "Game has ended";
+
+            var fromProc = this.state.process;
+            var strictPath = [transition];
+            var wasWeak = this.isWeak();
 
             var gameLogPlay = new GUI.Widget.GameLogObject(this.graph);
             gameLogPlay.setTemplate("{0} played {1} {2} {3}.");
@@ -704,7 +714,10 @@ module Activity {
             this.dgNode = this.dgNode.newWithFormula(hmlSubF).newWithProcess(transition.targetProcess);
             this.state = this.state.withFormula(hmlSubF).withProcess(transition.targetProcess);
 
-            exploreProcess(this.state.process); // explore the process.
+            if (wasWeak) {
+                strictPath = (<any>this.weakSuccGen).getStrictPath(fromProc.id, transition.action, transition.targetProcess.id);
+            }
+            usedTransitions(strictPath); // notify of all intermediary nodes
         }
 
         private cycleExists() : boolean {
