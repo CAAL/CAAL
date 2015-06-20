@@ -24,25 +24,25 @@ class Save extends MenuItem {
         Main.showNotification("Project saved!", 2000);
     }
 
-    /*
-     * Saves the current project to Local Storage.
-     * Assigns a unique id to the project if it does not already have one.
-     * Triggers the "save"-event after saving.
-     */
     public saveToStorage() : void {
+        this.storage.setObj("autosave", null); // Reset the auto save.
         var id = this.project.getId();
         var projects = this.storage.getObj("projects");
-        this.storage.setObj("autosave", null); // Reset the auto save.
-        
-        if (id !== null) { // Has id. Overwrite existing project and save.
+
+        if (id !== null) {
             for (var i = 0; i < projects.length; i++) {
                 if (projects[i].id === id) {
-                    projects[i] = this.project.toJSON();
+                    if (projects[i].title !== this.project.getTitle()) { // Title changed. Assign new id and save.
+                        this.project.setId(this.nextId());
+                        projects.push(this.project.toJSON());
+                    } else {
+                        projects[i] = this.project.toJSON();
+                    }
                     this.storage.setObj("projects", projects);
                     break;
                 }
             }
-        } else { // No id. Assign id and save.
+        } else { // Assign unique id and save.
             this.project.setId(this.nextId());
             if (projects) {
                 projects.push(this.project.toJSON());
