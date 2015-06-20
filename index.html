@@ -81,8 +81,8 @@
                     <ul class="nav navbar-nav navbar-right">
                         <li data-toggle="modal" data-target="#aboutModal"><a>About</a></li>
                         <li data-toggle="modal" data-target="#helpModal"><a>Syntax</a></li>
-                        <li><a id="contact" target="_top" data-toggle="contact-tooltip" title="Contact us!"><i class="fa fa-envelope-o fa-lg"></i></a></li>
-                        <li><a href="https://github.com/CAAL/CAAL" target="_blank" data-toggle="github-tooltip" title="GitHub Source Code"><i class="fa fa-github fa-lg"></i></a></li>
+                        <li data-toggle="modal" data-target="#contactModal"><a title="Contact Us"><i class="fa fa-envelope-o fa-lg"></i></a></li>
+                        <li><a href="https://github.com/CAAL/CAAL" target="_blank" title="GitHub Repository"><i class="fa fa-github fa-lg"></i></a></li>
                     </ul>
                 </div>
             </div>
@@ -519,61 +519,6 @@
                 </div>
             </div>
         </div>
-        
-        <div id="contact-modal" class="modal fade" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                        <h4 class="modal-title">Contact Form</h4>
-                    </div>
-                    <div class="modal-body">
-
-                        <form id="contact-form">
-                            <div class="form-group">
-                                <label for="contact-subject">Choose Subject</label>
-                                <select class="form-control" id="contact-subject" name="contact-cat-subject">
-                                    <option>Suggestions / Feedback</option>
-                                    <option>Bug Report</option>
-                                    <option>Other</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="contact-name">Your Name</label>
-                                <input type="text" class="form-control" id="contact-name" placeholder="Enter name" name="contact-cat-name">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="contact-email">Your Email</label>
-                                <input type="email" class="form-control" id="contact-email" placeholder="Enter email" name="contact-cat-email">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="contact-text">Your Message</label>
-                                <textarea class="form-control" rows="5" id="contact-text" name="contact-cat-text"></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <div class="checkbox">
-                                    <label>
-                                        <input type="checkbox" value="" id="contact-isAttached">
-                                        Attach current project
-                                    </label>
-                                </div>
-                            </div>
-
-                        </form>
-
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                        <button id="contact-send" type="submit" class="btn btn-primary" form="contact-form">Send</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
         <div class="modal fade" id="message-box" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -590,9 +535,9 @@
                 </div>
             </div>
         </div>
-
         <div class="modal fade" id="aboutModal" tabindex="-1"></div>
         <div class="modal fade" id="helpModal" tabindex="-1"></div>
+        <div class="modal fade" id="contactModal" tabindex="-1"></div>
 
         <!-- Notification box -->
         <div id="notification-box"></div>

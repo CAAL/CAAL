@@ -4,13 +4,9 @@ module ContactForm {
     export function init() {
         // Get project
         var project = Project.getInstance();
-        
+
         // Set version in contact form
         $("#contact-version").attr("placeholder", Main.getVersion());
-        
-        $('#contact').click(() => {
-            $("#contact-modal").modal("show");
-        });
 
         // Set validation on focusout
         $("#contact-form > .form-group").each( (i, item) => {
@@ -91,16 +87,12 @@ module ContactForm {
     }
 
     function showSuccess() {
-        $("#contact-modal").modal("hide");
+        $("#contactModal").modal("hide");
         Main.showNotification("Thank you!", 2000);
     }
-    
+
     function showError() {
-        $("#contact-modal").modal("hide");
+        $("#contactModal").modal("hide");
         Main.showNotification("An error occurred, please try again", 2000);
     }
 }
-
-
-
-

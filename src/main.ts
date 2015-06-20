@@ -41,6 +41,7 @@ module Main {
 
         $("#aboutModal").load("about.html");
         $("#helpModal").load("help.html");
+        $("#contactModal").load("contact.html");
 
         $("#version").append(Version);
 
