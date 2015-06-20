@@ -92,6 +92,8 @@ module Activity {
         private hmlselector = new GUI.Widget.FormulaSelector();
         private gamelog = new GUI.Widget.GameLog();
 
+        private tooltipAnchor : HTMLDivElement = document.createElement('div');
+
         private project : Project;
         // private currentProcess : CCS.Process = null;
         // private currentFormula : HML.Formula = null
@@ -148,8 +150,10 @@ module Activity {
                 this.configure(this.configuration);
             });
 
+            $(this.tooltipAnchor).css("position", "absolute");
+
             /*Explorer*/
-            $("#hml-game-main").append(this.processExplorer.getRootElement());
+            $("#hml-game-main").append(this.processExplorer.getRootElement(), this.tooltipAnchor);
             /*Gamelog*/
             $("#hml-game-status-left").append(this.gamelog.getRootElement());
 
@@ -174,6 +178,20 @@ module Activity {
 
             this.tooltip = new ProcessTooltip($("#hml-game-status"));
             new DataTooltip($("#hml-game-log")); // no need to save instance
+
+            //Set tooltips
+            this.processExplorer.setOnHoverTimeout((processId, position) => {
+                var $tooltipAnchor = $(this.tooltipAnchor);
+                var $container = $(this.processExplorer.getCanvasContainer());
+                $tooltipAnchor.css("left", position.x + $container.offset().left);
+                $tooltipAnchor.css("top", position.y + $container.offset().top - 10);
+                $tooltipAnchor.tooltip({title: this.tooltip.ccsNotationForProcessId(processId), html: true});
+                $tooltipAnchor.tooltip("show");
+            }, 750);
+
+            this.processExplorer.setOnHoverLeave(() => {
+                $(this.tooltipAnchor).tooltip("destroy");
+            });
         }
 
         onShow(configuration) {

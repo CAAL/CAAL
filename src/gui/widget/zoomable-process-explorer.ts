@@ -24,12 +24,18 @@ module GUI.Widget {
         private canvasContainer = document.createElement("div");
         private canvas : HTMLCanvasElement = document.createElement("canvas");
 
+        private hoverTimeoutListener : any = null;
+        private hoverLeaveListener : any = null;
+        private hoverTimeout : any;
+        private hoverTimeoutDelay;
+
         private renderer : Renderer;
         private graphUI : GUI.ProcessGraphUI;
         public succGen : CCS.SuccessorGenerator = null;
         public graph : CCS.Graph = null;
         private currentZoom = 1;
         private expandDepth = 10;
+
 
         constructor() {
             $(this.root).addClass("widget-zoom-process-explorer");
@@ -44,8 +50,31 @@ module GUI.Widget {
 
             this.renderer = new Renderer(this.canvas);
             this.graphUI = new ArborGraph(this.renderer);
-
             this.graphUI.bindCanvasEvents();
+
+            var cancelHoverTimeout = () => {
+                if (this.hoverTimeout) {
+                    clearTimeout(this.hoverTimeout);
+                }
+            };
+
+            this.graphUI.setHoverOnListener(processId => {
+                cancelHoverTimeout();
+                if (this.hoverTimeoutListener != null) {
+                    this.hoverTimeout = setTimeout(() => {
+                        if (this.hoverTimeoutListener) {
+                            this.hoverTimeoutListener.call(this, processId, this.graphUI.getPosition(processId));
+                        }
+                    }, this.hoverTimeoutDelay);
+                }
+            });
+
+            this.graphUI.setHoverOutListener(() => {
+                cancelHoverTimeout();
+                if (this.hoverLeaveListener != null) {
+                    this.hoverLeaveListener.call(this);
+                }
+            });
         }
 
         getGraphUI(){
@@ -139,6 +168,15 @@ module GUI.Widget {
 
         clear() : void {
             this.graphUI.clearAll();
+        }
+
+        setOnHoverTimeout(callback : (processId, position) => void, msTimeout : number) {
+            this.hoverTimeoutDelay = msTimeout;
+            this.hoverTimeoutListener = callback;
+        }
+
+        setOnHoverLeave(callback : (processId) => void) {
+            this.hoverLeaveListener = callback;
         }
 
         private drawProcess(process : CCS.Process) {
