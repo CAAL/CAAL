@@ -30,6 +30,7 @@ import hml = HML;
 module Main {
     declare var Version : string;
     export var activityHandler = new Activity.ActivityHandler();
+    var timer;
 
     $(document).ready(function() {
         activityHandler.addActivity("editor", new Activity.Editor("#editor-container", "#edit-btn"));
@@ -39,27 +40,22 @@ module Main {
         activityHandler.addActivity("hmlgame" , new Activity.HmlGame("#hml-game-container", "#hml-game-btn", "#select-game"));
         activityHandler.selectActivity("editor");
 
-        $("#aboutModal").load("about.html");
-        $("#helpModal").load("help.html");
-        $("#contactModal").load("contact.html");
-
-        $("#version").append(Version);
-
-        $('[data-toggle="tooltip"]').tooltip(); 
         new New("#new-btn", activityHandler);
         var save = new Save(null, activityHandler);
         new Load(null, activityHandler);
         new Delete("#delete-btn", activityHandler);
         new Export("#export-pdf-btn", activityHandler);
-
         new HotkeyHandler().setGlobalHotkeys(activityHandler, save);
 
+        $('[data-toggle="tooltip"]').tooltip(); 
         Activity.addTooltips();
 
         ContactForm.init();
     });
 
-    var timer;
+    $("#aboutModal").load("about.html", () => $("#version").append(getVersion()));
+    $("#helpModal").load("help.html");
+    $("#contactModal").load("contact.html");
 
     export function showNotification(text : string, time : number) : void {
         window.clearTimeout(timer);
