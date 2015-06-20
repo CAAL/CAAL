@@ -37,5 +37,10 @@ module GUI {
 
     }
 
-
+    export function highlightTransitions(uiGraph, startId, transitions) {
+        transitions.forEach(t => {
+            uiGraph.highlightEdge(startId, t.targetProcess.id);
+            startId = t.targetProcess.id;
+        });  
+    }
 }
