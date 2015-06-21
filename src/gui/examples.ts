@@ -156,7 +156,8 @@ var examples : any[] = [
             "FastUser = 'press.1.'press.FastUser;",
             "SlowUser = 'press.3.'press.SlowUser;",
             "",
-            "Lightswitch = (FastUser | Off) \\ {press};"
+            "Lightswitch1 = (FastUser | Off) \\ {press};",
+            "Lightswitch2 = (SlowUser | Off) \\ {press};"
         ].join("\n"),
         properties: [],
         inputMode: "TCCS"
@@ -170,7 +171,8 @@ var examples : any[] = [
             "GoodAirbag = crash.1.'inflate.GoodAirbag;",
             "BadAirbag  = crash.3.'inflate.BadAirbag;",
             "",
-            "Impl = (Driver | GoodAirbag) \\ {crash, inflate};",
+            "Impl1 = (Driver | GoodAirbag) \\ {crash, inflate};",
+            "Impl2 = (Driver | BadAirbag) \\ {crash, inflate};",
             "Spec = drive.Spec;",
         ].join("\n"),
         properties: [],
@@ -215,6 +217,70 @@ var examples : any[] = [
                     topFormula: "X;",
                     definitions: "X max= [acc]<<0,7>><'del>tt and [-]X;",
                     comment: "When acc is performed the message can be delivered within 7 time units."
+                }
+            }
+        ],
+        inputMode: "TCCS"
+    },
+    {
+        title: "Fischer's Mutual Exclusion",
+        ccs: [
+            "* Fischer's Protocol for Mutual Exclusion (instance for two processes)",
+            "",
+            "* a template for process behaviour (to be instantiated by relabelling later on)",
+            "Sleeping = try.(read0.Waiting + tau.Sleeping); * a visible 'try' action is used to avoid urgency ",
+            "Waiting = 1.'writeMe.Trying; * wait one time unit and write my ID to the variable L",
+            "Trying = 2.(readMe.CS + readNotMe.Sleeping);  * wait two time units, if the id in L is still me, enter critical section",
+            "CS = enter.exit.'write0.Sleeping;",
+            "",
+            "* channel renaming to create two instances of the processes",
+            "P1 = Sleeping[ write1/writeMe, read1/readMe, notme1/readNotMe ];",
+            "P2 = Sleeping[ write2/writeMe, read2/readMe, notme2/readNotMe ];",
+            "",
+            "* implementation of variable L with values 0, 1, and 2",
+            "Update = write0.L0 + write1.L1 + write2.L2;",
+            "L0 = 'read0.L0 + Update + 'notme1.L0 + 'notme2.L0 ;",
+            "L1 = 'read1.L1 + Update + 'notme2.L1;",
+            "L2 = 'read2.L2 + Update + 'notme1.L2;",
+            "",
+            "set Internals = {read0, read1, read2, write0, write1, write2, notme1, notme2};",
+            "System = (P1 | P2 | L0) \\ Internals; * protocol implementation",
+            "",
+            "EnterExit = enter.exit.EnterExit; * expected abstract behaviour of the protocol",
+            "HideTry = try.HideTry; * allows the specification to ignore any 'try' actions",
+            "Spec = EnterExit | HideTry; * specification of the protocol"
+        ].join("\n"),
+        properties: [
+            {
+                className: "TraceInclusion",
+                status: 0,
+                options: {
+                    type: "weak",
+                    time: "untimed",
+                    firstProcess: "System",
+                    secondProcess: "Spec",
+                    comment: "Trace inclusion guarantees that the system must after every enter perform (possibly after some tau and try sequence) the exit action."
+                }
+            },
+            {
+                className: "HML",
+                status: 0,
+                options: {
+                    process: "System",
+                    definitions: "Safe max= [[enter]]NoMoreEnter and [-]Safe;\nNoMoreEnter max= [[enter]]ff and [[try]]NoMoreEnter;",
+                    topFormula: "Safe; ",
+                    comment: "Describes that it is impossible at any moment to perform two enters after each other, with only tau and try actions in between (after each enter we must eventually see exit before enter can be done again)."
+                }
+            },
+            {
+                className: "Simulation",
+                status: 0,
+                options: {
+                    type: "weak",
+                    time: "untimed",
+                    firstProcess: "System",
+                    secondProcess: "Spec",
+                    comment: "Stronger property than trace inclusion but because it holds, it implies also trace inclusion and verification of simulation usually takes less time than trace inclusion."
                 }
             }
         ],
