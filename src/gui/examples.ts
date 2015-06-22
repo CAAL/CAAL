@@ -285,5 +285,112 @@ var examples : any[] = [
             }
         ],
         inputMode: "TCCS"
+    },
+    {
+        title: "Dekker's Mutual Exclusion",
+        ccs: [
+            "* dekker-2 (written by David Walker) ",
+            "* ",
+            "* This file contains a development of Dekker's mutual exclusion algorithm for two processes. ",
+            "* ",
+            "* The specification is the agent \"Spec\", and the implementation is \"Dekker-2\". ",
+            "* ",
+            "* A complete description of this development of the algorithm can be ",
+            "* found in the Edinburgh University technical report ECS-LFCS-89-91 ",
+            "* by David Walker, entitled \"Automated Analysis of Mutual Exclusion Algorithms using CCS",
+            "*",
+            "* This example is taken diretly from CWB example database found here (using the CWB input syntax):",
+            "* http://homepages.inf.ed.ac.uk/perdita/cwb/Examples/ccs/dekker-2.cwb",
+            "",
+            "agent B1f = 'b1rf.B1f + b1wf.B1f + b1wt.B1t; ",
+            "agent B1t = 'b1rt.B1t + b1wt.B1t + b1wf.B1f; ",
+            "agent B2f = 'b2rf.B2f + b2wf.B2f + b2wt.B2t; ",
+            "agent B2t = 'b2rt.B2t + b2wt.B2t + b2wf.B2f; ",
+            "",
+            "agent K1 = 'kr1.K1 + kw1.K1 + kw2.K2; ",
+            "agent K2 = 'kr2.K2 + kw2.K2 + kw1.K1; ",
+            "",
+            "agent P1 = 'b1wt.P11; ",
+            "agent P11 = b2rf.P14 + b2rt.P12; ",
+            "agent P12 = kr1.P11 + kr2.'b1wf.P13; ",
+            "agent P13 = kr2.P13 + kr1.'b1wt.P11; ",
+            "agent P14 = enter.exit.'kw2.'b1wf.P1; ",
+            "",
+            "agent P2 = 'b2wt.P21; ",
+            "agent P21 = b1rf.P24 + b1rt.P22; ",
+            "agent P22 = kr2.P21 + kr1.'b2wf.P23; ",
+            "agent P23 = kr1.P23 + kr2.'b2wt.P21; ",
+            "agent P24 = enter.exit.'kw1.'b2wf.P2;",
+            "",
+            "agent Pre-Dekker-2 = P1 | P2 | K1 | B1f | B2f; ",
+            "set L = {b1rf,b1rt,b1wf,b1wt,b2rf,b2rt,b2wf,b2wt,kr1,kr2,kw1,kw2}; ",
+            "agent Dekker-2 = Pre-Dekker-2\\L;",
+            "",
+            "agent Spec = enter.exit.Spec;"
+        ].join("\n"),
+        properties: [
+            {
+                className: "Bisimulation",
+                status: 0,
+                options: {
+                    type: "weak",
+                    time: "",
+                    firstProcess: "Spec",
+                    secondProcess: "Dekker-2",
+                    comment: "The protocol guarantees mutual exclusion as the implementation and specification are weakly bisimilar."
+                }
+            },
+            {
+                className: "HML",
+                status: "0",
+                options: {
+                    "process": "Dekker-2",
+                    "definitions": "NoTwoEnter max= [[enter]][[enter]]ff and [-]NoTwoEnter;",
+                    "topFormula": "NoTwoEnter;",
+                    "comment": "The fixed point expresses the invariant that it is never possible to perform twice the action enter critical section after each other."
+                }
+            }
+        ],
+        inputMode: "CCS"
+    },
+    {
+        title: "Basic Buffer Example",
+        ccs: [
+            "* This is a basic buffer example in CWB syntax taken form",
+            "* http://homepages.inf.ed.ac.uk/perdita/cwb/Examples/ccs/ (basic.cwb)",
+            "",
+            "agent Buff3 = (C0 | C1 | C2)\\{c,d}; ",
+            "agent C0 = Cell[c/b]; ",
+            "agent C1 = Cell[c/a,d/b]; ",
+            "agent C2 = Cell[d/a]; ",
+            "agent Cell = a.'b.Cell; ",
+            "",
+            "agent Spec = a.Spec'; ",
+            "agent Spec' = 'b.Spec + a.Spec'';",
+            "agent Spec'' = 'b.Spec' + a.'b.Spec'';"
+        ].join("\n"),
+        properties: [
+            {
+                className: "HML",
+                status: 0,
+                options: {
+                    process: "Buff3",
+                    definitions: "Deadlock min= [-]ff or <->Deadlock;",
+                    topFormula: "Deadlock;",
+                    comment: "This property is checking the existence of deadlock."
+                }
+            },
+            {
+                className: "Bisimulation",
+                status: 0,
+                options: {
+                    type: "weak",
+                    firstProcess: "Buff3",
+                    secondProcess: "Spec",
+                    comment: "Buffer and its specification are weakly bisimilar."
+                }
+            }
+        ],
+        inputMode: "CCS"
     }
 ]
