@@ -31,15 +31,24 @@ module GUI.Widget {
                 .on("mouseleave", "tr", this.onRowHoverLeave.bind(this));
         }
 
-        setTransitions(source, transitions : CCS.Transition[] ) {
+        setTransitions(source, transitions : CCS.Transition[], abstractingSuccGen : CCS.SuccessorGenerator) {
             var $body = $(this.body);
             $body.empty();
             this.transitions = transitions.slice(0);
             this.transitions.forEach((transition, index) => {
+                var $action
                 var $row = $("<tr></tr>"),
                     $source = $("<td></td>").append(this.labelWithTooltip(source)),
-                    $action = $("<td></td>").append(transition.action.toString()),
                     $target = $("<td></td>").append(this.labelWithTooltip(transition.targetProcess));
+                
+                if (abstractingSuccGen instanceof Traverse.AbstractingSuccessorGenerator) {
+                    // Add strict path to the tooltip when it is a weak transition
+                    var actionTransition = "=" + transition.action.toString() + "=>";
+                    $action = $("<td></td>").append(Activity.Tooltip.setTooltip(Activity.Tooltip.wrap(actionTransition), Activity.Tooltip.strongSequence(abstractingSuccGen, source, transition.action, transition.targetProcess, this.graph)))
+                } else {
+                    $action = $("<td></td>").append("-" + transition.action.toString() + "->");
+                }
+
                 $row.append($source, $action, $target);
                 $row.data("data-transition-idx", index);
                 $body.append($row);

@@ -488,7 +488,7 @@ module Activity {
                 this.gamelog.printToGameLog(gameLogObject);
 
                 this.setActionWidget(this.transitionTable) // set widget to be transition table
-                this.transitionTable.setTransitions(this.hmlGameLogic.state.process, this.hmlGameLogic.getAvailableTransitions());
+                this.transitionTable.setTransitions(this.hmlGameLogic.state.process, this.hmlGameLogic.getAvailableTransitions(), this.hmlGameLogic.getCurrentSucc());
             }
             else if (this.hmlGameLogic.getNextActionType() === ActionType.formula) {
                 gameLogObject.setTemplate("Select a subformula")
@@ -696,16 +696,18 @@ module Activity {
             gameLogPlay.addLabel({text: (this.getCurrentPlayer() === this.human ? 
                 "You " + ((this.human === Player.defender) ? "(defender)" : "(attacker)") 
                 : this.computer === Player.defender ? "Defender" : "Attacker")});
-            // gameLogPlay.addLabel({text: (this.getCurrentPlayer() === Player.attacker ? "Attacker" : "Defender")});
             gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(this.state.process), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
+           
             if (this.isWeak()) {
+                // Add strict path to the tooltip when it is a weak transition
                 var actionTransition = "=" + transition.action.toString() + "=>";
                 gameLogPlay.addLabel({text: actionTransition, tag: "<span>",attr: [{name: "class", value: "ccs-tooltip-data"},
-                {name: "data-tooltip", value: Tooltip.strongSequence(<Traverse.WeakSuccessorGenerator>this.weakSuccGen, this.state.process, transition.action, transition.targetProcess, this.graph)}]});
+                {name: "data-tooltip", value: Tooltip.strongSequence(<Traverse.AbstractingSuccessorGenerator>this.weakSuccGen, this.state.process, transition.action, transition.targetProcess, this.graph)}]});
             }
             else {
                 gameLogPlay.addLabel({text: "-" + transition.action.toString() + "->", tag: "<span>", attr: [{name: "class", value: "monospace"}]});
             }
+            
             gameLogPlay.addLabel({text: gameLogPlay.labelForProcess(transition.targetProcess), tag: "<span>", attr: [{name: "class", value: "ccs-tooltip-process"}]});
             this.writeToGamelog(gameLogPlay);
 
@@ -825,28 +827,6 @@ module Activity {
             throw "Unhandled formula type in JudgeUnfold";
         }
 
-        /*private updateCurrentDgNode(id : string, describedEdges): void {
-            // update the currentDgNode after each play/unfolding.
-            for (var descEdge in describedEdges){
-                var hyberedge = describedEdges[descEdge];
-                //loop through the target nodes, and find the selected subformula.
-                //PROBLEM, what if there are two of the same subformula? whould this become a problem?
-                for (var i = 0; i < hyberedge.nodeDescriptions.length; i++){
-                    var dgNode = hyberedge.nodeDescriptions[i];
-                    if(this.getNextActionType() === ActionType.formula || this.getNextActionType() === ActionType.variable) {
-                        if (dgNode.formula.id === id){
-                            this.currentDgNodeId = dgNode.nodeId;
-                        }
-                    }
-                    else if(this.getNextActionType() === ActionType.transition) {
-                        if (dgNode.process === id){
-                            this.currentDgNodeId = dgNode.nodeId;
-                        }
-                    }
-                }
-            }
-        }*/
-
         public getCurrentPlayer() : Player {
             var attackerMoves = [HML.ConjFormula, HML.StrongForAllFormula, HML.WeakForAllFormula, HML.FalseFormula];
             var defenderMoves = [HML.DisjFormula, HML.StrongExistsFormula, HML.WeakExistsFormula, HML.TrueFormula];
@@ -878,6 +858,16 @@ module Activity {
             throw "Unhandled formula type in getAvailableTransitions";
         }
 
+        public getCurrentSucc() : CCS.SuccessorGenerator {
+            if (this.getNextActionType() === ActionType.transition) {
+                if (this.isWeak()) {
+                    return this.weakSuccGen;
+                } else {
+                    return this.strongSuccGen;
+                }
+            }
+            throw "Unhandled formula type in getCurrentSucc";
+        }
         public isWeak() : boolean {
             var weakMoves = [HML.WeakForAllFormula, HML.WeakExistsFormula];
             var strongMoves = [HML.StrongForAllFormula, HML.StrongExistsFormula];
