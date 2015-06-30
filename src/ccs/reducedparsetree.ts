@@ -181,9 +181,9 @@ module Traverse {
                     isStageTwo : boolean) => {
                 var strongSuccessors = this.strictSuccGenerator.getSuccessors(fromProcess.id);
                 strongSuccessors.forEach(transition => {
-                    //No loops yet.
-                    if (fromProcess.id !== transition.targetProcess.id) {       
-                        var isActionAbstract = isAbstraction(transition.action);
+                    var isActionAbstract = isAbstraction(transition.action);
+                    //No loops yet with abstractions
+                    if (!isActionAbstract || fromProcess.id !== transition.targetProcess.id) {       
                         var targetId = transition.targetProcess.id;
                         var newFromData = new FromData(prevFromData, transition.action, transition.targetProcess);
                         if (!isStageTwo) {
