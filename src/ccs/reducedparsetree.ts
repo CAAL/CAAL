@@ -101,13 +101,13 @@ module Traverse {
         }
     }
 
-    class FullTransition {
+    class AbstractTransition {
         constructor(public fromId : ccs.ProcessId, public action : ccs.Action, public toId : ccs.ProcessId) {
         }
     }
 
     class FromData {
-        constructor(public prev : FromData, public action : ccs.Action, public toId : ccs.ProcessId) {
+        constructor(public prev : FromData, public action : ccs.Action, public to : ccs.Process) {
         }
     }
 
@@ -118,7 +118,7 @@ module Traverse {
         return 0;
     }
 
-    function compareTransitionTuple(left : FullTransition, right : FullTransition) : number {
+    function compareTransitionTuple(left : AbstractTransition, right : AbstractTransition) : number {
         var fromIdDiff = left.fromId.localeCompare(right.fromId);
         if (fromIdDiff !== 0) return fromIdDiff;
         var toIdDiff = left.toId.localeCompare(right.toId);
@@ -132,8 +132,8 @@ module Traverse {
         public strictSuccGenerator : ccs.SuccessorGenerator;
         public cache;
         
-        private fromTable : MapUtil.Map<FullTransition, FromData> =
-                new MapUtil.OrderedMap<FullTransition, FromData>(compareTransitionTuple);
+        private fromTable : MapUtil.Map<AbstractTransition, FromData> =
+                new MapUtil.OrderedMap<AbstractTransition, FromData>(compareTransitionTuple);
 
         constructor(abstractions : ccs.Action[], strictSuccGenerator : ccs.SuccessorGenerator, cache?) {
             this.abstractions = abstractions;
@@ -165,22 +165,48 @@ module Traverse {
             var stage1Processes = [];
             var stage2Processes = [];
 
-            var addTransitions = (array : any[], prevFromData : FromData, fromProcessId : ccs.ProcessId, isStageTwo : boolean) => {
-                var strongSuccessors = this.strictSuccGenerator.getSuccessors(fromProcessId);
-                this.abstractions.forEach(abstraction => {
-                    strongSuccessors.forEach(transition => {
-                        if (!isStageTwo || transition.action.equals(abstraction)) {
-                            //If in stage two then reuse the first non-abstract action that was taken.
-                            //Afterwards all non-abstractions after the first can be inferred to really be abstractions.
-                            var action = isStageTwo ? prevFromData.action : transition.action;
-                            array.push(new FromData(prevFromData, action, transition.targetProcess.id));
-                            result.add(new CCS.Transition(action, transition.targetProcess));
+            var isAbstraction = (action) => {
+                return this.abstractions.some(abstraction => abstraction.equals(action));
+            };
+
+            // Precondition: there must be non abstraction
+            var findNonAbstraction = (fromData) => {
+                if (isAbstraction(fromData.action)) return findNonAbstraction(fromData.prev);
+                return fromData.action;
+            };
+
+            var addTransitions = (
+                    prevFromData : FromData,
+                    fromProcess : ccs.Process,
+                    isStageTwo : boolean) => {
+                var strongSuccessors = this.strictSuccGenerator.getSuccessors(fromProcess.id);
+                strongSuccessors.forEach(transition => {
+                    //No loops yet.
+                    if (fromProcess.id !== transition.targetProcess.id) {       
+                        var isActionAbstract = isAbstraction(transition.action);
+                        var targetId = transition.targetProcess.id;
+                        var newFromData = new FromData(prevFromData, transition.action, transition.targetProcess);
+                        if (!isStageTwo) {
+                            if (isActionAbstract) { // ...  --1/tau--> X
+                                this.abstractions.forEach(abstraction => {
+                                    this.fromTable.set(new AbstractTransition(sourceProcessId, abstraction, targetId), newFromData);
+                                });
+                                stage1Processes.push(newFromData);
+                            } else {  // ... --a--> X
+                                this.fromTable.set(new AbstractTransition(sourceProcessId, transition.action, targetId), newFromData);
+                                stage2Processes.push(newFromData);
+                            }
+                        } else if (isActionAbstract) { // --a--> ....  --1/tau-> X
+                            var nonAbstractAction = findNonAbstraction(prevFromData);
+                            this.fromTable.set(new AbstractTransition(sourceProcessId, nonAbstractAction, targetId), newFromData);
+                            stage2Processes.push(newFromData);
                         }
-                    });
+                    }
                 });
             };
 
-            addTransitions(stage1Processes, null, sourceProcessId, false);
+            //Abstraction does not matter in this call since stage two is false.
+            addTransitions(null, sourceProcess, false);
 
             //Stage 1
             //Find all --tau-->* and
@@ -188,14 +214,14 @@ module Traverse {
             while (stage1Processes.length > 0) {
                 var fromData = stage1Processes.pop();
                 //  P == action ==> Q
-                var fullTransition = new FullTransition(sourceProcessId, fromData.action, fromData.toId);
-                if (!this.fromTable.has(fullTransition)) {
-                    this.fromTable.set(fullTransition, fromData);
-                    if (this.abstractions.some(abstraction => abstraction.equals(fromData.action))) {
-                        addTransitions(stage1Processes, fromData, fromData.toId, false);
-                    } else {
-                        addTransitions(stage2Processes, fromData, fromData.toId, true);
-                    }
+                var transition = new CCS.Transition(fromData.action, fromData.to);
+                if (!result.contains(transition)) {
+                    //Know only abstracts in this loop.
+                    //If  --1--> X then also --tau--> X and reverse
+                    this.abstractions.forEach(abstraction => {
+                        result.add(new CCS.Transition(abstraction, fromData.to));
+                    });
+                    addTransitions(fromData, fromData.to, false);
                 }
             }
 
@@ -203,19 +229,20 @@ module Traverse {
             //Find all continuing  P --tau-->* when already --tau->* --x--> P
             while (stage2Processes.length > 0) {
                 var fromData = stage2Processes.pop();
-                var fullTransition = new FullTransition(sourceProcessId, fromData.action, fromData.toId);
-                if (!this.fromTable.has(fullTransition)) {
-                    this.fromTable.set(fullTransition, fromData);
-                    addTransitions(stage2Processes, fromData, fromData.toId, true);
+                var nonAbstractAction = findNonAbstraction(fromData);
+                var transition = new CCS.Transition(nonAbstractAction, fromData.to);
+                if (!result.contains(transition)) {
+                    result.add(transition);
+                    addTransitions(fromData, fromData.to, true);
                 }
             }
 
             //Add tau loop to from set:  P ==tau=> P, by P -- tau -> P
             this.abstractions.forEach(abstraction => {
-                var fullTransition = new FullTransition(sourceProcessId, abstraction, sourceProcessId);
-                if (!this.fromTable.has(fullTransition)) {
-                    var fromData = new FromData(null, abstraction, sourceProcessId);
-                    this.fromTable.set(fullTransition, fromData);
+                var abstractTransition = new AbstractTransition(sourceProcessId, abstraction, sourceProcessId);
+                if (!this.fromTable.has(abstractTransition)) {
+                    var fromData = new FromData(null, abstraction, sourceProcess);
+                    this.fromTable.set(abstractTransition, fromData);
                 }
                 result.add(new CCS.Transition(abstraction, sourceProcess));
             });
@@ -226,30 +253,16 @@ module Traverse {
 
         //Only call with arguments, for which getSuccessors(fromId) has yielded Transition(action, proces.toId)
         getStrictPath(fromId : ccs.ProcessId, action : ccs.Action, toId : ccs.ProcessId) : ccs.Transition[] {
-            var path = [],
+            var transitions = [],
                 succGen = this.strictSuccGenerator;
-
-            var fromData = this.fromTable.get(new FullTransition(fromId, action, toId));
+            var fromData = this.fromTable.get(new AbstractTransition(fromId, action, toId));
             if (!fromData) throw "Do not call getStrictPath with unknown data.";
             do {
-                path.push(new ccs.Transition(fromData.action, succGen.getProcessById(fromData.toId)));
+                transitions.push(new ccs.Transition(fromData.action, fromData.to));
                 fromData = fromData.prev;
             } while (fromData);
-
-            path.reverse();
-            //Fix so only one non-abstraction
-            var hasNonAbstraction = false;
-            var result = path.map(transition => {
-                var resultTransition = transition;
-                if (hasNonAbstraction) {
-                    resultTransition = new ccs.Transition(this.abstractions[0], transition.targetProcess);
-                } else if (this.abstractions.every(abstraction => !abstraction.equals(transition.action))) { 
-                    hasNonAbstraction = true;
-                }
-                return resultTransition;
-            });
-
-            return result;
+            transitions.reverse();
+            return transitions;
         }
     }
     
