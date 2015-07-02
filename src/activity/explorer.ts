@@ -168,6 +168,7 @@ module Activity {
                 options["successor"] = $("input[name=option-ccs-successor]:checked").val();
                 options["collapse"] = $("input[name=option-collapse]:checked").val();
             } else {
+                options["collapse"] = $("input[name=option-tccs-collapse]:checked").val();
                 options["successor"] = $("input[name=option-tccs-successor]:checked").val();
                 options["time"] = $("input[name=option-tccs-successor]:checked").data("time");
             }
@@ -182,35 +183,43 @@ module Activity {
 
             var options = this.getOptions();
             this.succGenerator = CCS.getSuccGenerator(this.graph,
-                {inputMode: options.inputMode, succGen: options.successor, reduce: options.simplify});
+                {inputMode: options.inputMode, succGen: options.successor, time: options.time, reduce: options.simplify});
             var process = this.succGenerator.getProcessByName(options.process);
 
-            if (this.project.getInputMode() === InputMode.CCS) {
-                if (options.collapse !== "none") {
-                    try {
-                        //Always attack with strong succ generator (improves performance)
-                        var attackSuccGen = CCS.getSuccGenerator(this.graph, {succGen: "strong", reduce: options.simplify});
-                        var defendSuccGen = CCS.getSuccGenerator(this.graph, {succGen: options.collapse, reduce: options.simplify});
-                        var collapse = Equivalence.getBisimulationCollapse(attackSuccGen, defendSuccGen, process.id, process.id);
-                        var collapseSuccGen = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
-                        //Wrap the transition relation used in the collapse.
-                        this.succGenerator = collapseSuccGen;
-                        //Process have been replaced by collapse.
-                        process = collapseSuccGen.getCollapseForProcess(process.id);
-                    } catch (err) {
-                        if (err.name === "CollapseTooLarge") {
-                            //Possible, this restriction should be removed eventually and the calculation run in a worker.
-                            this.showMessageBox("Unable to Collapse", "There are too many processes to collapse.");
-                            //This is safe (no looping), because this code is not run when 'none' collapse is set.
-                            $("input[name=option-collapse][value='none']").prop("checked", true);
-                        } else {
-                            throw err;
-                        }
+            var mode = this.project.getInputMode();
+
+            if (options.collapse !== 'none') {
+                var defendInfos = {
+                    'strong': {succGen: 'strong', time: undefined},
+                    'weak': {succGen: 'weak'. time: undefined},
+                    'strong-timed': {succGen: 'strong', time: 'timed'},
+                    'strong-untimed': {succGen: 'strong', time: 'untimed'},
+                    'weak-timed': {succGen: 'weak', time: 'timed'},
+                    'weak-untimed': {succGen: 'weak', time: 'untimed'}
+                };
+                var defInfo = defendInfos[options.collapse];
+                if (!defInfo) throw "Invalid collapse setting: '" + options.collapse + "'";
+                try {
+                    //Always attack with strong succ generator (improves performance)
+                    var attackSuccGen = CCS.getSuccGenerator(this.graph, {inputMode: mode, succGen: "strong", time: "timed", reduce: options.simplify});
+                    var defendSuccGen = CCS.getSuccGenerator(this.graph, {inputMode: mode, succGen: defInfo.succGen, time: defInfo.time, reduce: options.simplify});
+                    var collapse = Equivalence.getBisimulationCollapse(attackSuccGen, defendSuccGen, process.id, process.id);
+                    var collapseSuccGen = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
+                    //Wrap the transition relation used in the collapse.
+                    this.succGenerator = collapseSuccGen;
+                    //Process have been replaced by collapse.
+                    process = collapseSuccGen.getCollapseForProcess(process.id);
+                } catch (err) {
+                    if (err.name === "CollapseTooLarge") {
+                        //Possible, this restriction should be removed eventually and the calculation run in a worker.
+                        this.showMessageBox("Unable to Collapse", "There are too many processes to collapse.");
+                        //This is safe (no looping), because this code is not run when 'none' collapse is set.
+                        $("input[name=option-collapse][value='none']").prop("checked", true);
+                        $("input[name=option-tccs-collapse][value='none']").prop("checked", true);
+                    } else {
+                        throw err;
                     }
                 }
-            } else {
-                this.succGenerator = CCS.getSuccGenerator(this.graph,
-                    {inputMode: options.inputMode, time: options.time, succGen: options.successor, reduce: options.simplify});
             }
 
             this.lastSelectedProcess = process;
