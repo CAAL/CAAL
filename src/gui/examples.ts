@@ -25,12 +25,12 @@ var examples : any[] = [
             "set L = {b1rf, b2rf, b1rt, b2rt, b1wf, b2wf, b1wt, b2wt, kr1, kr2, kw1, kw2};",
             "Peterson = (P1 | P2 | B1f | B2f | K1) \\ L;",
             "",
-            "Spec = enter1.exit1.Spec + enter2.exit2.Spec;",
+            "Spec = enter1.exit1.Spec + enter2.exit2.Spec;"
         ].join("\n"),
         properties: [
             {
                 className: "TraceEquivalence",
-                status: 3,
+                status: 0,
                 options: {
                     type: "weak",
                     firstProcess: "Peterson",
@@ -39,11 +39,21 @@ var examples : any[] = [
             },
             {
                 className: "Bisimulation",
-                status: 3,
+                status: 1,
                 options: {
                     type: "weak",
                     firstProcess: "Peterson",
-                    secondProcess:"Spec"
+                    secondProcess: "Spec"
+                }
+            },
+            {
+                className: "HML",
+                status: 0,
+                options: {
+                    process: "Peterson",
+                    definitions: "MutualExclusion max= [[enter1]][[enter2]]ff and [[enter2]][[enter1]]ff and [-]MutualExclusion;",
+                    topFormula: "MutualExclusion;",
+                    comment: "An invariant property that guarantees that immediately after enter1 it is not possible to perform enter2 and vice versa. "
                 }
             }
         ],
@@ -58,7 +68,7 @@ var examples : any[] = [
             "",
             "Orchard = (AppleTree | Man) \\ {shake, redapple, greenapple};",
             "",
-            "Spec = walk.Spec;",
+            "Spec = walk.Spec;"
         ].join("\n"),
         properties:[
             {
@@ -107,7 +117,7 @@ var examples : any[] = [
         properties: [
             {
                 className: "Bisimulation",
-                status: 3,
+                status: 1,
                 options: {
                     type: "weak",
                     firstProcess: "Impl",
@@ -116,31 +126,11 @@ var examples : any[] = [
             },
             {
                 className: "TraceEquivalence",
-                status: 3,
+                status: 1,
                 options: {
                     type: "weak",
                     firstProcess: "Impl",
                     secondProcess: "Spec"
-                }
-            },
-            {
-                className: "HML",
-                status: 3,
-                options: {
-                    process: "Impl",
-                    topFormula: "X;",
-                    definitions: "X min= [-]ff or <->X;",
-                    comment: "Reachable deadlock."
-                }
-            },
-            {
-                className: "HML",
-                status: 3,
-                options: {
-                    process: "Impl",
-                    topFormula: "Y;",
-                    definitions: "Y min= Z or <->Y; Z max= <tau>Z;",
-                    comment: "Reachable livelock."
                 }
             }
         ],
