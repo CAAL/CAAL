@@ -59,11 +59,11 @@ module Activity {
             
             for (var i = 0; i < strictPath.length; i++) {
                 var actionStr : string;
-                if (abstractingSuccGen.getAbstractions().some(abstraction => abstraction.getLabel() === strictPath[i].action.getLabel())) {
-                    actionStr = abstractingSuccGen.getAbstractions().map(abstraction => abstraction.toString()).join("/");
-                } else {
+                // if (abstractingSuccGen.getAbstractions().some(abstraction => abstraction.getLabel() === strictPath[i].action.getLabel())) {
+                //     actionStr = abstractingSuccGen.getAbstractions().map(abstraction => abstraction.toString()).join("/");
+                // } else {
                     actionStr = strictPath[i].action.toString();
-                }
+                // }
                 strongActions += " -" + actionStr + "-> " + labelFor(strictPath[i].targetProcess);
             }
             
