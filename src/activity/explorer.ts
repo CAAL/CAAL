@@ -191,7 +191,7 @@ module Activity {
             if (options.collapse !== 'none') {
                 var defendInfos = {
                     'strong': {succGen: 'strong', time: undefined},
-                    'weak': {succGen: 'weak'. time: undefined},
+                    'weak': {succGen: 'weak', time: undefined},
                     'strong-timed': {succGen: 'strong', time: 'timed'},
                     'strong-untimed': {succGen: 'strong', time: 'untimed'},
                     'weak-timed': {succGen: 'weak', time: 'timed'},
