@@ -369,7 +369,7 @@ module DependencyGraph {
     }
 
     export function solveDgGlobalLevel(graph : DependencyGraph) : LevelMarking {
-        var S_ZERO = 1, S_ONE = 2;
+        var S_ZERO = 2, S_ONE = 3;
         // A[k]
         var Level = (function () {
             var a = {};
@@ -396,9 +396,9 @@ module DependencyGraph {
                     d[k].push(edgeL);
                 },
                 get: function(k, level) {
-                    var pairs = (d[k] || []).slice();
-                    pairs.forEach(pair => pair.push(level));
-                    return pairs;
+                    return (d[k] || []).map(pair => {
+                        return [pair[0], pair[1], level];
+                    });
                 }
             };
             return o;
@@ -432,10 +432,10 @@ module DependencyGraph {
                     var subLevel = Level.get(l[edgeIdx]);
                     highestSubLevel = Math.max(subLevel, highestSubLevel);
                     //This target node is too high level to improve "parent".
-                    if (subLevel >= candidateLevel) break; 
+                    //if (subLevel >= candidateLevel) break; 
                 }
                 //Went through all and improved?
-                if ((edgeIdx >= l.length) && (highestSubLevel+1) < kLevel) {
+                if (edgeIdx >= l.length && (highestSubLevel+1) < kLevel) {
                     Level.set(k, highestSubLevel+1);
                     W = W.concat(D.get(k, highestSubLevel+2));
                 }
