@@ -432,7 +432,7 @@ module DependencyGraph {
                     var subLevel = Level.get(l[edgeIdx]);
                     highestSubLevel = Math.max(subLevel, highestSubLevel);
                     //This target node is too high level to improve "parent".
-                    //if (subLevel >= candidateLevel) break; 
+                    if (subLevel >= kLevel) break; 
                 }
                 //Went through all and improved?
                 if (edgeIdx >= l.length && (highestSubLevel+1) < kLevel) {
