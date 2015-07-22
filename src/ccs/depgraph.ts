@@ -235,8 +235,8 @@ module DependencyGraph {
         //Performance: on different calls may sort same data again.
         var lengthDiff = nodesA.length - nodesB.length;
         if (lengthDiff !== 0) return lengthDiff;
-        var copyA = nodesA.splice();
-        var copyB = nodesB.splice();
+        var copyA = nodesA.slice();
+        var copyB = nodesB.slice();
         copyA.sort();
         copyB.sort();
         for (var i=0; i < copyA.length; ++i) {
