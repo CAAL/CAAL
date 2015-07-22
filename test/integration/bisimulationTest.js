@@ -9,7 +9,7 @@ function getStrictSuccGenerator(graph) {
 }
 
 function getWeakSuccGenerator(graph) {
-    return CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true})
+    return CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true});
 }
 
 QUnit.module("Bisimulation Tests");

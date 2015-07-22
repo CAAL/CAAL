@@ -5,18 +5,11 @@ var tvs = Traverse,
     hml = HML;
 
 function getStrictSuccGenerator(graph) {
-    var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
-        treeReducer = new tvs.ProcessTreeReducer(graph),
-        reducingGenerator = new tvs.ReducingSuccessorGenerator(strictGenerator, treeReducer);
-    return reducingGenerator;
+    return CCS.getSuccGenerator(graph, {succGen: "strong", reduce: true});
 }
 
 function getWeakSuccGenerator(graph) {
-    var strictGenerator = new ccs.StrictSuccessorGenerator(graph),
-        treeReducer = new tvs.ProcessTreeReducer(graph),
-        reducingGenerator = new tvs.ReducingSuccessorGenerator(strictGenerator, treeReducer),
-        weakGenerator = new tvs.WeakSuccessorGenerator(reducingGenerator);
-    return weakGenerator;
+    return CCS.getSuccGenerator(graph, {succGen: "weak", reduce: true});
 }
 
 var program = "* Sender\n" +
@@ -65,7 +58,6 @@ var program = "* Sender\n" +
     "set InternalComActs = {left0, left1, right0, right1, leftAck0, leftAck1, rightAck0, rightAck1};\n" +
     "agent Protocol = (Send0 | Med | RecvAck0) \\ InternalComActs;\n" +
     "agent ZProtocol = (ZSend0 | ZMed | ZRecvAck0) \\ InternalComActs;\n";
-
 
 function bisimulation(graph) {
     var succGen = getStrictSuccGenerator(graph),
