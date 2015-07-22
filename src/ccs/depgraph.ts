@@ -230,15 +230,13 @@ module DependencyGraph {
         getLevel(any) : number;
     }
 
+    //Fragile: Assume vertices in hyperedges are string-like.
+    //Only to be used by compareHyperedgesMFPCalculator!!!
     function compareTargetNodes(nodesA, nodesB) : number {
-        //Fragile: Assume vertices in hyperedges are string-like.
-        //Performance: on different calls may sort same data again.
         var lengthDiff = nodesA.length - nodesB.length;
         if (lengthDiff !== 0) return lengthDiff;
-        var copyA = nodesA.slice();
-        var copyB = nodesB.slice();
-        copyA.sort();
-        copyB.sort();
+        var copyA = nodesA; //Copy already done in 'load'
+        var copyB = nodesB; //Copy alredy done in 'load'
         for (var i=0; i < copyA.length; ++i) {
             var elemA = copyA[i];
             var elemB = copyB[i];
@@ -247,6 +245,7 @@ module DependencyGraph {
         return 0;
     }
     
+    //Only to be used by MinFixedPointCalculator
     function compareHyperedgesMFPCalculator(edgeA, edgeB) : number {
         if (edgeA[0] !== edgeB[0]) return edgeA[0] < edgeB[0] ? -1 : 1;
         return compareTargetNodes(edgeA[1], edgeB[1]);
@@ -284,7 +283,10 @@ module DependencyGraph {
             function load(node) {
                 var hyperedges = succGen(node);
                 for (var i=0; i < hyperedges.length; ++i) {
-                    W.push([node, hyperedges[i]]);
+                    //sort now to prevent sorting later on comparisons.
+                    var hyperEdge = hyperedges[i].slice();
+                    hyperEdge.sort(); 
+                    W.push([node, hyperEdge]);
                 }
             }
 
