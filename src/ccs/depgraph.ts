@@ -331,7 +331,6 @@ module DependencyGraph {
                 if (numOnes === tNodes.length && sourceLevel > (maxTargetLevel+1)) {
                     Level[source] = maxTargetLevel+1;
                     Deps[source].forEach(edge => W.push(edge));
-                    // W = W.concat(Deps[source]);
                     if (("" + source) === solveNodeStr) {
                         return;
                     }
