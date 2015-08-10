@@ -3,7 +3,7 @@ module Activity {
     export class Verifier extends Activity {
         private graph : CCS.Graph;
         private timer : number;
-        private verificationQueue : Property.Property[];
+        private queue : Property.Property[];
         private verifyingProperty = null;
         private formulaEditor : any;
         private definitionsEditor : any;
@@ -11,7 +11,7 @@ module Activity {
         constructor(container : string, button : string) {
             super(container, button);
 
-            this.verificationQueue = [];
+            this.queue = [];
 
             $("#add-property").on("click", () => this.showPropertyModal());
             $("#verify-all").on("click", () => this.verifyAll());
@@ -68,6 +68,10 @@ module Activity {
                 this.displayProperties();
                 this.setPropertyModalOptions();
             }
+        }
+
+        public onHide() : void {
+            this.stopVerify();
         }
 
         private displayProperty(property : Property.Property) : void {
@@ -287,16 +291,16 @@ module Activity {
         }
 
         private verifyNext() : void {
-            if (this.verificationQueue.length > 0) {
-                var property = this.verificationQueue.shift();
+            if (this.queue.length > 0) {
+                var property = this.queue.shift();
                 this.verify({data: {property: property}});
             }
         }
 
         private verifyAll() : void {;
-            this.verificationQueue = [];
+            this.queue = [];
             var properties = this.project.getProperties();
-            properties.forEach((property) => this.verificationQueue.push(property));
+            properties.forEach((property) => this.queue.push(property));
             this.verifyNext();
         }
 
@@ -305,6 +309,7 @@ module Activity {
                 this.verifyingProperty.abortVerification();
                 this.enableVerification();
                 this.displayProperty(this.verifyingProperty);
+                this.queue = [];
                 this.verifyingProperty = null;
             }
         }
