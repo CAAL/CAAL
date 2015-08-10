@@ -4,7 +4,7 @@ module Activity {
         private graph : CCS.Graph;
         private timer : number;
         private verificationQueue : Property.Property[];
-        private verificationInProgress : boolean;
+        private verifyingProperty = null;
         private formulaEditor : any;
         private definitionsEditor : any;
 
@@ -12,10 +12,10 @@ module Activity {
             super(container, button);
 
             this.verificationQueue = [];
-            this.verificationInProgress = false;
 
             $("#add-property").on("click", () => this.showPropertyModal());
             $("#verify-all").on("click", () => this.verifyAll());
+            $("#verify-stop").on("click", () => this.stopVerify());
             $("input[name=property-type]").on("change", () => this.showSelectedPropertyType());
 
             this.formulaEditor = ace.edit("hml-formula-editor");
@@ -279,10 +279,10 @@ module Activity {
         }
 
         private verify(e) : void {
-            if (!this.verificationInProgress) {
-                this.verificationInProgress = true;
+            if (this.verifyingProperty == null) {
+                this.verifyingProperty = e.data.property;
                 this.disableVerification();
-                e.data.property.verify((property) => this.verificationEnded(property));
+                this.verifyingProperty.verify((property) => this.verificationEnded(property));
             }
         }
 
@@ -300,8 +300,17 @@ module Activity {
             this.verifyNext();
         }
 
+        private stopVerify() : void {
+            if (this.verifyingProperty != null) {
+                this.verifyingProperty.abortVerification();
+                this.enableVerification();
+                this.displayProperty(this.verifyingProperty);
+                this.verifyingProperty = null;
+            }
+        }
+
         private verificationEnded(property : Property.Property) {
-            this.verificationInProgress = false;
+            this.verifyingProperty = null;
             this.enableVerification();
             this.displayProperty(property);
             this.verifyNext();
