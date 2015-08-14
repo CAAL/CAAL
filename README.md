@@ -53,7 +53,7 @@ npm run release-notest
 
 #### Troubleshooting
 
-If you see the following JavaScript errors in the browser console upon running the tool.
+You might see the following JavaScript errors in the browser console upon running the tool.
 ```
 ace.js:14346 Uncaught SyntaxError: Unexpected token ILLEGAL
 editor.ts:19 Uncaught ReferenceError: ace is not defined
