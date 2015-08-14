@@ -20,7 +20,7 @@ A live demo of CAAL is available at [caal.cs.aau.dk](http://caal.cs.aau.dk/)
 
 ####Setup
 
-All you need is [Node.js](http://nodejs.org/) and npm installed.
+All you need is to have installed is [Node.js](http://nodejs.org/), npm, and Python (for building ace).
 Clone this repository and run the following commands in the root directory of the repository:
 ```bash
 npm install
@@ -31,6 +31,8 @@ npm install
 ```
 
 #### Building
+
+To build CAAL, run the following command in the root directory.
 
 ```bash
 npm run build
@@ -44,18 +46,20 @@ npm run release
 ```
 The release will be zipped to ```release.tar.gz```. ([caal.cs.aau.dk](http://caal.cs.aau.dk/) is running the latest release.)
 
-Another option (not recommeded) is to compile the release without running tests:
+Another option (not recommended) is to compile the release without running tests:
 ```bash
 npm run release-notest
 ```
 
 #### Troubleshooting
 
-If you experience errors with the Ace editor upon running the tool, such as
+If you see the following JavaScript errors in the browser console upon running the tool.
 ```
 ace.js:14346 Uncaught SyntaxError: Unexpected token ILLEGAL
 editor.ts:19 Uncaught ReferenceError: ace is not defined
 ```
+The problem is that some line endings characters are causing issues. One possible method to fix this is to run the following commands.
+
 1. Delete the directory ``` modules/ace ```.
 2. Run ```git config --global core.autocrlf input```.
 3. Run the above setup again.
