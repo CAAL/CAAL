@@ -5,7 +5,8 @@
   "dependencies": {
     "typescript": "1.4.x",
     "pegjs": "~0.8.0",
-    "jake": "latest"
+    "jake": "latest",
+    "connect": "latest"
   },
   "devDependencies": {
     "node-qunit-phantomjs": ">=1.2.0"
