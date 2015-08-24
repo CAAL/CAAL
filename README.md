@@ -11,10 +11,7 @@ A live demo of CAAL is available at [caal.cs.aau.dk](http://caal.cs.aau.dk/)
 
 #### Offline version
 
-- Download and install [Node.js](http://nodejs.org/).
-- Download and unzip the latest [release](http://caal.cs.aau.dk/release.tar.gz).
-- Open a shell and run ```node server``` in the root directory.
-- Open a web browser and navigate to ```http://localhost:8090```.
+Download and unzip the latest [release](http://caal.cs.aau.dk/caal-local.zip) for offline use. Extract the package and run the scripts; there is a script for Windows, MacOs, and Linux. For more information read the README bundled with the package.
 
 ## For developers
 
