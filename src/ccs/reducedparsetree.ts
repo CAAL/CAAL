@@ -296,10 +296,11 @@ module Traverse {
         }
 
         private reduceSuccessors(transitionSet : ccs.TransitionSet) {
+            var result = new ccs.TransitionSet();
             transitionSet.forEach(transition => {
-                transition.targetProcess = this.reducer.visit(transition.targetProcess);
+                result.add(new ccs.Transition(transition.action, this.reducer.visit(transition.targetProcess)));
             });
-            return transitionSet;
+            return result;
         }
     }
 }
