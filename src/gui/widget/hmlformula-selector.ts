@@ -45,9 +45,8 @@ module GUI.Widget {
 
                 this.currentSubFormulas.forEach((subFormula, index) => {
                     var $row = $("<tr></tr>"),
-                        hmlNotationVisitor = new Traverse.HMLNotationVisitor(false, true, false),
+                        hmlNotationVisitor = new Traverse.HMLNotationVisitor(false, true, true),
                         $subFormulaTd = $("<td></td>").append(hmlNotationVisitor.visit(subFormula));
-
 
                     $row.append($subFormulaTd);
                     $row.data("data-transition-idx", index);
