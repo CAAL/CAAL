@@ -1,6 +1,6 @@
 {
   "name": "CAAL",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "",
   "dependencies": {
     "typescript": "1.4.x",
