@@ -210,7 +210,7 @@ module Property {
         }
 
         public getGameConfiguration() : any {
-            var formulaSetForProperty = this.project.getFormulaSetsForProperties()[this.id];
+            var formulaSetForProperty = this.project.getFormulaSetForProperty(this);
             var HmlConfiguration = Object.create(null),
                 graph : ccs.Graph = this.project.getGraph();
 

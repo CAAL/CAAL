@@ -124,15 +124,18 @@ class Project {
         }
     }
 
+    public getFormulaSetForProperty(prop) {
+        if (prop instanceof Property.HML) {
+            return this.createFormulaSetFromProperty(prop);
+        }
+        return null;
+    }
+
     public getFormulaSetsForProperties() {
         var result = {};
-
         this.properties.forEach((prop) => {
-            if (prop instanceof Property.HML){
-                result[prop.getId()] = this.createFormulaSetFromProperty(prop);
-            }
+            result[prop.getId()] = this.getFormulaSetForProperty(prop);
         });
-
         return result;
     }
 
