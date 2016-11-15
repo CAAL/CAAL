@@ -131,10 +131,21 @@ class Project {
         return null;
     }
 
-    public getFormulaSetsForProperties() {
-        var result = {};
+    public getValidFormulaSetsForProperties() {
+        var result = Object.create(null);
         this.properties.forEach((prop) => {
-            result[prop.getId()] = this.getFormulaSetForProperty(prop);
+            var failed = false;
+            try {
+                var set = this.getFormulaSetForProperty(prop);
+                failed = !set;
+                if (!failed) {
+                    result[prop.getId()] = set;
+                }
+            } catch (err) {
+                //Ignore failed queries
+                failed = true;
+            }
+            console.log("Failed to create formula set");
         });
         return result;
     }

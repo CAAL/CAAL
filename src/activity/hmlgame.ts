@@ -74,7 +74,7 @@ module Activity {
                 return false;
             }
 
-            var hmlFormulaSets = project.getFormulaSetsForProperties();
+            var hmlFormulaSets = project.getValidFormulaSetsForProperties();
             if (Object.keys(hmlFormulaSets).length === 0) {
                 this.showMessageBox("No HML Formula Defined", "There must be at least one HML formula defined.");
                 return false;
@@ -202,7 +202,7 @@ module Activity {
             $(window).on("resize", () => this.resize());
             this.fullscreen.onShow();
             this.resize();
-            this.formulaSets = this.project.getFormulaSetsForProperties();
+            this.formulaSets = this.project.getValidFormulaSetsForProperties();
             
             var configIsSame : Function = (leftConfig, rightConfig) => {
                 for (var prop in leftConfig) {
@@ -262,7 +262,7 @@ module Activity {
         getDefaultConfiguration() : any {
             /*Return a default configurations*/
             var configuration = Object.create(null);
-            var formulaSets = this.project.getFormulaSetsForProperties()
+            var formulaSets = this.project.getValidFormulaSetsForProperties()
             /*configuration.strongSuccGen = this.getSuccGenerator("strong");
             configuration.weakSuccGen = this.getSuccGenerator("weak");*/
             configuration.processName = this.getNamedProcessList()[0];
