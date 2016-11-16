@@ -37,6 +37,9 @@ module Traverse {
                 if (subProcesses.length === 0) {
                     return this.graph.getNullProcess();
                 }
+                if (subProcesses.length === 1) {
+                    return subProcesses[0];
+                }
                 resultProcess = this.cache[process.id] = this.graph.newSummationProcess(subProcesses);
             }
             return resultProcess;
@@ -49,6 +52,9 @@ module Traverse {
                 subProcesses = subProcesses.filter(subProc => !(subProc instanceof ccs.NullProcess));
                 if (subProcesses.length === 0) {
                     return this.graph.getNullProcess();
+                }
+                if (subProcesses.length === 1) {
+                    return subProcesses[0];
                 }
                 resultProcess = this.cache[process.id] = this.graph.newCompositionProcess(subProcesses);
             }
