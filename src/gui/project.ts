@@ -124,6 +124,16 @@ class Project {
         }
     }
 
+    public rearrangeProperties(newPositions : number[]) {
+        if (!newPositions.every(pos => pos >= 0 && pos < this.properties.length)) {
+            throw "Invalid rearrangement of properties"
+        }
+        var prevProperties = this.properties.slice();
+        newPositions.forEach((futureIndex, oldIndex) => {
+            this.properties[futureIndex] = prevProperties[oldIndex];
+        });
+    }
+
     public getFormulaSetForProperty(prop) {
         if (prop instanceof Property.HML) {
             return this.createFormulaSetFromProperty(prop);
