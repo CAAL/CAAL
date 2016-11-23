@@ -124,15 +124,39 @@ class Project {
         }
     }
 
-    public getFormulaSetsForProperties() {
-        var result = {};
-
-        this.properties.forEach((prop) => {
-            if (prop instanceof Property.HML){
-                result[prop.getId()] = this.createFormulaSetFromProperty(prop);
-            }
+    public rearrangeProperties(newPositions : number[]) {
+        if (!newPositions.every(pos => pos >= 0 && pos < this.properties.length)) {
+            throw "Invalid rearrangement of properties"
+        }
+        var prevProperties = this.properties.slice();
+        newPositions.forEach((futureIndex, oldIndex) => {
+            this.properties[futureIndex] = prevProperties[oldIndex];
         });
+    }
 
+    public getFormulaSetForProperty(prop) {
+        if (prop instanceof Property.HML) {
+            return this.createFormulaSetFromProperty(prop);
+        }
+        return null;
+    }
+
+    public getValidFormulaSetsForProperties() {
+        var result = Object.create(null);
+        this.properties.forEach((prop) => {
+            var failed = false;
+            try {
+                var set = this.getFormulaSetForProperty(prop);
+                failed = !set;
+                if (!failed) {
+                    result[prop.getId()] = set;
+                }
+            } catch (err) {
+                //Ignore failed queries
+                failed = true;
+            }
+            console.log("Failed to create formula set");
+        });
         return result;
     }
 

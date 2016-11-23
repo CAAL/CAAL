@@ -18,6 +18,17 @@ module Activity {
             $("#verify-stop").on("click", () => this.stopVerify());
             $("input[name=property-type]").on("change", () => this.showSelectedPropertyType());
 
+            var $propertyTable = $("#property-table-properties");
+            (<any>$propertyTable).sortable({
+                axis: "y",
+                stop: (event, ui) => {
+                    var newPositions = this.project.getProperties().map(prop => {
+                        return $propertyTable.children().index(prop.getRow());
+                    });
+                    this.project.rearrangeProperties(newPositions);
+                }
+            });
+
             this.formulaEditor = ace.edit("hml-formula-editor");
             this.formulaEditor.setTheme("ace/theme/crisp");
             this.formulaEditor.getSession().setMode("ace/mode/hml");
