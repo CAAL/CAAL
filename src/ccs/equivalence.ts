@@ -214,7 +214,7 @@ module Equivalence {
                 if (count++ > maxCount) {
                     var error = new Error("Too many process pairs");
                     error.name = "CollapseTooLarge";
-                    throw "Too many process pairs";
+                    throw error;
                 }
                 reachableProcessIds.push(iterator.next());
             }

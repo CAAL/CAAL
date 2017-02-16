@@ -203,7 +203,20 @@ module Activity {
                     //Always attack with strong succ generator (improves performance)
                     var attackSuccGen = CCS.getSuccGenerator(this.graph, {inputMode: mode, succGen: "strong", time: "timed", reduce: options.simplify});
                     var defendSuccGen = CCS.getSuccGenerator(this.graph, {inputMode: mode, succGen: defInfo.succGen, time: defInfo.time, reduce: options.simplify});
-                    var collapse = Equivalence.getBisimulationCollapse(attackSuccGen, defendSuccGen, process.id, process.id);
+                    try {
+                        var collapse = Equivalence.getBisimulationCollapse(attackSuccGen, defendSuccGen, process.id, process.id);    
+                    } catch (err) {
+                        if (err && err.name && err.name === 'CollapseTooLarge') {
+                            this.showMessageBox('System too large', 
+                                'The bisimulation collapse is too large to compute in the browser.' + (
+                                    options.simplify ? '' : " Try enabling 'Structural Reduction'."
+                                )
+                            );
+                            return;
+                        } else {
+                            throw err;
+                        }
+                    }
                     var collapseSuccGen = new Traverse.CollapsingSuccessorGenerator(this.succGenerator, collapse);
                     //Wrap the transition relation used in the collapse.
                     this.succGenerator = collapseSuccGen;
