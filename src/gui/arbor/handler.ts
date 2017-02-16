@@ -42,7 +42,7 @@ class Handler {
         this.mouseDownPos = arbor.Point(e.pageX-pos.left, e.pageY-pos.top);
         this.mouseP = this.mouseDownPos;
         this.draggedObject = this.renderer.particleSystem.nearest(this.mouseP);
-        this.selectedNode = this.draggedObject.node;
+        this.selectedNode = this.draggedObject ? this.draggedObject.node : null;
         
         if (this.selectedNode && this.draggedObject.distance <= this.clickDistance) {
             // only register the mousedown, if they press within the this.clickDistance

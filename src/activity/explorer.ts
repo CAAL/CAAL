@@ -178,6 +178,7 @@ module Activity {
 
         private draw() : void {
             this.uiGraph.clearAll();
+            this.$statusTable.empty();
             this.$zoom.val("1");
             this.resize(1);
 
