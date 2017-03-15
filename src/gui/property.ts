@@ -206,7 +206,7 @@ module Property {
                 return "<span>" + d.replace(/</g, "&lt;").replace(/>/g, "&gt;").trim() + "</span>";
             });
 
-            return this.process + " &#8872; " + formula + definitions.join("");
+            return this.process + " &#8872; " + formula + '\n' + definitions.join("");
         }
 
         public getGameConfiguration() : any {

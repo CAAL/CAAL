@@ -44,7 +44,9 @@ module Main {
         var save = new Save(null, activityHandler);
         new Load(null, activityHandler);
         new Delete("#delete-btn", activityHandler);
-        new Export("#export-pdf-btn", activityHandler);
+        new Export("#export-pdf-btn", activityHandler, {});
+        new Export("#export-pdf-with-props", activityHandler, {properties: true});
+
         new HotkeyHandler().setGlobalHotkeys(activityHandler, save);
 
         $('[data-toggle="tooltip"]').tooltip(); 
