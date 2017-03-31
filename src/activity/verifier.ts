@@ -107,7 +107,8 @@ module Activity {
 
         private displayProperty(property : Property.Property) : void {
             var $row = $("<tr>");
-
+            //Hack - force evaluation of readyness
+            property.isReadyForVerification();
             var statusIcon = $(this.getStatusIcon(property.getStatus()));
 
             if (property.getStatus() === PropertyStatus.invalid) {
