@@ -617,4 +617,88 @@ module Traverse {
             return this.prevSet.referVariable(formula.variable);
         }
     }
+
+    // Repurposes the visitor to be event based.
+    // Only provides one callback per event. Client must multiplex if necessary.
+    export class FormulaEventWalker implements hml.FormulaDispatchHandler<void> {
+        private events : any = Object.create(null);
+
+        private doCallback(event, obj) {
+            var callback = this.events[event];
+            if (callback) {
+                callback.call(null, obj);
+            }
+        }
+
+        on(event : string, callback : (formula : hml.Formula) => any) {
+            this.events[event] = callback;
+        }
+
+        visit(formulaSet : hml.FormulaSet) : void {
+            if (formulaSet.getTopFormula()) {
+                formulaSet.getTopFormula().dispatchOn(this);
+            }
+            formulaSet.getTopLevelFormulas().forEach(formula => formula.dispatchOn(this));
+        }
+
+        dispatchDisjFormula(formula : hml.DisjFormula) {
+            this.doCallback('enterDisjunction', formula);
+            formula.subFormulas.map(subF => subF.dispatchOn(this));
+            this.doCallback('leaveDisjunction', formula);
+        }
+
+        dispatchConjFormula(formula : hml.ConjFormula) {
+            this.doCallback('enterConjunction', formula);
+            formula.subFormulas.map(subF => subF.dispatchOn(this));
+            this.doCallback('leaveConjunction', formula);
+        }
+
+        dispatchTrueFormula(formula : hml.TrueFormula) {
+            this.doCallback('enterTrue', formula);
+        }
+
+        dispatchFalseFormula(formula : hml.FalseFormula) {
+            this.doCallback('enterFalse', formula);
+        }
+
+        dispatchStrongExistsFormula(formula : hml.StrongExistsFormula) {
+            this.doCallback('enterStrongExists', formula);
+            formula.subFormula.dispatchOn(this);
+            this.doCallback('leaveStrongExists', formula);
+        }
+
+        dispatchStrongForAllFormula(formula : hml.StrongForAllFormula) {
+            this.doCallback('enterStrongForAll', formula);
+            formula.subFormula.dispatchOn(this);
+            this.doCallback('leaveStrongForAll', formula);
+        }
+
+        dispatchWeakExistsFormula(formula : hml.WeakExistsFormula) {
+            this.doCallback('enterWeakExists', formula);
+            formula.subFormula.dispatchOn(this);
+            this.doCallback('leaveWeakExists', formula);
+        }
+
+        dispatchWeakForAllFormula(formula : hml.WeakForAllFormula) {
+            this.doCallback('enterWeakForAll', formula);
+            formula.subFormula.dispatchOn(this);
+            this.doCallback('leaveWeakForAll', formula);
+        }
+
+        dispatchMinFixedPointFormula(formula : hml.MinFixedPointFormula) {
+            this.doCallback('enterMinFixedPoint', formula);
+            formula.subFormula.dispatchOn(this);
+            this.doCallback('leaveMinFixedPoint', formula);
+        }
+
+        dispatchMaxFixedPointFormula(formula : hml.MaxFixedPointFormula) {
+            this.doCallback('enterMaxFixedPoint', formula);
+            formula.subFormula.dispatchOn(this);
+            this.doCallback('leaveMaxFixedPoint', formula);
+        }
+
+        dispatchVariableFormula(formula : hml.VariableFormula) {
+            this.doCallback('enterVariable', formula);
+        }        
+    }
 }

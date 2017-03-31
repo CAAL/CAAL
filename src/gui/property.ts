@@ -18,13 +18,6 @@ module Property {
         protected comment : string;
         protected status : PropertyStatus;
 
-        public icons = {
-            "checkmark": $("<i class=\"fa fa-check-circle fa-lg text-success\"></i>"),
-            "cross": $("<i class=\"fa fa-times-circle fa-lg text-danger\"></i>"),
-            "triangle": $("<i class=\"fa fa-exclamation-triangle fa-lg text-danger\"></i>"),
-            "questionmark" : $("<i class=\"fa fa-question-circle fa-lg \"></i>")
-        }
-
         public constructor(status : PropertyStatus = PropertyStatus.unknown) {
             this.project = Project.getInstance();
             this.status = status;
@@ -38,6 +31,10 @@ module Property {
 
         public getStatus() : PropertyStatus {
             return this.status;
+        }
+
+        public getError() : string {
+            return this.error;
         }
 
         public getComment() : string {
@@ -73,19 +70,6 @@ module Property {
 
         public stopTimer() {
             clearInterval(this.timer);
-        }
-
-        public getStatusIcon() : JQuery {
-            switch (this.status) {
-                case PropertyStatus.unknown:
-                    return this.icons.questionmark;
-                case PropertyStatus.satisfied:
-                    return this.icons.checkmark;
-                case PropertyStatus.unsatisfied:
-                    return this.icons.cross;
-                case PropertyStatus.invalid:
-                    return this.icons.triangle;
-            }
         }
 
         protected setInvalidateStatus(error? : string) : void {
@@ -260,6 +244,52 @@ module Property {
             if(!this.topFormula || this.topFormula === "") {
                 error = "Formula is not defined.";
                 isReady = false;
+            }
+
+
+            // Check all process constants defined
+            // Same as in worker/verifier
+            var inputMode = InputMode[this.project.getInputMode()];
+            function readFormulaSet(data) : hml.FormulaSet {
+                var formulaSet = new hml.FormulaSet();
+                if (inputMode === "CCS") {
+                    HMLParser.parse(data.definitions, {ccs: CCS, hml: hml, formulaSet: formulaSet});
+                    HMLParser.parse(data.formula, {startRule: "TopFormula", ccs: CCS, hml: hml, formulaSet: formulaSet});
+                } else if (inputMode === "TCCS") {
+                    THMLParser.parse(data.definitions, {ccs: CCS, tccs: TCCS, hml: hml, formulaSet: formulaSet});
+                    THMLParser.parse(data.formula, {startRule: "TopFormula", ccs: CCS, tccs: TCCS, hml: hml, formulaSet: formulaSet});
+                }
+                return formulaSet;
+            }
+
+            var formulaSet = null;
+            if (isReady) {
+                try {
+                    formulaSet = readFormulaSet(this.getWorkerMessage());
+                } catch (err) {
+                    //Ignore handle below in case failed without exception
+                }
+                if (!formulaSet) {
+                    isReady = false;
+                    error = "Unable to parse formula and/or variable definitions";
+                }
+                if (isReady) {
+                    var formulaEventWalker = new Traverse.FormulaEventWalker();
+                    var definitions = Object.create(null);
+                    var variables = Object.create(null);
+                    formulaEventWalker.on('enterMinFixedPoint', def => definitions[(<any>def).variable] = true);
+                    formulaEventWalker.on('enterMaxFixedPoint', def => definitions[(<any>def).variable] = true);
+                    formulaEventWalker.on('enterVariable', ref => variables[(<any>ref).variable] = true);
+                    formulaEventWalker.visit(formulaSet);
+                    
+                    // Remove defined variables, leftovers are undefined.
+                    Object.keys(definitions).forEach(definedVar => delete variables[definedVar]);
+                    var undefinedVars = Object.keys(variables);
+                    if (undefinedVars.length > 0) {
+                        isReady = false;
+                        error = "The following variables are undefined: '" + undefinedVars.join("', '") + "'.";
+                    }
+                }
             }
 
             if(!isReady){

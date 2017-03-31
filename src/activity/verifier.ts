@@ -85,13 +85,38 @@ module Activity {
             this.stopVerify();
         }
 
+        private icons = {
+            "checkmark": "<i class=\"fa fa-check-circle fa-lg text-success\"></i>",
+            "cross": "<i class=\"fa fa-times-circle fa-lg text-danger\"></i>",
+            "triangle": "<i class=\"fa fa-exclamation-triangle fa-lg text-danger\"></i>",
+            "questionmark" : "<i class=\"fa fa-question-circle fa-lg \"></i>"
+        }
+
+        private getStatusIcon(status) : string {
+            switch (status) {
+                case PropertyStatus.unknown:
+                    return this.icons.questionmark;
+                case PropertyStatus.satisfied:
+                    return this.icons.checkmark;
+                case PropertyStatus.unsatisfied:
+                    return this.icons.cross;
+                case PropertyStatus.invalid:
+                    return this.icons.triangle;
+            }
+        }
+
         private displayProperty(property : Property.Property) : void {
             var $row = $("<tr>");
 
+            var statusIcon = $(this.getStatusIcon(property.getStatus()));
+
             if (property.getStatus() === PropertyStatus.invalid) {
                 // Add some tooltip with the error to the status icon.
+                statusIcon.prop('title', property.getError() || '');
+                statusIcon.tooltip();
             }
-            $row.append($("<td>").append(property.getStatusIcon()));
+
+            $row.append($("<td>").append(statusIcon));
 
             var $time = $("<td>").append(property.getElapsedTime());
             property.setTimeCell($time);
