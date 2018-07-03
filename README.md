@@ -1,4 +1,3 @@
-[![Stories in Ready](https://badge.waffle.io/caal/caal.svg?label=ready&title=Ready)](http://waffle.io/caal/caal)
 # CAAL
 
 CAAL (Concurrency Workbench, Aalborg Edition) is a web-based tool for modelling, visualization and verification of concurrent processes expressed in the well-known CCS language (Calculus of Communicating Systems).
