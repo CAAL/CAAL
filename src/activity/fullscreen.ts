@@ -41,6 +41,7 @@ module Activity {
         }
 
         public isFullscreen(): boolean {
+            var document : any = document;
             return !!document.fullscreenElement ||
                    !!document.mozFullScreenElement ||
                    !!document.webkitFullscreenElement ||
@@ -48,6 +49,7 @@ module Activity {
         }
 
         public toggleFullscreen() : void {
+            var document : any = document;
             if (!this.isFullscreen()) {
                 if (this.container.requestFullscreen) {
                     this.container.requestFullscreen();

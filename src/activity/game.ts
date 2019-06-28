@@ -338,6 +338,8 @@ module Activity {
                     options.leftProcess, options.rightProcess, options.time, options.type);
             }
 
+            this.dgGame.computeMarking();
+
             var attacker : Player;
             var defender : Player;
 
@@ -533,12 +535,6 @@ module Activity {
             this.time = time;
             this.currentLeft = currentLeft;
             this.currentRight = currentRight;
-
-            // create the dependency graph
-            this.dependencyGraph = this.createDependencyGraph(this.graph, currentLeft, currentRight);
-
-            // create markings
-            this.marking = this.createMarking();
         }
 
         public getTransitionStr(isAttack : boolean, action : string) : string {
@@ -556,6 +552,12 @@ module Activity {
 
         public getGameLog() : GameLog {
             return this.gameLog;
+        }
+
+        public computeMarking() : dg.LevelMarking {
+            this.dependencyGraph = this.createDependencyGraph(this.graph, this.currentLeft, this.currentRight);
+            this.marking = this.createMarking();
+            return this.marking;
         }
 
         protected createMarking() : dg.LevelMarking {
@@ -825,16 +827,16 @@ module Activity {
 
         constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator,
                 leftProcessName : string, rightProcessName : string, time : string, gameType : string) {
+            
+            var currentLeft  = graph.processByName(leftProcessName);
+            var currentRight = graph.processByName(rightProcessName);    
+
+            super(gameActivity, new BisimulationGameLog(time, gameActivity), graph, currentLeft, currentRight, gameType, time); // creates dependency graph and marking
 
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
             this.attackerSuccessorGen = attackerSuccessorGen;
             this.defenderSuccessorGen = defenderSuccessorGen;
-
-            var currentLeft  = graph.processByName(this.leftProcessName);
-            var currentRight = graph.processByName(this.rightProcessName);
-
-            super(gameActivity, new BisimulationGameLog(time, gameActivity), graph, currentLeft, currentRight, gameType, time); // creates dependency graph and marking
         }
         
         public getGameType() : string {
@@ -916,15 +918,16 @@ module Activity {
 
         constructor(gameActivity : Game, graph : CCS.Graph, attackerSuccessorGen : CCS.SuccessorGenerator, defenderSuccessorGen : CCS.SuccessorGenerator,
                 leftProcessName : string, rightProcessName : string, time : string, gameType : string) {
+            
+            var currentLeft  = graph.processByName(leftProcessName);
+            var currentRight = graph.processByName(rightProcessName);
+                    
+            super(gameActivity, new SimulationGameLog(time, gameActivity), graph, currentLeft, currentRight, gameType, time); // creates dependency graph and marking
+            
             this.leftProcessName = leftProcessName;
             this.rightProcessName = rightProcessName;
             this.attackerSuccessorGen = attackerSuccessorGen;
             this.defenderSuccessorGen = defenderSuccessorGen;
-
-            var currentLeft  = graph.processByName(this.leftProcessName);
-            var currentRight = graph.processByName(this.rightProcessName);
-
-            super(gameActivity, new SimulationGameLog(time, gameActivity), graph, currentLeft, currentRight, gameType, time); // creates dependency graph and marking
         }
 
         public getGameType() : string {

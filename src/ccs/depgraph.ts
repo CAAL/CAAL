@@ -366,7 +366,7 @@ module DependencyGraph {
             ZERO: calculator.ZERO,
             ONE: calculator.ONE,
             UNKNOWN: calculator.BOTTOM
-        };
+        } as LevelMarking;
     }
 
     export function solveDgGlobalLevel(graph : DependencyGraph) : LevelMarking {

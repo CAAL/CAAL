@@ -31,7 +31,7 @@ module Traverse {
         dispatchSummationProcess(process : ccs.SummationProcess) {
             var resultProcess = this.cache[process.id];
             if (!resultProcess) {
-                var subProcesses = process.subProcesses.map(subProc => subProc.dispatchOn(this));
+                var subProcesses : Array<CCS.Process> = process.subProcesses.map(subProc => subProc.dispatchOn(this));
                 subProcesses = subProcesses.filter(subProc => !(subProc instanceof ccs.NullProcess));
                 subProcesses = ArrayUtil.sortAndRemoveDuplicates(subProcesses, p => p.id);
                 if (subProcesses.length === 0) {

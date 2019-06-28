@@ -29,7 +29,7 @@ class Load extends MenuItem {
         reader.readAsText(file);
 
         reader.onload = () => {
-            var project = JSON.parse(reader.result);
+            var project = JSON.parse(reader.result as string);
             this.project.update(null, project.title, project.ccs, project.properties, project.inputMode);
             this.activityHandler.selectActivity("editor");
             this.$fileInput.replaceWith(this.$fileInput = this.$fileInput.clone(true)); // Clear input field.

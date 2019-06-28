@@ -34,8 +34,10 @@ module Activity {
         constructor($container : JQuery, titleFunction : Function, selectorClass : string) {
             this.$container = $container;
             
+            var thisTooltip = this;
+            // Ugly, but we need the to separate from the lexical the dynamic 'this'.
             this.$container.tooltip({
-                title: titleFunction,
+                title: function () { titleFunction(thisTooltip, this);  },
                 selector: "span." + selectorClass,
                 html: true
             });
@@ -81,16 +83,15 @@ module Activity {
         private graph : CCS.Graph;
         
         constructor($container : JQuery) {
-            this.visitor = new Traverse.TCCSNotationVisitor();
-            var getCCSNotation = this.ccsNotationForProcessId.bind(this);
-
-            var thisTooltip = this;
-            var titleFunction = function() {
-                var process = thisTooltip.graph.processByLabel($(this).text());
+            var titleFunction = function(tooltipOwner, domElement) {
+                var process = tooltipOwner.graph.processByLabel($(domElement).text());
                 return getCCSNotation(process);
             };
-
+            
             super($container, titleFunction, "ccs-tooltip-process");
+
+            this.visitor = new Traverse.TCCSNotationVisitor();
+            var getCCSNotation = this.ccsNotationForProcessId.bind(this);
         }
         
         public ccsNotationForProcessId(idOrName : string) : string {
@@ -120,8 +121,8 @@ module Activity {
     
     export class DataTooltip extends Tooltip {
         constructor($container : JQuery) {
-            var titleFunction = function() {
-                return $(this).data("tooltip");
+            var titleFunction = function(tooltipOwner, domElement) {
+                return $(domElement).data("tooltip");
             };
 
             super($container, titleFunction, "ccs-tooltip-data");

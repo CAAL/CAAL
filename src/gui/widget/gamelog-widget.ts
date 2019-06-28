@@ -4,7 +4,7 @@
 
 module GUI.Widget {
     export type htmlWrapper = {tag : string; attr? : [{name: string; value: string}];}
-    export type GameLogObjectRow = {text : string; htmlWrapper? : htmlWrapper;};
+    export type GameLogObjectRow = {text : string; htmlWrapper? : htmlWrapper; tag? : string, attr? : any};
     export class GameLog {
         private log = document.createElement("div");
         private round = 0;

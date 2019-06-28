@@ -45,7 +45,7 @@ module MapUtil {
                 this.value = val;
                 return this;
             }   
-            var parent = this;
+            var parent : TreapNode<K,V> = this;
             if (compareResult < 0) {
                 if (!parent.left) {
                     parent.left = new TreapNode<K, V>(key, val);
