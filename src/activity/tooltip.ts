@@ -37,7 +37,7 @@ module Activity {
             var thisTooltip = this;
             // Ugly, but we need the to separate from the lexical the dynamic 'this'.
             this.$container.tooltip({
-                title: function () { titleFunction(thisTooltip, this);  },
+                title: function () { return titleFunction(thisTooltip, this);  },
                 selector: "span." + selectorClass,
                 html: true
             });

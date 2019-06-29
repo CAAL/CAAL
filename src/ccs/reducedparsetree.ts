@@ -99,9 +99,18 @@ module Traverse {
         dispatchRelabellingProcess(process : ccs.RelabellingProcess) {
             var resultProcess = this.cache[process.id];
             if (!resultProcess) {
-                var subProcess = process.subProcess.dispatchOn(this);
+                const subProcess = process.subProcess.dispatchOn(this);
                 if (subProcess instanceof ccs.NullProcess) return subProcess; // 0 [f] => 0
-                resultProcess = this.cache[process.id] = this.graph.newRelabelingProcess(subProcess, process.relabellings);
+                if (subProcess instanceof ccs.RelabellingProcess) { // P [f1] [f2] => P [f2 . f1]
+                    const newRelabels = ccs.RelabellingSet.FromComposition(subProcess.relabellings, process.relabellings);
+                    resultProcess = this.graph.newRelabelingProcess(subProcess.subProcess, newRelabels);
+                } else {
+                    resultProcess = this.graph.newRelabelingProcess(subProcess, process.relabellings);
+                }
+                if (resultProcess.relabellings.isEmpty()) { // P [] => P
+                    resultProcess = resultProcess.subProcess;
+                }
+                this.cache[process.id] = resultProcess;
             }
             return resultProcess;
         }

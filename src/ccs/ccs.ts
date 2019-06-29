@@ -401,8 +401,7 @@ module CCS {
                 if (relabel.from === "tau") {
                     throw newError("TauRelabel", "Cannot relabel tau.");
                 }
-                this.froms.push(relabel.from);
-                this.tos.push(relabel.to);
+                this.addRelabel(relabel.from, relabel.to);
             });
         }
 
@@ -440,6 +439,65 @@ module CCS {
 
         toString() : string {
             return "RelabellingSet";
+        }
+
+        isEmpty() : boolean {
+            return this.froms.length === 0;
+        }
+
+        private addRelabel(from : string, to : string) {
+            this.froms.push(from);
+            this.tos.push(to);
+        }
+
+        private targetLabelFor(label : string) : string {
+            const index = this.froms.indexOf(label);
+            if (index === -1) {
+                return null;
+            }
+            return this.tos[index];
+        }
+
+        private hasTargetLabel(targetLabel : string) : boolean {
+            return this.tos.indexOf(targetLabel) !== -1;
+        }
+
+        private static ComposeTwo(first : RelabellingSet, second : RelabellingSet) : RelabellingSet {
+            // This could be implemented in-place but it is tricky to get right.
+            const result = new RelabellingSet([]);
+
+            first.forEach((firstFrom, firstTo) => {
+                const secondTo = second.targetLabelFor(firstTo);
+                if (secondTo !== null) {
+                    // Case 1:  A --first--> B --second--> C
+                    if (firstFrom !== secondTo) {
+                        // If A != C
+                        result.addRelabel(firstFrom, secondTo);
+                    }
+                } else {
+                    // Case 2:  A --first--> B
+                    result.addRelabel(firstFrom, firstTo);
+                }
+            });
+            
+            // Case 3:  A --second--> B
+            second.forEach((secondFrom, secondTo) => {
+                // Do not readd case 1, implied if: first.hasTargetLabel(secondFrom)
+                // Case 2 might already have rewritten label A -> X, then pointless to rewrite A -> Y
+                if (!first.hasRelabelForLabel(secondFrom) && !first.hasTargetLabel(secondFrom)) {
+                    result.addRelabel(secondFrom, secondTo);
+                }
+            });
+
+            return result;
+        }
+
+        static FromComposition(...relabellings : RelabellingSet[]) : RelabellingSet {
+            var last = new RelabellingSet([]);
+            relabellings.forEach(toApply => {
+                last = RelabellingSet.ComposeTwo(last, toApply);
+            });
+            return last;
         }
     }
 
