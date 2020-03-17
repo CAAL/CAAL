@@ -23,6 +23,24 @@ var getResource = ((rStore) => {
     }
 })(Object.create(null)) 
 
+// https://stackoverflow.com/questions/13405129/javascript-create-and-save-file
+function downloadPDF(blob, filename) {
+    if (window.navigator.msSaveOrOpenBlob) // IE10+
+        window.navigator.msSaveOrOpenBlob(blob, filename);
+    else { // Others
+        var a = document.createElement("a"),
+                url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function() {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);  
+        }, 0); 
+    }
+}
+
 class Export extends MenuItem {
 
     private options : any = {};
@@ -67,7 +85,7 @@ class Export extends MenuItem {
         var stream = doc.pipe(blobStream());
 
         stream.on("finish", () => {
-            window.open(stream.toBlobURL("application/pdf"), this.project.getTitle());
+            downloadPDF(stream.toBlob("application/pdf"), this.project.getTitle() + ".pdf");
         });
 
         doc.end();
