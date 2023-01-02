@@ -25,8 +25,9 @@ var getResource = ((rStore) => {
 
 // https://stackoverflow.com/questions/13405129/javascript-create-and-save-file
 function downloadPDF(blob, filename) {
-    if (window.navigator.msSaveOrOpenBlob) // IE10+
-        window.navigator.msSaveOrOpenBlob(blob, filename);
+    const navigator = window.navigator as any;
+    if (navigator.msSaveOrOpenBlob) // IE10+
+        navigator.msSaveOrOpenBlob(blob, filename);
     else { // Others
         var a = document.createElement("a"),
                 url = URL.createObjectURL(blob);
