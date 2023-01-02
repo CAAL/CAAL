@@ -3,15 +3,15 @@
   "version": "1.0.3",
   "main": "",
   "dependencies": {
-    "typescript": "3.5.2",
+    "typescript": "4.9.4",
     "pegjs": "~0.8.0",
-    "jake": "8.1.1",
+    "jake": "10.8.5",
     "connect": "3.7.0",
-    "serve-static": "1.14.1"
+    "serve-static": "~1.15.0"
   },
   "devDependencies": {
-    "node-qunit-phantomjs": "2.0.1",
-    "qunitjs": "2.4.1"
+    "node-qunit-phantomjs": "~2.1.1",
+    "qunitjs": "~2.4.1"
   },
   "scripts": {
     "build": "./node_modules/.bin/jake -q -f build.js || exit 0",
