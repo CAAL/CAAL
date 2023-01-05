@@ -3,11 +3,11 @@
   "version": "1.0.4",
   "main": "",
   "dependencies": {
-    "typescript": "4.9.4",
-    "pegjs": "~0.8.0",
-    "jake": "10.8.5",
     "connect": "3.7.0",
-    "serve-static": "~1.15.0"
+    "jake": "10.8.5",
+    "pegjs": "~0.8.0",
+    "serve-static": "~1.15.0",
+    "typescript": "4.9.4"
   },
   "devDependencies": {
     "node-qunit-phantomjs": "~2.1.1",
@@ -16,8 +16,8 @@
   "scripts": {
     "build": "./node_modules/.bin/jake -q -f build.js || exit 0",
     "build-all": "./node_modules/.bin/jake -B -f build.js || exit 0",
-    "test": "./node_modules/.bin/node-qunit-phantomjs ./test/test.html || exit 0",
-    "release": "./node_modules/.bin/jake -q -f build.js || exit 1; ./node_modules/.bin/node-qunit-phantomjs ./test/test.html || exit 1; rm -f release.tar.gz; tar -zcf release.tar.gz lib/ css/ fonts/ docs/ index.html help.html contact.html about.html LICENSE README.md server.js;",
+    "test": "OPENSSL_CONF=/etc/ssl ./node_modules/.bin/node-qunit-phantomjs ./test/test.html || exit 0",
+    "release": "./node_modules/.bin/jake -q -f build.js || exit 1; OPENSSL_CONF=/etc/ssl ./node_modules/.bin/node-qunit-phantomjs ./test/test.html || exit 1; rm -f release.tar.gz; tar -zcf release.tar.gz lib/ css/ fonts/ docs/ index.html help.html contact.html about.html LICENSE README.md server.js;",
     "release-notest": "./node_modules/.bin/jake -q -f build.js || exit 1; rm -f release.tar.gz; tar -zcf release.tar.gz lib/ css/ fonts/ docs/ index.html help.html contact.html about.html LICENSE README.md server.js;"
   },
   "authors": "Jacob K. Wortmann, Jesper R. Andersen, Mathias M. Hansen, Nicklas Andersen, Simon R. Olesen, Søren Enevoldsen ",
